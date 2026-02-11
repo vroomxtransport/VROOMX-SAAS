@@ -8,7 +8,7 @@
 |------|--------|
 | **Milestone** | v1.0 — MVP Launch |
 | **Current Phase** | Phase 1 (Project Setup + Auth + Multi-Tenancy) |
-| **Next Action** | Execute Plan 01-07 or 01-08 |
+| **Next Action** | Execute Plan 01-08 (Billing Page) |
 | **Blockers** | None |
 
 ## Completed Work
@@ -22,12 +22,13 @@
 | 01-04 | Done | 2026-02-11 | Login/signup pages with Server Actions |
 | 01-05 | Done | 2026-02-11 | Stripe webhooks with subscription lifecycle |
 | 01-06 | Done | 2026-02-11 | Auth flow wiring: email confirmation, logout, useActionState |
+| 01-07 | Done | 2026-02-11 | Dashboard UI with sidebar, header, role-based navigation |
 
 ## Phase Status
 
 | Phase | Name | Status | Plans |
 |-------|------|--------|-------|
-| 1 | Project Setup + Auth + Multi-Tenancy | In Progress | 6/8 |
+| 1 | Project Setup + Auth + Multi-Tenancy | In Progress | 7/8 |
 | 2 | Data Model + Core Entities | Not Started | 0/? |
 | 3 | Dispatch Workflow | Not Started | 0/? |
 | 4 | Billing & Invoicing | Not Started | 0/? |
@@ -36,7 +37,7 @@
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-██████░░░ 75% (6/8 plans in Phase 1 complete)
+███████░░ 87.5% (7/8 plans in Phase 1 complete)
 
 ## Key Decisions Log
 
@@ -75,6 +76,11 @@
 | 2026-02-11 | Server Actions return error objects for inline display | Better UX than URL searchParams for validation errors | 01-06 |
 | 2026-02-11 | Email confirmation handles both PKCE and OTP flows | Supports Supabase's dual auth verification methods | 01-06 |
 | 2026-02-11 | Logout revalidates layout cache | Clears protected route state after sign out | 01-06 |
+| 2026-02-11 | Zustand for sidebar state | Simpler than Context API for single-piece UI state | 01-07 |
+| 2026-02-11 | Role hierarchy levels for navigation | viewer(0) < dispatcher(1) < admin(2) < owner(3) for hasMinRole checks | 01-07 |
+| 2026-02-11 | Dashboard layout as Server Component | Performs auth checks and tenant data fetching server-side | 01-07 |
+| 2026-02-11 | 8 navigation links with role-based filtering | Progressive visibility based on user role | 01-07 |
+| 2026-02-11 | Async searchParams in Next.js 16 | Promise pattern for route params handling | 01-07 |
 
 ## Research Summary
 
@@ -87,34 +93,39 @@
 
 ## Session Continuity
 
-**Last session:** 2026-02-11 22:03 UTC
-**Stopped at:** Completed 01-06-PLAN.md
+**Last session:** 2026-02-11 23:15 UTC
+**Stopped at:** Completed 01-07-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Plan 01-06 executed successfully in 2 min
-- Email confirmation route handles PKCE and OTP auth verification flows
-- Logout Server Action with session clearing and cache revalidation
-- Upgraded auth forms to React 19 useActionState pattern
-- Inline error messages without URL parameter dependency
-- Loading states on submit buttons with isPending
-- 2 atomic commits: 1ebe1f4 (auth-confirm/logout), 33944f2 (useActionState upgrade)
+- Plan 01-07 executed successfully in 3 min
+- Protected dashboard layout with Server Component auth and tenant fetching
+- Role-based sidebar navigation with 8 links (role-filtered visibility)
+- User menu dropdown with profile info, plan badges, and logout action
+- Dashboard page with stats cards, plan info card, trial countdown
+- Setup complete banner for Stripe Checkout return (?setup=complete)
+- Zustand sidebar store for mobile/desktop responsive state
+- Tier utility functions (display names, badge colors, role checking)
+- 2 atomic commits: d4ae420 (components/stores), 567ba27 (layout/pages)
 
-**Next action:** Execute Plan 01-07 (Dashboard UI) or 01-08 (Billing Page)
+**Next action:** Execute Plan 01-08 (Billing Page) - final plan in Phase 1
 
-**Auth lifecycle now complete:**
-- Signup flow: form → create user → create tenant → Stripe Checkout → dashboard
-- Email confirmation: /auth-confirm route exchanges tokens for session
-- Login flow: credentials → verify → redirect to dashboard
-- Logout flow: sign out → revalidate cache → redirect to login
-- Modern form UX: inline errors, loading states, recoverable errors
+**Dashboard UI now complete:**
+- Protected layout wraps all future dashboard pages
+- Sidebar shows 8 navigation sections (4-8 visible based on role)
+- Header with hamburger toggle (mobile) and user menu
+- User menu displays: name, email, tenant, role, plan, status badges
+- Dashboard page shows: welcome, stats (0 for now), plan info, quick start
+- Responsive: overlay sidebar on mobile, fixed on desktop
+- Auth check: redirects to /login if no user or tenant
 
-**Pattern established for future forms:**
-- Use `useActionState(serverAction, null)` for client forms
-- Server Actions accept `(prevState, formData)` signature
-- Return `{ error: string }` on validation/error, `redirect()` on success
-- Extract `isPending` from useActionState for loading UI
+**Pattern established for dashboard pages:**
+- Create page in `src/app/(dashboard)/[section]/page.tsx`
+- Layout automatically applies: sidebar, header, auth checks
+- Use `hasMinRole(userRole, requiredRole)` for page-level access control
+- Navigation link auto-highlights when route matches
+- All pages inherit: sidebar, header, user menu, responsive layout
 
-Phase 1 is the foundation — it creates the Next.js project, Supabase schema with RLS, auth flows, and Stripe integration. Everything else depends on it.
+**Phase 1 almost complete:** 7/8 plans done. Only 01-08 (Billing Page) remains before Phase 2.
