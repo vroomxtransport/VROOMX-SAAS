@@ -19,3 +19,4 @@ export const truckSchema = z.object({
 })
 
 export type TruckFormValues = z.infer<typeof truckSchema>
+export type TruckFormInput = z.input<typeof truckSchema>

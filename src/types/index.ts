@@ -114,9 +114,9 @@ export const DRIVER_STATUS_LABELS: Record<DriverStatus, string> = {
 }
 
 export const TRUCK_TYPE_LABELS: Record<TruckType, string> = {
-  '7_car': '7 Car',
-  '8_car': '8 Car',
-  '9_car': '9 Car',
+  '7_car': '7-Car Hauler',
+  '8_car': '8-Car Hauler',
+  '9_car': '9-Car Hauler',
   flatbed: 'Flatbed',
   enclosed: 'Enclosed',
 }
