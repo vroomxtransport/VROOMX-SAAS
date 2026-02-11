@@ -57,8 +57,18 @@ Plans:
 
 **Requirements:** ORD-1, ORD-2, ORD-3, ORD-5, ORD-6, DRV-1, DRV-2, DRV-3, DRV-4, FLT-1, FLT-2, FLT-3
 
+**Plans:** 6 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Database schema (orders, drivers, trucks, brokers) + RLS + shared infrastructure + Zod schemas
+- [ ] 02-02-PLAN.md — Brokers CRUD vertical slice (list, form, drawer, detail, server actions)
+- [ ] 02-03-PLAN.md — Drivers CRUD vertical slice (list, form, drawer, detail, pay configuration)
+- [ ] 02-04-PLAN.md — Trucks CRUD vertical slice (list, form, drawer, detail, status management)
+- [ ] 02-05-PLAN.md — Orders CRUD with multi-step wizard, VIN decode, and advanced filtering
+- [ ] 02-06-PLAN.md — Order detail + status workflow + cross-entity links + Realtime wiring
+
 **Key Deliverables:**
-- Database tables: orders, drivers, trucks, brokers, expenses (all with tenant_id + RLS)
+- Database tables: orders, drivers, trucks, brokers (all with tenant_id + RLS)
 - Orders CRUD: create, edit, list, detail view, status workflow
 - Drivers CRUD: create, edit, list, driver types (company/owner-operator), pay config
 - Trucks CRUD: create, edit, list, truck types, status management
