@@ -1,0 +1,22 @@
+{
+  "project_name": "VroomX SaaS TMS",
+  "project_root": "/Users/reepsy/Desktop/VROOMX_SAAS",
+  "workflow": {
+    "mode": "auto",
+    "depth": "thorough",
+    "git_tracking": "auto-commit",
+    "research": true,
+    "plan_check": true,
+    "verifier": true,
+    "parallelization": true
+  },
+  "model_profile": "quality",
+  "model_assignments": {
+    "research": "opus",
+    "planning": "opus",
+    "execution": "sonnet",
+    "verification": "sonnet"
+  },
+  "created": "2026-02-11",
+  "version": "1.0"
+}
