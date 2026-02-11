@@ -8,10 +8,10 @@
 |------|--------|
 | **Milestone** | v1.0 — MVP Launch |
 | **Current Phase** | Phase 2 (Data Model + Core Entities) |
-| **Next Action** | Execute 02-03-PLAN.md |
+| **Next Action** | Execute 02-04-PLAN.md |
 | **Blockers** | None |
 
-Phase 2 progress: 2/6 plans done. Brokers CRUD complete, pattern established for Drivers and Trucks.
+Phase 2 progress: 3/6 plans done. Brokers and Drivers CRUD complete, Trucks next.
 
 ## Completed Work
 
@@ -28,13 +28,14 @@ Phase 2 progress: 2/6 plans done. Brokers CRUD complete, pattern established for
 | 01-08 | Done | 2026-02-11 | Sentry + PostHog observability integration |
 | 02-01 | Done | 2026-02-11 | Database foundation + shared infrastructure for 4 entities |
 | 02-02 | Done | 2026-02-11 | Brokers CRUD vertical slice: list, form, drawer, detail, server actions |
+| 02-03 | Done | 2026-02-11 | Drivers CRUD with pay configuration, status toggle, card grid |
 
 ## Phase Status
 
 | Phase | Name | Status | Plans |
 |-------|------|--------|-------|
 | 1 | Project Setup + Auth + Multi-Tenancy | Complete | 8/8 |
-| 2 | Data Model + Core Entities | In Progress | 2/6 |
+| 2 | Data Model + Core Entities | In Progress | 3/6 |
 | 3 | Dispatch Workflow | Not Started | 0/? |
 | 4 | Billing & Invoicing | Not Started | 0/? |
 | 5 | Onboarding + Stripe Polish | Not Started | 0/? |
@@ -42,7 +43,7 @@ Phase 2 progress: 2/6 plans done. Brokers CRUD complete, pattern established for
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-█████████░░░░░ 71% (10/14 plans complete across Phases 1-2)
+██████████░░░░ 79% (11/14 plans complete across Phases 1-2)
 
 ## Key Decisions Log
 
@@ -97,6 +98,8 @@ Phase 2 progress: 2/6 plans done. Brokers CRUD complete, pattern established for
 | 2026-02-11 | Numeric fields use string defaults in Drizzle | Preserves decimal precision for financial calculations | 02-01 |
 | 2026-02-11 | Broker detail as client component with useBroker | Consistent TanStack Query pattern for all entity detail pages | 02-02 |
 | 2026-02-11 | URL search params for filter state | Shareable/bookmarkable filtered views | 02-02 |
+| 2026-02-11 | z.input<> for useForm generic with Zod v4 .default() fields | Resolves zodResolver type mismatch between input and output types | 02-03 |
+| 2026-02-11 | Status toggle on both card and detail page | Dispatchers need fast status changes from list view | 02-03 |
 
 ## Research Summary
 
@@ -109,24 +112,20 @@ Phase 2 progress: 2/6 plans done. Brokers CRUD complete, pattern established for
 
 ## Session Continuity
 
-**Last session:** 2026-02-11 23:19 UTC
-**Stopped at:** Completed 02-02-PLAN.md
+**Last session:** 2026-02-11 23:22 UTC
+**Stopped at:** Completed 02-03-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Plan 02-02 executed successfully in 4 min
-- Complete Brokers CRUD vertical slice: list page, detail page, drawer form, server actions
-- CRUD pattern established: query builders -> hooks -> server actions -> form -> drawer -> list -> detail
-- 2 atomic commits: 946b8ad (data layer), 93b4f61 (UI components)
+- Plan 02-03 executed successfully in 5 min
+- Complete Drivers CRUD with pay configuration (3 pay types), status toggle, card grid
+- z.input<> pattern established for Zod v4 + react-hook-form compatibility
+- 2 atomic commits: c3f62e3 (data layer), 0dbd188 (UI components)
 
-**Next action:** Execute 02-03-PLAN.md (Drivers CRUD -- replicates broker pattern)
+**Next action:** Execute 02-04-PLAN.md (Trucks CRUD -- needs z.input<> fix for truck-form.tsx)
 
-**CRUD pattern to replicate:**
-- `src/lib/queries/brokers.ts` -> query builders
-- `src/hooks/use-brokers.ts` -> TanStack Query hooks
-- `src/app/actions/brokers.ts` -> Server Actions
-- `src/app/(dashboard)/brokers/_components/` -> UI components
+**Known issue:** truck-form.tsx has pre-existing Zod v4 type errors (same z.input<> fix needed)
 
-**Phase 2 progress:** 2/6 plans done. Brokers complete, Drivers and Trucks next.
+**Phase 2 progress:** 3/6 plans done. Brokers and Drivers complete, Trucks next.
