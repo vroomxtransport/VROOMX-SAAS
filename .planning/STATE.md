@@ -8,10 +8,10 @@
 |------|--------|
 | **Milestone** | v1.0 — MVP Launch |
 | **Current Phase** | Phase 2 (Data Model + Core Entities) |
-| **Next Action** | Execute 02-05-PLAN.md |
+| **Next Action** | Execute 02-06-PLAN.md |
 | **Blockers** | None |
 
-Phase 2 progress: 4/6 plans done. Brokers, Drivers, and Trucks CRUD complete.
+Phase 2 progress: 5/6 plans done. Brokers, Drivers, Trucks, and Orders CRUD all complete.
 
 ## Completed Work
 
@@ -30,13 +30,14 @@ Phase 2 progress: 4/6 plans done. Brokers, Drivers, and Trucks CRUD complete.
 | 02-02 | Done | 2026-02-11 | Brokers CRUD vertical slice: list, form, drawer, detail, server actions |
 | 02-03 | Done | 2026-02-11 | Drivers CRUD with pay configuration, status toggle, card grid |
 | 02-04 | Done | 2026-02-11 | Trucks CRUD with type classification, 3-way status, fleet management |
+| 02-05 | Done | 2026-02-11 | Orders CRUD with 3-step wizard, VIN decode, card grid, 4-axis filtering |
 
 ## Phase Status
 
 | Phase | Name | Status | Plans |
 |-------|------|--------|-------|
 | 1 | Project Setup + Auth + Multi-Tenancy | Complete | 8/8 |
-| 2 | Data Model + Core Entities | In Progress | 4/6 |
+| 2 | Data Model + Core Entities | In Progress | 5/6 |
 | 3 | Dispatch Workflow | Not Started | 0/? |
 | 4 | Billing & Invoicing | Not Started | 0/? |
 | 5 | Onboarding + Stripe Polish | Not Started | 0/? |
@@ -44,7 +45,7 @@ Phase 2 progress: 4/6 plans done. Brokers, Drivers, and Trucks CRUD complete.
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-███████████░░░ 86% (12/14 plans complete across Phases 1-2)
+████████████░░ 93% (13/14 plans complete across Phases 1-2)
 
 ## Key Decisions Log
 
@@ -103,6 +104,10 @@ Phase 2 progress: 4/6 plans done. Brokers, Drivers, and Trucks CRUD complete.
 | 2026-02-11 | Status toggle on both card and detail page | Dispatchers need fast status changes from list view | 02-03 |
 | 2026-02-11 | Inline Select dropdown for truck 3-way status | Trucks need active/inactive/maintenance vs drivers' 2-way toggle | 02-04 |
 | 2026-02-11 | TRUCK_TYPE_LABELS as "7-Car Hauler" format | Clearer fleet context than short "7 Car" labels | 02-04 |
+| 2026-02-11 | CreateOrderInput (z.input<>) for multi-step wizard form | z.coerce.number() fields need input type for react-hook-form compatibility | 02-05 |
+| 2026-02-11 | NHTSA VIN decode with staleTime: Infinity | VIN data is immutable, no refetch needed | 02-05 |
+| 2026-02-11 | Card click opens edit drawer (no detail page yet) | Deferred order detail page to later phase for MVP velocity | 02-05 |
+| 2026-02-11 | Dynamic filter selects via existing hooks | OrderFilters fetches brokers/drivers inline for dropdown options | 02-05 |
 
 ## Research Summary
 
@@ -115,18 +120,20 @@ Phase 2 progress: 4/6 plans done. Brokers, Drivers, and Trucks CRUD complete.
 
 ## Session Continuity
 
-**Last session:** 2026-02-11 23:23 UTC
-**Stopped at:** Completed 02-04-PLAN.md
+**Last session:** 2026-02-11 23:35 UTC
+**Stopped at:** Completed 02-05-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Plan 02-04 executed successfully in 6 min
-- Complete Trucks CRUD with type classification (7-Car/8-Car/9-Car/Flatbed/Enclosed)
-- Three-way status management (active/inactive/maintenance) with inline dropdown
-- 2 atomic commits: ec61510 (data layer), 5c22767 (UI components)
+- Plan 02-05 executed successfully in 8 min
+- Complete Orders CRUD with 3-step wizard (Vehicle -> Location -> Pricing)
+- NHTSA VIN decode auto-fill with fallback manual entry
+- Card grid with 4-axis filtering (status, broker, driver, search)
+- Draft auto-save for wizard state persistence
+- 2 atomic commits: 69bafa2 (data layer), 6ac6f02 (UI components)
 
-**Next action:** Execute 02-05-PLAN.md (Orders CRUD or next entity plan)
+**Next action:** Execute 02-06-PLAN.md (final Phase 2 plan)
 
-**Phase 2 progress:** 4/6 plans done. Brokers, Drivers, and Trucks all complete.
+**Phase 2 progress:** 5/6 plans done. Brokers, Drivers, Trucks, and Orders all complete.
