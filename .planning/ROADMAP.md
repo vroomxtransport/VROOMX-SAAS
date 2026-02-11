@@ -6,7 +6,9 @@
 
 ---
 
-## Phase 1: Project Setup + Auth + Multi-Tenancy
+## Phase 1: Project Setup + Auth + Multi-Tenancy ✓
+
+**Status:** Complete (2026-02-11)
 
 **Goal:** A carrier can sign up, create an organization, log in, and see an empty dashboard. Stripe subscription is active. RLS tenant isolation is enforced on every table. This is the foundation — nothing else works without it.
 
@@ -15,14 +17,14 @@
 **Plans:** 8 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Scaffold Next.js 16 project, install deps, init shadcn/ui, create directory structure
-- [ ] 01-02-PLAN.md — SQL schema (tenants, memberships, stripe_events) + RLS policies + auth hook + Drizzle ORM
-- [ ] 01-03-PLAN.md — Supabase client factories (browser, server, service-role) + proxy.ts auth session refresh
-- [ ] 01-04-PLAN.md — Login and signup pages with Server Actions (auth + tenant creation + Stripe Checkout)
-- [ ] 01-05-PLAN.md — Stripe config, webhook handlers, and /api/webhooks/stripe route with idempotency
-- [ ] 01-06-PLAN.md — Email confirmation route, logout action, signup UX polish with useActionState
-- [ ] 01-07-PLAN.md — Protected dashboard layout with sidebar navigation, header, user menu
-- [ ] 01-08-PLAN.md — Sentry error monitoring + PostHog analytics integration
+- [x] 01-01-PLAN.md — Scaffold Next.js 16 project, install deps, init shadcn/ui, create directory structure
+- [x] 01-02-PLAN.md — SQL schema (tenants, memberships, stripe_events) + RLS policies + auth hook + Drizzle ORM
+- [x] 01-03-PLAN.md — Supabase client factories (browser, server, service-role) + proxy.ts auth session refresh
+- [x] 01-04-PLAN.md — Login and signup pages with Server Actions (auth + tenant creation + Stripe Checkout)
+- [x] 01-05-PLAN.md — Stripe config, webhook handlers, and /api/webhooks/stripe route with idempotency
+- [x] 01-06-PLAN.md — Email confirmation route, logout action, signup UX polish with useActionState
+- [x] 01-07-PLAN.md — Protected dashboard layout with sidebar navigation, header, user menu
+- [x] 01-08-PLAN.md — Sentry error monitoring + PostHog analytics integration
 
 **Key Deliverables:**
 - Next.js 16 project with TypeScript, Tailwind CSS v4, shadcn/ui
@@ -41,11 +43,11 @@ Plans:
 **Research Flags:** RLS `(SELECT ...)` wrapper pattern critical (see PITFALLS.md CRIT-3). Avoid auth.users triggers (see PITFALLS.md Anti-Pattern 4).
 
 **Success Criteria:**
-- [ ] New user can sign up and land on empty dashboard
-- [ ] Tenant isolation verified: User A cannot see User B's data
-- [ ] Stripe subscription created on signup
-- [ ] RLS policies on tenants, tenant_memberships tables
-- [ ] Automated test: cross-tenant query returns 0 rows
+- [x] New user can sign up and land on empty dashboard
+- [x] Tenant isolation verified: User A cannot see User B's data
+- [x] Stripe subscription created on signup
+- [x] RLS policies on tenants, tenant_memberships tables
+- [ ] Automated test: cross-tenant query returns 0 rows (deferred to Phase 7)
 
 ---
 
