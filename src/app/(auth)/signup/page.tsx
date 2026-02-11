@@ -7,27 +7,19 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { TIER_LIMITS, TIER_PRICING } from '@/types'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
-import { useState } from 'react'
+import { useActionState, useState } from 'react'
 
 type Plan = 'starter' | 'pro' | 'enterprise'
 
 const PLAN_INFO: Record<Plan, { name: string; description: string }> = {
-  starter: { name: 'Starter', description: `Up to ${TIER_LIMITS.starter.trucks} trucks` },
-  pro: { name: 'Pro', description: `Up to ${TIER_LIMITS.pro.trucks} trucks` },
-  enterprise: { name: 'Enterprise', description: 'Unlimited trucks' },
+  starter: { name: 'Starter', description: `Up to ${TIER_LIMITS.starter.trucks} trucks, ${TIER_LIMITS.starter.users} users` },
+  pro: { name: 'Pro', description: `Up to ${TIER_LIMITS.pro.trucks} trucks, ${TIER_LIMITS.pro.users} users` },
+  enterprise: { name: 'Enterprise', description: 'Unlimited trucks and users' },
 }
 
 export default function SignupPage() {
-  const searchParams = useSearchParams()
-  const error = searchParams.get('error')
+  const [state, formAction, isPending] = useActionState(signUpAction, null)
   const [selectedPlan, setSelectedPlan] = useState<Plan>('starter')
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  const handleSubmit = async (formData: FormData) => {
-    setIsSubmitting(true)
-    await signUpAction(formData)
-  }
 
   return (
     <Card>
@@ -36,12 +28,12 @@ export default function SignupPage() {
         <CardDescription>Create your account</CardDescription>
       </CardHeader>
       <CardContent>
-        {error && (
-          <div className="mb-4 rounded-md bg-destructive/15 p-3 text-sm text-destructive">
-            {error}
+        {state?.error && (
+          <div className="mb-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+            {state.error}
           </div>
         )}
-        <form action={handleSubmit} className="space-y-4">
+        <form action={formAction} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="full_name">Full Name</Label>
             <Input
@@ -122,12 +114,12 @@ export default function SignupPage() {
               ))}
             </div>
             <p className="text-xs text-muted-foreground">
-              All plans include a 14-day free trial
+              All plans include a 14-day free trial. No charge until trial ends.
             </p>
           </div>
 
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? 'Creating account...' : 'Continue to checkout'}
+          <Button type="submit" className="w-full" disabled={isPending}>
+            {isPending ? 'Creating account...' : 'Create account'}
           </Button>
         </form>
       </CardContent>

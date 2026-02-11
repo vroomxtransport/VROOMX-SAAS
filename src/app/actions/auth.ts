@@ -25,7 +25,7 @@ const PRICE_MAP: Record<string, string> = {
   enterprise: process.env.STRIPE_ENTERPRISE_PRICE_ID!,
 }
 
-export async function loginAction(formData: FormData) {
+export async function loginAction(prevState: any, formData: FormData) {
   const supabase = await createClient()
 
   const email = formData.get('email') as string
@@ -34,14 +34,14 @@ export async function loginAction(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) {
-    redirect('/login?error=' + encodeURIComponent(error.message))
+    return { error: error.message }
   }
 
   revalidatePath('/', 'layout')
   redirect('/dashboard')
 }
 
-export async function signUpAction(formData: FormData) {
+export async function signUpAction(prevState: any, formData: FormData) {
   // 1. Validate inputs
   const parsed = signUpSchema.safeParse({
     full_name: formData.get('full_name'),
@@ -53,7 +53,7 @@ export async function signUpAction(formData: FormData) {
 
   if (!parsed.success) {
     const firstError = parsed.error.issues[0]?.message || 'Invalid input'
-    redirect('/signup?error=' + encodeURIComponent(firstError))
+    return { error: firstError }
   }
 
   const { full_name, email, password, company_name, plan } = parsed.data
@@ -69,7 +69,7 @@ export async function signUpAction(formData: FormData) {
   })
 
   if (authError || !authData.user) {
-    redirect('/signup?error=' + encodeURIComponent(authError?.message || 'Signup failed'))
+    return { error: authError?.message || 'Signup failed' }
   }
 
   // 3. Create Stripe customer
@@ -96,7 +96,7 @@ export async function signUpAction(formData: FormData) {
     .single()
 
   if (tenantError || !tenant) {
-    redirect('/signup?error=' + encodeURIComponent(tenantError?.message || 'Failed to create organization'))
+    return { error: tenantError?.message || 'Failed to create organization' }
   }
 
   // 5. Create tenant membership (owner role)
@@ -134,5 +134,5 @@ export async function signUpAction(formData: FormData) {
     redirect(session.url)
   }
 
-  redirect('/signup?error=' + encodeURIComponent('Failed to create checkout session'))
+  return { error: 'Failed to create checkout session' }
 }
