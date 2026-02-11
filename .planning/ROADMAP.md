@@ -83,12 +83,12 @@ Plans:
 **Research Flags:** Financial calculations belong in application code with denormalized summaries (see ARCHITECTURE.md Section 6).
 
 **Success Criteria:**
-- [ ] Dispatcher can create, edit, view, and filter orders
-- [ ] Dispatcher can manage drivers with pay configuration
-- [ ] Dispatcher can manage trucks with status tracking
-- [ ] All data is tenant-isolated (verified via cross-tenant test)
-- [ ] List views paginate at 50+ records
-- [ ] Real-time updates: change in tab A reflects in tab B
+- [x] Dispatcher can create, edit, view, and filter orders
+- [x] Dispatcher can manage drivers with pay configuration
+- [x] Dispatcher can manage trucks with status tracking
+- [ ] All data is tenant-isolated (verified via cross-tenant test) — human verification needed
+- [x] List views paginate at 50+ records
+- [ ] Real-time updates: change in tab A reflects in tab B — human verification needed
 
 ---
 
