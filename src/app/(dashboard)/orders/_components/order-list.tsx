@@ -80,12 +80,10 @@ export function OrderList() {
   }, [])
 
   const handleCardClick = useCallback(
-    (_order: OrderWithRelations) => {
-      // For now, open in edit mode. Detail page can be added later.
-      setEditingOrder(_order)
-      setDrawerOpen(true)
+    (order: OrderWithRelations) => {
+      router.push(`/orders/${order.id}`)
     },
-    []
+    [router]
   )
 
   return (

@@ -3,6 +3,15 @@
 import { createClient } from '@/lib/supabase/server'
 import { createOrderSchema } from '@/lib/validations/order'
 import { revalidatePath } from 'next/cache'
+import type { OrderStatus } from '@/types'
+
+// Status workflow: defines the linear progression of order statuses
+const STATUS_ORDER: OrderStatus[] = ['new', 'assigned', 'picked_up', 'delivered', 'invoiced', 'paid']
+
+// Statuses that allow cancellation (before delivery)
+const CANCELLABLE_STATUSES: OrderStatus[] = ['new', 'assigned', 'picked_up']
+
+const VALID_STATUSES: OrderStatus[] = ['new', 'assigned', 'picked_up', 'delivered', 'invoiced', 'paid', 'cancelled']
 
 export async function createOrder(data: unknown) {
   const parsed = createOrderSchema.safeParse(data)
@@ -155,4 +164,132 @@ export async function deleteOrder(id: string) {
 
   revalidatePath('/orders')
   return { success: true }
+}
+
+export async function updateOrderStatus(
+  id: string,
+  newStatus: string,
+  reason?: string
+) {
+  if (!VALID_STATUSES.includes(newStatus as OrderStatus)) {
+    return { error: `Invalid status: ${newStatus}` }
+  }
+
+  if (newStatus === 'cancelled' && !reason?.trim()) {
+    return { error: 'A reason is required when cancelling an order' }
+  }
+
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+
+  if (authError || !user) {
+    return { error: 'Not authenticated' }
+  }
+
+  // Build update payload
+  const updateData: Record<string, unknown> = {
+    status: newStatus,
+  }
+
+  if (newStatus === 'cancelled') {
+    updateData.cancelled_reason = reason!.trim()
+  }
+
+  if (newStatus === 'picked_up') {
+    updateData.actual_pickup_date = new Date().toISOString()
+  }
+
+  if (newStatus === 'delivered') {
+    updateData.actual_delivery_date = new Date().toISOString()
+  }
+
+  const { data: order, error } = await supabase
+    .from('orders')
+    .update(updateData)
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath(`/orders/${id}`)
+  revalidatePath('/orders')
+  return { data: order }
+}
+
+export async function rollbackOrderStatus(id: string) {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+
+  if (authError || !user) {
+    return { error: 'Not authenticated' }
+  }
+
+  // Fetch current order
+  const { data: current, error: fetchError } = await supabase
+    .from('orders')
+    .select('status')
+    .eq('id', id)
+    .single()
+
+  if (fetchError || !current) {
+    return { error: fetchError?.message ?? 'Order not found' }
+  }
+
+  const currentStatus = current.status as OrderStatus
+
+  if (currentStatus === 'new') {
+    return { error: 'Cannot roll back further -- order is already at the initial status' }
+  }
+
+  if (currentStatus === 'cancelled') {
+    return { error: 'Cancelled orders cannot be rolled back' }
+  }
+
+  const currentIndex = STATUS_ORDER.indexOf(currentStatus)
+  if (currentIndex < 0) {
+    return { error: `Cannot determine previous status for: ${currentStatus}` }
+  }
+
+  const previousStatus = STATUS_ORDER[currentIndex - 1]
+
+  // Build update payload, clearing relevant date fields
+  const updateData: Record<string, unknown> = {
+    status: previousStatus,
+  }
+
+  // If rolling back FROM picked_up, clear actual_pickup_date
+  if (currentStatus === 'picked_up') {
+    updateData.actual_pickup_date = null
+  }
+
+  // If rolling back FROM delivered, clear actual_delivery_date
+  if (currentStatus === 'delivered') {
+    updateData.actual_delivery_date = null
+  }
+
+  const { data: order, error } = await supabase
+    .from('orders')
+    .update(updateData)
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath(`/orders/${id}`)
+  revalidatePath('/orders')
+  return { data: order }
 }
