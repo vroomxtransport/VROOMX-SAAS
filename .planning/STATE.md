@@ -8,7 +8,7 @@
 |------|--------|
 | **Milestone** | v1.0 — MVP Launch |
 | **Current Phase** | Phase 1 (Project Setup + Auth + Multi-Tenancy) |
-| **Next Action** | Execute Plan 01-06 or 01-07 |
+| **Next Action** | Execute Plan 01-07 or 01-08 |
 | **Blockers** | None |
 
 ## Completed Work
@@ -21,12 +21,13 @@
 | 01-03 | Done | 2026-02-11 | Supabase client factories, Next.js 16 proxy |
 | 01-04 | Done | 2026-02-11 | Login/signup pages with Server Actions |
 | 01-05 | Done | 2026-02-11 | Stripe webhooks with subscription lifecycle |
+| 01-06 | Done | 2026-02-11 | Auth flow wiring: email confirmation, logout, useActionState |
 
 ## Phase Status
 
 | Phase | Name | Status | Plans |
 |-------|------|--------|-------|
-| 1 | Project Setup + Auth + Multi-Tenancy | In Progress | 5/8 |
+| 1 | Project Setup + Auth + Multi-Tenancy | In Progress | 6/8 |
 | 2 | Data Model + Core Entities | Not Started | 0/? |
 | 3 | Dispatch Workflow | Not Started | 0/? |
 | 4 | Billing & Invoicing | Not Started | 0/? |
@@ -35,7 +36,7 @@
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-█████░░░░ 62.5% (5/8 plans in Phase 1 complete)
+██████░░░ 75% (6/8 plans in Phase 1 complete)
 
 ## Key Decisions Log
 
@@ -70,6 +71,10 @@
 | 2026-02-11 | Handlers throw on DB errors for Stripe retry | Returns 500 status triggers automatic retry | 01-05 |
 | 2026-02-11 | Idempotency check before processing webhooks | stripe_events table prevents duplicate event handling | 01-05 |
 | 2026-02-11 | Status mapping for subscription states | Maps Stripe's 8+ statuses to tenant enum values | 01-05 |
+| 2026-02-11 | React 19 useActionState for auth forms | Modern form state management with built-in loading/error handling | 01-06 |
+| 2026-02-11 | Server Actions return error objects for inline display | Better UX than URL searchParams for validation errors | 01-06 |
+| 2026-02-11 | Email confirmation handles both PKCE and OTP flows | Supports Supabase's dual auth verification methods | 01-06 |
+| 2026-02-11 | Logout revalidates layout cache | Clears protected route state after sign out | 01-06 |
 
 ## Research Summary
 
@@ -82,34 +87,34 @@
 
 ## Session Continuity
 
-**Last session:** 2026-02-11 21:58 UTC
-**Stopped at:** Completed 01-05-PLAN.md
+**Last session:** 2026-02-11 22:03 UTC
+**Stopped at:** Completed 01-06-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Plan 01-05 executed successfully in 2 min
-- Stripe client configuration with bidirectional price/plan mapping
-- Four webhook handlers: checkout completed, subscription updated/deleted, payment failed
-- Webhook API route with signature verification and idempotency
-- Service role client pattern for webhook operations
-- 2 atomic commits: d6654d8 (config/handlers), 4a3542c (webhook route)
+- Plan 01-06 executed successfully in 2 min
+- Email confirmation route handles PKCE and OTP auth verification flows
+- Logout Server Action with session clearing and cache revalidation
+- Upgraded auth forms to React 19 useActionState pattern
+- Inline error messages without URL parameter dependency
+- Loading states on submit buttons with isPending
+- 2 atomic commits: 1ebe1f4 (auth-confirm/logout), 33944f2 (useActionState upgrade)
 
-**Next action:** Execute Plan 01-06 (Dashboard UI) or 01-07 (Billing Page)
+**Next action:** Execute Plan 01-07 (Dashboard UI) or 01-08 (Billing Page)
 
-**Stripe integration complete:**
-- Webhook endpoint handles full subscription lifecycle
-- Idempotent event processing via stripe_events table
-- Service role client bypasses RLS for webhook context
-- Error handling triggers Stripe retries on DB failures
-- Status mapping translates Stripe states to tenant enum
+**Auth lifecycle now complete:**
+- Signup flow: form → create user → create tenant → Stripe Checkout → dashboard
+- Email confirmation: /auth-confirm route exchanges tokens for session
+- Login flow: credentials → verify → redirect to dashboard
+- Logout flow: sign out → revalidate cache → redirect to login
+- Modern form UX: inline errors, loading states, recoverable errors
 
-**User setup required:**
-- See `.planning/phases/01-project-setup-auth-multi-tenancy/01-05-USER-SETUP.md`
-- Stripe account needed (test mode)
-- Create 3 products/prices in Stripe Dashboard
-- Configure webhook endpoint (Stripe CLI for local dev)
-- Add 5 environment variables (keys, webhook secret, price IDs)
+**Pattern established for future forms:**
+- Use `useActionState(serverAction, null)` for client forms
+- Server Actions accept `(prevState, formData)` signature
+- Return `{ error: string }` on validation/error, `redirect()` on success
+- Extract `isPending` from useActionState for loading UI
 
 Phase 1 is the foundation — it creates the Next.js project, Supabase schema with RLS, auth flows, and Stripe integration. Everything else depends on it.
