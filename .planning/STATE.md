@@ -7,8 +7,8 @@
 | Item | Status |
 |------|--------|
 | **Milestone** | v1.0 — MVP Launch |
-| **Current Phase** | Phase 1 (Project Setup + Auth + Multi-Tenancy) |
-| **Next Action** | Phase 1 Complete — Begin Phase 2 planning |
+| **Current Phase** | Phase 2 (Data Model + Core Entities) |
+| **Next Action** | Execute 02-02-PLAN.md |
 | **Blockers** | None |
 
 ## Completed Work
@@ -24,13 +24,14 @@
 | 01-06 | Done | 2026-02-11 | Auth flow wiring: email confirmation, logout, useActionState |
 | 01-07 | Done | 2026-02-11 | Dashboard UI with sidebar, header, role-based navigation |
 | 01-08 | Done | 2026-02-11 | Sentry + PostHog observability integration |
+| 02-01 | Done | 2026-02-11 | Database foundation + shared infrastructure for 4 entities |
 
 ## Phase Status
 
 | Phase | Name | Status | Plans |
 |-------|------|--------|-------|
 | 1 | Project Setup + Auth + Multi-Tenancy | Complete | 8/8 |
-| 2 | Data Model + Core Entities | Not Started | 0/? |
+| 2 | Data Model + Core Entities | In Progress | 1/6 |
 | 3 | Dispatch Workflow | Not Started | 0/? |
 | 4 | Billing & Invoicing | Not Started | 0/? |
 | 5 | Onboarding + Stripe Polish | Not Started | 0/? |
@@ -38,7 +39,7 @@
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-█████████ 100% (8/8 plans in Phase 1 complete)
+████████░░░░░░ 64% (9/14 plans complete across Phases 1-2)
 
 ## Key Decisions Log
 
@@ -87,6 +88,10 @@
 | 2026-02-11 | Manual page view tracking | App Router requires custom implementation | 01-08 |
 | 2026-02-11 | Lazy-load Stripe client | Prevents build-time env var requirement errors | 01-08 |
 | 2026-02-11 | Proxy wrappers for backwards compatibility | Maintains existing import syntax during refactors | 01-08 |
+| 2026-02-11 | RLS policies in SQL migration (not Drizzle pgPolicy) | Avoids drizzle-kit push bugs with RLS | 02-01 |
+| 2026-02-11 | Order Zod schema split into 3 steps | Supports multi-step wizard form with per-step validation | 02-01 |
+| 2026-02-11 | QueryProvider wraps main content only | Keeps dashboard layout as Server Component for auth | 02-01 |
+| 2026-02-11 | Numeric fields use string defaults in Drizzle | Preserves decimal precision for financial calculations | 02-01 |
 
 ## Research Summary
 
@@ -99,34 +104,30 @@
 
 ## Session Continuity
 
-**Last session:** 2026-02-11 17:04 UTC
-**Stopped at:** Completed 01-08-PLAN.md
+**Last session:** 2026-02-11 23:12 UTC
+**Stopped at:** Completed 02-01-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Plan 01-08 executed successfully in 4 min
-- Sentry error monitoring integrated (browser, server, edge runtimes)
-- PostHog analytics with reverse proxy via /ingest
-- Global error boundary catches React rendering errors
-- Manual page view tracking for App Router compatibility
-- Lazy-loaded Stripe client pattern to prevent build errors
-- Fixed critical Stripe type errors from plan 01-05
-- 3 atomic commits: 2b223b8 (Sentry), dcc3546 (bug fixes), 890c971 (PostHog)
+- Plan 02-01 executed successfully in 5 min
+- 4 entity tables (orders, drivers, trucks, brokers) defined in SQL migration with RLS
+- 8 pgEnums for all status/type fields
+- Drizzle schema extended with typed table definitions
+- 14 shadcn/ui components + react-hook-form installed
+- 6 shared UI components ready (StatusBadge, EntityCard, FilterBar, Pagination, EmptyState, ConfirmDialog)
+- 4 Zod validation schemas ready for forms
+- QueryClientProvider wrapping dashboard
+- Zustand persist draft store for form auto-save
+- 3 atomic commits: 982b9dc (schema), 73ad8e2 (deps), 2324e50 (infrastructure)
 
-**Next action:** Begin Phase 2 planning (Data Model + Core Entities)
+**Next action:** Execute 02-02-PLAN.md (next entity plan in Phase 2)
 
-**Observability foundation complete:**
-- Sentry captures all unhandled errors automatically
-- PostHog tracks user behavior with privacy-friendly settings
-- Graceful degradation when API keys missing
-- Source maps uploaded on build for debugging
-- Error boundary provides user-friendly fallback UI
+**Database foundation ready:**
+- SQL migration 00002 needs to be applied to Supabase instance
+- All RLS policies use (SELECT public.get_tenant_id()) pattern
+- Atomic order number generation via trigger
+- Realtime grants for all 4 entity tables
 
-**Critical bug fixes applied:**
-- Stripe Invoice.subscription type error resolved with type assertion
-- Lazy-loaded Stripe client prevents build-time instantiation errors
-- Proxy wrappers maintain backwards compatibility
-
-**Phase 1 COMPLETE:** 8/8 plans done. Foundation ready for Phase 2.
+**Phase 2 progress:** 1/6 plans done. Foundation in place, entity CRUD plans can proceed.
