@@ -97,14 +97,14 @@ export async function handleSubscriptionDeleted(subscription: Stripe.Subscriptio
 export async function handlePaymentFailed(invoice: Stripe.Invoice) {
   const supabase = createServiceRoleClient()
 
-  // Extract subscription ID from invoice (can be string, object, or undefined)
-  let subscriptionId: string | undefined
+  // Extract subscription ID from invoice
+  // Type assertion needed because Stripe's types don't reflect runtime expandable fields
+  const subscription = (invoice as any).subscription
+  if (!subscription) return
 
-  if (invoice.subscription) {
-    subscriptionId = typeof invoice.subscription === 'string'
-      ? invoice.subscription
-      : invoice.subscription.id
-  }
+  const subscriptionId = typeof subscription === 'string'
+    ? subscription
+    : subscription.id
 
   if (!subscriptionId) return
 
