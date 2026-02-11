@@ -16,7 +16,7 @@ The main risk vector is not technology -- it is execution speed. Every component
 
 ## Key Findings
 
-**Stack:** Next.js 15 App Router + Supabase + Stripe + TanStack Query + Zustand + shadcn/ui + Drizzle. All validated, no changes from proposal.
+**Stack:** Next.js 15 App Router + Supabase + Stripe + TanStack Query + Zustand + shadcn/ui + Drizzle. All validated, no changes needed from initial proposal.
 
 **Architecture:** Shared PostgreSQL schema with RLS tenant isolation. Supabase handles auth/DB/storage/realtime. Complex queries via Drizzle ORM server-side. Stripe Checkout (not custom payment UI) for billing.
 
