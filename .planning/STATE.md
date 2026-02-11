@@ -8,7 +8,7 @@
 |------|--------|
 | **Milestone** | v1.0 — MVP Launch |
 | **Current Phase** | Phase 1 (Project Setup + Auth + Multi-Tenancy) |
-| **Next Action** | Execute Plan 01-02 (Supabase Setup) |
+| **Next Action** | Execute Plan 01-04 (Login/Signup Pages) |
 | **Blockers** | None |
 
 ## Completed Work
@@ -17,12 +17,14 @@
 |-------|--------|------|-------|
 | Project Init | Done | 2026-02-11 | PROJECT.md, config, research, requirements, roadmap |
 | 01-01 | Done | 2026-02-11 | Next.js 16 scaffold, dependencies, project structure |
+| 01-02 | Done | 2026-02-11 | Database schema with RLS, Drizzle setup |
+| 01-03 | Done | 2026-02-11 | Supabase client factories, Next.js 16 proxy |
 
 ## Phase Status
 
 | Phase | Name | Status | Plans |
 |-------|------|--------|-------|
-| 1 | Project Setup + Auth + Multi-Tenancy | In Progress | 1/8 |
+| 1 | Project Setup + Auth + Multi-Tenancy | In Progress | 3/8 |
 | 2 | Data Model + Core Entities | Not Started | 0/? |
 | 3 | Dispatch Workflow | Not Started | 0/? |
 | 4 | Billing & Invoicing | Not Started | 0/? |
@@ -31,7 +33,7 @@
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-█░░░░░░░░ 12.5% (1/8 plans in Phase 1 complete)
+███░░░░░░ 37.5% (3/8 plans in Phase 1 complete)
 
 ## Key Decisions Log
 
@@ -47,6 +49,10 @@
 | 2026-02-11 | PostHog reverse proxy at /ingest/* | Avoid ad blockers blocking analytics | 01-01 |
 | 2026-02-11 | shadcn/ui New York style | Cleaner modern aesthetic | 01-01 |
 | 2026-02-11 | Tier limits: Starter 5/3, Pro 20/10, Enterprise unlimited | Competitive positioning vs Super Dispatch | 01-01 |
+| 2026-02-11 | NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY naming | New convention for projects after Nov 2025 | 01-03 |
+| 2026-02-11 | getUser() not getSession() in proxy | Server-side token validation | 01-03 |
+| 2026-02-11 | Next.js 16 proxy.ts pattern | Replaces middleware.ts in Next.js 16 | 01-03 |
+| 2026-02-11 | Three-tier Supabase client pattern | Browser, server, service-role separation | 01-03 |
 
 ## Research Summary
 
@@ -59,25 +65,26 @@
 
 ## Session Continuity
 
-**Last session:** 2026-02-11 21:33 UTC
-**Stopped at:** Completed 01-01-PLAN.md
+**Last session:** 2026-02-11 21:44 UTC
+**Stopped at:** Completed 01-03-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Plan 01-01 executed successfully in 4m 51s
-- Next.js 16 scaffold complete with all dependencies installed (653 packages)
-- Project structure created with types, env template, shadcn/ui
-- Dev server verified running on localhost:3001
-- 2 atomic commits: 177f231 (scaffold), 07dd766 (structure)
+- Plan 01-03 executed successfully in 2 min
+- Supabase client factories created (browser, server, service-role)
+- Next.js 16 proxy.ts with auth session refresh and route protection
+- Three route protection rules: login, onboarding, dashboard
+- 2 atomic commits: 487b95f (client factories), cb474c4 (proxy)
 
-**Next action:** Execute Plan 01-02 (Supabase Project Setup and Database Schema)
+**Next action:** Execute Plan 01-04 (Login/Signup Pages)
 
-**Prerequisites for 01-02:**
-- Create Supabase project (web console)
-- Obtain credentials: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, SUPABASE_SECRET_KEY
-- Get database connection strings: DATABASE_URL (pooler), DATABASE_URL_DIRECT
-- Populate .env.local with actual values (copy from .env.local.example)
+**Auth plumbing ready:**
+- Browser client available for client components
+- Server client available for Server Components and Server Actions
+- Service role client available for admin operations
+- Token refresh happens automatically on every request
+- Route protection enforces auth + tenant requirements
 
 Phase 1 is the foundation — it creates the Next.js project, Supabase schema with RLS, auth flows, and Stripe integration. Everything else depends on it.
