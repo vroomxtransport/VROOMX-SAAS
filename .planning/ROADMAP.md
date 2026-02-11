@@ -12,13 +12,25 @@
 
 **Requirements:** AUTH-1, AUTH-2, AUTH-3, AUTH-4, AUTH-5, AUTH-7, SUB-1, SUB-2, ONB-1
 
+**Plans:** 8 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Scaffold Next.js 16 project, install deps, init shadcn/ui, create directory structure
+- [ ] 01-02-PLAN.md — SQL schema (tenants, memberships, stripe_events) + RLS policies + auth hook + Drizzle ORM
+- [ ] 01-03-PLAN.md — Supabase client factories (browser, server, service-role) + proxy.ts auth session refresh
+- [ ] 01-04-PLAN.md — Login and signup pages with Server Actions (auth + tenant creation + Stripe Checkout)
+- [ ] 01-05-PLAN.md — Stripe config, webhook handlers, and /api/webhooks/stripe route with idempotency
+- [ ] 01-06-PLAN.md — Email confirmation route, logout action, signup UX polish with useActionState
+- [ ] 01-07-PLAN.md — Protected dashboard layout with sidebar navigation, header, user menu
+- [ ] 01-08-PLAN.md — Sentry error monitoring + PostHog analytics integration
+
 **Key Deliverables:**
-- Next.js 15 project with TypeScript, Tailwind CSS, shadcn/ui
+- Next.js 16 project with TypeScript, Tailwind CSS v4, shadcn/ui
 - Supabase project with multi-tenant schema (tenants, tenant_memberships tables)
 - Custom Access Token Hook injecting tenant_id into JWT
 - RLS policy template applied to all tables
 - Supabase Auth (email/password signup + login)
-- Signup flow: register → create tenant → select Stripe tier → redirect to dashboard
+- Signup flow: register -> create tenant -> select Stripe tier -> redirect to dashboard
 - Stripe Checkout integration (Starter/Pro/Enterprise tiers)
 - 14-day free trial auto-activation
 - Protected dashboard layout with sidebar navigation
@@ -76,7 +88,7 @@
 - Database tables: trips (with denormalized financial columns)
 - Trip CRUD: create (truck + driver + date range), edit, list, detail view
 - Order-to-trip assignment (select orders, assign to trip)
-- Trip status workflow: PLANNED → IN_PROGRESS → AT_TERMINAL → COMPLETED
+- Trip status workflow: PLANNED -> IN_PROGRESS -> AT_TERMINAL -> COMPLETED
 - Trip financial calculations:
   - Total revenue (sum of order revenues)
   - Carrier pay / broker fees
@@ -105,7 +117,7 @@
 **Requirements:** BIL-1, BIL-2, BIL-3, BIL-4, BIL-5, BIL-6
 
 **Key Deliverables:**
-- Order payment status tracking (unpaid → invoiced → paid)
+- Order payment status tracking (unpaid -> invoiced -> paid)
 - Invoice date and payment date fields on orders
 - Broker receivables dashboard (grouped by broker, total owed)
 - Aging analysis: current, 1-30, 31-60, 61-90, 90+ day buckets
@@ -132,7 +144,7 @@
 **Requirements:** AUTH-6, SUB-3, SUB-4, SUB-5, ONB-2
 
 **Key Deliverables:**
-- Team invite flow (email invite → accept → join tenant with role)
+- Team invite flow (email invite -> accept -> join tenant with role)
 - Stripe Billing Portal integration (upgrade/downgrade/cancel)
 - Stripe webhook handling (payment_intent.succeeded, customer.subscription.updated/deleted, invoice.payment_failed)
 - Webhook idempotency (processed_events table)
@@ -140,9 +152,9 @@
   - Starter: 5 trucks, 3 users
   - Pro: 20 trucks, 10 users
   - Enterprise: unlimited
-- Guided onboarding wizard (add first driver → truck → order)
+- Guided onboarding wizard (add first driver -> truck -> order)
 - Usage dashboard (current plan, limits, upgrade CTA)
-- Dunning flow (failed payment → grace period → account suspension)
+- Dunning flow (failed payment -> grace period -> account suspension)
 
 **Research Flags:** Stripe webhook idempotency is critical (see PITFALLS.md CRIT-4). Use Vercel API routes for webhooks, not Edge Functions (see PITFALLS.md MOD-2).
 
@@ -212,9 +224,9 @@
 - 404 and error pages
 - SEO: landing page, pricing page, signup page
 - E2E tests for critical paths (Playwright):
-  - Signup → dashboard
-  - Create order → assign to trip → mark delivered
-  - Stripe checkout → active subscription
+  - Signup -> dashboard
+  - Create order -> assign to trip -> mark delivered
+  - Stripe checkout -> active subscription
 - Performance audit (Core Web Vitals)
 - Security audit (RLS coverage, no exposed keys, webhook signatures)
 
