@@ -49,6 +49,10 @@
 | 2026-02-11 | PostHog reverse proxy at /ingest/* | Avoid ad blockers blocking analytics | 01-01 |
 | 2026-02-11 | shadcn/ui New York style | Cleaner modern aesthetic | 01-01 |
 | 2026-02-11 | Tier limits: Starter 5/3, Pro 20/10, Enterprise unlimited | Competitive positioning vs Super Dispatch | 01-01 |
+| 2026-02-11 | (SELECT ...) wrapper in RLS policies | Supabase best practice for stable function caching | 01-02 |
+| 2026-02-11 | GRANT pattern for JWT hook (not SECURITY DEFINER) | More secure, explicit permissions | 01-02 |
+| 2026-02-11 | No INSERT/DELETE policies on tenants | Service role only for proper isolation | 01-02 |
+| 2026-02-11 | stripe_events has no authenticated policies | Service role webhook processing only | 01-02 |
 | 2026-02-11 | NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY naming | New convention for projects after Nov 2025 | 01-03 |
 | 2026-02-11 | getUser() not getSession() in proxy | Server-side token validation | 01-03 |
 | 2026-02-11 | Next.js 16 proxy.ts pattern | Replaces middleware.ts in Next.js 16 | 01-03 |
@@ -66,25 +70,31 @@
 ## Session Continuity
 
 **Last session:** 2026-02-11 21:44 UTC
-**Stopped at:** Completed 01-03-PLAN.md
+**Stopped at:** Completed 01-02-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Plan 01-03 executed successfully in 2 min
-- Supabase client factories created (browser, server, service-role)
-- Next.js 16 proxy.ts with auth session refresh and route protection
-- Three route protection rules: login, onboarding, dashboard
-- 2 atomic commits: 487b95f (client factories), cb474c4 (proxy)
+- Plan 01-02 executed successfully in 3 min
+- Multi-tenant database schema with RLS policies (tenants, tenant_memberships, stripe_events)
+- Custom access token hook for JWT tenant context injection
+- Drizzle ORM schema with type-safe queries
+- Database client configured with prepare: false for PgBouncer
+- 2 atomic commits: e5733a7 (SQL migration), e7af791 (Drizzle schema)
 
-**Next action:** Execute Plan 01-04 (Login/Signup Pages)
+**Next action:** Execute Plan 01-03 (Supabase Client Setup) or 01-04 (Login/Signup Pages)
 
-**Auth plumbing ready:**
-- Browser client available for client components
-- Server client available for Server Components and Server Actions
-- Service role client available for admin operations
-- Token refresh happens automatically on every request
-- Route protection enforces auth + tenant requirements
+**Database foundation ready:**
+- SQL migration file ready to run in Supabase Dashboard
+- RLS policies establish tenant isolation pattern for all future tables
+- JWT hook ready to inject tenant_id, role, plan, subscription_status
+- Drizzle schema provides type-safe database access
+- Manual Supabase project setup required before proceeding
+
+**Blockers:**
+- Supabase project must be created manually
+- Migration must be run in Supabase Dashboard SQL Editor
+- Environment variables needed in .env.local (DATABASE_URL, Supabase keys)
 
 Phase 1 is the foundation — it creates the Next.js project, Supabase schema with RLS, auth flows, and Stripe integration. Everything else depends on it.
