@@ -42,11 +42,39 @@ export function useOrders(filters: OrderFilters = {}) {
 
 export function useOrder(id: string | undefined) {
   const supabase = createClient()
+  const queryClient = useQueryClient()
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ['order', id],
     queryFn: () => fetchOrder(supabase, id!),
     enabled: !!id,
     staleTime: 30_000,
   })
+
+  // Realtime invalidation for individual order
+  useEffect(() => {
+    if (!id) return
+
+    const channel = supabase
+      .channel(`order-${id}-changes`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders',
+          filter: `id=eq.${id}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['order', id] })
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [supabase, queryClient, id])
+
+  return query
 }
