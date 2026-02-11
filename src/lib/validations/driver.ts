@@ -18,3 +18,4 @@ export const driverSchema = z.object({
 })
 
 export type DriverFormValues = z.infer<typeof driverSchema>
+export type DriverFormInput = z.input<typeof driverSchema>
