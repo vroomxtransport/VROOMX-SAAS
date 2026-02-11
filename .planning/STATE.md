@@ -8,8 +8,10 @@
 |------|--------|
 | **Milestone** | v1.0 — MVP Launch |
 | **Current Phase** | Phase 2 (Data Model + Core Entities) |
-| **Next Action** | Execute 02-02-PLAN.md |
+| **Next Action** | Execute 02-03-PLAN.md |
 | **Blockers** | None |
+
+Phase 2 progress: 2/6 plans done. Brokers CRUD complete, pattern established for Drivers and Trucks.
 
 ## Completed Work
 
@@ -25,13 +27,14 @@
 | 01-07 | Done | 2026-02-11 | Dashboard UI with sidebar, header, role-based navigation |
 | 01-08 | Done | 2026-02-11 | Sentry + PostHog observability integration |
 | 02-01 | Done | 2026-02-11 | Database foundation + shared infrastructure for 4 entities |
+| 02-02 | Done | 2026-02-11 | Brokers CRUD vertical slice: list, form, drawer, detail, server actions |
 
 ## Phase Status
 
 | Phase | Name | Status | Plans |
 |-------|------|--------|-------|
 | 1 | Project Setup + Auth + Multi-Tenancy | Complete | 8/8 |
-| 2 | Data Model + Core Entities | In Progress | 1/6 |
+| 2 | Data Model + Core Entities | In Progress | 2/6 |
 | 3 | Dispatch Workflow | Not Started | 0/? |
 | 4 | Billing & Invoicing | Not Started | 0/? |
 | 5 | Onboarding + Stripe Polish | Not Started | 0/? |
@@ -39,7 +42,7 @@
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-████████░░░░░░ 64% (9/14 plans complete across Phases 1-2)
+█████████░░░░░ 71% (10/14 plans complete across Phases 1-2)
 
 ## Key Decisions Log
 
@@ -92,6 +95,8 @@
 | 2026-02-11 | Order Zod schema split into 3 steps | Supports multi-step wizard form with per-step validation | 02-01 |
 | 2026-02-11 | QueryProvider wraps main content only | Keeps dashboard layout as Server Component for auth | 02-01 |
 | 2026-02-11 | Numeric fields use string defaults in Drizzle | Preserves decimal precision for financial calculations | 02-01 |
+| 2026-02-11 | Broker detail as client component with useBroker | Consistent TanStack Query pattern for all entity detail pages | 02-02 |
+| 2026-02-11 | URL search params for filter state | Shareable/bookmarkable filtered views | 02-02 |
 
 ## Research Summary
 
@@ -104,30 +109,24 @@
 
 ## Session Continuity
 
-**Last session:** 2026-02-11 23:12 UTC
-**Stopped at:** Completed 02-01-PLAN.md
+**Last session:** 2026-02-11 23:19 UTC
+**Stopped at:** Completed 02-02-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Plan 02-01 executed successfully in 5 min
-- 4 entity tables (orders, drivers, trucks, brokers) defined in SQL migration with RLS
-- 8 pgEnums for all status/type fields
-- Drizzle schema extended with typed table definitions
-- 14 shadcn/ui components + react-hook-form installed
-- 6 shared UI components ready (StatusBadge, EntityCard, FilterBar, Pagination, EmptyState, ConfirmDialog)
-- 4 Zod validation schemas ready for forms
-- QueryClientProvider wrapping dashboard
-- Zustand persist draft store for form auto-save
-- 3 atomic commits: 982b9dc (schema), 73ad8e2 (deps), 2324e50 (infrastructure)
+- Plan 02-02 executed successfully in 4 min
+- Complete Brokers CRUD vertical slice: list page, detail page, drawer form, server actions
+- CRUD pattern established: query builders -> hooks -> server actions -> form -> drawer -> list -> detail
+- 2 atomic commits: 946b8ad (data layer), 93b4f61 (UI components)
 
-**Next action:** Execute 02-02-PLAN.md (next entity plan in Phase 2)
+**Next action:** Execute 02-03-PLAN.md (Drivers CRUD -- replicates broker pattern)
 
-**Database foundation ready:**
-- SQL migration 00002 needs to be applied to Supabase instance
-- All RLS policies use (SELECT public.get_tenant_id()) pattern
-- Atomic order number generation via trigger
-- Realtime grants for all 4 entity tables
+**CRUD pattern to replicate:**
+- `src/lib/queries/brokers.ts` -> query builders
+- `src/hooks/use-brokers.ts` -> TanStack Query hooks
+- `src/app/actions/brokers.ts` -> Server Actions
+- `src/app/(dashboard)/brokers/_components/` -> UI components
 
-**Phase 2 progress:** 1/6 plans done. Foundation in place, entity CRUD plans can proceed.
+**Phase 2 progress:** 2/6 plans done. Brokers complete, Drivers and Trucks next.
