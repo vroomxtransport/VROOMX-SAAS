@@ -8,7 +8,7 @@
 |------|--------|
 | **Milestone** | v1.0 — MVP Launch |
 | **Current Phase** | Phase 1 (Project Setup + Auth + Multi-Tenancy) |
-| **Next Action** | Execute Plan 01-08 (Billing Page) |
+| **Next Action** | Phase 1 Complete — Begin Phase 2 planning |
 | **Blockers** | None |
 
 ## Completed Work
@@ -23,12 +23,13 @@
 | 01-05 | Done | 2026-02-11 | Stripe webhooks with subscription lifecycle |
 | 01-06 | Done | 2026-02-11 | Auth flow wiring: email confirmation, logout, useActionState |
 | 01-07 | Done | 2026-02-11 | Dashboard UI with sidebar, header, role-based navigation |
+| 01-08 | Done | 2026-02-11 | Sentry + PostHog observability integration |
 
 ## Phase Status
 
 | Phase | Name | Status | Plans |
 |-------|------|--------|-------|
-| 1 | Project Setup + Auth + Multi-Tenancy | In Progress | 7/8 |
+| 1 | Project Setup + Auth + Multi-Tenancy | Complete | 8/8 |
 | 2 | Data Model + Core Entities | Not Started | 0/? |
 | 3 | Dispatch Workflow | Not Started | 0/? |
 | 4 | Billing & Invoicing | Not Started | 0/? |
@@ -37,7 +38,7 @@
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-███████░░ 87.5% (7/8 plans in Phase 1 complete)
+█████████ 100% (8/8 plans in Phase 1 complete)
 
 ## Key Decisions Log
 
@@ -81,6 +82,11 @@
 | 2026-02-11 | Dashboard layout as Server Component | Performs auth checks and tenant data fetching server-side | 01-07 |
 | 2026-02-11 | 8 navigation links with role-based filtering | Progressive visibility based on user role | 01-07 |
 | 2026-02-11 | Async searchParams in Next.js 16 | Promise pattern for route params handling | 01-07 |
+| 2026-02-11 | Manual Sentry config instead of wizard | Version control and customization | 01-08 |
+| 2026-02-11 | PostHog reverse proxy at /ingest | Bypasses ad blockers, better data quality | 01-08 |
+| 2026-02-11 | Manual page view tracking | App Router requires custom implementation | 01-08 |
+| 2026-02-11 | Lazy-load Stripe client | Prevents build-time env var requirement errors | 01-08 |
+| 2026-02-11 | Proxy wrappers for backwards compatibility | Maintains existing import syntax during refactors | 01-08 |
 
 ## Research Summary
 
@@ -93,39 +99,34 @@
 
 ## Session Continuity
 
-**Last session:** 2026-02-11 23:15 UTC
-**Stopped at:** Completed 01-07-PLAN.md
+**Last session:** 2026-02-11 17:04 UTC
+**Stopped at:** Completed 01-08-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Plan 01-07 executed successfully in 3 min
-- Protected dashboard layout with Server Component auth and tenant fetching
-- Role-based sidebar navigation with 8 links (role-filtered visibility)
-- User menu dropdown with profile info, plan badges, and logout action
-- Dashboard page with stats cards, plan info card, trial countdown
-- Setup complete banner for Stripe Checkout return (?setup=complete)
-- Zustand sidebar store for mobile/desktop responsive state
-- Tier utility functions (display names, badge colors, role checking)
-- 2 atomic commits: d4ae420 (components/stores), 567ba27 (layout/pages)
+- Plan 01-08 executed successfully in 4 min
+- Sentry error monitoring integrated (browser, server, edge runtimes)
+- PostHog analytics with reverse proxy via /ingest
+- Global error boundary catches React rendering errors
+- Manual page view tracking for App Router compatibility
+- Lazy-loaded Stripe client pattern to prevent build errors
+- Fixed critical Stripe type errors from plan 01-05
+- 3 atomic commits: 2b223b8 (Sentry), dcc3546 (bug fixes), 890c971 (PostHog)
 
-**Next action:** Execute Plan 01-08 (Billing Page) - final plan in Phase 1
+**Next action:** Begin Phase 2 planning (Data Model + Core Entities)
 
-**Dashboard UI now complete:**
-- Protected layout wraps all future dashboard pages
-- Sidebar shows 8 navigation sections (4-8 visible based on role)
-- Header with hamburger toggle (mobile) and user menu
-- User menu displays: name, email, tenant, role, plan, status badges
-- Dashboard page shows: welcome, stats (0 for now), plan info, quick start
-- Responsive: overlay sidebar on mobile, fixed on desktop
-- Auth check: redirects to /login if no user or tenant
+**Observability foundation complete:**
+- Sentry captures all unhandled errors automatically
+- PostHog tracks user behavior with privacy-friendly settings
+- Graceful degradation when API keys missing
+- Source maps uploaded on build for debugging
+- Error boundary provides user-friendly fallback UI
 
-**Pattern established for dashboard pages:**
-- Create page in `src/app/(dashboard)/[section]/page.tsx`
-- Layout automatically applies: sidebar, header, auth checks
-- Use `hasMinRole(userRole, requiredRole)` for page-level access control
-- Navigation link auto-highlights when route matches
-- All pages inherit: sidebar, header, user menu, responsive layout
+**Critical bug fixes applied:**
+- Stripe Invoice.subscription type error resolved with type assertion
+- Lazy-loaded Stripe client prevents build-time instantiation errors
+- Proxy wrappers maintain backwards compatibility
 
-**Phase 1 almost complete:** 7/8 plans done. Only 01-08 (Billing Page) remains before Phase 2.
+**Phase 1 COMPLETE:** 8/8 plans done. Foundation ready for Phase 2.
