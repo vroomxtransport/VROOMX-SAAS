@@ -53,3 +53,6 @@ export type OrderVehicleValues = z.infer<typeof orderVehicleSchema>
 export type OrderLocationValues = z.infer<typeof orderLocationSchema>
 export type OrderPricingValues = z.infer<typeof orderPricingSchema>
 export type CreateOrderValues = z.infer<typeof createOrderSchema>
+
+// Input types for react-hook-form (z.coerce fields have `unknown` input vs `number` output)
+export type CreateOrderInput = z.input<typeof createOrderSchema>
