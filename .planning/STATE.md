@@ -8,10 +8,10 @@
 |------|--------|
 | **Milestone** | v1.0 — MVP Launch |
 | **Current Phase** | Phase 2 (Data Model + Core Entities) |
-| **Next Action** | Execute 02-04-PLAN.md |
+| **Next Action** | Execute 02-05-PLAN.md |
 | **Blockers** | None |
 
-Phase 2 progress: 3/6 plans done. Brokers and Drivers CRUD complete, Trucks next.
+Phase 2 progress: 4/6 plans done. Brokers, Drivers, and Trucks CRUD complete.
 
 ## Completed Work
 
@@ -29,13 +29,14 @@ Phase 2 progress: 3/6 plans done. Brokers and Drivers CRUD complete, Trucks next
 | 02-01 | Done | 2026-02-11 | Database foundation + shared infrastructure for 4 entities |
 | 02-02 | Done | 2026-02-11 | Brokers CRUD vertical slice: list, form, drawer, detail, server actions |
 | 02-03 | Done | 2026-02-11 | Drivers CRUD with pay configuration, status toggle, card grid |
+| 02-04 | Done | 2026-02-11 | Trucks CRUD with type classification, 3-way status, fleet management |
 
 ## Phase Status
 
 | Phase | Name | Status | Plans |
 |-------|------|--------|-------|
 | 1 | Project Setup + Auth + Multi-Tenancy | Complete | 8/8 |
-| 2 | Data Model + Core Entities | In Progress | 3/6 |
+| 2 | Data Model + Core Entities | In Progress | 4/6 |
 | 3 | Dispatch Workflow | Not Started | 0/? |
 | 4 | Billing & Invoicing | Not Started | 0/? |
 | 5 | Onboarding + Stripe Polish | Not Started | 0/? |
@@ -43,7 +44,7 @@ Phase 2 progress: 3/6 plans done. Brokers and Drivers CRUD complete, Trucks next
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-██████████░░░░ 79% (11/14 plans complete across Phases 1-2)
+███████████░░░ 86% (12/14 plans complete across Phases 1-2)
 
 ## Key Decisions Log
 
@@ -100,6 +101,8 @@ Phase 2 progress: 3/6 plans done. Brokers and Drivers CRUD complete, Trucks next
 | 2026-02-11 | URL search params for filter state | Shareable/bookmarkable filtered views | 02-02 |
 | 2026-02-11 | z.input<> for useForm generic with Zod v4 .default() fields | Resolves zodResolver type mismatch between input and output types | 02-03 |
 | 2026-02-11 | Status toggle on both card and detail page | Dispatchers need fast status changes from list view | 02-03 |
+| 2026-02-11 | Inline Select dropdown for truck 3-way status | Trucks need active/inactive/maintenance vs drivers' 2-way toggle | 02-04 |
+| 2026-02-11 | TRUCK_TYPE_LABELS as "7-Car Hauler" format | Clearer fleet context than short "7 Car" labels | 02-04 |
 
 ## Research Summary
 
@@ -112,20 +115,18 @@ Phase 2 progress: 3/6 plans done. Brokers and Drivers CRUD complete, Trucks next
 
 ## Session Continuity
 
-**Last session:** 2026-02-11 23:22 UTC
-**Stopped at:** Completed 02-03-PLAN.md
+**Last session:** 2026-02-11 23:23 UTC
+**Stopped at:** Completed 02-04-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Plan 02-03 executed successfully in 5 min
-- Complete Drivers CRUD with pay configuration (3 pay types), status toggle, card grid
-- z.input<> pattern established for Zod v4 + react-hook-form compatibility
-- 2 atomic commits: c3f62e3 (data layer), 0dbd188 (UI components)
+- Plan 02-04 executed successfully in 6 min
+- Complete Trucks CRUD with type classification (7-Car/8-Car/9-Car/Flatbed/Enclosed)
+- Three-way status management (active/inactive/maintenance) with inline dropdown
+- 2 atomic commits: ec61510 (data layer), 5c22767 (UI components)
 
-**Next action:** Execute 02-04-PLAN.md (Trucks CRUD -- needs z.input<> fix for truck-form.tsx)
+**Next action:** Execute 02-05-PLAN.md (Orders CRUD or next entity plan)
 
-**Known issue:** truck-form.tsx has pre-existing Zod v4 type errors (same z.input<> fix needed)
-
-**Phase 2 progress:** 3/6 plans done. Brokers and Drivers complete, Trucks next.
+**Phase 2 progress:** 4/6 plans done. Brokers, Drivers, and Trucks all complete.
