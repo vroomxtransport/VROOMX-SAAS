@@ -51,7 +51,9 @@ Plans:
 
 ---
 
-## Phase 2: Data Model + Core Entities (CRUD)
+## Phase 2: Data Model + Core Entities (CRUD) ✓
+
+**Status:** Complete (2026-02-11)
 
 **Goal:** A dispatcher can create and manage orders, drivers, trucks, and brokers. All entity CRUD is functional with proper forms, validation, and list views. Data is tenant-isolated.
 
@@ -60,12 +62,12 @@ Plans:
 **Plans:** 6 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Database schema (orders, drivers, trucks, brokers) + RLS + shared infrastructure + Zod schemas
-- [ ] 02-02-PLAN.md — Brokers CRUD vertical slice (list, form, drawer, detail, server actions)
-- [ ] 02-03-PLAN.md — Drivers CRUD vertical slice (list, form, drawer, detail, pay configuration)
-- [ ] 02-04-PLAN.md — Trucks CRUD vertical slice (list, form, drawer, detail, status management)
-- [ ] 02-05-PLAN.md — Orders CRUD with multi-step wizard, VIN decode, and advanced filtering
-- [ ] 02-06-PLAN.md — Order detail + status workflow + cross-entity links + Realtime wiring
+- [x] 02-01-PLAN.md — Database schema (orders, drivers, trucks, brokers) + RLS + shared infrastructure + Zod schemas
+- [x] 02-02-PLAN.md — Brokers CRUD vertical slice (list, form, drawer, detail, server actions)
+- [x] 02-03-PLAN.md — Drivers CRUD vertical slice (list, form, drawer, detail, pay configuration)
+- [x] 02-04-PLAN.md — Trucks CRUD vertical slice (list, form, drawer, detail, status management)
+- [x] 02-05-PLAN.md — Orders CRUD with multi-step wizard, VIN decode, and advanced filtering
+- [x] 02-06-PLAN.md — Order detail + status workflow + cross-entity links + Realtime wiring
 
 **Key Deliverables:**
 - Database tables: orders, drivers, trucks, brokers (all with tenant_id + RLS)

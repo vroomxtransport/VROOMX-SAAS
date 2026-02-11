@@ -7,11 +7,11 @@
 | Item | Status |
 |------|--------|
 | **Milestone** | v1.0 — MVP Launch |
-| **Current Phase** | Phase 2 (Data Model + Core Entities) |
-| **Next Action** | Execute 02-06-PLAN.md |
+| **Current Phase** | Phase 2 (Data Model + Core Entities) -- Complete |
+| **Next Action** | Plan Phase 3 (Dispatch Workflow) |
 | **Blockers** | None |
 
-Phase 2 progress: 5/6 plans done. Brokers, Drivers, Trucks, and Orders CRUD all complete.
+Phase 2 complete: 6/6 plans done. All 4 entities with full CRUD, detail pages, status workflow, and Realtime.
 
 ## Completed Work
 
@@ -31,13 +31,14 @@ Phase 2 progress: 5/6 plans done. Brokers, Drivers, Trucks, and Orders CRUD all 
 | 02-03 | Done | 2026-02-11 | Drivers CRUD with pay configuration, status toggle, card grid |
 | 02-04 | Done | 2026-02-11 | Trucks CRUD with type classification, 3-way status, fleet management |
 | 02-05 | Done | 2026-02-11 | Orders CRUD with 3-step wizard, VIN decode, card grid, 4-axis filtering |
+| 02-06 | Done | 2026-02-11 | Order detail + status workflow + cross-entity nav + Realtime |
 
 ## Phase Status
 
 | Phase | Name | Status | Plans |
 |-------|------|--------|-------|
 | 1 | Project Setup + Auth + Multi-Tenancy | Complete | 8/8 |
-| 2 | Data Model + Core Entities | In Progress | 5/6 |
+| 2 | Data Model + Core Entities | Complete | 6/6 |
 | 3 | Dispatch Workflow | Not Started | 0/? |
 | 4 | Billing & Invoicing | Not Started | 0/? |
 | 5 | Onboarding + Stripe Polish | Not Started | 0/? |
@@ -45,7 +46,7 @@ Phase 2 progress: 5/6 plans done. Brokers, Drivers, Trucks, and Orders CRUD all 
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-████████████░░ 93% (13/14 plans complete across Phases 1-2)
+██████████████ 100% (14/14 plans complete across Phases 1-2)
 
 ## Key Decisions Log
 
@@ -106,34 +107,27 @@ Phase 2 progress: 5/6 plans done. Brokers, Drivers, Trucks, and Orders CRUD all 
 | 2026-02-11 | TRUCK_TYPE_LABELS as "7-Car Hauler" format | Clearer fleet context than short "7 Car" labels | 02-04 |
 | 2026-02-11 | CreateOrderInput (z.input<>) for multi-step wizard form | z.coerce.number() fields need input type for react-hook-form compatibility | 02-05 |
 | 2026-02-11 | NHTSA VIN decode with staleTime: Infinity | VIN data is immutable, no refetch needed | 02-05 |
-| 2026-02-11 | Card click opens edit drawer (no detail page yet) | Deferred order detail page to later phase for MVP velocity | 02-05 |
+| 2026-02-11 | Card click navigates to detail page (not edit drawer) | Order detail page provides full context before editing | 02-06 |
 | 2026-02-11 | Dynamic filter selects via existing hooks | OrderFilters fetches brokers/drivers inline for dropdown options | 02-05 |
-
-## Research Summary
-
-4 research documents completed (4,028 lines total):
-- **STACK.md** (815 lines) — Stack validated, added: TanStack Query, Zustand, shadcn/ui, Drizzle, Vitest+Playwright
-- **FEATURES.md** (444 lines) — 20 table stakes features, competitor analysis (Super Dispatch, AscendTMS, Ship.Cars)
-- **ARCHITECTURE.md** (1,452 lines) — Full multi-tenant architecture with SQL, TypeScript patterns, ERD
-- **PITFALLS.md** (1,238 lines) — 6 critical + 11 moderate + 6 minor pitfalls with prevention strategies
-- **SUMMARY.md** (79 lines) — Executive synthesis
+| 2026-02-11 | Targeted Realtime filter on useOrder hook | Subscribes to specific order ID changes for efficient detail page updates | 02-06 |
+| 2026-02-11 | Status rollback clears timestamp fields | Keeps actual_pickup_date/actual_delivery_date consistent with status | 02-06 |
 
 ## Session Continuity
 
-**Last session:** 2026-02-11 23:35 UTC
-**Stopped at:** Completed 02-05-PLAN.md
+**Last session:** 2026-02-11 23:41 UTC
+**Stopped at:** Completed 02-06-PLAN.md (Phase 2 complete)
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Plan 02-05 executed successfully in 8 min
-- Complete Orders CRUD with 3-step wizard (Vehicle -> Location -> Pricing)
-- NHTSA VIN decode auto-fill with fallback manual entry
-- Card grid with 4-axis filtering (status, broker, driver, search)
-- Draft auto-save for wizard state persistence
-- 2 atomic commits: 69bafa2 (data layer), 6ac6f02 (UI components)
+- Plan 02-06 executed successfully in 4 min
+- Order detail page with status workflow (advance/rollback/cancel)
+- Visual status timeline showing 6-step order progression
+- Cross-entity navigation links to brokers and drivers
+- Realtime subscription on order detail hook
+- Phase 2 is now 100% complete (6/6 plans)
 
-**Next action:** Execute 02-06-PLAN.md (final Phase 2 plan)
+**Next action:** Plan Phase 3 (Dispatch Workflow)
 
-**Phase 2 progress:** 5/6 plans done. Brokers, Drivers, Trucks, and Orders all complete.
+**Phase 2 complete:** All 4 entities (brokers, drivers, trucks, orders) have full CRUD, detail views, and Realtime.
