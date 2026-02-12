@@ -7,11 +7,11 @@
 | Item | Status |
 |------|--------|
 | **Milestone** | v1.0 — MVP Launch |
-| **Current Phase** | Phase 4 (Billing & Invoicing) -- Executing |
-| **Next Action** | Execute 04-05 (Billing Dashboard) |
+| **Current Phase** | Phase 4 (Billing & Invoicing) -- Complete |
+| **Next Action** | Begin Phase 5 (Onboarding + Stripe Polish) |
 | **Blockers** | None |
 
-Phase 4 in progress: 4/5 plans done. Order detail billing section complete with PaymentRecorder and InvoiceButton. One plan remaining: billing dashboard (Plan 05).
+Phase 4 complete: 5/5 plans done. Full billing pipeline built: DB schema, invoice PDF/email, payment tracking, billing dashboard with receivables/aging/batch actions. Ready for Phase 5.
 
 ## Completed Work
 
@@ -42,6 +42,7 @@ Phase 4 in progress: 4/5 plans done. Order detail billing section complete with 
 | 04-02 | Done | 2026-02-12 | Invoice PDF template, Resend client, email template, PDF download + send API routes |
 | 04-03 | Done | 2026-02-12 | Payment server actions, receivables/aging queries, Realtime payment hooks |
 | 04-04 | Done | 2026-02-12 | Order detail billing section: PaymentRecorder, InvoiceButton, broker email in queries |
+| 04-05 | Done | 2026-02-12 | Billing page: receivables table, aging analysis, batch actions, collection rate, broker receivables |
 
 ## Phase Status
 
@@ -50,13 +51,13 @@ Phase 4 in progress: 4/5 plans done. Order detail billing section complete with 
 | 1 | Project Setup + Auth + Multi-Tenancy | Complete | 8/8 |
 | 2 | Data Model + Core Entities | Complete | 6/6 |
 | 3 | Dispatch Workflow | Complete | 6/6 |
-| 4 | Billing & Invoicing | In Progress | 4/5 |
+| 4 | Billing & Invoicing | Complete | 5/5 |
 | 5 | Onboarding + Stripe Polish | Not Started | 0/? |
 | 6 | iOS Driver App | Not Started | 0/? |
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-████████████████████████ 96% (24/25 plans complete across Phases 1-4)
+█████████████████████████ 100% (25/25 plans complete across Phases 1-4)
 
 ## Key Decisions Log
 
@@ -158,23 +159,27 @@ Phase 4 in progress: 4/5 plans done. Order detail billing section complete with 
 | 2026-02-12 | Billing section for picked_up/delivered/invoiced/paid statuses | Conditional rendering excludes new/assigned/cancelled orders | 04-04 |
 | 2026-02-12 | Broker email in order queries for invoice delivery check | Added to OrderWithRelations type and both select strings | 04-04 |
 | 2026-02-12 | INV-{orderId.slice(0,8)} for compact invoice number display | Full UUID per locked decision, truncated for UI readability | 04-04 |
+| 2026-02-12 | Server component billing page with client sub-components | Page fetches data server-side, passes to interactive client components | 04-05 |
+| 2026-02-12 | Batch send uses individual fetch calls with Promise.allSettled | Allows partial success reporting for invoice sending | 04-05 |
+| 2026-02-12 | BrokerReceivables uses TanStack Query client-side | Follows existing hook pattern for independent broker-scoped data | 04-05 |
+| 2026-02-12 | Replaced broker detail placeholder with live receivables | Old "Orders from this Broker" placeholder swapped for real data | 04-05 |
 
 ## Session Continuity
 
-**Last session:** 2026-02-12 08:24 UTC
-**Stopped at:** Completed 04-04-PLAN.md
+**Last session:** 2026-02-12 08:25 UTC
+**Stopped at:** Completed 04-05-PLAN.md (Phase 4 complete)
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Phase 4 Plan 04: Order Detail Billing Section
-- PaymentRecorder component: status badge, balance progress bar, payment history with Realtime, record payment form with Zod validation
-- InvoiceButton component: send/resend invoice via API, PDF download, broker email tooltip
-- Billing section integrated into order detail page for picked_up/delivered/invoiced/paid statuses
-- Broker email added to order query selects
-- Sonner toast library installed for project-wide notifications
+- Phase 4 Plan 05: Billing Page & Broker Receivables
+- Billing page at /billing with server-side data fetching for receivables, aging, collection rate
+- Broker-grouped receivables table with expandable rows and checkbox selection
+- Color-coded aging analysis (current/1-30/31-60/61-90/90+ days)
+- Batch send invoices (individual API calls with progress) and batch mark paid (server action)
+- Collection rate metric card with color-coded percentage
+- Broker detail page receivables section with outstanding orders
+- Sidebar navigation updated from "Invoices" to "Billing"
 
-**Next action:** Execute 04-05-PLAN.md (Billing Dashboard)
-
-**Phase 4 in progress.** Database foundation, invoice pipeline, payment data layer, and order detail billing section complete. One plan remaining: billing dashboard (Plan 05).
+**Phase 4 complete.** Full billing pipeline: DB schema -> invoice PDF/email -> payment tracking -> billing dashboard. Ready for Phase 5 (Onboarding + Stripe Polish).
