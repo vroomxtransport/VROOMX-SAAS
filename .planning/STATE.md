@@ -11,7 +11,7 @@
 | **Next Action** | Execute remaining Phase 7 plans |
 | **Blockers** | None |
 
-Phase 7 in progress: 1/10 plans done. Magic link login complete.
+Phase 7 in progress: 2/10 plans done. Error boundaries + loading states complete.
 
 ## Completed Work
 
@@ -61,6 +61,7 @@ Phase 7 in progress: 1/10 plans done. Magic link login complete.
 | 06-09 | Done | 2026-02-12 | InspectionNotesView (GPS/odometer), SignaturePadView, DriverReviewView, CustomerReviewView, CustomerSignOffView |
 | 06-08 | Done | 2026-02-12 | InspectionView flow controller, InspectionPhotoView (12 slots), InspectionVideoCaptureView (AVFoundation), ExteriorInspectionView, VehicleDiagrams (25 shapes), VehicleDiagramView (interactive damage markers) |
 | 06-10 | Done | 2026-02-12 | BOL generation, PDF preview, email delivery |
+| 07-02 | Done | 2026-02-12 | Error boundaries, loading states, 404 pages for root/dashboard/auth route groups |
 | 07-03 | Done | 2026-02-12 | Magic link login: magicLinkAction + tab-based login UI with password/magic-link toggle |
 
 ## Phase Status
@@ -73,10 +74,10 @@ Phase 7 in progress: 1/10 plans done. Magic link login complete.
 | 4 | Billing & Invoicing | Complete | 5/5 |
 | 5 | Onboarding + Stripe Polish | Complete | 5/5 |
 | 6 | iOS Driver App | Complete | 13/13 |
-| 7 | Polish & Launch Prep | In Progress | 1/10 |
+| 7 | Polish & Launch Prep | In Progress | 2/10 |
 
 ## Progress
-████████████████████████████████████████████████░░░░░░░░░░ 83% (44/53 plans complete across Phases 1-7)
+█████████████████████████████████████████████████░░░░░░░░░ 85% (45/53 plans complete across Phases 1-7)
 
 ## Key Decisions Log
 
@@ -258,22 +259,29 @@ Phase 7 in progress: 1/10 plans done. Magic link login complete.
 | 2026-02-12 | Non-isolated RecordingDelegate wrapper for AVFoundation | AVFoundation delegates are non-isolated; bridge to MainActor | 06-08 |
 | 2026-02-12 | Right-side diagrams via scaleEffect(x: -1) mirroring | Avoids duplicating all left-side Shape definitions | 06-08 |
 | 2026-02-12 | Camera session startRunning/stopRunning on Task.detached | AVCaptureSession operations must not run on main thread | 06-08 |
+| 2026-02-12 | Dashboard error/404 use min-h-[400px] (sidebar provides height) | Dashboard layout already fills viewport; inner content needs less height | 07-02 |
+| 2026-02-12 | Auth error uses min-h-screen to match auth layout centering | Consistent with existing auth layout pattern | 07-02 |
+| 2026-02-12 | Dashboard loading skeleton: 2x2 card grid + content area | Matches typical dashboard page structure | 07-02 |
+| 2026-02-12 | Auth loading skeleton: card with form field skeletons | Matches login/signup page dimensions (max-w-md) | 07-02 |
+| 2026-02-12 | Error digest shown in small muted text when available | Debugging reference without cluttering UI | 07-02 |
 | 2026-02-12 | shouldCreateUser: false for magic link OTP | Prevents magic link signup bypass; directs to signup page | 07-03 |
 | 2026-02-12 | Redirect magic link to existing /auth-confirm route | Reuses PKCE + OTP callback handling already built | 07-03 |
 | 2026-02-12 | Password tab as default in login Tabs | Preserves existing UX for returning users | 07-03 |
 
 ## Session Continuity
 
-**Last session:** 2026-02-12 11:47 UTC
-**Stopped at:** Completed 07-03-PLAN.md
+**Last session:** 2026-02-12 11:48 UTC
+**Stopped at:** Completed 07-02-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Phase 7 Plan 03: Magic Link Login (AUTH-8)
-- magicLinkAction server action in auth.ts: signInWithOtp, shouldCreateUser: false, /auth-confirm redirect
-- Login page updated with Tabs (Password / Magic Link) - password remains default
-- Existing password login flow completely unchanged
+- Phase 7 Plan 02: Error Boundaries, Loading States, and 404 Pages
+- 7 new files across root, dashboard, and auth route groups
+- Error boundaries with Sentry.captureException, retry buttons, fallback navigation
+- Dashboard loading skeleton with 2x2 card grid and content area
+- Auth loading skeleton with form field placeholders
+- 404 pages with contextual back navigation
 
-**Next:** Execute remaining Phase 7 plans (07-01, 07-02, 07-04 through 07-10)
+**Next:** Execute remaining Phase 7 plans (07-01, 07-04 through 07-10)
