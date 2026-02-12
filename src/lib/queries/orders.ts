@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Order, Broker, Driver } from '@/types/database'
+import type { Order, Broker, Driver, Trip } from '@/types/database'
 
 export interface OrderFilters {
   status?: string
@@ -15,6 +15,7 @@ export interface OrderFilters {
 export interface OrderWithRelations extends Order {
   broker: Pick<Broker, 'id' | 'name'> | null
   driver: Pick<Driver, 'id' | 'first_name' | 'last_name'> | null
+  trip: Pick<Trip, 'id' | 'trip_number' | 'status'> | null
 }
 
 export interface OrdersResult {
@@ -30,7 +31,7 @@ export async function fetchOrders(
 
   let query = supabase
     .from('orders')
-    .select('*, broker:brokers(id, name), driver:drivers(id, first_name, last_name)', { count: 'exact' })
+    .select('*, broker:brokers(id, name), driver:drivers(id, first_name, last_name), trip:trips(id, trip_number, status)', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(page * pageSize, (page + 1) * pageSize - 1)
 
@@ -74,7 +75,7 @@ export async function fetchOrder(
 ): Promise<OrderWithRelations> {
   const { data, error } = await supabase
     .from('orders')
-    .select('*, broker:brokers(id, name), driver:drivers(id, first_name, last_name)')
+    .select('*, broker:brokers(id, name), driver:drivers(id, first_name, last_name), trip:trips(id, trip_number, status)')
     .eq('id', id)
     .single()
 

@@ -9,6 +9,7 @@ import { deleteOrder } from '@/app/actions/orders'
 import { OrderStatusActions } from './order-status-actions'
 import { OrderTimeline } from './order-timeline'
 import { OrderDrawer } from './order-drawer'
+import { AssignToTrip } from './assign-to-trip'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { Button } from '@/components/ui/button'
@@ -26,7 +27,7 @@ import {
   User,
 } from 'lucide-react'
 import { PAYMENT_TYPE_LABELS } from '@/types'
-import type { OrderStatus } from '@/types'
+import type { OrderStatus, TripStatus } from '@/types'
 import type { OrderWithRelations } from '@/lib/queries/orders'
 
 interface OrderDetailProps {
@@ -164,6 +165,16 @@ export function OrderDetail({ order }: OrderDetailProps) {
           <h3 className="text-sm font-semibold text-red-800">Cancellation Reason</h3>
           <p className="mt-1 text-sm text-red-700">{order.cancelled_reason}</p>
         </div>
+      )}
+
+      {/* Trip Assignment -- shown for orders in assignable statuses */}
+      {(['new', 'assigned', 'picked_up'] as OrderStatus[]).includes(status) && (
+        <AssignToTrip
+          orderId={order.id}
+          currentTripId={order.trip?.id ?? null}
+          currentTripNumber={order.trip?.trip_number ?? null}
+          currentTripStatus={(order.trip?.status as TripStatus) ?? null}
+        />
       )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
