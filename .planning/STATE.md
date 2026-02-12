@@ -8,10 +8,10 @@
 |------|--------|
 | **Milestone** | v1.0 — MVP Launch |
 | **Current Phase** | Phase 6 (iOS Driver App) -- In Progress |
-| **Next Action** | Execute 06-04-PLAN.md |
+| **Next Action** | Execute 06-05-PLAN.md |
 | **Blockers** | None |
 
-Phase 6 in progress: 3/13 plans done. Auth flow and app shell complete.
+Phase 6 in progress: 4/13 plans done. Data layer with offline queues complete.
 
 ## Completed Work
 
@@ -51,6 +51,7 @@ Phase 6 in progress: 3/13 plans done. Auth flow and app shell complete.
 | 06-01 | Done | 2026-02-12 | DB migration (7 tables, 5 enums, RLS) + Xcode SwiftUI scaffold with supabase-swift |
 | 06-02 | Done | 2026-02-12 | Theme system (dark/light, blue/violet), 7 models, 13 enums, SupabaseManager, NetworkMonitor, CacheManager |
 | 06-03 | Done | 2026-02-12 | Auth flow (email OTP + biometric + PIN), LoginView, ContentView routing, 5-tab MainTabView shell |
+| 06-04 | Done | 2026-02-12 | DataManager (fetch/cache/Realtime/mutations), PendingActionsQueue, InspectionUploadQueue, shared UI components |
 
 ## Phase Status
 
@@ -61,11 +62,11 @@ Phase 6 in progress: 3/13 plans done. Auth flow and app shell complete.
 | 3 | Dispatch Workflow | Complete | 6/6 |
 | 4 | Billing & Invoicing | Complete | 5/5 |
 | 5 | Onboarding + Stripe Polish | Complete | 5/5 |
-| 6 | iOS Driver App | In Progress | 3/13 |
+| 6 | iOS Driver App | In Progress | 4/13 |
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-█████████████████████████████████████████████████░░░░░ 77% (33/43 plans complete across Phases 1-6)
+██████████████████████████████████████████████████░░░░ 79% (34/43 plans complete across Phases 1-6)
 
 ## Key Decisions Log
 
@@ -207,21 +208,26 @@ Phase 6 in progress: 3/13 plans done. Auth flow and app shell complete.
 | 2026-02-12 | LoginPhase private enum drives 6-phase UI state machine | Single state variable controls entire multi-step auth flow | 06-03 |
 | 2026-02-12 | Nested NavigationStack per tab in MainTabView | Independent nav stacks prevent tab switches from resetting navigation | 06-03 |
 | 2026-02-12 | Biometric flag in UserDefaults, PIN hash in Keychain | Boolean preference vs secret credential stored appropriately | 06-03 |
+| 2026-02-12 | NetworkMonitor.shared singleton added | DataManager and queues need shared access to connectivity state | 06-04 |
+| 2026-02-12 | @MainActor on DataManager | Required for safe @Published property updates from async contexts | 06-04 |
+| 2026-02-12 | AnyJSON for Supabase update dictionaries | SDK requires AnyJSON for dynamic column updates | 06-04 |
+| 2026-02-12 | Combine sink for network reconnection | Auto-processes pending queue and refreshes data on reconnect | 06-04 |
+| 2026-02-12 | ISO8601DateFormatter for all timestamp mutations | Matches Supabase/PostgreSQL timestamp format | 06-04 |
 
 ## Session Continuity
 
-**Last session:** 2026-02-12 10:43 UTC
-**Stopped at:** Completed 06-03-PLAN.md
+**Last session:** 2026-02-12 10:44 UTC
+**Stopped at:** Completed 06-04-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Phase 6 Plan 03: Auth Flow + App Shell
-- AuthManager with email OTP (sendOTP/verifyOTP), biometric (Face ID/Touch ID), PIN (SHA-256), session management
-- LoginView with 3 paths: first login (email->OTP->PIN->biometric), returning PIN, returning biometric
-- ContentView root routing with splash screen and session restore
-- MainTabView with 5 tabs: Home, Trips, Earnings, Messages, Profile (all placeholder)
-- VroomXDriverApp updated with ThemeManager, AuthManager, NetworkMonitor as environment objects
+- Phase 6 Plan 04: Data Layer + Offline Queues
+- DataManager singleton: 5 fetch methods, 5 mutation methods, Realtime subscriptions on 3 tables, CacheManager integration
+- PendingActionsQueue actor: offline mutation queue with UserDefaults persistence, max 5 retries, 5 action handlers
+- InspectionUploadQueue actor: media upload queue with exponential backoff (5s to 15min cap), Supabase Storage upload
+- Shared UI: OfflineBanner (amber wifi.slash), ErrorBannerView (red dismissable), LoadingView (brandPrimary spinner)
+- NetworkMonitor.shared singleton added for DataManager/queue access
 
-**Next:** Execute 06-04-PLAN.md (Home tab + order cards)
+**Next:** Execute 06-05-PLAN.md (Home tab + order cards)
