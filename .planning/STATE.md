@@ -11,7 +11,7 @@
 | **Next Action** | Execute next Wave 3 plan |
 | **Blockers** | None |
 
-Phase 6 in progress: 9/13 plans done. Trips tab complete.
+Phase 6 in progress: 10/13 plans done. Order detail complete.
 
 ## Completed Work
 
@@ -232,6 +232,10 @@ Phase 6 in progress: 9/13 plans done. Trips tab complete.
 | 2026-02-12 | Jan 1 2024 reference epoch for bi-weekly period alignment | Consistent period grouping across all dates | 06-11 |
 | 2026-02-12 | Swift Charts for weekly earnings bar chart | iOS 16+ already required; built-in framework | 06-11 |
 | 2026-02-12 | UIGraphicsPDFRenderer with 15 trips/page pagination | Professional settlement PDF layout with page breaks | 06-11 |
+| 2026-02-12 | NotificationManager as @MainActor singleton with NSObject base | UNUserNotificationCenterDelegate requires NSObject; singleton ensures single delegate | 06-12 |
+| 2026-02-12 | NotificationCenter.default posts for push-tap navigation | Decouples NotificationManager from view layer; views observe independently | 06-12 |
+| 2026-02-12 | nonisolated delegate methods with Task { @MainActor } bridge | UNUserNotificationCenterDelegate is non-isolated; bridge for safe state updates | 06-12 |
+| 2026-02-12 | DataManager.driverId changed from private to private(set) | NotificationManager needs read access for badge count queries | 06-12 |
 
 ## Session Continuity
 
