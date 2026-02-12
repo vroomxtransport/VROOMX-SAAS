@@ -274,15 +274,31 @@ Plans:
 
 ## Phase 7: Polish & Launch Prep
 
+**Status:** Not Started
+
 **Goal:** VroomX is production-ready for 1-2 paying carrier customers. All P1/P2 features are shipped, error handling is solid, and the product is deployable.
 
-**Requirements:** AUTH-8, ORD-7, ORD-8, TRIP-7, DRV-5, DRV-6, FLT-4, FLT-5, ONB-3, ONB-4
+**Requirements:** AUTH-8, ORD-7, ORD-8, TRIP-7 (already done), DRV-5, DRV-6, FLT-4, FLT-5, ONB-3, ONB-4
+
+**Plans:** 10 plans
+
+Plans:
+- [ ] 07-01-PLAN.md — DB migration (trailers, driver/truck documents) + Drizzle schema + storage helper + papaparse
+- [ ] 07-02-PLAN.md — Error boundaries, loading states, 404 pages for all route groups
+- [ ] 07-03-PLAN.md — Magic link login (AUTH-8): signInWithOtp + login page tabs
+- [ ] 07-04-PLAN.md — Trailer assignment (FLT-4) + truck document uploads (FLT-5) on truck detail
+- [ ] 07-05-PLAN.md — CSV order import wizard (ORD-7): papaparse + column mapping + batch import
+- [ ] 07-06-PLAN.md — Driver earnings view (DRV-5) + driver documents (DRV-6) + order attachments (ORD-8)
+- [ ] 07-07-PLAN.md — Sample data seeding (ONB-3) + in-app help tooltips (ONB-4)
+- [ ] 07-08-PLAN.md — Marketing pages: landing page + pricing page in (marketing) route group
+- [ ] 07-09-PLAN.md — E2E tests (Playwright): signup, dispatch, and billing flows
+- [ ] 07-10-PLAN.md — Performance + security audit scripts + launch checklist + final verification
 
 **Key Deliverables:**
 - Magic link login option
 - CSV order import
 - Order attachments (photos, rate confirmations)
-- Trip expense management (CRUD)
+- Trip expense management (CRUD) — already done in Phase 3
 - Driver earnings view (trip-by-trip pay breakdown)
 - Driver/truck document uploads
 - Trailer assignment
@@ -291,18 +307,18 @@ Plans:
 - Error boundary handling across all pages
 - Loading states and skeleton screens
 - 404 and error pages
-- SEO: landing page, pricing page, signup page
+- SEO: landing page, pricing page
 - E2E tests for critical paths (Playwright):
   - Signup -> dashboard
-  - Create order -> assign to trip -> mark delivered
-  - Stripe checkout -> active subscription
+  - Create order -> assign to trip
+  - Billing page verification
 - Performance audit (Core Web Vitals)
 - Security audit (RLS coverage, no exposed keys, webhook signatures)
 
 **Success Criteria:**
 - [ ] All 56 v1 requirements implemented
 - [ ] E2E tests passing for signup, dispatch, and billing flows
-- [ ] Core Web Vitals: LCP < 2.5s, FID < 100ms, CLS < 0.1
+- [ ] Core Web Vitals: LCP < 2.5s, INP < 200ms, CLS < 0.1
 - [ ] No console errors on any page
 - [ ] Cross-tenant isolation verified with automated tests
 - [ ] Production deployment on Vercel + Supabase Pro
