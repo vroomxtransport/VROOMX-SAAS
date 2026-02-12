@@ -321,12 +321,18 @@ export async function recalculateTripFinancials(tripId: string) {
     return { error: expensesError.message }
   }
 
-  // Parse numeric strings
-  const parsedOrders = (orders ?? []).map((o) => ({
+  // Parse order data: financial fields + route fields
+  const rawOrders = (orders ?? []).map((o) => ({
     revenue: parseFloat(o.revenue || '0'),
     brokerFee: parseFloat(o.broker_fee || '0'),
-    pickup_state: o.pickup_state,
-    delivery_state: o.delivery_state,
+    pickup_state: o.pickup_state as string | null,
+    delivery_state: o.delivery_state as string | null,
+  }))
+
+  // OrderFinancials for calculateTripFinancials (only revenue + brokerFee)
+  const orderFinancials = rawOrders.map((o) => ({
+    revenue: o.revenue,
+    brokerFee: o.brokerFee,
   }))
 
   const parsedExpenses = (expenses ?? []).map((e) => ({
@@ -335,31 +341,37 @@ export async function recalculateTripFinancials(tripId: string) {
 
   const carrierPay = parseFloat(trip.carrier_pay || '0')
 
-  // Calculate financials using the shared calculation module
-  const driver = trip.driver as {
+  // Build driver config from joined relation
+  const driverRaw = trip.driver as {
     driver_type: string
     pay_type: string
     pay_rate: number
   } | null
 
-  const driverConfig = driver
+  const driverConfig = driverRaw
     ? {
-        driverType: driver.driver_type as import('@/types').DriverType,
-        payType: driver.pay_type as import('@/types').DriverPayType,
-        payRate: driver.pay_rate,
+        driverType: driverRaw.driver_type as import('@/types').DriverType,
+        payType: driverRaw.pay_type as import('@/types').DriverPayType,
+        payRate: driverRaw.pay_rate,
       }
     : null
 
-  const financials = calculateTripFinancials(parsedOrders, driverConfig, parsedExpenses, carrierPay)
+  // Calculate financials using the shared calculation module (4 positional args)
+  const financials = calculateTripFinancials(
+    orderFinancials,
+    driverConfig,
+    parsedExpenses,
+    carrierPay
+  )
 
   // Compute route summary from orders
   let originSummary: string | null = null
   let destinationSummary: string | null = null
 
-  if (parsedOrders.length > 0) {
-    // Collect unique pickup states (preserve order for first/last logic)
+  if (rawOrders.length > 0) {
+    // Collect unique pickup states (preserve insertion order)
     const pickupStates: string[] = []
-    for (const o of parsedOrders) {
+    for (const o of rawOrders) {
       if (o.pickup_state && !pickupStates.includes(o.pickup_state)) {
         pickupStates.push(o.pickup_state)
       }
@@ -368,7 +380,7 @@ export async function recalculateTripFinancials(tripId: string) {
 
     // Collect unique delivery states
     const deliveryStates: string[] = []
-    for (const o of parsedOrders) {
+    for (const o of rawOrders) {
       if (o.delivery_state && !deliveryStates.includes(o.delivery_state)) {
         deliveryStates.push(o.delivery_state)
       }
@@ -385,7 +397,7 @@ export async function recalculateTripFinancials(tripId: string) {
       driver_pay: String(financials.driverPay),
       total_expenses: String(financials.expenses),
       net_profit: String(financials.netProfit),
-      order_count: parsedOrders.length,
+      order_count: rawOrders.length,
       origin_summary: originSummary,
       destination_summary: destinationSummary,
     })
