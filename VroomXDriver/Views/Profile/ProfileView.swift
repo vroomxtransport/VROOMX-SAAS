@@ -553,13 +553,16 @@ struct ProfileView: View {
             // 1. Tear down DataManager (stop Realtime, clear state)
             DataManager.shared.teardown()
 
-            // 2. Clear pending actions queue
+            // 2. Deregister push notification device token
+            await NotificationManager.shared.deregisterDeviceToken()
+
+            // 3. Clear pending actions queue
             await PendingActionsQueue.shared.clearQueue()
 
-            // 3. Clear inspection upload queue
+            // 4. Clear inspection upload queue
             await InspectionUploadQueue.shared.clearQueue()
 
-            // 4. Sign out via AuthManager (Keychain clear, cache clear, Supabase sign out)
+            // 5. Sign out via AuthManager (Keychain clear, cache clear, Supabase sign out)
             await authManager.logout()
         }
     }
