@@ -8,10 +8,10 @@
 |------|--------|
 | **Milestone** | v1.0 — MVP Launch |
 | **Current Phase** | Phase 6 (iOS Driver App) -- In Progress |
-| **Next Action** | Execute 06-05-PLAN.md |
+| **Next Action** | Execute 06-06-PLAN.md |
 | **Blockers** | None |
 
-Phase 6 in progress: 4/13 plans done. Data layer with offline queues complete.
+Phase 6 in progress: 5/13 plans done. Home tab with order cards complete.
 
 ## Completed Work
 
@@ -52,6 +52,7 @@ Phase 6 in progress: 4/13 plans done. Data layer with offline queues complete.
 | 06-02 | Done | 2026-02-12 | Theme system (dark/light, blue/violet), 7 models, 13 enums, SupabaseManager, NetworkMonitor, CacheManager |
 | 06-03 | Done | 2026-02-12 | Auth flow (email OTP + biometric + PIN), LoginView, ContentView routing, 5-tab MainTabView shell |
 | 06-04 | Done | 2026-02-12 | DataManager (fetch/cache/Realtime/mutations), PendingActionsQueue, InspectionUploadQueue, shared UI components |
+| 06-05 | Done | 2026-02-12 | HomeView (greeting/stats/module tabs), OrderCardView (vehicle/route/status/actions), ModuleTabsView |
 
 ## Phase Status
 
@@ -62,11 +63,11 @@ Phase 6 in progress: 4/13 plans done. Data layer with offline queues complete.
 | 3 | Dispatch Workflow | Complete | 6/6 |
 | 4 | Billing & Invoicing | Complete | 5/5 |
 | 5 | Onboarding + Stripe Polish | Complete | 5/5 |
-| 6 | iOS Driver App | In Progress | 4/13 |
+| 6 | iOS Driver App | In Progress | 5/13 |
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-██████████████████████████████████████████████████░░░░ 79% (34/43 plans complete across Phases 1-6)
+███████████████████████████████████████████████████░░░ 81% (35/43 plans complete across Phases 1-6)
 
 ## Key Decisions Log
 
@@ -213,21 +214,25 @@ Phase 6 in progress: 4/13 plans done. Data layer with offline queues complete.
 | 2026-02-12 | AnyJSON for Supabase update dictionaries | SDK requires AnyJSON for dynamic column updates | 06-04 |
 | 2026-02-12 | Combine sink for network reconnection | Auto-processes pending queue and refreshes data on reconnect | 06-04 |
 | 2026-02-12 | ISO8601DateFormatter for all timestamp mutations | Matches Supabase/PostgreSQL timestamp format | 06-04 |
+| 2026-02-12 | NavigationLink(value:) for order card navigation | Detail destination wired when OrderDetailView built in Plan 07 | 06-05 |
+| 2026-02-12 | Vehicle color dot mapped from color name string | Common auto colors (black, white, silver, red, blue, etc.) | 06-05 |
+| 2026-02-12 | ISO8601 date parsing with 3-step fallback chain | Fractional seconds, standard ISO, then date-only format | 06-05 |
+| 2026-02-12 | MainTabView NOT modified per orchestrator rules | Tab wiring deferred to post-Wave 3 orchestration | 06-05 |
 
 ## Session Continuity
 
-**Last session:** 2026-02-12 10:44 UTC
-**Stopped at:** Completed 06-04-PLAN.md
+**Last session:** 2026-02-12 10:49 UTC
+**Stopped at:** Completed 06-05-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Phase 6 Plan 04: Data Layer + Offline Queues
-- DataManager singleton: 5 fetch methods, 5 mutation methods, Realtime subscriptions on 3 tables, CacheManager integration
-- PendingActionsQueue actor: offline mutation queue with UserDefaults persistence, max 5 retries, 5 action handlers
-- InspectionUploadQueue actor: media upload queue with exponential backoff (5s to 15min cap), Supabase Storage upload
-- Shared UI: OfflineBanner (amber wifi.slash), ErrorBannerView (red dismissable), LoadingView (brandPrimary spinner)
-- NetworkMonitor.shared singleton added for DataManager/queue access
+- Phase 6 Plan 05: Home Tab + Order Cards
+- HomeView: dynamic greeting (morning/afternoon/evening), 4 quick-stat cards, ModuleTabsView pill picker, filtered order list with pull-to-refresh
+- OrderCardView: vehicle description, color dot, VIN last-8, route (pickup/delivery city+state with dates), status badge, quick action buttons
+- ModuleTabsView: pill-shaped segmented picker with count badges for Pickup/Delivery/Completed/Archived
+- MainTabView NOT modified (orchestrator will wire tabs after Wave 3)
+- NavigationLink(value:) pattern ready for OrderDetailView wiring in Plan 07
 
-**Next:** Execute 06-05-PLAN.md (Home tab + order cards)
+**Next:** Execute 06-06-PLAN.md (next Wave 3 plan)
