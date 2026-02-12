@@ -182,6 +182,15 @@ Plans:
 
 **Requirements:** AUTH-6, SUB-3, SUB-4, SUB-5, ONB-2
 
+**Plans:** 5 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — DB foundation: invites table, tenant dunning columns, tier enforcement triggers, types/validations
+- [ ] 05-02-PLAN.md — Tier limit enforcement: checkTierLimit/isAccountSuspended utilities, Server Action guards on createTruck/createDriver
+- [ ] 05-03-PLAN.md — Stripe Billing Portal Server Action + webhook expansion with dunning (invoice.paid, payment_failed grace period)
+- [ ] 05-04-PLAN.md — Team invite flow: send/revoke actions, React Email template, accept route, settings team section
+- [ ] 05-05-PLAN.md — Onboarding wizard on dashboard, billing/usage sections on settings, grace period/suspension banners in layout
+
 **Key Deliverables:**
 - Team invite flow (email invite -> accept -> join tenant with role)
 - Stripe Billing Portal integration (upgrade/downgrade/cancel)
