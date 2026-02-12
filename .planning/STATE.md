@@ -8,10 +8,10 @@
 |------|--------|
 | **Milestone** | v1.0 — MVP Launch |
 | **Current Phase** | Phase 4 (Billing & Invoicing) -- Executing |
-| **Next Action** | Execute 04-02 (Invoice PDF Generation) |
+| **Next Action** | Execute 04-03 (Payment Data Layer) |
 | **Blockers** | None |
 
-Phase 4 in progress: 1/5 plans done. Database foundation for billing complete: payment_status enum, payments table, billing columns, types, validation.
+Phase 4 in progress: 2/5 plans done. Invoice PDF generation and email delivery pipeline complete. Ready for payment data layer (Plan 03) and UI integration (Plans 04-05).
 
 ## Completed Work
 
@@ -39,6 +39,7 @@ Phase 4 in progress: 1/5 plans done. Database foundation for billing complete: p
 | 03-05 | Done | 2026-02-12 | Trip detail page: financial card, order assign/unassign, expense CRUD, status workflow |
 | 03-06 | Done | 2026-02-12 | Order-side trip assignment: AssignToTrip component, trip relation in order queries |
 | 04-01 | Done | 2026-02-12 | DB foundation for billing: payment_status enum, payments table, types, Zod validation |
+| 04-02 | Done | 2026-02-12 | Invoice PDF template, Resend client, email template, PDF download + send API routes |
 
 ## Phase Status
 
@@ -47,13 +48,13 @@ Phase 4 in progress: 1/5 plans done. Database foundation for billing complete: p
 | 1 | Project Setup + Auth + Multi-Tenancy | Complete | 8/8 |
 | 2 | Data Model + Core Entities | Complete | 6/6 |
 | 3 | Dispatch Workflow | Complete | 6/6 |
-| 4 | Billing & Invoicing | In Progress | 1/5 |
+| 4 | Billing & Invoicing | In Progress | 2/5 |
 | 5 | Onboarding + Stripe Polish | Not Started | 0/? |
 | 6 | iOS Driver App | Not Started | 0/? |
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-█████████████████████ 84% (21/25 plans complete across Phases 1-4)
+██████████████████████ 88% (22/25 plans complete across Phases 1-4)
 
 ## Key Decisions Log
 
@@ -145,25 +146,26 @@ Phase 4 in progress: 1/5 plans done. Database foundation for billing complete: p
 | 2026-02-12 | Trip relation added to both fetchOrder and fetchOrders | Enables trip info display on both detail and list views | 03-06 |
 | 2026-02-12 | paymentStatusEnum in top-level Enums section (not Phase 4 section) | Avoids TypeScript use-before-declaration error | 04-01 |
 | 2026-02-12 | Payments table follows trips RLS pattern exactly | Consistent tenant isolation across all tables | 04-01 |
+| 2026-02-12 | Uint8Array conversion for Response body in PDF route | Node Buffer not accepted by Web Response API in strict TS | 04-02 |
+| 2026-02-12 | Invoice number INV-{orderId} using full UUID | Per locked decision; simple and unique per order | 04-02 |
+| 2026-02-12 | Conditional status updates on invoice send (idempotent re-send) | Only advance from unpaid/delivered; preserve original invoice_date | 04-02 |
 
 ## Session Continuity
 
-**Last session:** 2026-02-12 08:10 UTC
-**Stopped at:** Completed 04-01-PLAN.md
+**Last session:** 2026-02-12 08:17 UTC
+**Stopped at:** Completed 04-02-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Phase 4 Plan 01: Database Foundation for Billing
-- payment_status enum (unpaid, invoiced, partially_paid, paid) in SQL, Drizzle, TypeScript
-- payments table with RLS policies, indexes, triggers, Realtime
-- Billing columns on orders (payment_status, invoice_date, amount_paid)
-- Company info columns on tenants (address, city, state, zip, phone)
-- PaymentStatus type union with labels and colors
-- recordPaymentSchema Zod validation
-- Installed @react-pdf/renderer, resend, @react-email/components
+- Phase 4 Plan 02: Invoice PDF Generation & Email Delivery
+- InvoiceDocument component with company header, bill-to, line items, VIN, total, footer
+- Resend client singleton using RESEND_API_KEY env var
+- InvoiceEmail React Email template with inline styles
+- GET /api/invoices/[orderId]/pdf returns PDF buffer with proper Content-Type
+- POST /api/invoices/[orderId]/send generates PDF, emails broker, updates payment_status/invoice_date/status
 
-**Next action:** Execute 04-02-PLAN.md (Invoice PDF Generation)
+**Next action:** Execute 04-03-PLAN.md (Payment Data Layer)
 
-**Phase 4 in progress.** Database foundation complete. All subsequent billing plans (02-05) can now build on these tables, types, and validations.
+**Phase 4 in progress.** Database foundation and invoice pipeline complete. Payment data layer (Plan 03) and UI integration (Plans 04-05) remain.
