@@ -11,7 +11,7 @@
 | **Next Action** | Execute next Wave 3 plan |
 | **Blockers** | None |
 
-Phase 6 in progress: 6/13 plans done. Profile tab complete.
+Phase 6 in progress: 9/13 plans done. Trips tab complete.
 
 ## Completed Work
 
@@ -53,6 +53,9 @@ Phase 6 in progress: 6/13 plans done. Profile tab complete.
 | 06-03 | Done | 2026-02-12 | Auth flow (email OTP + biometric + PIN), LoginView, ContentView routing, 5-tab MainTabView shell |
 | 06-04 | Done | 2026-02-12 | DataManager (fetch/cache/Realtime/mutations), PendingActionsQueue, InspectionUploadQueue, shared UI components |
 | 06-05 | Done | 2026-02-12 | HomeView (greeting/stats/module tabs), OrderCardView (vehicle/route/status/actions), ModuleTabsView |
+| 06-06 | Done | 2026-02-12 | TripsView (active/completed list), TripDetailView (financials, orders, expenses, receipt upload), AllTripsView |
+| 06-11 | Done | 2026-02-12 | EarningsView (hero card, breakdown, chart, history), SettlementDetailView (trip table, PDF/CSV export) |
+| 06-12 | Done | 2026-02-12 | NotificationManager (APNs, device tokens, badge), MessagesView (grouped list, filters, tap-to-read) |
 | 06-13 | Done | 2026-02-12 | ProfileView: driver info, stats grid, theme/biometric/notification prefs, cache mgmt, sign out |
 
 ## Phase Status
@@ -64,11 +67,11 @@ Phase 6 in progress: 6/13 plans done. Profile tab complete.
 | 3 | Dispatch Workflow | Complete | 6/6 |
 | 4 | Billing & Invoicing | Complete | 5/5 |
 | 5 | Onboarding + Stripe Polish | Complete | 5/5 |
-| 6 | iOS Driver App | In Progress | 6/13 |
+| 6 | iOS Driver App | In Progress | 9/13 |
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-████████████████████████████████████████████████████░░░ 84% (36/43 plans complete across Phases 1-6)
+████████████████████████████████████████████████████████ 91% (39/43 plans complete across Phases 1-6)
 
 ## Key Decisions Log
 
@@ -220,21 +223,28 @@ Phase 6 in progress: 6/13 plans done. Profile tab complete.
 | 2026-02-12 | ISO8601 date parsing with 3-step fallback chain | Fractional seconds, standard ISO, then date-only format | 06-05 |
 | 2026-02-12 | MainTabView NOT modified per orchestrator rules | Tab wiring deferred to post-Wave 3 orchestration | 06-05 |
 | 2026-02-12 | Skip NotificationManager.deregisterDeviceToken() in sign out | NotificationManager does not exist yet; will be added when built | 06-13 |
+| 2026-02-12 | Inline TripOrderCard (not shared OrderCardView) | Parallel agent may not have created OrderCardView yet | 06-06 |
+| 2026-02-12 | Context menu delete for expenses in ScrollView | swipeActions requires List parent; context menu works everywhere | 06-06 |
+| 2026-02-12 | Receipt path: {tenantId}/{tripId}/{uuid}.jpg | Organized per-tenant, per-trip in receipts bucket | 06-06 |
+| 2026-02-12 | CameraView via UIImagePickerController wrapper | Native SwiftUI camera API is iOS 18+ only | 06-06 |
+| 2026-02-12 | ExpenseCreate extended with receiptUrl field | Required for storing receipt storage path when creating expenses | 06-06 |
 | 2026-02-12 | Current period earnings = current calendar month | No pay period config exists; calendar month is reasonable default | 06-13 |
 
 ## Session Continuity
 
-**Last session:** 2026-02-12 10:50 UTC
-**Stopped at:** Completed 06-13-PLAN.md
+**Last session:** 2026-02-12 10:51 UTC
+**Stopped at:** Completed 06-06-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Phase 6 Plan 13: Profile Tab
-- ProfileView: driver info header (initials avatar, name, email, type badge, license), 2x2 stats grid (total/active trips, total/current earnings), preferences (dark mode toggle, biometric toggle, notification status), app info (version, sync status, pending count, clear cache), sign out with full teardown
-- Sign out order: DataManager.teardown() -> PendingActionsQueue.clearQueue() -> InspectionUploadQueue.clearQueue() -> authManager.logout()
+- Phase 6 Plan 06: Trips Tab
+- TripsView: active trips section, recent completed DisclosureGroup, pull-to-refresh, empty state, "View All Trips" link
+- AllTripsView: full trip history with search by trip_number, status-grouped sections (Active/Completed)
+- TripDetailView: header, route with origin/destination, status progress bar, 6-metric financial card (driver pay emphasized), orders list with TripOrderCard, expenses with context menu delete, AddExpenseSheet with category/amount/notes/date/receipt photo
+- Receipt photo: camera capture via UIImagePickerController + PhotosPicker library, upload to Supabase Storage receipts bucket, ReceiptPreviewSheet for viewing
+- ExpenseCreate model extended with receiptUrl field
 - MainTabView NOT modified (orchestrator will wire tabs after Wave 3)
-- NotificationManager.deregisterDeviceToken() skipped (does not exist yet)
 
-**Next:** Execute remaining Wave 3 plans
+**Next:** Execute remaining Wave 3 plans (06-07, 06-08, 06-09, 06-10)
