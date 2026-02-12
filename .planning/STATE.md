@@ -7,11 +7,11 @@
 | Item | Status |
 |------|--------|
 | **Milestone** | v1.0 — MVP Launch |
-| **Current Phase** | Phase 4 (Billing & Invoicing) -- Complete |
-| **Next Action** | Begin Phase 5 (Onboarding + Stripe Polish) |
+| **Current Phase** | Phase 5 (Onboarding + Stripe Polish) -- In Progress |
+| **Next Action** | Execute 05-02-PLAN.md (Invite server actions + team management UI) |
 | **Blockers** | None |
 
-Phase 4 complete: 5/5 plans done. Full billing pipeline built: DB schema, invoice PDF/email, payment tracking, billing dashboard with receivables/aging/batch actions. Ready for Phase 5.
+Phase 5 started: 1/5 plans done. DB foundation for invites, dunning, tier enforcement landed. Ready for invite flow implementation.
 
 ## Completed Work
 
@@ -43,6 +43,7 @@ Phase 4 complete: 5/5 plans done. Full billing pipeline built: DB schema, invoic
 | 04-03 | Done | 2026-02-12 | Payment server actions, receivables/aging queries, Realtime payment hooks |
 | 04-04 | Done | 2026-02-12 | Order detail billing section: PaymentRecorder, InvoiceButton, broker email in queries |
 | 04-05 | Done | 2026-02-12 | Billing page: receivables table, aging analysis, batch actions, collection rate, broker receivables |
+| 05-01 | Done | 2026-02-12 | DB foundation: invites table, tenant dunning/onboarding columns, tier enforcement triggers |
 
 ## Phase Status
 
@@ -52,12 +53,12 @@ Phase 4 complete: 5/5 plans done. Full billing pipeline built: DB schema, invoic
 | 2 | Data Model + Core Entities | Complete | 6/6 |
 | 3 | Dispatch Workflow | Complete | 6/6 |
 | 4 | Billing & Invoicing | Complete | 5/5 |
-| 5 | Onboarding + Stripe Polish | Not Started | 0/? |
+| 5 | Onboarding + Stripe Polish | In Progress | 1/5 |
 | 6 | iOS Driver App | Not Started | 0/? |
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-█████████████████████████ 100% (25/25 plans complete across Phases 1-4)
+██████████████████████████████████████████████░░░░░░░░ 87% (26/30 plans complete across Phases 1-5)
 
 ## Key Decisions Log
 
@@ -163,23 +164,24 @@ Phase 4 complete: 5/5 plans done. Full billing pipeline built: DB schema, invoic
 | 2026-02-12 | Batch send uses individual fetch calls with Promise.allSettled | Allows partial success reporting for invoice sending | 04-05 |
 | 2026-02-12 | BrokerReceivables uses TanStack Query client-side | Follows existing hook pattern for independent broker-scoped data | 04-05 |
 | 2026-02-12 | Replaced broker detail placeholder with live receivables | Old "Orders from this Broker" placeholder swapped for real data | 04-05 |
+| 2026-02-12 | CHECK constraints on invites role and status columns | DB-level validation mirrors TypeScript types | 05-01 |
+| 2026-02-12 | RLS SELECT+INSERT for authenticated on invites; service role for updates | Acceptance flow handled server-side without user JWT | 05-01 |
+| 2026-02-12 | Trial plan uses starter limits in tier enforcement | Consistent with existing TIER_LIMITS constant | 05-01 |
+| 2026-02-12 | InvitableRole excludes owner | Owner is always tenant creator, never invited | 05-01 |
 
 ## Session Continuity
 
-**Last session:** 2026-02-12 08:25 UTC
-**Stopped at:** Completed 04-05-PLAN.md (Phase 4 complete)
+**Last session:** 2026-02-12 09:20 UTC
+**Stopped at:** Completed 05-01-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Phase 4 Plan 05: Billing Page & Broker Receivables
-- Billing page at /billing with server-side data fetching for receivables, aging, collection rate
-- Broker-grouped receivables table with expandable rows and checkbox selection
-- Color-coded aging analysis (current/1-30/31-60/61-90/90+ days)
-- Batch send invoices (individual API calls with progress) and batch mark paid (server action)
-- Collection rate metric card with color-coded percentage
-- Broker detail page receivables section with outstanding orders
-- Sidebar navigation updated from "Invoices" to "Billing"
+- Phase 5 Plan 01: DB Foundation for Onboarding + Stripe Polish
+- SQL migration with invites table (token, email, role, status, expiry)
+- Tenant columns: grace_period_ends_at, is_suspended, onboarding_completed_at
+- Tier enforcement triggers: enforce_truck_limit on trucks, enforce_user_limit on tenant_memberships
+- Drizzle schema mirrors SQL migration; InviteStatus/InvitableRole types and Zod validation
 
-**Phase 4 complete.** Full billing pipeline: DB schema -> invoice PDF/email -> payment tracking -> billing dashboard. Ready for Phase 5 (Onboarding + Stripe Polish).
+**Next:** 05-02 (invite server actions + team management UI)
