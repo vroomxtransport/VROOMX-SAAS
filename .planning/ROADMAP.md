@@ -98,6 +98,16 @@ Plans:
 
 **Requirements:** ORD-4, TRIP-1, TRIP-2, TRIP-3, TRIP-4, TRIP-5, TRIP-6
 
+**Plans:** 6 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — DB schema (trips, trip_expenses, trip_id on orders) + types + validations + sidebar nav
+- [ ] 03-02-PLAN.md — TDD: Trip financial calculation module (3 driver pay models)
+- [ ] 03-03-PLAN.md — Trip server actions, queries, and TanStack Query hooks
+- [ ] 03-04-PLAN.md — Dispatch board page with status-grouped trip list and creation modal
+- [ ] 03-05-PLAN.md — Trip detail page (financial card, orders, expenses, status workflow)
+- [ ] 03-06-PLAN.md — Order-to-trip assignment from order detail page
+
 **Key Deliverables:**
 - Database tables: trips (with denormalized financial columns)
 - Trip CRUD: create (truck + driver + date range), edit, list, detail view
