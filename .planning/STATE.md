@@ -8,10 +8,10 @@
 |------|--------|
 | **Milestone** | v1.0 — MVP Launch |
 | **Current Phase** | Phase 4 (Billing & Invoicing) -- Executing |
-| **Next Action** | Execute 04-04 (Order Detail Billing Section) |
+| **Next Action** | Execute 04-05 (Billing Dashboard) |
 | **Blockers** | None |
 
-Phase 4 in progress: 3/5 plans done. Payment data layer complete: server actions, receivables/aging queries, Realtime hooks. Ready for UI integration (Plans 04-05).
+Phase 4 in progress: 4/5 plans done. Order detail billing section complete with PaymentRecorder and InvoiceButton. One plan remaining: billing dashboard (Plan 05).
 
 ## Completed Work
 
@@ -41,6 +41,7 @@ Phase 4 in progress: 3/5 plans done. Payment data layer complete: server actions
 | 04-01 | Done | 2026-02-12 | DB foundation for billing: payment_status enum, payments table, types, Zod validation |
 | 04-02 | Done | 2026-02-12 | Invoice PDF template, Resend client, email template, PDF download + send API routes |
 | 04-03 | Done | 2026-02-12 | Payment server actions, receivables/aging queries, Realtime payment hooks |
+| 04-04 | Done | 2026-02-12 | Order detail billing section: PaymentRecorder, InvoiceButton, broker email in queries |
 
 ## Phase Status
 
@@ -49,13 +50,13 @@ Phase 4 in progress: 3/5 plans done. Payment data layer complete: server actions
 | 1 | Project Setup + Auth + Multi-Tenancy | Complete | 8/8 |
 | 2 | Data Model + Core Entities | Complete | 6/6 |
 | 3 | Dispatch Workflow | Complete | 6/6 |
-| 4 | Billing & Invoicing | In Progress | 3/5 |
+| 4 | Billing & Invoicing | In Progress | 4/5 |
 | 5 | Onboarding + Stripe Polish | Not Started | 0/? |
 | 6 | iOS Driver App | Not Started | 0/? |
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-███████████████████████ 92% (23/25 plans complete across Phases 1-4)
+████████████████████████ 96% (24/25 plans complete across Phases 1-4)
 
 ## Key Decisions Log
 
@@ -153,24 +154,27 @@ Phase 4 in progress: 3/5 plans done. Payment data layer complete: server actions
 | 2026-02-12 | Supabase broker relation cast via unknown for type safety | Array vs object return from .select() with joins | 04-03 |
 | 2026-02-12 | Collection rate includes paid orders for accurate percentage | Denominator is all invoiced orders, not just outstanding | 04-03 |
 | 2026-02-12 | Overdue threshold 30 days from invoice_date | Standard accounts receivable aging convention | 04-03 |
+| 2026-02-12 | Sonner for toast notifications in root layout | First toast library in project; global availability | 04-04 |
+| 2026-02-12 | Billing section for picked_up/delivered/invoiced/paid statuses | Conditional rendering excludes new/assigned/cancelled orders | 04-04 |
+| 2026-02-12 | Broker email in order queries for invoice delivery check | Added to OrderWithRelations type and both select strings | 04-04 |
+| 2026-02-12 | INV-{orderId.slice(0,8)} for compact invoice number display | Full UUID per locked decision, truncated for UI readability | 04-04 |
 
 ## Session Continuity
 
-**Last session:** 2026-02-12 08:17 UTC
-**Stopped at:** Completed 04-03-PLAN.md
+**Last session:** 2026-02-12 08:24 UTC
+**Stopped at:** Completed 04-04-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Phase 4 Plan 03: Payment Data Layer
-- recordPayment server action with balance validation and auto-status transition
-- batchMarkPaid server action for bulk payment processing with Promise.allSettled
-- fetchBrokerReceivables aggregation query grouped by broker
-- fetchAgingAnalysis with current/1-30/31-60/61-90/90+ day buckets
-- fetchCollectionRate computing invoiced vs collected percentage
-- usePaymentsByOrder hook with Realtime subscription
+- Phase 4 Plan 04: Order Detail Billing Section
+- PaymentRecorder component: status badge, balance progress bar, payment history with Realtime, record payment form with Zod validation
+- InvoiceButton component: send/resend invoice via API, PDF download, broker email tooltip
+- Billing section integrated into order detail page for picked_up/delivered/invoiced/paid statuses
+- Broker email added to order query selects
+- Sonner toast library installed for project-wide notifications
 
-**Next action:** Execute 04-04-PLAN.md (Order Detail Billing Section)
+**Next action:** Execute 04-05-PLAN.md (Billing Dashboard)
 
-**Phase 4 in progress.** Database foundation, invoice pipeline, and payment data layer complete. UI integration (Plans 04-05) remain.
+**Phase 4 in progress.** Database foundation, invoice pipeline, payment data layer, and order detail billing section complete. One plan remaining: billing dashboard (Plan 05).
