@@ -11,7 +11,7 @@
 | **Next Action** | Execute remaining Phase 7 plans |
 | **Blockers** | None |
 
-Phase 7 in progress: 8/10 plans done. DB foundation, error boundaries, magic link, trailer/documents, CSV import, driver earnings/documents/order attachments, sample data seeding/help tooltips, marketing pages complete.
+Phase 7 in progress: 9/10 plans done. DB foundation, error boundaries, magic link, trailer/documents, CSV import, driver earnings/documents/order attachments, sample data seeding/help tooltips, marketing pages, E2E tests complete.
 
 ## Completed Work
 
@@ -69,6 +69,7 @@ Phase 7 in progress: 8/10 plans done. DB foundation, error boundaries, magic lin
 | 07-06 | Done | 2026-02-12 | Driver earnings table, driver document uploads with expiry tracking, order attachments visual grid |
 | 07-07 | Done | 2026-02-12 | Sample data seeding (2 brokers, 3 drivers, 2 trucks, 8 orders, 2 trips) + HelpTooltip on 4 pages |
 | 07-08 | Done | 2026-02-12 | Marketing route group: landing page (hero, features, CTAs), pricing page (3 tiers, FAQ), SEO metadata |
+| 07-09 | Done | 2026-02-12 | Playwright E2E: 15 tests across signup-dashboard, dispatch-flow, billing-flow specs |
 
 ## Phase Status
 
@@ -80,10 +81,10 @@ Phase 7 in progress: 8/10 plans done. DB foundation, error boundaries, magic lin
 | 4 | Billing & Invoicing | Complete | 5/5 |
 | 5 | Onboarding + Stripe Polish | Complete | 5/5 |
 | 6 | iOS Driver App | Complete | 13/13 |
-| 7 | Polish & Launch Prep | In Progress | 8/10 |
+| 7 | Polish & Launch Prep | In Progress | 9/10 |
 
 ## Progress
-██████████████████████████████████████████████████████░░░ 96% (51/53 plans complete across Phases 1-7)
+█████████████████████████████████████████████████████░░░ 98% (52/53 plans complete across Phases 1-7)
 
 ## Key Decisions Log
 
@@ -293,19 +294,24 @@ Phase 7 in progress: 8/10 plans done. DB foundation, error boundaries, magic lin
 | 2026-02-12 | Sample data tagged with [SAMPLE DATA] in notes field | Deterministic cleanup identification for seed/clear operations | 07-07 |
 | 2026-02-12 | Owner-only access for seed/clear sample data | Prevents non-owners from modifying demo data | 07-07 |
 | 2026-02-12 | HelpTooltip wraps its own TooltipProvider | Self-contained usage anywhere without parent wrapper | 07-07 |
+| 2026-02-12 | Chromium-only Playwright project | Speed over coverage; Firefox/WebKit added later if needed | 07-09 |
+| 2026-02-12 | Production build target for E2E (next build && next start) | Realistic testing against compiled output, not dev server | 07-09 |
+| 2026-02-12 | UI-structure tests (not full CRUD integration) | Avoids hard backend/database dependencies for E2E portability | 07-09 |
+| 2026-02-12 | Env-configurable test credentials (E2E_TEST_EMAIL/PASSWORD) | Flexible for CI and local environments | 07-09 |
 
 ## Session Continuity
 
-**Last session:** 2026-02-12 12:11 UTC
-**Stopped at:** Completed 07-07-PLAN.md
+**Last session:** 2026-02-12 12:17 UTC
+**Stopped at:** Completed 07-09-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Phase 7 Plan 07: Sample Data Seeding & Help Tooltips
-- generateSampleData: 2 brokers, 3 drivers, 2 trucks, 8 orders with US city routes
-- seedSampleData/clearSampleData server actions with dependency-ordered insert/delete
-- HelpTooltip component placed on dispatch, orders, billing, and settings pages
+- Phase 7 Plan 09: Playwright E2E Tests
+- playwright.config.ts targeting production build on port 3000
+- 15 E2E tests: signup-dashboard (5), dispatch-flow (5), billing-flow (5)
+- Shared auth helper: loginAsTestUser, TEST_USER, createTestOrder
+- npm scripts: test:e2e, test:e2e:ui, test:e2e:headed
 
-**Next:** Execute remaining Phase 7 plans (09, 10)
+**Next:** Execute remaining Phase 7 plan (10)
