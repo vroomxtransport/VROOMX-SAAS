@@ -7,11 +7,11 @@
 | Item | Status |
 |------|--------|
 | **Milestone** | v1.0 — MVP Launch |
-| **Current Phase** | Phase 3 (Dispatch Workflow) -- Complete |
-| **Next Action** | Plan Phase 4 (Billing & Invoicing) |
+| **Current Phase** | Phase 4 (Billing & Invoicing) -- Executing |
+| **Next Action** | Execute 04-02 (Invoice PDF Generation) |
 | **Blockers** | None |
 
-Phase 3 complete: 6/6 plans done. Full dispatch workflow operational: trip CRUD, financial calculations, dispatch board, trip detail page, bidirectional order assignment.
+Phase 4 in progress: 1/5 plans done. Database foundation for billing complete: payment_status enum, payments table, billing columns, types, validation.
 
 ## Completed Work
 
@@ -38,6 +38,7 @@ Phase 3 complete: 6/6 plans done. Full dispatch workflow operational: trip CRUD,
 | 03-04 | Done | 2026-02-12 | Dispatch board UI: status-grouped trip list, filters, creation modal |
 | 03-05 | Done | 2026-02-12 | Trip detail page: financial card, order assign/unassign, expense CRUD, status workflow |
 | 03-06 | Done | 2026-02-12 | Order-side trip assignment: AssignToTrip component, trip relation in order queries |
+| 04-01 | Done | 2026-02-12 | DB foundation for billing: payment_status enum, payments table, types, Zod validation |
 
 ## Phase Status
 
@@ -46,13 +47,13 @@ Phase 3 complete: 6/6 plans done. Full dispatch workflow operational: trip CRUD,
 | 1 | Project Setup + Auth + Multi-Tenancy | Complete | 8/8 |
 | 2 | Data Model + Core Entities | Complete | 6/6 |
 | 3 | Dispatch Workflow | Complete | 6/6 |
-| 4 | Billing & Invoicing | Not Started | 0/? |
+| 4 | Billing & Invoicing | In Progress | 1/5 |
 | 5 | Onboarding + Stripe Polish | Not Started | 0/? |
 | 6 | iOS Driver App | Not Started | 0/? |
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-████████████████████ 100% (20/20 plans complete across Phases 1-3)
+█████████████████████ 84% (21/25 plans complete across Phases 1-4)
 
 ## Key Decisions Log
 
@@ -142,22 +143,27 @@ Phase 3 complete: 6/6 plans done. Full dispatch workflow operational: trip CRUD,
 | 2026-02-12 | Trip search uses local filter on useTrips(pageSize:100) | Simpler than server-side search, leverages existing hook | 03-06 |
 | 2026-02-12 | AssignToTrip shown for new/assigned/picked_up statuses only | Non-assignable statuses (delivered, invoiced, paid, cancelled) excluded | 03-06 |
 | 2026-02-12 | Trip relation added to both fetchOrder and fetchOrders | Enables trip info display on both detail and list views | 03-06 |
+| 2026-02-12 | paymentStatusEnum in top-level Enums section (not Phase 4 section) | Avoids TypeScript use-before-declaration error | 04-01 |
+| 2026-02-12 | Payments table follows trips RLS pattern exactly | Consistent tenant isolation across all tables | 04-01 |
 
 ## Session Continuity
 
-**Last session:** 2026-02-12 06:05 UTC
-**Stopped at:** Completed 03-06-PLAN.md (Phase 3 complete)
+**Last session:** 2026-02-12 08:10 UTC
+**Stopped at:** Completed 04-01-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Phase 3 Plan 06: Order-Side Trip Assignment
-- AssignToTrip component on order detail page with Popover trip search
-- Order queries now include trip relation (id, trip_number, status)
-- Bidirectional assignment complete: trip detail -> assign orders, order detail -> assign to trip
-- Phase 3 (Dispatch Workflow) is fully complete: 6/6 plans done
+- Phase 4 Plan 01: Database Foundation for Billing
+- payment_status enum (unpaid, invoiced, partially_paid, paid) in SQL, Drizzle, TypeScript
+- payments table with RLS policies, indexes, triggers, Realtime
+- Billing columns on orders (payment_status, invoice_date, amount_paid)
+- Company info columns on tenants (address, city, state, zip, phone)
+- PaymentStatus type union with labels and colors
+- recordPaymentSchema Zod validation
+- Installed @react-pdf/renderer, resend, @react-email/components
 
-**Next action:** Plan Phase 4 (Billing & Invoicing)
+**Next action:** Execute 04-02-PLAN.md (Invoice PDF Generation)
 
-**Phase 3 complete.** All dispatch workflow functionality in place: trip CRUD, financial calculations (TDD), dispatch board with status sections and filters, trip detail with financials/orders/expenses/status workflow, and bidirectional order-trip assignment.
+**Phase 4 in progress.** Database foundation complete. All subsequent billing plans (02-05) can now build on these tables, types, and validations.
