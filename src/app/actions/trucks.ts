@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { truckSchema } from '@/lib/validations/truck'
+import { checkTierLimit } from '@/lib/tier'
 import { revalidatePath } from 'next/cache'
 
 export async function createTruck(data: unknown) {
@@ -24,6 +25,15 @@ export async function createTruck(data: unknown) {
   const tenantId = user.app_metadata?.tenant_id
   if (!tenantId) {
     return { error: 'No tenant found' }
+  }
+
+  // Tier limit check: block if truck limit reached or account suspended
+  const tierCheck = await checkTierLimit(supabase, tenantId, 'trucks')
+  if (!tierCheck.allowed) {
+    if (tierCheck.limit === 0) {
+      return { error: 'Your account is suspended. Please update your payment method.' }
+    }
+    return { error: `Truck limit reached (${tierCheck.current}/${tierCheck.limit}). Upgrade your plan to add more trucks.` }
   }
 
   const { data: truck, error } = await supabase

@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { driverSchema } from '@/lib/validations/driver'
+import { checkTierLimit } from '@/lib/tier'
 import { revalidatePath } from 'next/cache'
 
 export async function createDriver(data: unknown) {
@@ -24,6 +25,15 @@ export async function createDriver(data: unknown) {
   const tenantId = user.app_metadata?.tenant_id
   if (!tenantId) {
     return { error: 'No tenant found' }
+  }
+
+  // Tier limit check: block if user limit reached or account suspended
+  const tierCheck = await checkTierLimit(supabase, tenantId, 'users')
+  if (!tierCheck.allowed) {
+    if (tierCheck.limit === 0) {
+      return { error: 'Your account is suspended. Please update your payment method.' }
+    }
+    return { error: `Team member limit reached (${tierCheck.current}/${tierCheck.limit}). Upgrade your plan to add more team members.` }
   }
 
   const { data: driver, error } = await supabase
