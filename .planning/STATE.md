@@ -56,6 +56,7 @@ Phase 6 in progress: 10/13 plans done. Order detail complete.
 | 06-06 | Done | 2026-02-12 | TripsView (active/completed list), TripDetailView (financials, orders, expenses, receipt upload), AllTripsView |
 | 06-11 | Done | 2026-02-12 | EarningsView (hero card, breakdown, chart, history), SettlementDetailView (trip table, PDF/CSV export) |
 | 06-12 | Done | 2026-02-12 | NotificationManager (APNs, device tokens, badge), MessagesView (grouped list, filters, tap-to-read) |
+| 06-07 | Done | 2026-02-12 | OrderDetailView (9-section ScrollView), TimelineView (7-step), ETAButton, MapLinkButton, ContactActionSheet, FileManagementGrid |
 | 06-13 | Done | 2026-02-12 | ProfileView: driver info, stats grid, theme/biometric/notification prefs, cache mgmt, sign out |
 
 ## Phase Status
@@ -67,11 +68,11 @@ Phase 6 in progress: 10/13 plans done. Order detail complete.
 | 3 | Dispatch Workflow | Complete | 6/6 |
 | 4 | Billing & Invoicing | Complete | 5/5 |
 | 5 | Onboarding + Stripe Polish | Complete | 5/5 |
-| 6 | iOS Driver App | In Progress | 9/13 |
+| 6 | iOS Driver App | In Progress | 10/13 |
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-████████████████████████████████████████████████████████ 91% (39/43 plans complete across Phases 1-6)
+█████████████████████████████████████████████████████████ 93% (40/43 plans complete across Phases 1-6)
 
 ## Key Decisions Log
 
@@ -236,22 +237,27 @@ Phase 6 in progress: 10/13 plans done. Order detail complete.
 | 2026-02-12 | NotificationCenter.default posts for push-tap navigation | Decouples NotificationManager from view layer; views observe independently | 06-12 |
 | 2026-02-12 | nonisolated delegate methods with Task { @MainActor } bridge | UNUserNotificationCenterDelegate is non-isolated; bridge for safe state updates | 06-12 |
 | 2026-02-12 | DataManager.driverId changed from private to private(set) | NotificationManager needs read access for badge count queries | 06-12 |
+| 2026-02-12 | OrderStatus.level extension for timeline comparison | Numeric levels enable >= comparisons instead of switch statements | 06-07 |
+| 2026-02-12 | Inspection actions as placeholders (not NavigationLinks) | InspectionView doesn't exist yet; avoids broken references until Plans 08-09 | 06-07 |
+| 2026-02-12 | Dual upload path in FileManagementGrid (queue + direct) | InspectionUploadQueue provides offline resilience; direct upload provides immediate feedback | 06-07 |
+| 2026-02-12 | OrderAttachment model colocated in FileManagementGrid.swift | Only consumer; can extract to Models/ later if needed | 06-07 |
 
 ## Session Continuity
 
-**Last session:** 2026-02-12 10:51 UTC
-**Stopped at:** Completed 06-11-PLAN.md
+**Last session:** 2026-02-12 10:52 UTC
+**Stopped at:** Completed 06-07-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Phase 6 Plan 06: Trips Tab
-- TripsView: active trips section, recent completed DisclosureGroup, pull-to-refresh, empty state, "View All Trips" link
-- AllTripsView: full trip history with search by trip_number, status-grouped sections (Active/Completed)
-- TripDetailView: header, route with origin/destination, status progress bar, 6-metric financial card (driver pay emphasized), orders list with TripOrderCard, expenses with context menu delete, AddExpenseSheet with category/amount/notes/date/receipt photo
-- Receipt photo: camera capture via UIImagePickerController + PhotosPicker library, upload to Supabase Storage receipts bucket, ReceiptPreviewSheet for viewing
-- ExpenseCreate model extended with receiptUrl field
-- MainTabView NOT modified (orchestrator will wire tabs after Wave 3)
+- Phase 6 Plan 07: Order Detail View
+- OrderDetailView: 9-section ScrollView (header, vehicle info, timeline, status actions, pickup, delivery, financial, files, notes, inspections)
+- TimelineView: 7-step vertical timeline with color-coded states (complete/active/pending)
+- ETAButton: DatePicker sheet for pickup/delivery ETA submission via DataManager.submitETA
+- MapLinkButton: Google Maps preferred, Apple Maps fallback
+- ContactActionSheet: call/SMS/copy with haptic feedback
+- FileManagementGrid: order_attachments fetch, 2-column grid, PhotosPicker upload via InspectionUploadQueue to bol-documents bucket
+- OrderStatus.level extension added for timeline comparison
 
-**Next:** Execute remaining Wave 3 plans (06-07, 06-08, 06-09, 06-10)
+**Next:** Execute remaining Wave 3 plans (06-08, 06-09, 06-10)
