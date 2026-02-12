@@ -22,6 +22,7 @@ import {
   Package,
 } from 'lucide-react'
 import { PAYMENT_TERMS_LABELS } from '@/types'
+import { BrokerReceivables } from '../_components/broker-receivables'
 
 export default function BrokerDetailPage({
   params,
@@ -236,17 +237,9 @@ export default function BrokerDetailPage({
           </div>
         )}
 
-        {/* Orders from this broker (placeholder) */}
-        <div className="rounded-lg border bg-white p-6">
-          <h2 className="mb-4 text-lg font-semibold text-gray-900">
-            Orders from this Broker
-          </h2>
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <Package className="mb-2 h-8 w-8 text-gray-300" />
-            <p className="text-sm text-gray-500">
-              Orders will appear here once the order management is connected.
-            </p>
-          </div>
+        {/* Receivables */}
+        <div className="lg:col-span-2">
+          <BrokerReceivables brokerId={id} />
         </div>
       </div>
 
