@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select'
 import { PAYMENT_TYPES, PAYMENT_TYPE_LABELS } from '@/types'
 import type { PaymentType } from '@/types'
+import { HelpTooltip } from '@/components/help-tooltip'
 import type { CreateOrderInput } from '@/lib/validations/order'
 
 export function PricingStep() {
@@ -41,7 +42,10 @@ export function PricingStep() {
           name="revenue"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Revenue *</FormLabel>
+              <FormLabel className="flex items-center gap-1">
+                Revenue *
+                <HelpTooltip content="Total amount the customer or broker pays for this transport." side="top" />
+              </FormLabel>
               <FormControl>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">$</span>
@@ -67,7 +71,10 @@ export function PricingStep() {
           name="carrierPay"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Carrier Pay *</FormLabel>
+              <FormLabel className="flex items-center gap-1">
+                Carrier Pay *
+                <HelpTooltip content="Amount paid to the carrier or driver for hauling this vehicle." side="top" />
+              </FormLabel>
               <FormControl>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">$</span>
@@ -139,7 +146,10 @@ export function PricingStep() {
         name="paymentType"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Payment Type</FormLabel>
+            <FormLabel className="flex items-center gap-1">
+              Payment Type
+              <HelpTooltip content="COD = Cash on Delivery, COP = Cash on Pickup, BILL = Invoice after delivery." side="top" />
+            </FormLabel>
             <Select
               onValueChange={field.onChange}
               value={field.value ?? 'COP'}

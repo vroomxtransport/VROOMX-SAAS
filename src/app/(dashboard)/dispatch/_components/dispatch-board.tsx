@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/shared/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Plus, Truck, ChevronDown, ChevronRight } from 'lucide-react'
+import { HelpTooltip } from '@/components/help-tooltip'
 import { TRIP_STATUSES, TRIP_STATUS_LABELS, TRIP_STATUS_COLORS } from '@/types'
 import type { TripStatus } from '@/types'
 import type { TripWithRelations } from '@/lib/queries/trips'
@@ -139,7 +140,13 @@ export function DispatchBoard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dispatch Board</h1>
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
+            Dispatch Board
+            <HelpTooltip
+              content="Create trips, assign orders, and track driver progress. Trips flow from Planned to In Progress to Completed."
+              side="right"
+            />
+          </h1>
           <p className="mt-1 text-sm text-gray-500">
             {data ? `Showing ${data.trips.length} of ${data.total} trips` : 'Manage trips and dispatching.'}
           </p>

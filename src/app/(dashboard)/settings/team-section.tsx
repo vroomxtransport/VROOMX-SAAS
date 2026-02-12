@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { UserPlus, X, Mail, Clock } from 'lucide-react'
+import { HelpTooltip } from '@/components/help-tooltip'
 import type { TenantRole } from '@/types'
 import { INVITABLE_ROLES } from '@/types'
 
@@ -87,6 +88,10 @@ export function TeamSection({
           <CardTitle className="flex items-center gap-2">
             <UserPlus className="h-5 w-5" />
             Invite Team Member
+            <HelpTooltip
+              content="Invitees receive an email link to join your organization. Dispatchers can manage orders and trips. Viewers have read-only access."
+              side="right"
+            />
           </CardTitle>
           <CardDescription>
             Send an email invitation to add someone to your organization.
