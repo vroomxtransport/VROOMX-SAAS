@@ -7,11 +7,11 @@
 | Item | Status |
 |------|--------|
 | **Milestone** | v1.0 — MVP Launch |
-| **Current Phase** | Phase 3 (Dispatch Workflow) -- In Progress |
-| **Next Action** | Execute 03-06-PLAN.md (Wiring & Polish) |
+| **Current Phase** | Phase 3 (Dispatch Workflow) -- Complete |
+| **Next Action** | Plan Phase 4 (Billing & Invoicing) |
 | **Blockers** | None |
 
-Phase 3 in progress: 5/6 plans done. Dispatch board and trip detail page complete. Final wiring/polish remaining.
+Phase 3 complete: 6/6 plans done. Full dispatch workflow operational: trip CRUD, financial calculations, dispatch board, trip detail page, bidirectional order assignment.
 
 ## Completed Work
 
@@ -37,6 +37,7 @@ Phase 3 in progress: 5/6 plans done. Dispatch board and trip detail page complet
 | 03-03 | Done | 2026-02-12 | Trip server actions, queries, hooks with Realtime for dispatch data layer |
 | 03-04 | Done | 2026-02-12 | Dispatch board UI: status-grouped trip list, filters, creation modal |
 | 03-05 | Done | 2026-02-12 | Trip detail page: financial card, order assign/unassign, expense CRUD, status workflow |
+| 03-06 | Done | 2026-02-12 | Order-side trip assignment: AssignToTrip component, trip relation in order queries |
 
 ## Phase Status
 
@@ -44,14 +45,14 @@ Phase 3 in progress: 5/6 plans done. Dispatch board and trip detail page complet
 |-------|------|--------|-------|
 | 1 | Project Setup + Auth + Multi-Tenancy | Complete | 8/8 |
 | 2 | Data Model + Core Entities | Complete | 6/6 |
-| 3 | Dispatch Workflow | In Progress | 5/6 |
+| 3 | Dispatch Workflow | Complete | 6/6 |
 | 4 | Billing & Invoicing | Not Started | 0/? |
 | 5 | Onboarding + Stripe Polish | Not Started | 0/? |
 | 6 | iOS Driver App | Not Started | 0/? |
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-███████████████████░ 95% (19/20 plans complete across Phases 1-3)
+████████████████████ 100% (20/20 plans complete across Phases 1-3)
 
 ## Key Decisions Log
 
@@ -138,23 +139,25 @@ Phase 3 in progress: 5/6 plans done. Dispatch board and trip detail page complet
 | 2026-02-12 | Status confirm dialogs mention order auto-sync | User sees "will mark all X orders as Delivered" before completing | 03-05 |
 | 2026-02-12 | Trip orders query inline in component (not separate hook) | View-specific query, no reuse needed elsewhere | 03-05 |
 | 2026-02-12 | Net profit card uses ring + colored bg for visual emphasis | Green for positive, red for negative profit at a glance | 03-05 |
+| 2026-02-12 | Trip search uses local filter on useTrips(pageSize:100) | Simpler than server-side search, leverages existing hook | 03-06 |
+| 2026-02-12 | AssignToTrip shown for new/assigned/picked_up statuses only | Non-assignable statuses (delivered, invoiced, paid, cancelled) excluded | 03-06 |
+| 2026-02-12 | Trip relation added to both fetchOrder and fetchOrders | Enables trip info display on both detail and list views | 03-06 |
 
 ## Session Continuity
 
-**Last session:** 2026-02-12 05:58 UTC
-**Stopped at:** Completed 03-05-PLAN.md
+**Last session:** 2026-02-12 06:05 UTC
+**Stopped at:** Completed 03-06-PLAN.md (Phase 3 complete)
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Phase 3 Plan 05: Trip Detail Page
-- Trip detail page at /trips/[id] with 7 component files
-- Financial summary card with 6 stat cards (revenue, carrier pay editable, broker fees, driver pay with model subtitle, expenses, net profit color-coded)
-- Orders section with assign dialog (debounced search, batch assignment), unassign with confirmation
-- Expense CRUD with inline form, 5 predefined categories + custom label for misc
-- Status workflow: planned -> in_progress -> at_terminal -> completed with rollback and order sync messaging
+- Phase 3 Plan 06: Order-Side Trip Assignment
+- AssignToTrip component on order detail page with Popover trip search
+- Order queries now include trip relation (id, trip_number, status)
+- Bidirectional assignment complete: trip detail -> assign orders, order detail -> assign to trip
+- Phase 3 (Dispatch Workflow) is fully complete: 6/6 plans done
 
-**Next action:** Execute 03-06-PLAN.md (Wiring & Polish)
+**Next action:** Plan Phase 4 (Billing & Invoicing)
 
-**Phase 3 progress:** 5/6 plans complete. Only 03-06 remaining to complete Phase 3.
+**Phase 3 complete.** All dispatch workflow functionality in place: trip CRUD, financial calculations (TDD), dispatch board with status sections and filters, trip detail with financials/orders/expenses/status workflow, and bidirectional order-trip assignment.
