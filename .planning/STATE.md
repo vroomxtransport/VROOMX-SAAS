@@ -8,10 +8,10 @@
 |------|--------|
 | **Milestone** | v1.0 — MVP Launch |
 | **Current Phase** | Phase 6 (iOS Driver App) -- In Progress |
-| **Next Action** | Execute 06-06-PLAN.md |
+| **Next Action** | Execute next Wave 3 plan |
 | **Blockers** | None |
 
-Phase 6 in progress: 5/13 plans done. Home tab with order cards complete.
+Phase 6 in progress: 6/13 plans done. Profile tab complete.
 
 ## Completed Work
 
@@ -53,6 +53,7 @@ Phase 6 in progress: 5/13 plans done. Home tab with order cards complete.
 | 06-03 | Done | 2026-02-12 | Auth flow (email OTP + biometric + PIN), LoginView, ContentView routing, 5-tab MainTabView shell |
 | 06-04 | Done | 2026-02-12 | DataManager (fetch/cache/Realtime/mutations), PendingActionsQueue, InspectionUploadQueue, shared UI components |
 | 06-05 | Done | 2026-02-12 | HomeView (greeting/stats/module tabs), OrderCardView (vehicle/route/status/actions), ModuleTabsView |
+| 06-13 | Done | 2026-02-12 | ProfileView: driver info, stats grid, theme/biometric/notification prefs, cache mgmt, sign out |
 
 ## Phase Status
 
@@ -63,11 +64,11 @@ Phase 6 in progress: 5/13 plans done. Home tab with order cards complete.
 | 3 | Dispatch Workflow | Complete | 6/6 |
 | 4 | Billing & Invoicing | Complete | 5/5 |
 | 5 | Onboarding + Stripe Polish | Complete | 5/5 |
-| 6 | iOS Driver App | In Progress | 5/13 |
+| 6 | iOS Driver App | In Progress | 6/13 |
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-███████████████████████████████████████████████████░░░ 81% (35/43 plans complete across Phases 1-6)
+████████████████████████████████████████████████████░░░ 84% (36/43 plans complete across Phases 1-6)
 
 ## Key Decisions Log
 
@@ -218,21 +219,22 @@ Phase 6 in progress: 5/13 plans done. Home tab with order cards complete.
 | 2026-02-12 | Vehicle color dot mapped from color name string | Common auto colors (black, white, silver, red, blue, etc.) | 06-05 |
 | 2026-02-12 | ISO8601 date parsing with 3-step fallback chain | Fractional seconds, standard ISO, then date-only format | 06-05 |
 | 2026-02-12 | MainTabView NOT modified per orchestrator rules | Tab wiring deferred to post-Wave 3 orchestration | 06-05 |
+| 2026-02-12 | Skip NotificationManager.deregisterDeviceToken() in sign out | NotificationManager does not exist yet; will be added when built | 06-13 |
+| 2026-02-12 | Current period earnings = current calendar month | No pay period config exists; calendar month is reasonable default | 06-13 |
 
 ## Session Continuity
 
-**Last session:** 2026-02-12 10:49 UTC
-**Stopped at:** Completed 06-05-PLAN.md
+**Last session:** 2026-02-12 10:50 UTC
+**Stopped at:** Completed 06-13-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Phase 6 Plan 05: Home Tab + Order Cards
-- HomeView: dynamic greeting (morning/afternoon/evening), 4 quick-stat cards, ModuleTabsView pill picker, filtered order list with pull-to-refresh
-- OrderCardView: vehicle description, color dot, VIN last-8, route (pickup/delivery city+state with dates), status badge, quick action buttons
-- ModuleTabsView: pill-shaped segmented picker with count badges for Pickup/Delivery/Completed/Archived
+- Phase 6 Plan 13: Profile Tab
+- ProfileView: driver info header (initials avatar, name, email, type badge, license), 2x2 stats grid (total/active trips, total/current earnings), preferences (dark mode toggle, biometric toggle, notification status), app info (version, sync status, pending count, clear cache), sign out with full teardown
+- Sign out order: DataManager.teardown() -> PendingActionsQueue.clearQueue() -> InspectionUploadQueue.clearQueue() -> authManager.logout()
 - MainTabView NOT modified (orchestrator will wire tabs after Wave 3)
-- NavigationLink(value:) pattern ready for OrderDetailView wiring in Plan 07
+- NotificationManager.deregisterDeviceToken() skipped (does not exist yet)
 
-**Next:** Execute 06-06-PLAN.md (next Wave 3 plan)
+**Next:** Execute remaining Wave 3 plans
