@@ -11,6 +11,20 @@ export type SubscriptionPlan = 'starter' | 'pro' | 'enterprise'
 // Subscription status
 export type SubscriptionStatus = 'trialing' | 'active' | 'past_due' | 'canceled' | 'unpaid'
 
+// Invite status
+export type InviteStatus = 'pending' | 'accepted' | 'expired' | 'revoked'
+
+export const INVITE_STATUSES: readonly InviteStatus[] = [
+  'pending', 'accepted', 'expired', 'revoked',
+] as const
+
+// Invitable roles (owner cannot be invited, must be the creator)
+export type InvitableRole = 'admin' | 'dispatcher' | 'viewer'
+
+export const INVITABLE_ROLES: readonly InvitableRole[] = [
+  'admin', 'dispatcher', 'viewer',
+] as const
+
 // Tier limits
 export const TIER_LIMITS: Record<SubscriptionPlan, { trucks: number; users: number }> = {
   starter: { trucks: 5, users: 3 },

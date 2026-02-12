@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, unique, index, numeric, integer, date, pgEnum } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, text, timestamp, unique, index, numeric, integer, date, pgEnum, boolean } from 'drizzle-orm/pg-core'
 
 // ============================================================================
 // Enums
@@ -53,6 +53,10 @@ export const tenants = pgTable('tenants', {
   state: text('state'),
   zip: text('zip'),
   phone: text('phone'),
+  // Phase 5 - Dunning and onboarding
+  gracePeriodEndsAt: timestamp('grace_period_ends_at', { withTimezone: true }),
+  isSuspended: boolean('is_suspended').notNull().default(false),
+  onboardingCompletedAt: timestamp('onboarding_completed_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
@@ -325,6 +329,33 @@ export const payments = pgTable('payments', {
 ])
 
 // ============================================================================
+// Phase 5 Tables: Onboarding + Stripe Polish
+// ============================================================================
+
+/**
+ * Invites Table
+ * Team member invitations with token-based acceptance.
+ */
+export const invites = pgTable('invites', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  email: text('email').notNull(),
+  role: text('role').notNull().default('dispatcher'),
+  token: uuid('token').notNull().defaultRandom(),
+  invitedBy: uuid('invited_by').notNull(),
+  status: text('status').notNull().default('pending'),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  acceptedAt: timestamp('accepted_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  unique('invites_token_unique').on(table.token),
+  index('idx_invites_tenant_id').on(table.tenantId),
+  index('idx_invites_token').on(table.token),
+  index('idx_invites_email_tenant').on(table.tenantId, table.email),
+])
+
+// ============================================================================
 // Type Exports
 // ============================================================================
 
@@ -355,3 +386,7 @@ export type NewTripExpense = typeof tripExpenses.$inferInsert
 // Phase 4
 export type DrizzlePayment = typeof payments.$inferSelect
 export type NewPayment = typeof payments.$inferInsert
+
+// Phase 5
+export type Invite = typeof invites.$inferSelect
+export type NewInvite = typeof invites.$inferInsert
