@@ -223,6 +223,163 @@ export async function updateOrderStatus(
   return { data: order }
 }
 
+// ============================================================================
+// CSV Batch Import
+// ============================================================================
+
+/** A single row from a mapped CSV import */
+export interface CsvOrderRow {
+  vehicle_vin?: string
+  vehicle_year?: string | number
+  vehicle_make?: string
+  vehicle_model?: string
+  vehicle_color?: string
+  vehicle_type?: string
+  pickup_location?: string
+  pickup_city?: string
+  pickup_state?: string
+  pickup_zip?: string
+  pickup_contact_name?: string
+  pickup_contact_phone?: string
+  pickup_date?: string
+  delivery_location?: string
+  delivery_city?: string
+  delivery_state?: string
+  delivery_zip?: string
+  delivery_contact_name?: string
+  delivery_contact_phone?: string
+  delivery_date?: string
+  revenue?: string | number
+  carrier_pay?: string | number
+  broker_fee?: string | number
+  payment_type?: string
+}
+
+export interface BatchImportResult {
+  created: number
+  errors: { row: number; message: string }[]
+}
+
+export async function batchCreateOrders(
+  rows: CsvOrderRow[]
+): Promise<BatchImportResult> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+
+  if (authError || !user) {
+    return { created: 0, errors: [{ row: 0, message: 'Not authenticated' }] }
+  }
+
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { created: 0, errors: [{ row: 0, message: 'No tenant found' }] }
+  }
+
+  const result: BatchImportResult = { created: 0, errors: [] }
+
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i]
+
+    // Validate required fields
+    const missingFields: string[] = []
+    if (!r.pickup_city?.trim()) missingFields.push('pickup_city')
+    if (!r.pickup_state?.trim()) missingFields.push('pickup_state')
+    if (!r.delivery_city?.trim()) missingFields.push('delivery_city')
+    if (!r.delivery_state?.trim()) missingFields.push('delivery_state')
+
+    if (missingFields.length > 0) {
+      result.errors.push({
+        row: i + 1,
+        message: `Missing required fields: ${missingFields.join(', ')}`,
+      })
+      continue
+    }
+
+    // Validate state codes are 2 characters
+    if (r.pickup_state && r.pickup_state.trim().length !== 2) {
+      result.errors.push({ row: i + 1, message: 'pickup_state must be a 2-letter state code' })
+      continue
+    }
+    if (r.delivery_state && r.delivery_state.trim().length !== 2) {
+      result.errors.push({ row: i + 1, message: 'delivery_state must be a 2-letter state code' })
+      continue
+    }
+
+    // Validate VIN length if provided
+    const vin = r.vehicle_vin?.trim()
+    if (vin && vin.length !== 17) {
+      result.errors.push({ row: i + 1, message: 'VIN must be exactly 17 characters' })
+      continue
+    }
+
+    // Parse numeric fields
+    const year = r.vehicle_year ? Number(r.vehicle_year) : null
+    if (year !== null && (isNaN(year) || year < 1900 || year > new Date().getFullYear() + 2)) {
+      result.errors.push({ row: i + 1, message: 'Invalid vehicle year' })
+      continue
+    }
+
+    const revenue = r.revenue ? Number(r.revenue) : 0
+    const carrierPay = r.carrier_pay ? Number(r.carrier_pay) : 0
+    const brokerFee = r.broker_fee ? Number(r.broker_fee) : 0
+
+    if (isNaN(revenue) || isNaN(carrierPay) || isNaN(brokerFee)) {
+      result.errors.push({ row: i + 1, message: 'Invalid numeric value for revenue, carrier_pay, or broker_fee' })
+      continue
+    }
+
+    // Validate payment_type if provided
+    const validPaymentTypes = ['COD', 'COP', 'CHECK', 'BILL', 'SPLIT']
+    const paymentType = r.payment_type?.trim().toUpperCase() || 'COP'
+    if (!validPaymentTypes.includes(paymentType)) {
+      result.errors.push({ row: i + 1, message: `Invalid payment_type: ${r.payment_type}. Must be one of: ${validPaymentTypes.join(', ')}` })
+      continue
+    }
+
+    const { error } = await supabase.from('orders').insert({
+      tenant_id: tenantId,
+      status: 'new',
+      vehicle_vin: vin || null,
+      vehicle_year: year,
+      vehicle_make: r.vehicle_make?.trim() || null,
+      vehicle_model: r.vehicle_model?.trim() || null,
+      vehicle_color: r.vehicle_color?.trim() || null,
+      vehicle_type: r.vehicle_type?.trim() || null,
+      pickup_location: r.pickup_location?.trim() || r.pickup_city!.trim(),
+      pickup_city: r.pickup_city!.trim(),
+      pickup_state: r.pickup_state!.trim().toUpperCase(),
+      pickup_zip: r.pickup_zip?.trim() || null,
+      pickup_contact_name: r.pickup_contact_name?.trim() || null,
+      pickup_contact_phone: r.pickup_contact_phone?.trim() || null,
+      pickup_date: r.pickup_date?.trim() || null,
+      delivery_location: r.delivery_location?.trim() || r.delivery_city!.trim(),
+      delivery_city: r.delivery_city!.trim(),
+      delivery_state: r.delivery_state!.trim().toUpperCase(),
+      delivery_zip: r.delivery_zip?.trim() || null,
+      delivery_contact_name: r.delivery_contact_name?.trim() || null,
+      delivery_contact_phone: r.delivery_contact_phone?.trim() || null,
+      delivery_date: r.delivery_date?.trim() || null,
+      revenue: String(revenue),
+      carrier_pay: String(carrierPay),
+      broker_fee: String(brokerFee),
+      payment_type: paymentType,
+    })
+
+    if (error) {
+      result.errors.push({ row: i + 1, message: error.message })
+    } else {
+      result.created++
+    }
+  }
+
+  revalidatePath('/orders')
+  return result
+}
+
 export async function rollbackOrderStatus(id: string) {
   const supabase = await createClient()
 
