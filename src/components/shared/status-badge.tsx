@@ -8,11 +8,13 @@ import {
   DRIVER_STATUS_LABELS,
   TRUCK_STATUS_COLORS,
   TRUCK_STATUS_LABELS,
+  TRIP_STATUS_COLORS,
+  TRIP_STATUS_LABELS,
 } from '@/types'
-import type { OrderStatus, DriverStatus, TruckStatus } from '@/types'
+import type { OrderStatus, DriverStatus, TruckStatus, TripStatus } from '@/types'
 import { cn } from '@/lib/utils'
 
-type StatusBadgeType = 'order' | 'driver' | 'truck'
+type StatusBadgeType = 'order' | 'driver' | 'truck' | 'trip'
 
 interface StatusBadgeProps {
   status: string
@@ -28,6 +30,8 @@ function getColorClasses(status: string, type: StatusBadgeType): string {
       return DRIVER_STATUS_COLORS[status as DriverStatus] ?? 'bg-gray-50 text-gray-700 border-gray-200'
     case 'truck':
       return TRUCK_STATUS_COLORS[status as TruckStatus] ?? 'bg-gray-50 text-gray-700 border-gray-200'
+    case 'trip':
+      return TRIP_STATUS_COLORS[status as TripStatus] ?? 'bg-gray-50 text-gray-700 border-gray-200'
     default:
       return 'bg-gray-50 text-gray-700 border-gray-200'
   }
@@ -41,6 +45,8 @@ function getLabel(status: string, type: StatusBadgeType): string {
       return DRIVER_STATUS_LABELS[status as DriverStatus] ?? status
     case 'truck':
       return TRUCK_STATUS_LABELS[status as TruckStatus] ?? status
+    case 'trip':
+      return TRIP_STATUS_LABELS[status as TripStatus] ?? status
     default:
       return status
   }

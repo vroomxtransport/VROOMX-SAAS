@@ -27,11 +27,11 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Orders', href: '/orders', icon: Package },
+  { name: 'Dispatch', href: '/dispatch', icon: Route },
   { name: 'Trucks', href: '/trucks', icon: Truck },
-  { name: 'Loads', href: '/loads', icon: Package },
-  { name: 'Routes', href: '/routes', icon: Route },
   { name: 'Drivers', href: '/drivers', icon: Users, minRole: 'dispatcher' },
-  { name: 'Customers', href: '/customers', icon: Building2, minRole: 'dispatcher' },
+  { name: 'Brokers', href: '/brokers', icon: Building2, minRole: 'dispatcher' },
   { name: 'Invoices', href: '/invoices', icon: Receipt, minRole: 'admin' },
   { name: 'Settings', href: '/settings', icon: Settings, minRole: 'admin' },
 ]
