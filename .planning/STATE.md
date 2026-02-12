@@ -8,10 +8,10 @@
 |------|--------|
 | **Milestone** | v1.0 — MVP Launch |
 | **Current Phase** | Phase 3 (Dispatch Workflow) -- In Progress |
-| **Next Action** | Execute 03-05-PLAN.md (Trip Detail Page) |
+| **Next Action** | Execute 03-06-PLAN.md (Wiring & Polish) |
 | **Blockers** | None |
 
-Phase 3 in progress: 4/6 plans done. Dispatch board UI complete. Next is trip detail page.
+Phase 3 in progress: 5/6 plans done. Dispatch board and trip detail page complete. Final wiring/polish remaining.
 
 ## Completed Work
 
@@ -36,6 +36,7 @@ Phase 3 in progress: 4/6 plans done. Dispatch board UI complete. Next is trip de
 | 03-02 | Done | 2026-02-12 | TDD financial calculations: 3 driver pay models, 8 test cases, Vitest |
 | 03-03 | Done | 2026-02-12 | Trip server actions, queries, hooks with Realtime for dispatch data layer |
 | 03-04 | Done | 2026-02-12 | Dispatch board UI: status-grouped trip list, filters, creation modal |
+| 03-05 | Done | 2026-02-12 | Trip detail page: financial card, order assign/unassign, expense CRUD, status workflow |
 
 ## Phase Status
 
@@ -43,14 +44,14 @@ Phase 3 in progress: 4/6 plans done. Dispatch board UI complete. Next is trip de
 |-------|------|--------|-------|
 | 1 | Project Setup + Auth + Multi-Tenancy | Complete | 8/8 |
 | 2 | Data Model + Core Entities | Complete | 6/6 |
-| 3 | Dispatch Workflow | In Progress | 4/6 |
+| 3 | Dispatch Workflow | In Progress | 5/6 |
 | 4 | Billing & Invoicing | Not Started | 0/? |
 | 5 | Onboarding + Stripe Polish | Not Started | 0/? |
 | 6 | iOS Driver App | Not Started | 0/? |
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-██████████████████░░ 90% (18/20 plans complete across Phases 1-3)
+███████████████████░ 95% (19/20 plans complete across Phases 1-3)
 
 ## Key Decisions Log
 
@@ -131,23 +132,29 @@ Phase 3 in progress: 4/6 plans done. Dispatch board UI complete. Next is trip de
 | 2026-02-12 | PAGE_SIZE=50 for dispatch board | Primary workspace needs more trips visible than entity pages | 03-04 |
 | 2026-02-12 | Date range filters as separate inputs below FilterBar | FilterBar only supports select/search types | 03-04 |
 | 2026-02-12 | Capacity color coding: green/amber/red | Quick visual for under/at/over capacity | 03-04 |
+| 2026-02-12 | Assign dialog stays open for batch assignment | Dispatcher assigns multiple orders in sequence without closing | 03-05 |
+| 2026-02-12 | Capacity warnings are soft amber banners, never block | Per CONTEXT.md: warn on overflow, always allow override | 03-05 |
+| 2026-02-12 | Inline carrier pay editing with keyboard shortcuts | Enter to save, Escape to cancel for fast editing | 03-05 |
+| 2026-02-12 | Status confirm dialogs mention order auto-sync | User sees "will mark all X orders as Delivered" before completing | 03-05 |
+| 2026-02-12 | Trip orders query inline in component (not separate hook) | View-specific query, no reuse needed elsewhere | 03-05 |
+| 2026-02-12 | Net profit card uses ring + colored bg for visual emphasis | Green for positive, red for negative profit at a glance | 03-05 |
 
 ## Session Continuity
 
 **Last session:** 2026-02-12 05:58 UTC
-**Stopped at:** Completed 03-04-PLAN.md
+**Stopped at:** Completed 03-05-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Phase 3 Plan 04: Dispatch Board UI
-- Dispatch board page at /dispatch with status-grouped trip sections (Planned, In Progress, At Terminal, Completed)
-- Trip rows: trip #, truck, driver, capacity (color-coded), route summary, status badge, date range
-- Filters: status, driver, truck, date range, search -- all URL-persisted
-- Trip creation modal with SearchableSelect type-ahead for truck/driver, redirects to /trips/{id}
-- SearchableSelect pattern: Popover + Input filter + scrollable list (reusable for 03-06)
+- Phase 3 Plan 05: Trip Detail Page
+- Trip detail page at /trips/[id] with 7 component files
+- Financial summary card with 6 stat cards (revenue, carrier pay editable, broker fees, driver pay with model subtitle, expenses, net profit color-coded)
+- Orders section with assign dialog (debounced search, batch assignment), unassign with confirmation
+- Expense CRUD with inline form, 5 predefined categories + custom label for misc
+- Status workflow: planned -> in_progress -> at_terminal -> completed with rollback and order sync messaging
 
-**Next action:** Execute 03-05-PLAN.md (Trip Detail Page)
+**Next action:** Execute 03-06-PLAN.md (Wiring & Polish)
 
-**Phase 3 progress:** 4/6 plans complete. Dispatch board done, trip detail page next.
+**Phase 3 progress:** 5/6 plans complete. Only 03-06 remaining to complete Phase 3.
