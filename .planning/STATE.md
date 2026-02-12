@@ -8,10 +8,10 @@
 |------|--------|
 | **Milestone** | v1.0 — MVP Launch |
 | **Current Phase** | Phase 5 (Onboarding + Stripe Polish) -- In Progress |
-| **Next Action** | Execute 05-02-PLAN.md (Invite server actions + team management UI) |
+| **Next Action** | Execute 05-03-PLAN.md |
 | **Blockers** | None |
 
-Phase 5 started: 1/5 plans done. DB foundation for invites, dunning, tier enforcement landed. Ready for invite flow implementation.
+Phase 5 in progress: 2/5 plans done. Tier enforcement active at both Server Action and DB trigger levels. Ready for next plan.
 
 ## Completed Work
 
@@ -44,6 +44,7 @@ Phase 5 started: 1/5 plans done. DB foundation for invites, dunning, tier enforc
 | 04-04 | Done | 2026-02-12 | Order detail billing section: PaymentRecorder, InvoiceButton, broker email in queries |
 | 04-05 | Done | 2026-02-12 | Billing page: receivables table, aging analysis, batch actions, collection rate, broker receivables |
 | 05-01 | Done | 2026-02-12 | DB foundation: invites table, tenant dunning/onboarding columns, tier enforcement triggers |
+| 05-02 | Done | 2026-02-12 | Tier enforcement: checkTierLimit + isAccountSuspended in tier.ts, limit checks in createTruck/createDriver |
 
 ## Phase Status
 
@@ -53,12 +54,12 @@ Phase 5 started: 1/5 plans done. DB foundation for invites, dunning, tier enforc
 | 2 | Data Model + Core Entities | Complete | 6/6 |
 | 3 | Dispatch Workflow | Complete | 6/6 |
 | 4 | Billing & Invoicing | Complete | 5/5 |
-| 5 | Onboarding + Stripe Polish | In Progress | 1/5 |
+| 5 | Onboarding + Stripe Polish | In Progress | 2/5 |
 | 6 | iOS Driver App | Not Started | 0/? |
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-██████████████████████████████████████████████░░░░░░░░ 87% (26/30 plans complete across Phases 1-5)
+███████████████████████████████████████████████░░░░░░░ 90% (27/30 plans complete across Phases 1-5)
 
 ## Key Decisions Log
 
@@ -168,20 +169,26 @@ Phase 5 started: 1/5 plans done. DB foundation for invites, dunning, tier enforc
 | 2026-02-12 | RLS SELECT+INSERT for authenticated on invites; service role for updates | Acceptance flow handled server-side without user JWT | 05-01 |
 | 2026-02-12 | Trial plan uses starter limits in tier enforcement | Consistent with existing TIER_LIMITS constant | 05-01 |
 | 2026-02-12 | InvitableRole excludes owner | Owner is always tenant creator, never invited | 05-01 |
+| 2026-02-12 | checkTierLimit reads plan from DB, never JWT | JWT may be stale; DB is source of truth for plan | 05-02 |
+| 2026-02-12 | Trial plan maps to starter tier limits | Consistent with DB triggers and TIER_LIMITS constant | 05-02 |
+| 2026-02-12 | Enterprise returns limit=-1 (unlimited) | Sentinel value signals unlimited capacity | 05-02 |
+| 2026-02-12 | Only create actions get tier checks | Update/delete/status should always work regardless of tier | 05-02 |
+| 2026-02-12 | isAccountSuspended lazily marks suspension | Handles case where grace period expired but flag not yet set | 05-02 |
 
 ## Session Continuity
 
-**Last session:** 2026-02-12 09:20 UTC
-**Stopped at:** Completed 05-01-PLAN.md
+**Last session:** 2026-02-12 09:24 UTC
+**Stopped at:** Completed 05-02-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Phase 5 Plan 01: DB Foundation for Onboarding + Stripe Polish
-- SQL migration with invites table (token, email, role, status, expiry)
-- Tenant columns: grace_period_ends_at, is_suspended, onboarding_completed_at
-- Tier enforcement triggers: enforce_truck_limit on trucks, enforce_user_limit on tenant_memberships
-- Drizzle schema mirrors SQL migration; InviteStatus/InvitableRole types and Zod validation
+- Phase 5 Plan 02: Tier Enforcement in Server Actions
+- checkTierLimit function in tier.ts: reads plan from DB, maps trial to starter limits, returns allowed/current/limit/plan
+- isAccountSuspended function in tier.ts: lazy suspension when grace period expired
+- createTruck now checks truck tier limit before insert
+- createDriver now checks user tier limit before insert
+- Dual enforcement: application-layer (Server Actions) + DB triggers (Plan 01)
 
-**Next:** 05-02 (invite server actions + team management UI)
+**Next:** 05-03
