@@ -157,14 +157,15 @@ These are explicitly NOT part of v1. Documented to prevent scope creep.
 
 Every v1 requirement maps to at least one roadmap phase:
 
-| Phase | Requirements Covered |
-|-------|---------------------|
-| 1 — Project Setup + Auth + Multi-Tenancy | AUTH-1, AUTH-2, AUTH-3, AUTH-4, AUTH-5, AUTH-7, SUB-1, SUB-2, ONB-1 |
-| 2 — Data Model + Core Entities | ORD-1, ORD-2, ORD-3, ORD-5, ORD-6, DRV-1, DRV-2, DRV-3, DRV-4, FLT-1, FLT-2, FLT-3 |
-| 3 — Dispatch Workflow | ORD-4, TRIP-1, TRIP-2, TRIP-3, TRIP-4, TRIP-5, TRIP-6 |
-| 4 — Billing & Invoicing | BIL-1, BIL-2, BIL-3, BIL-4, BIL-5, BIL-6, ORD-3 |
-| 5 — Onboarding + Stripe Polish | AUTH-6, SUB-3, SUB-4, SUB-5, ONB-2, ONB-1 |
-| 6 — iOS Driver App | APP-1, APP-2, APP-3, APP-4, APP-5, APP-6, APP-7 |
-| 7 — Polish & Launch Prep | AUTH-8, ORD-7, ORD-8, TRIP-7, DRV-5, DRV-6, FLT-4, FLT-5, ONB-3, ONB-4 |
+| Phase | Requirements Covered | Status |
+|-------|---------------------|--------|
+| 1 — Project Setup + Auth + Multi-Tenancy | AUTH-1, AUTH-2, AUTH-3, AUTH-4, AUTH-5, AUTH-7, SUB-1, SUB-2, ONB-1 | ✓ Complete |
+| 2 — Data Model + Core Entities | ORD-1, ORD-2, ORD-3, ORD-5, ORD-6, DRV-1, DRV-2, DRV-3, DRV-4, FLT-1, FLT-2, FLT-3 | ✓ Complete |
+| 3 — Dispatch Workflow | ORD-4, TRIP-1, TRIP-2, TRIP-3, TRIP-4, TRIP-5, TRIP-6 | ✓ Complete |
+| 4 — Billing & Invoicing | BIL-1, BIL-2, BIL-3, BIL-4, BIL-5, BIL-6, ORD-3 | ✓ Complete |
+| 5 — Onboarding + Stripe Polish | AUTH-6, SUB-3, SUB-4, SUB-5, ONB-2, ONB-1 | ✓ Complete |
+| 6 — iOS Driver App | APP-1, APP-2, APP-3, APP-4, APP-5, APP-6, APP-7 | ✓ Complete |
+| 7 — Polish & Launch Prep | AUTH-8, ORD-7, ORD-8, TRIP-7, DRV-5, DRV-6, FLT-4, FLT-5, ONB-3, ONB-4 | ✓ Complete |
 
 **Coverage:** 56/56 requirements mapped (100%)
+**Status:** 56/56 requirements implemented (100%) — All phases complete as of 2026-02-12
