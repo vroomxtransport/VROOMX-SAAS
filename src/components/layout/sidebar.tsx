@@ -32,7 +32,7 @@ const NAV_ITEMS: NavItem[] = [
   { name: 'Trucks', href: '/trucks', icon: Truck },
   { name: 'Drivers', href: '/drivers', icon: Users, minRole: 'dispatcher' },
   { name: 'Brokers', href: '/brokers', icon: Building2, minRole: 'dispatcher' },
-  { name: 'Invoices', href: '/invoices', icon: Receipt, minRole: 'admin' },
+  { name: 'Billing', href: '/billing', icon: Receipt, minRole: 'admin' },
   { name: 'Settings', href: '/settings', icon: Settings, minRole: 'admin' },
 ]
 
