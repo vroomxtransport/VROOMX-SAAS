@@ -8,10 +8,10 @@
 |------|--------|
 | **Milestone** | v1.0 — MVP Launch |
 | **Current Phase** | Phase 3 (Dispatch Workflow) -- In Progress |
-| **Next Action** | Execute 03-03-PLAN.md (Trip CRUD Server Actions) |
+| **Next Action** | Execute 03-04-PLAN.md (Dispatch Board UI) |
 | **Blockers** | None |
 
-Phase 3 in progress: 2/6 plans done. Financial calculations TDD complete, ready for Trip CRUD.
+Phase 3 in progress: 3/6 plans done. Server actions, queries, and hooks complete. Ready for UI.
 
 ## Completed Work
 
@@ -34,6 +34,7 @@ Phase 3 in progress: 2/6 plans done. Financial calculations TDD complete, ready 
 | 02-06 | Done | 2026-02-11 | Order detail + status workflow + cross-entity nav + Realtime |
 | 03-01 | Done | 2026-02-12 | DB foundation for dispatch: trips/trip_expenses tables, types, Zod, sidebar |
 | 03-02 | Done | 2026-02-12 | TDD financial calculations: 3 driver pay models, 8 test cases, Vitest |
+| 03-03 | Done | 2026-02-12 | Trip server actions, queries, hooks with Realtime for dispatch data layer |
 
 ## Phase Status
 
@@ -41,14 +42,14 @@ Phase 3 in progress: 2/6 plans done. Financial calculations TDD complete, ready 
 |-------|------|--------|-------|
 | 1 | Project Setup + Auth + Multi-Tenancy | Complete | 8/8 |
 | 2 | Data Model + Core Entities | Complete | 6/6 |
-| 3 | Dispatch Workflow | In Progress | 2/6 |
+| 3 | Dispatch Workflow | In Progress | 3/6 |
 | 4 | Billing & Invoicing | Not Started | 0/? |
 | 5 | Onboarding + Stripe Polish | Not Started | 0/? |
 | 6 | iOS Driver App | Not Started | 0/? |
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-████████████████░░░░ 80% (16/20 plans complete across Phases 1-3)
+█████████████████░░░ 85% (17/20 plans complete across Phases 1-3)
 
 ## Key Decisions Log
 
@@ -120,22 +121,27 @@ Phase 3 in progress: 2/6 plans done. Financial calculations TDD complete, ready 
 | 2026-02-12 | Vitest as test runner with tsconfig path aliases | Already in devDeps, just needed vitest.config.ts | 03-02 |
 | 2026-02-12 | Four positional args for calculateTripFinancials | Simpler than object arg, matches plan spec | 03-02 |
 | 2026-02-12 | Private calculateDriverPay helper function | Clean switch logic encapsulation for pay models | 03-02 |
+| 2026-02-12 | recalculateTripFinancials as shared exported helper | Used by both trips.ts and trip-expenses.ts for consistent recalculation | 03-03 |
+| 2026-02-12 | Multi-table Realtime in useTrip hook | Single channel subscribes to trips, orders, and expenses for trip detail | 03-03 |
+| 2026-02-12 | useUnassignedOrders filters status in [new, assigned] | Only assignable orders shown in assignment UI | 03-03 |
+| 2026-02-12 | Database types from @/types/database, unions from @/types | Established import convention for type sources | 03-03 |
 
 ## Session Continuity
 
-**Last session:** 2026-02-12 05:50 UTC
-**Stopped at:** Completed 03-02-PLAN.md
+**Last session:** 2026-02-12 05:52 UTC
+**Stopped at:** Completed 03-03-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Phase 3 Plan 02: Trip Financial Calculations (TDD)
-- Pure calculateTripFinancials() function with 3 driver pay models
-- 8 Vitest test cases covering all pay models and edge cases
-- Vitest infrastructure established (vitest.config.ts)
-- Fixed caller in trips.ts to match function API
+- Phase 3 Plan 03: Trip Server Actions + Queries + Hooks
+- 7 trip server actions: CRUD, status workflow with order auto-sync, order assignment with dual-trip recalculation
+- 3 expense server actions with auto financial recalculation
+- Query functions: fetchTrips (with driver/truck joins, filters, pagination), fetchTrip, fetchTripExpenses
+- TanStack Query hooks: useTrips, useTrip, useTripExpenses, useUnassignedOrders -- all with Realtime
+- Integrated with calculateTripFinancials from 03-02
 
-**Next action:** Execute 03-03-PLAN.md (Trip CRUD Server Actions)
+**Next action:** Execute 03-04-PLAN.md (Dispatch Board UI)
 
-**Phase 3 progress:** 2/6 plans complete. Financial calculations ready, next is Trip CRUD vertical slice.
+**Phase 3 progress:** 3/6 plans complete. Complete data layer ready, next is dispatch board UI.
