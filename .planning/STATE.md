@@ -8,10 +8,10 @@
 |------|--------|
 | **Milestone** | v1.0 — MVP Launch |
 | **Current Phase** | Phase 5 (Onboarding + Stripe Polish) -- In Progress |
-| **Next Action** | Execute 05-04-PLAN.md |
+| **Next Action** | Execute 05-05-PLAN.md |
 | **Blockers** | None |
 
-Phase 5 in progress: 3/5 plans done. Dunning flow and billing portal ready. Next: onboarding wizard or settings page.
+Phase 5 in progress: 4/5 plans done. Team invite flow and settings page complete. Next: final polish plan.
 
 ## Completed Work
 
@@ -46,6 +46,7 @@ Phase 5 in progress: 3/5 plans done. Dunning flow and billing portal ready. Next
 | 05-01 | Done | 2026-02-12 | DB foundation: invites table, tenant dunning/onboarding columns, tier enforcement triggers |
 | 05-02 | Done | 2026-02-12 | Tier enforcement: checkTierLimit + isAccountSuspended in tier.ts, limit checks in createTruck/createDriver |
 | 05-03 | Done | 2026-02-12 | Stripe dunning flow (14-day grace period) + Billing Portal Server Action |
+| 05-04 | Done | 2026-02-12 | Team invite flow: send/accept/revoke invites, settings page team management |
 
 ## Phase Status
 
@@ -55,12 +56,12 @@ Phase 5 in progress: 3/5 plans done. Dunning flow and billing portal ready. Next
 | 2 | Data Model + Core Entities | Complete | 6/6 |
 | 3 | Dispatch Workflow | Complete | 6/6 |
 | 4 | Billing & Invoicing | Complete | 5/5 |
-| 5 | Onboarding + Stripe Polish | In Progress | 3/5 |
+| 5 | Onboarding + Stripe Polish | In Progress | 4/5 |
 | 6 | iOS Driver App | Not Started | 0/? |
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-████████████████████████████████████████████████░░░░░░ 93% (28/30 plans complete across Phases 1-5)
+█████████████████████████████████████████████████░░░░░ 97% (29/30 plans complete across Phases 1-5)
 
 ## Key Decisions Log
 
@@ -179,21 +180,27 @@ Phase 5 in progress: 3/5 plans done. Dunning flow and billing portal ready. Next
 | 2026-02-12 | Grace period only set on first failure, not reset on subsequent | Prevents timer extension on repeated failures during grace period | 05-03 |
 | 2026-02-12 | handleInvoicePaid sets status to active | Covers initial, renewal, and manual retry payment success | 05-03 |
 | 2026-02-12 | Billing portal returns to /settings | Natural return point after subscription management | 05-03 |
+| 2026-02-12 | Resend react: prop instead of @react-email/render | Matches existing invoice email pattern, no extra dependency | 05-04 |
+| 2026-02-12 | Invited signups skip tenant/Stripe creation entirely | Cleaner than creating unused placeholder tenant | 05-04 |
+| 2026-02-12 | NEXT_REDIRECT digest re-throw in accept route | Prevents swallowing Next.js redirect throws in catch blocks | 05-04 |
+| 2026-02-12 | Suspense wrapper for useSearchParams in login/signup | Required by Next.js App Router for client-side search params | 05-04 |
 
 ## Session Continuity
 
-**Last session:** 2026-02-12 09:25 UTC
-**Stopped at:** Completed 05-03-PLAN.md
+**Last session:** 2026-02-12 09:32 UTC
+**Stopped at:** Completed 05-04-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Phase 5 Plan 03: Stripe Dunning Flow + Billing Portal
-- handleInvoicePaid clears grace_period_ends_at and is_suspended on successful payment
-- handlePaymentFailedWithGrace sets 14-day grace period (only on first failure)
-- invoice.paid webhook case added to route; invoice.payment_failed now uses grace period handler
-- createPortalSession helper and createBillingPortalSession Server Action for Stripe Billing Portal
-- Server Action fetches stripe_customer_id, creates portal session, redirects user
+- Phase 5 Plan 04: Team Invite Flow + Settings Page Team Management
+- sendInvite Server Action: role/permission checks, tier limits, duplicate detection, Resend email
+- revokeInvite Server Action: marks invite as revoked with admin role check
+- InviteEmail React Email template for team invitations
+- Accept route at /invite/accept: token validation, expiry check, membership creation, app_metadata update
+- Login/signup pages wire invite_token through hidden fields with auth action redirect
+- signUpAction skips tenant/Stripe creation for invited users
+- Settings page extended with TeamSection: invite form, member list, pending invites
 
-**Next:** 05-04
+**Next:** 05-05
