@@ -5,6 +5,9 @@ import Combine
 /// Monitors device network connectivity using `NWPathMonitor`.
 /// Publishes connection state for offline indicators and sync decisions.
 final class NetworkMonitor: ObservableObject {
+    /// Shared singleton instance.
+    static let shared = NetworkMonitor()
+
     /// Whether the device currently has network connectivity.
     @Published var isConnected: Bool = true
 
