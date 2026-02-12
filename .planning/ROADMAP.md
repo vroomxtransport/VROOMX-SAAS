@@ -137,7 +137,9 @@ Plans:
 
 ---
 
-## Phase 4: Billing & Invoicing
+## Phase 4: Billing & Invoicing ✓
+
+**Status:** Complete (2026-02-12)
 
 **Goal:** A carrier can track payments, view aging analysis, and see which brokers owe money. Basic invoice generation works. The financial backbone of the TMS is complete.
 
@@ -146,11 +148,11 @@ Plans:
 **Plans:** 5 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — DB foundation: payments table, payment_status enum, tenant company columns, types, validations, npm deps
-- [ ] 04-02-PLAN.md — Invoice generation: PDF template, Resend client, email template, API routes for PDF/send
-- [ ] 04-03-PLAN.md — Payment data layer: server actions, receivables queries, aging computation, hooks
-- [ ] 04-04-PLAN.md — Order detail billing: payment recorder, send invoice button, payment status display
-- [ ] 04-05-PLAN.md — Billing page: receivables table, aging analysis, batch actions, collection rate, sidebar nav
+- [x] 04-01-PLAN.md — DB foundation: payments table, payment_status enum, tenant company columns, types, validations, npm deps
+- [x] 04-02-PLAN.md — Invoice generation: PDF template, Resend client, email template, API routes for PDF/send
+- [x] 04-03-PLAN.md — Payment data layer: server actions, receivables queries, aging computation, hooks
+- [x] 04-04-PLAN.md — Order detail billing: payment recorder, send invoice button, payment status display
+- [x] 04-05-PLAN.md — Billing page: receivables table, aging analysis, batch actions, collection rate, sidebar nav
 
 **Key Deliverables:**
 - Order payment status tracking (unpaid -> invoiced -> partially paid -> paid)
@@ -166,11 +168,11 @@ Plans:
 **Research Flags:** Aging analysis via security_invoker view (see ARCHITECTURE.md Section 6). Use Resend for email (team familiarity from Horizon Star).
 
 **Success Criteria:**
-- [ ] Dispatcher can mark orders as invoiced and track payment dates
-- [ ] Aging analysis shows correct bucket totals
-- [ ] Broker receivables page shows per-broker totals
-- [ ] Invoice PDF generates with correct order details
-- [ ] Collection rate metric is accurate
+- [x] Dispatcher can mark orders as invoiced and track payment dates
+- [x] Aging analysis shows correct bucket totals
+- [x] Broker receivables page shows per-broker totals
+- [x] Invoice PDF generates with correct order details
+- [x] Collection rate metric is accurate
 
 ---
 
