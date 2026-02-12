@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { BillingSection } from './billing-section'
 import { UsageSection } from './usage-section'
 import { TeamSection } from './team-section'
+import { SeedSection } from './seed-section'
 import type { TenantRole } from '@/types'
 
 export default async function SettingsPage() {
@@ -90,6 +91,9 @@ export default async function SettingsPage() {
           plan={tenant.plan}
         />
       )}
+
+      {/* Sample data management for owners */}
+      <SeedSection isOwner={userRole === 'owner'} />
     </div>
   )
 }
