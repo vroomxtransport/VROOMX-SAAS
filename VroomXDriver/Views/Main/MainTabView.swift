@@ -8,38 +8,22 @@ struct MainTabView: View {
     var body: some View {
         TabView(selection: $selectedTab) {
             // MARK: 1. Home
-            NavigationStack {
-                PlaceholderTabView(
-                    title: "Home",
-                    icon: "house.fill",
-                    description: "Greeting, quick stats, order cards"
-                )
-            }
-            .tabItem {
-                Label("Home", systemImage: "house.fill")
-            }
-            .tag(Tab.home)
+            HomeView()
+                .tabItem {
+                    Label("Home", systemImage: "house.fill")
+                }
+                .tag(Tab.home)
 
             // MARK: 2. Trips
-            NavigationStack {
-                PlaceholderTabView(
-                    title: "Trips",
-                    icon: "shippingbox.fill",
-                    description: "Assigned trip list and trip details"
-                )
-            }
-            .tabItem {
-                Label("Trips", systemImage: "shippingbox.fill")
-            }
-            .tag(Tab.trips)
+            TripsView()
+                .tabItem {
+                    Label("Trips", systemImage: "shippingbox.fill")
+                }
+                .tag(Tab.trips)
 
             // MARK: 3. Earnings
             NavigationStack {
-                PlaceholderTabView(
-                    title: "Earnings",
-                    icon: "wallet.pass.fill",
-                    description: "Pay period, financial breakdown, history"
-                )
+                EarningsView()
             }
             .tabItem {
                 Label("Earnings", systemImage: "wallet.pass.fill")
@@ -48,24 +32,17 @@ struct MainTabView: View {
 
             // MARK: 4. Messages
             NavigationStack {
-                PlaceholderTabView(
-                    title: "Messages",
-                    icon: "message.fill",
-                    description: "Dispatch notifications and messages"
-                )
+                MessagesView()
             }
             .tabItem {
                 Label("Messages", systemImage: "message.fill")
             }
+            .badge(NotificationManager.shared.unreadCount)
             .tag(Tab.messages)
 
             // MARK: 5. Profile
             NavigationStack {
-                PlaceholderTabView(
-                    title: "Profile",
-                    icon: "person.fill",
-                    description: "Driver stats, theme, preferences, sign out"
-                )
+                ProfileView()
             }
             .tabItem {
                 Label("Profile", systemImage: "person.fill")
