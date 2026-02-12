@@ -11,7 +11,7 @@
 | **Next Action** | Execute remaining Phase 7 plans |
 | **Blockers** | None |
 
-Phase 7 in progress: 3/10 plans done. DB foundation, error boundaries, magic link complete.
+Phase 7 in progress: 5/10 plans done. DB foundation, error boundaries, magic link, trailer/documents, CSV import complete.
 
 ## Completed Work
 
@@ -64,6 +64,8 @@ Phase 7 in progress: 3/10 plans done. DB foundation, error boundaries, magic lin
 | 07-01 | Done | 2026-02-12 | DB foundation: trailers/documents tables, Drizzle schema, types, Zod, storage helper, papaparse |
 | 07-02 | Done | 2026-02-12 | Error boundaries, loading states, 404 pages for root/dashboard/auth route groups |
 | 07-03 | Done | 2026-02-12 | Magic link login: magicLinkAction + tab-based login UI with password/magic-link toggle |
+| 07-04 | Done | 2026-02-12 | Trailer CRUD + assignment, generic document CRUD, truck detail trailer section + document uploads |
+| 07-05 | Done | 2026-02-12 | CSV order import: 4-step wizard dialog, batchCreateOrders action, papaparse parsing, fuzzy column mapping |
 
 ## Phase Status
 
@@ -75,10 +77,10 @@ Phase 7 in progress: 3/10 plans done. DB foundation, error boundaries, magic lin
 | 4 | Billing & Invoicing | Complete | 5/5 |
 | 5 | Onboarding + Stripe Polish | Complete | 5/5 |
 | 6 | iOS Driver App | Complete | 13/13 |
-| 7 | Polish & Launch Prep | In Progress | 3/10 |
+| 7 | Polish & Launch Prep | In Progress | 5/10 |
 
 ## Progress
-██████████████████████████████████████████████████░░░░░░░░ 87% (46/53 plans complete across Phases 1-7)
+████████████████████████████████████████████████████░░░░░░ 91% (48/53 plans complete across Phases 1-7)
 
 ## Key Decisions Log
 
@@ -271,22 +273,28 @@ Phase 7 in progress: 3/10 plans done. DB foundation, error boundaries, magic lin
 | 2026-02-12 | TEXT + CHECK constraint for trailer_type/status instead of PG enum | Avoids migration complexity for adding values | 07-01 |
 | 2026-02-12 | orderAttachments backfilled from migration 00006 into Drizzle schema | Missing Drizzle definition for existing SQL table | 07-01 |
 | 2026-02-12 | Storage path convention: {tenantId}/{entityId}/{uuid}.{ext} | Tenant isolation and collision avoidance | 07-01 |
+| 2026-02-12 | Generic document actions with entityType discriminator | Reusable for both truck and driver documents (Plan 06) | 07-04 |
+| 2026-02-12 | Document delete removes storage file before DB record | Graceful degradation: logs storage errors without blocking | 07-04 |
+| 2026-02-12 | Trailer CRUD inline on truck detail (no separate route) | Trailers are managed in context of their truck | 07-04 |
+| 2026-02-12 | StatusBadge type='truck' reused for trailer status | Same active/inactive/maintenance color mapping | 07-04 |
+| 2026-02-12 | Client-side CSV parsing with Papa.parse (not server upload) | Avoids file upload overhead, enables instant preview | 07-05 |
+| 2026-02-12 | Per-row insert with error collection for batch import | Granular error reporting vs all-or-nothing batch | 07-05 |
+| 2026-02-12 | Fuzzy auto-mapping via normalized alias lookup table | Flexible column matching for varied CSV header formats | 07-05 |
+| 2026-02-12 | pickup_location defaults to pickup_city when unmapped | Graceful fallback for CSVs lacking separate address column | 07-05 |
 
 ## Session Continuity
 
-**Last session:** 2026-02-12 11:51 UTC
-**Stopped at:** Completed 07-01-PLAN.md
+**Last session:** 2026-02-12 12:00 UTC
+**Stopped at:** Completed 07-05-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Phase 7 Plan 01: Database Foundation
-- SQL migration 00007 with trailers, driver_documents, truck_documents tables + RLS
-- Drizzle schema: trailers, driverDocuments, truckDocuments, orderAttachments + trailerId on trucks
-- TypeScript types, unions, label maps, color maps for trailers and documents
-- Zod validation schemas for trailer and document forms
-- Tenant-scoped storage helper (uploadFile, deleteFile, getFileUrl, getSignedUrl)
-- papaparse + @types/papaparse installed for CSV import
+- Phase 7 Plan 05: CSV Order Import
+- batchCreateOrders server action with per-row validation and error reporting
+- CSVImportDialog 4-step wizard: upload, map columns, preview/validate, import
+- Fuzzy auto-mapping of CSV headers to order fields
+- "Import CSV" button on orders page
 
-**Next:** Execute remaining Phase 7 plans (04 through 10)
+**Next:** Execute remaining Phase 7 plans (06 through 10)
