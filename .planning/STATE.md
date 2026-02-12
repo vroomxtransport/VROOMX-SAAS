@@ -8,10 +8,10 @@
 |------|--------|
 | **Milestone** | v1.0 — MVP Launch |
 | **Current Phase** | Phase 6 (iOS Driver App) -- In Progress |
-| **Next Action** | Execute 06-03-PLAN.md |
+| **Next Action** | Execute 06-04-PLAN.md |
 | **Blockers** | None |
 
-Phase 6 in progress: 2/13 plans done. Theme, models, and core infrastructure complete.
+Phase 6 in progress: 3/13 plans done. Auth flow and app shell complete.
 
 ## Completed Work
 
@@ -50,6 +50,7 @@ Phase 6 in progress: 2/13 plans done. Theme, models, and core infrastructure com
 | 05-05 | Done | 2026-02-12 | Dashboard onboarding wizard, settings billing/usage sections, layout dunning banners |
 | 06-01 | Done | 2026-02-12 | DB migration (7 tables, 5 enums, RLS) + Xcode SwiftUI scaffold with supabase-swift |
 | 06-02 | Done | 2026-02-12 | Theme system (dark/light, blue/violet), 7 models, 13 enums, SupabaseManager, NetworkMonitor, CacheManager |
+| 06-03 | Done | 2026-02-12 | Auth flow (email OTP + biometric + PIN), LoginView, ContentView routing, 5-tab MainTabView shell |
 
 ## Phase Status
 
@@ -60,11 +61,11 @@ Phase 6 in progress: 2/13 plans done. Theme, models, and core infrastructure com
 | 3 | Dispatch Workflow | Complete | 6/6 |
 | 4 | Billing & Invoicing | Complete | 5/5 |
 | 5 | Onboarding + Stripe Polish | Complete | 5/5 |
-| 6 | iOS Driver App | In Progress | 2/13 |
+| 6 | iOS Driver App | In Progress | 3/13 |
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-████████████████████████████████████████████████░░░░░░ 74% (32/43 plans complete across Phases 1-6)
+█████████████████████████████████████████████████░░░░░ 77% (33/43 plans complete across Phases 1-6)
 
 ## Key Decisions Log
 
@@ -201,21 +202,26 @@ Phase 6 in progress: 2/13 plans done. Theme, models, and core infrastructure com
 | 2026-02-12 | driverStatus as String (not enum) on Driver model | Forward-compatible if new statuses added | 06-02 |
 | 2026-02-12 | Settlement is computed-only (not Codable) | Never stored in DB, derived from trips data | 06-02 |
 | 2026-02-12 | DriverNotification data as String? | DB JSONB parsed on demand for flexibility | 06-02 |
+| 2026-02-12 | AuthState enum with 4 cases for auth flow state machine | Clean state machine avoids boolean flag combinations | 06-03 |
+| 2026-02-12 | SHA-256 PIN hashing via CryptoKit (not bcrypt) | Built-in framework, sufficient for 4-digit PIN | 06-03 |
+| 2026-02-12 | LoginPhase private enum drives 6-phase UI state machine | Single state variable controls entire multi-step auth flow | 06-03 |
+| 2026-02-12 | Nested NavigationStack per tab in MainTabView | Independent nav stacks prevent tab switches from resetting navigation | 06-03 |
+| 2026-02-12 | Biometric flag in UserDefaults, PIN hash in Keychain | Boolean preference vs secret credential stored appropriately | 06-03 |
 
 ## Session Continuity
 
-**Last session:** 2026-02-12 10:37 UTC
-**Stopped at:** Completed 06-02-PLAN.md
+**Last session:** 2026-02-12 10:43 UTC
+**Stopped at:** Completed 06-03-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Phase 6 Plan 02: Theme + Models + Core Infrastructure
-- Theme system: dark mode default, blue #3B82F6 / violet #8B5CF6 palette, 8 typography levels
-- 7 model structs matching VroomX database schema with UUID String IDs and snake_case CodingKeys
-- 13 enums matching database enum values exactly (OrderStatus, TripStatus, PaymentType, etc.)
-- SupabaseManager singleton, NetworkMonitor with NWPathMonitor, CacheManager with clearAllCache()
-- All models ready for auth flow, data layer, and UI views
+- Phase 6 Plan 03: Auth Flow + App Shell
+- AuthManager with email OTP (sendOTP/verifyOTP), biometric (Face ID/Touch ID), PIN (SHA-256), session management
+- LoginView with 3 paths: first login (email->OTP->PIN->biometric), returning PIN, returning biometric
+- ContentView root routing with splash screen and session restore
+- MainTabView with 5 tabs: Home, Trips, Earnings, Messages, Profile (all placeholder)
+- VroomXDriverApp updated with ThemeManager, AuthManager, NetworkMonitor as environment objects
 
-**Next:** Execute 06-03-PLAN.md (Auth flow)
+**Next:** Execute 06-04-PLAN.md (Home tab + order cards)
