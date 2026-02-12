@@ -10,6 +10,8 @@ import { OrderStatusActions } from './order-status-actions'
 import { OrderTimeline } from './order-timeline'
 import { OrderDrawer } from './order-drawer'
 import { AssignToTrip } from './assign-to-trip'
+import { PaymentRecorder } from './payment-recorder'
+import { InvoiceButton } from './invoice-button'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { Button } from '@/components/ui/button'
@@ -25,9 +27,10 @@ import {
   Clock,
   Building2,
   User,
+  Receipt,
 } from 'lucide-react'
 import { PAYMENT_TYPE_LABELS } from '@/types'
-import type { OrderStatus, TripStatus } from '@/types'
+import type { OrderStatus, TripStatus, PaymentStatus } from '@/types'
 import type { OrderWithRelations } from '@/lib/queries/orders'
 
 interface OrderDetailProps {
@@ -258,6 +261,31 @@ export function OrderDetail({ order }: OrderDetailProps) {
             )}
           </div>
         </div>
+
+        {/* Billing -- shown for orders past assignment stage */}
+        {(['picked_up', 'delivered', 'invoiced', 'paid'] as OrderStatus[]).includes(status) && (
+          <div className="rounded-lg border bg-white p-6 lg:col-span-2">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Receipt className="h-5 w-5 text-gray-400" />
+                <h2 className="text-lg font-semibold text-gray-900">Billing</h2>
+              </div>
+              <InvoiceButton
+                orderId={order.id}
+                orderNumber={order.order_number}
+                paymentStatus={order.payment_status as PaymentStatus}
+                invoiceDate={order.invoice_date}
+                hasBrokerEmail={!!order.broker?.email}
+              />
+            </div>
+            <PaymentRecorder
+              orderId={order.id}
+              carrierPay={carrierPay}
+              amountPaid={parseFloat(order.amount_paid ?? '0')}
+              paymentStatus={order.payment_status as PaymentStatus}
+            />
+          </div>
+        )}
 
         {/* Route */}
         <div className="rounded-lg border bg-white p-6 lg:col-span-2">

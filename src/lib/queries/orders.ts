@@ -13,7 +13,7 @@ export interface OrderFilters {
 }
 
 export interface OrderWithRelations extends Order {
-  broker: Pick<Broker, 'id' | 'name'> | null
+  broker: Pick<Broker, 'id' | 'name' | 'email'> | null
   driver: Pick<Driver, 'id' | 'first_name' | 'last_name'> | null
   trip: Pick<Trip, 'id' | 'trip_number' | 'status'> | null
 }
@@ -31,7 +31,7 @@ export async function fetchOrders(
 
   let query = supabase
     .from('orders')
-    .select('*, broker:brokers(id, name), driver:drivers(id, first_name, last_name), trip:trips(id, trip_number, status)', { count: 'exact' })
+    .select('*, broker:brokers(id, name, email), driver:drivers(id, first_name, last_name), trip:trips(id, trip_number, status)', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(page * pageSize, (page + 1) * pageSize - 1)
 
@@ -75,7 +75,7 @@ export async function fetchOrder(
 ): Promise<OrderWithRelations> {
   const { data, error } = await supabase
     .from('orders')
-    .select('*, broker:brokers(id, name), driver:drivers(id, first_name, last_name), trip:trips(id, trip_number, status)')
+    .select('*, broker:brokers(id, name, email), driver:drivers(id, first_name, last_name), trip:trips(id, trip_number, status)')
     .eq('id', id)
     .single()
 
