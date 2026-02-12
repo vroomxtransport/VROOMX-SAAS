@@ -11,7 +11,7 @@
 | **Next Action** | Execute remaining Phase 7 plans |
 | **Blockers** | None |
 
-Phase 7 in progress: 7/10 plans done. DB foundation, error boundaries, magic link, trailer/documents, CSV import, driver earnings/documents/order attachments, marketing pages complete.
+Phase 7 in progress: 8/10 plans done. DB foundation, error boundaries, magic link, trailer/documents, CSV import, driver earnings/documents/order attachments, sample data seeding/help tooltips, marketing pages complete.
 
 ## Completed Work
 
@@ -67,6 +67,7 @@ Phase 7 in progress: 7/10 plans done. DB foundation, error boundaries, magic lin
 | 07-04 | Done | 2026-02-12 | Trailer CRUD + assignment, generic document CRUD, truck detail trailer section + document uploads |
 | 07-05 | Done | 2026-02-12 | CSV order import: 4-step wizard dialog, batchCreateOrders action, papaparse parsing, fuzzy column mapping |
 | 07-06 | Done | 2026-02-12 | Driver earnings table, driver document uploads with expiry tracking, order attachments visual grid |
+| 07-07 | Done | 2026-02-12 | Sample data seeding (2 brokers, 3 drivers, 2 trucks, 8 orders, 2 trips) + HelpTooltip on 4 pages |
 | 07-08 | Done | 2026-02-12 | Marketing route group: landing page (hero, features, CTAs), pricing page (3 tiers, FAQ), SEO metadata |
 
 ## Phase Status
@@ -79,10 +80,10 @@ Phase 7 in progress: 7/10 plans done. DB foundation, error boundaries, magic lin
 | 4 | Billing & Invoicing | Complete | 5/5 |
 | 5 | Onboarding + Stripe Polish | Complete | 5/5 |
 | 6 | iOS Driver App | Complete | 13/13 |
-| 7 | Polish & Launch Prep | In Progress | 7/10 |
+| 7 | Polish & Launch Prep | In Progress | 8/10 |
 
 ## Progress
-██████████████████████████████████████████████████████░░░░ 94% (50/53 plans complete across Phases 1-7)
+██████████████████████████████████████████████████████░░░ 96% (51/53 plans complete across Phases 1-7)
 
 ## Key Decisions Log
 
@@ -289,19 +290,22 @@ Phase 7 in progress: 7/10 plans done. DB foundation, error boundaries, magic lin
 | 2026-02-12 | Deleted root page.tsx instead of redirect for marketing route group | Route group page.tsx serves / directly, no redirect overhead | 07-08 |
 | 2026-02-12 | Legal links as plain text (no href) on marketing footer | Privacy/terms pages do not exist yet | 07-08 |
 | 2026-02-12 | Pro plan highlighted with ring-2 ring-primary/20 + "Most Popular" Badge | Visual emphasis on recommended tier | 07-08 |
+| 2026-02-12 | Sample data tagged with [SAMPLE DATA] in notes field | Deterministic cleanup identification for seed/clear operations | 07-07 |
+| 2026-02-12 | Owner-only access for seed/clear sample data | Prevents non-owners from modifying demo data | 07-07 |
+| 2026-02-12 | HelpTooltip wraps its own TooltipProvider | Self-contained usage anywhere without parent wrapper | 07-07 |
 
 ## Session Continuity
 
-**Last session:** 2026-02-12 12:09 UTC
-**Stopped at:** Completed 07-08-PLAN.md
+**Last session:** 2026-02-12 12:11 UTC
+**Stopped at:** Completed 07-07-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Phase 7 Plan 08: Marketing & SEO Pages
-- Marketing route group with landing page (hero, 6 features, CTAs) and pricing page (3 tiers, FAQ)
-- Full SEO metadata on all marketing pages
-- Root layout updated with VroomX branding
+- Phase 7 Plan 07: Sample Data Seeding & Help Tooltips
+- generateSampleData: 2 brokers, 3 drivers, 2 trucks, 8 orders with US city routes
+- seedSampleData/clearSampleData server actions with dependency-ordered insert/delete
+- HelpTooltip component placed on dispatch, orders, billing, and settings pages
 
-**Next:** Execute remaining Phase 7 plans (07, 09, 10)
+**Next:** Execute remaining Phase 7 plans (09, 10)
