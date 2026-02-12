@@ -143,15 +143,25 @@ Plans:
 
 **Requirements:** BIL-1, BIL-2, BIL-3, BIL-4, BIL-5, BIL-6
 
+**Plans:** 5 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — DB foundation: payments table, payment_status enum, tenant company columns, types, validations, npm deps
+- [ ] 04-02-PLAN.md — Invoice generation: PDF template, Resend client, email template, API routes for PDF/send
+- [ ] 04-03-PLAN.md — Payment data layer: server actions, receivables queries, aging computation, hooks
+- [ ] 04-04-PLAN.md — Order detail billing: payment recorder, send invoice button, payment status display
+- [ ] 04-05-PLAN.md — Billing page: receivables table, aging analysis, batch actions, collection rate, sidebar nav
+
 **Key Deliverables:**
-- Order payment status tracking (unpaid -> invoiced -> paid)
+- Order payment status tracking (unpaid -> invoiced -> partially paid -> paid)
 - Invoice date and payment date fields on orders
 - Broker receivables dashboard (grouped by broker, total owed)
 - Aging analysis: current, 1-30, 31-60, 61-90, 90+ day buckets
-- Mark payment received with date and amount
+- Mark payment received with date and amount (single + batch)
 - Collection rate tracking (% of invoiced amount collected)
-- Basic invoice PDF generation (from order data)
-- Email invoice via Resend
+- Invoice PDF generation via @react-pdf/renderer
+- Email invoice via Resend with PDF attachment
+- Batch send invoices and batch mark paid from billing page
 
 **Research Flags:** Aging analysis via security_invoker view (see ARCHITECTURE.md Section 6). Use Resend for email (team familiarity from Horizon Star).
 
