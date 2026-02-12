@@ -12,6 +12,7 @@ import { OrderDrawer } from './order-drawer'
 import { AssignToTrip } from './assign-to-trip'
 import { PaymentRecorder } from './payment-recorder'
 import { InvoiceButton } from './invoice-button'
+import { OrderAttachments } from './order-attachments'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { Button } from '@/components/ui/button'
@@ -415,6 +416,9 @@ export function OrderDetail({ order }: OrderDetailProps) {
           </div>
         </div>
       </div>
+
+      {/* Attachments */}
+      <OrderAttachments orderId={order.id} tenantId={order.tenant_id} />
 
       {/* Edit Drawer */}
       <OrderDrawer
