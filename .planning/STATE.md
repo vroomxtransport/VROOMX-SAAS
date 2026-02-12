@@ -8,10 +8,10 @@
 |------|--------|
 | **Milestone** | v1.0 — MVP Launch |
 | **Current Phase** | Phase 6 (iOS Driver App) -- In Progress |
-| **Next Action** | Execute 06-02-PLAN.md |
+| **Next Action** | Execute 06-03-PLAN.md |
 | **Blockers** | None |
 
-Phase 6 in progress: 1/13 plans done. DB migration and Xcode scaffold complete.
+Phase 6 in progress: 2/13 plans done. Theme, models, and core infrastructure complete.
 
 ## Completed Work
 
@@ -49,6 +49,7 @@ Phase 6 in progress: 1/13 plans done. DB migration and Xcode scaffold complete.
 | 05-04 | Done | 2026-02-12 | Team invite flow: send/accept/revoke invites, settings page team management |
 | 05-05 | Done | 2026-02-12 | Dashboard onboarding wizard, settings billing/usage sections, layout dunning banners |
 | 06-01 | Done | 2026-02-12 | DB migration (7 tables, 5 enums, RLS) + Xcode SwiftUI scaffold with supabase-swift |
+| 06-02 | Done | 2026-02-12 | Theme system (dark/light, blue/violet), 7 models, 13 enums, SupabaseManager, NetworkMonitor, CacheManager |
 
 ## Phase Status
 
@@ -59,11 +60,11 @@ Phase 6 in progress: 1/13 plans done. DB migration and Xcode scaffold complete.
 | 3 | Dispatch Workflow | Complete | 6/6 |
 | 4 | Billing & Invoicing | Complete | 5/5 |
 | 5 | Onboarding + Stripe Polish | Complete | 5/5 |
-| 6 | iOS Driver App | In Progress | 1/13 |
+| 6 | iOS Driver App | In Progress | 2/13 |
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-███████████████████████████████████████████████░░░░░░░ 72% (31/43 plans complete across Phases 1-6)
+████████████████████████████████████████████████░░░░░░ 74% (32/43 plans complete across Phases 1-6)
 
 ## Key Decisions Log
 
@@ -195,22 +196,26 @@ Phase 6 in progress: 1/13 plans done. DB migration and Xcode scaffold complete.
 | 2026-02-12 | SPM-based iOS project (no .xcodeproj) | Package.swift at VroomXDriver/ root for dependency management | 06-01 |
 | 2026-02-12 | Partial unique index on drivers.auth_user_id | WHERE NOT NULL allows multiple unlinked driver records | 06-01 |
 | 2026-02-12 | Storage buckets as SQL comments (manual setup) | Supabase storage buckets require Dashboard/CLI creation | 06-01 |
+| 2026-02-12 | VroomXDriverModel name (not VroomXDriver) | Avoids collision with app module target name | 06-02 |
+| 2026-02-12 | Adaptive colors via UIColor traits initializer | Auto dark/light switching without manual colorScheme checks | 06-02 |
+| 2026-02-12 | driverStatus as String (not enum) on Driver model | Forward-compatible if new statuses added | 06-02 |
+| 2026-02-12 | Settlement is computed-only (not Codable) | Never stored in DB, derived from trips data | 06-02 |
+| 2026-02-12 | DriverNotification data as String? | DB JSONB parsed on demand for flexibility | 06-02 |
 
 ## Session Continuity
 
-**Last session:** 2026-02-12 10:35 UTC
-**Stopped at:** Completed 06-01-PLAN.md
+**Last session:** 2026-02-12 10:37 UTC
+**Stopped at:** Completed 06-02-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Phase 6 Plan 01: DB Migration + Xcode Scaffold
-- Migration 00006 adds 7 tables (vehicle_inspections, inspection_photos, inspection_videos, inspection_damages, order_attachments, driver_notifications, device_tokens) with full RLS
-- Drivers table now has auth_user_id (linking Supabase Auth) and pin_hash columns
-- Orders table now has pickup_eta and delivery_eta columns
-- Trip_expenses table now has receipt_url column
-- VroomXDriver/ directory created with Package.swift (supabase-swift, KeychainAccess), entry point, config, and Info.plist
-- Storage buckets (inspection-media, receipts, bol-documents) need manual creation in Supabase
+- Phase 6 Plan 02: Theme + Models + Core Infrastructure
+- Theme system: dark mode default, blue #3B82F6 / violet #8B5CF6 palette, 8 typography levels
+- 7 model structs matching VroomX database schema with UUID String IDs and snake_case CodingKeys
+- 13 enums matching database enum values exactly (OrderStatus, TripStatus, PaymentType, etc.)
+- SupabaseManager singleton, NetworkMonitor with NWPathMonitor, CacheManager with clearAllCache()
+- All models ready for auth flow, data layer, and UI views
 
-**Next:** Execute 06-02-PLAN.md (Swift models and Supabase client)
+**Next:** Execute 06-03-PLAN.md (Auth flow)
