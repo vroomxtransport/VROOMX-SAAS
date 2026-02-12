@@ -81,6 +81,7 @@ export interface Truck {
   model: string | null
   vin: string | null
   ownership: string | null
+  trailer_id: string | null
   notes: string | null
   created_at: string
   updated_at: string
@@ -174,4 +175,57 @@ export interface Payment {
   notes: string | null
   created_at: string
   updated_at: string
+}
+
+export interface OrderAttachment {
+  id: string
+  tenant_id: string
+  order_id: string
+  file_name: string
+  file_type: string
+  storage_path: string
+  file_size: number | null
+  uploaded_by: string | null
+  created_at: string
+}
+
+export interface Trailer {
+  id: string
+  tenant_id: string
+  trailer_number: string
+  trailer_type: 'open' | 'enclosed' | 'flatbed'
+  status: 'active' | 'inactive' | 'maintenance'
+  year: number | null
+  make: string | null
+  model: string | null
+  vin: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface DriverDocument {
+  id: string
+  tenant_id: string
+  driver_id: string
+  document_type: 'cdl' | 'medical_card' | 'mvr' | 'other'
+  file_name: string
+  storage_path: string
+  file_size: number | null
+  expires_at: string | null
+  uploaded_by: string | null
+  created_at: string
+}
+
+export interface TruckDocument {
+  id: string
+  tenant_id: string
+  truck_id: string
+  document_type: 'registration' | 'insurance' | 'inspection_cert' | 'other'
+  file_name: string
+  storage_path: string
+  file_size: number | null
+  expires_at: string | null
+  uploaded_by: string | null
+  created_at: string
 }

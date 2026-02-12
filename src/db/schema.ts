@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, unique, index, numeric, integer, date, pgEnum, boolean } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, text, timestamp, unique, index, numeric, integer, date, pgEnum, boolean, doublePrecision } from 'drizzle-orm/pg-core'
 
 // ============================================================================
 // Enums
@@ -161,6 +161,7 @@ export const trucks = pgTable('trucks', {
   model: text('model'),
   vin: text('vin'),
   ownership: text('ownership').default('company'),
+  trailerId: uuid('trailer_id'),
   notes: text('notes'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -356,6 +357,95 @@ export const invites = pgTable('invites', {
 ])
 
 // ============================================================================
+// Phase 6 Tables: Order Attachments (from migration 00006, added to Drizzle)
+// ============================================================================
+
+/**
+ * Order Attachments Table
+ * Files attached to orders (photos, documents, BOLs).
+ */
+export const orderAttachments = pgTable('order_attachments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  orderId: uuid('order_id').notNull().references(() => orders.id, { onDelete: 'cascade' }),
+  fileName: text('file_name').notNull(),
+  fileType: text('file_type').notNull(),
+  storagePath: text('storage_path').notNull(),
+  fileSize: integer('file_size'),
+  uploadedBy: uuid('uploaded_by'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_order_attachments_tenant_id').on(table.tenantId),
+  index('idx_order_attachments_order_id').on(table.tenantId, table.orderId),
+])
+
+// ============================================================================
+// Phase 7 Tables: Polish & Launch Prep
+// ============================================================================
+
+/**
+ * Trailers Table
+ * Trailer units that can be assigned to trucks.
+ */
+export const trailers = pgTable('trailers', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  trailerNumber: text('trailer_number').notNull(),
+  trailerType: text('trailer_type').notNull().default('open'),
+  status: text('status').notNull().default('active'),
+  year: integer('year'),
+  make: text('make'),
+  model: text('model'),
+  vin: text('vin'),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_trailers_tenant_id').on(table.tenantId),
+  index('idx_trailers_tenant_number').on(table.tenantId, table.trailerNumber),
+])
+
+/**
+ * Driver Documents Table
+ * Documents associated with drivers (CDL, medical card, MVR, etc.).
+ */
+export const driverDocuments = pgTable('driver_documents', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  driverId: uuid('driver_id').notNull().references(() => drivers.id, { onDelete: 'cascade' }),
+  documentType: text('document_type').notNull(),
+  fileName: text('file_name').notNull(),
+  storagePath: text('storage_path').notNull(),
+  fileSize: integer('file_size'),
+  expiresAt: date('expires_at'),
+  uploadedBy: uuid('uploaded_by'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_driver_documents_tenant_id').on(table.tenantId),
+  index('idx_driver_documents_tenant_driver').on(table.tenantId, table.driverId),
+])
+
+/**
+ * Truck Documents Table
+ * Documents associated with trucks (registration, insurance, inspection cert, etc.).
+ */
+export const truckDocuments = pgTable('truck_documents', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  truckId: uuid('truck_id').notNull().references(() => trucks.id, { onDelete: 'cascade' }),
+  documentType: text('document_type').notNull(),
+  fileName: text('file_name').notNull(),
+  storagePath: text('storage_path').notNull(),
+  fileSize: integer('file_size'),
+  expiresAt: date('expires_at'),
+  uploadedBy: uuid('uploaded_by'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_truck_documents_tenant_id').on(table.tenantId),
+  index('idx_truck_documents_tenant_truck').on(table.tenantId, table.truckId),
+])
+
+// ============================================================================
 // Type Exports
 // ============================================================================
 
@@ -390,3 +480,15 @@ export type NewPayment = typeof payments.$inferInsert
 // Phase 5
 export type Invite = typeof invites.$inferSelect
 export type NewInvite = typeof invites.$inferInsert
+
+// Phase 6
+export type DrizzleOrderAttachment = typeof orderAttachments.$inferSelect
+export type NewOrderAttachment = typeof orderAttachments.$inferInsert
+
+// Phase 7
+export type DrizzleTrailer = typeof trailers.$inferSelect
+export type NewTrailer = typeof trailers.$inferInsert
+export type DrizzleDriverDocument = typeof driverDocuments.$inferSelect
+export type NewDriverDocument = typeof driverDocuments.$inferInsert
+export type DrizzleTruckDocument = typeof truckDocuments.$inferSelect
+export type NewTruckDocument = typeof truckDocuments.$inferInsert

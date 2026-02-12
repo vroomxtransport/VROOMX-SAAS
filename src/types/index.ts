@@ -224,6 +224,52 @@ export const TRUCK_CAPACITY: Record<TruckType, number> = {
 }
 
 // ============================================================================
+// Phase 7: Trailer & Document Types
+// ============================================================================
+
+export type TrailerType = 'open' | 'enclosed' | 'flatbed'
+export type TrailerStatus = 'active' | 'inactive' | 'maintenance'
+export type DriverDocumentType = 'cdl' | 'medical_card' | 'mvr' | 'other'
+export type TruckDocumentType = 'registration' | 'insurance' | 'inspection_cert' | 'other'
+
+export const TRAILER_TYPES: readonly TrailerType[] = ['open', 'enclosed', 'flatbed'] as const
+export const TRAILER_STATUSES: readonly TrailerStatus[] = ['active', 'inactive', 'maintenance'] as const
+export const DRIVER_DOCUMENT_TYPES: readonly DriverDocumentType[] = ['cdl', 'medical_card', 'mvr', 'other'] as const
+export const TRUCK_DOCUMENT_TYPES: readonly TruckDocumentType[] = ['registration', 'insurance', 'inspection_cert', 'other'] as const
+
+export const TRAILER_TYPE_LABELS: Record<TrailerType, string> = {
+  open: 'Open',
+  enclosed: 'Enclosed',
+  flatbed: 'Flatbed',
+}
+
+export const TRAILER_STATUS_LABELS: Record<TrailerStatus, string> = {
+  active: 'Active',
+  inactive: 'Inactive',
+  maintenance: 'Maintenance',
+}
+
+export const TRAILER_STATUS_COLORS: Record<TrailerStatus, string> = {
+  active: 'bg-green-50 text-green-700 border-green-200',
+  inactive: 'bg-gray-50 text-gray-700 border-gray-200',
+  maintenance: 'bg-amber-50 text-amber-700 border-amber-200',
+}
+
+export const DRIVER_DOCUMENT_TYPE_LABELS: Record<DriverDocumentType, string> = {
+  cdl: 'CDL',
+  medical_card: 'Medical Card',
+  mvr: 'MVR',
+  other: 'Other',
+}
+
+export const TRUCK_DOCUMENT_TYPE_LABELS: Record<TruckDocumentType, string> = {
+  registration: 'Registration',
+  insurance: 'Insurance',
+  inspection_cert: 'Inspection Certificate',
+  other: 'Other',
+}
+
+// ============================================================================
 // Phase 4: Billing & Invoicing Types
 // ============================================================================
 
