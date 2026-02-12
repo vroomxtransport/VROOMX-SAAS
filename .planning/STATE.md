@@ -229,11 +229,14 @@ Phase 6 in progress: 9/13 plans done. Trips tab complete.
 | 2026-02-12 | CameraView via UIImagePickerController wrapper | Native SwiftUI camera API is iOS 18+ only | 06-06 |
 | 2026-02-12 | ExpenseCreate extended with receiptUrl field | Required for storing receipt storage path when creating expenses | 06-06 |
 | 2026-02-12 | Current period earnings = current calendar month | No pay period config exists; calendar month is reasonable default | 06-13 |
+| 2026-02-12 | Jan 1 2024 reference epoch for bi-weekly period alignment | Consistent period grouping across all dates | 06-11 |
+| 2026-02-12 | Swift Charts for weekly earnings bar chart | iOS 16+ already required; built-in framework | 06-11 |
+| 2026-02-12 | UIGraphicsPDFRenderer with 15 trips/page pagination | Professional settlement PDF layout with page breaks | 06-11 |
 
 ## Session Continuity
 
 **Last session:** 2026-02-12 10:51 UTC
-**Stopped at:** Completed 06-06-PLAN.md
+**Stopped at:** Completed 06-11-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
