@@ -42,6 +42,7 @@ struct ExpenseCreate: Codable {
     let amount: Double
     let notes: String?
     let expenseDate: String?
+    let receiptUrl: String?
 
     enum CodingKeys: String, CodingKey {
         case tenantId = "tenant_id"
@@ -51,5 +52,6 @@ struct ExpenseCreate: Codable {
         case amount
         case notes
         case expenseDate = "expense_date"
+        case receiptUrl = "receipt_url"
     }
 }
