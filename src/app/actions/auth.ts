@@ -30,6 +30,7 @@ export async function loginAction(prevState: any, formData: FormData) {
 
   const email = formData.get('email') as string
   const password = formData.get('password') as string
+  const inviteToken = formData.get('invite_token') as string | null
 
   const { error } = await supabase.auth.signInWithPassword({ email, password })
 
@@ -38,6 +39,12 @@ export async function loginAction(prevState: any, formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
+
+  // If invite_token present, redirect to accept route instead of dashboard
+  if (inviteToken) {
+    redirect(`/invite/accept?token=${inviteToken}`)
+  }
+
   redirect('/dashboard')
 }
 
@@ -70,6 +77,21 @@ export async function signUpAction(prevState: any, formData: FormData) {
 
   if (authError || !authData.user) {
     return { error: authError?.message || 'Signup failed' }
+  }
+
+  const inviteToken = formData.get('invite_token') as string | null
+
+  // Invited user: just create auth user, skip tenant/Stripe setup.
+  // The accept route will assign them to the inviting tenant.
+  if (inviteToken) {
+    const admin = createServiceRoleClient()
+    await admin.auth.admin.updateUserById(authData.user.id, {
+      app_metadata: { pending_invite: true },
+    })
+    // Sign them in so the accept route sees an authenticated user
+    await supabase.auth.signInWithPassword({ email, password })
+    revalidatePath('/', 'layout')
+    redirect(`/invite/accept?token=${inviteToken}`)
   }
 
   // 3. Create Stripe customer

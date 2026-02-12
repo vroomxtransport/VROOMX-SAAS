@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label'
 import { TIER_LIMITS, TIER_PRICING } from '@/types'
 import Link from 'next/link'
 import { useActionState, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 
 type Plan = 'starter' | 'pro' | 'enterprise'
 
@@ -17,7 +19,9 @@ const PLAN_INFO: Record<Plan, { name: string; description: string }> = {
   enterprise: { name: 'Enterprise', description: 'Unlimited trucks and users' },
 }
 
-export default function SignupPage() {
+function SignupForm() {
+  const searchParams = useSearchParams()
+  const inviteToken = searchParams.get('invite_token')
   const [state, formAction, isPending] = useActionState(signUpAction, null)
   const [selectedPlan, setSelectedPlan] = useState<Plan>('starter')
 
@@ -25,15 +29,23 @@ export default function SignupPage() {
     <Card>
       <CardHeader>
         <CardTitle className="text-2xl font-bold">VroomX</CardTitle>
-        <CardDescription>Create your account</CardDescription>
+        <CardDescription>
+          {inviteToken ? 'Create an account to accept your team invitation' : 'Create your account'}
+        </CardDescription>
       </CardHeader>
       <CardContent>
+        {inviteToken && (
+          <div className="mb-4 rounded-md bg-blue-50 p-3 text-sm text-blue-700">
+            Create an account to accept your team invitation.
+          </div>
+        )}
         {state?.error && (
           <div className="mb-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
             {state.error}
           </div>
         )}
         <form action={formAction} className="space-y-4">
+          {inviteToken && <input type="hidden" name="invite_token" value={inviteToken} />}
           <div className="space-y-2">
             <Label htmlFor="full_name">Full Name</Label>
             <Input
@@ -67,56 +79,67 @@ export default function SignupPage() {
               Must be at least 8 characters
             </p>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="company_name">Company Name</Label>
-            <Input
-              id="company_name"
-              name="company_name"
-              type="text"
-              placeholder="Acme Trucking"
-              required
-            />
-          </div>
 
-          <div className="space-y-2">
-            <Label>Select Plan</Label>
-            <div className="grid gap-3">
-              {(['starter', 'pro', 'enterprise'] as Plan[]).map((plan) => (
-                <label
-                  key={plan}
-                  className={`relative flex cursor-pointer rounded-lg border p-4 transition-colors ${
-                    selectedPlan === plan
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="plan"
-                    value={plan}
-                    checked={selectedPlan === plan}
-                    onChange={(e) => setSelectedPlan(e.target.value as Plan)}
-                    className="sr-only"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-baseline justify-between">
-                      <p className="font-medium">{PLAN_INFO[plan].name}</p>
-                      <p className="text-lg font-bold">
-                        ${TIER_PRICING[plan]}
-                        <span className="text-sm font-normal text-muted-foreground">/mo</span>
-                      </p>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {PLAN_INFO[plan].description}
-                    </p>
-                  </div>
-                </label>
-              ))}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              All plans include a 14-day free trial. No charge until trial ends.
-            </p>
-          </div>
+          {inviteToken ? (
+            <>
+              {/* Invited users join an existing tenant -- hide company/plan fields */}
+              <input type="hidden" name="company_name" value="Invited User" />
+              <input type="hidden" name="plan" value="starter" />
+            </>
+          ) : (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="company_name">Company Name</Label>
+                <Input
+                  id="company_name"
+                  name="company_name"
+                  type="text"
+                  placeholder="Acme Trucking"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Select Plan</Label>
+                <div className="grid gap-3">
+                  {(['starter', 'pro', 'enterprise'] as Plan[]).map((plan) => (
+                    <label
+                      key={plan}
+                      className={`relative flex cursor-pointer rounded-lg border p-4 transition-colors ${
+                        selectedPlan === plan
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="plan"
+                        value={plan}
+                        checked={selectedPlan === plan}
+                        onChange={(e) => setSelectedPlan(e.target.value as Plan)}
+                        className="sr-only"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-baseline justify-between">
+                          <p className="font-medium">{PLAN_INFO[plan].name}</p>
+                          <p className="text-lg font-bold">
+                            ${TIER_PRICING[plan]}
+                            <span className="text-sm font-normal text-muted-foreground">/mo</span>
+                          </p>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {PLAN_INFO[plan].description}
+                        </p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  All plans include a 14-day free trial. No charge until trial ends.
+                </p>
+              </div>
+            </>
+          )}
 
           <Button type="submit" className="w-full" disabled={isPending}>
             {isPending ? 'Creating account...' : 'Create account'}
@@ -126,11 +149,22 @@ export default function SignupPage() {
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">
           Already have an account?{' '}
-          <Link href="/login" className="font-medium text-primary hover:underline">
+          <Link
+            href={inviteToken ? `/login?invite_token=${inviteToken}` : '/login'}
+            className="font-medium text-primary hover:underline"
+          >
             Sign in
           </Link>
         </p>
       </CardFooter>
     </Card>
+  )
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense>
+      <SignupForm />
+    </Suspense>
   )
 }
