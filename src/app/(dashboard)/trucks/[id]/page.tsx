@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useTruck } from '@/hooks/use-trucks'
 import { deleteTruck, updateTruckStatus } from '@/app/actions/trucks'
 import { TruckDrawer } from '../_components/truck-drawer'
+import { TrailerSection } from './_components/trailer-section'
+import { TruckDocuments } from './_components/truck-documents'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { Badge } from '@/components/ui/badge'
@@ -225,6 +227,16 @@ export default function TruckDetailPage({ params }: TruckDetailPageProps) {
             Maintenance tracking will be available in a future update.
           </p>
         </div>
+      </div>
+
+      {/* Trailer Section */}
+      <div className="mt-6">
+        <TrailerSection truckId={id} currentTrailerId={truck.trailer_id} />
+      </div>
+
+      {/* Documents Section */}
+      <div className="mt-6">
+        <TruckDocuments truckId={id} tenantId={truck.tenant_id} />
       </div>
 
       {/* Notes */}
