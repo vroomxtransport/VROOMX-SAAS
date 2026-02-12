@@ -92,7 +92,9 @@ Plans:
 
 ---
 
-## Phase 3: Dispatch Workflow
+## Phase 3: Dispatch Workflow ✓
+
+**Status:** Complete (2026-02-12)
 
 **Goal:** A dispatcher can create trips, assign orders to trips, and see trip-level financial summaries. The core dispatch workflow — the primary value proposition of the TMS — is functional.
 
@@ -101,36 +103,37 @@ Plans:
 **Plans:** 6 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — DB schema (trips, trip_expenses, trip_id on orders) + types + validations + sidebar nav
-- [ ] 03-02-PLAN.md — TDD: Trip financial calculation module (3 driver pay models)
-- [ ] 03-03-PLAN.md — Trip server actions, queries, and TanStack Query hooks
-- [ ] 03-04-PLAN.md — Dispatch board page with status-grouped trip list and creation modal
-- [ ] 03-05-PLAN.md — Trip detail page (financial card, orders, expenses, status workflow)
-- [ ] 03-06-PLAN.md — Order-to-trip assignment from order detail page
+- [x] 03-01-PLAN.md — DB schema (trips, trip_expenses, trip_id on orders) + types + validations + sidebar nav
+- [x] 03-02-PLAN.md — TDD: Trip financial calculation module (3 driver pay models)
+- [x] 03-03-PLAN.md — Trip server actions, queries, and TanStack Query hooks
+- [x] 03-04-PLAN.md — Dispatch board page with status-grouped trip list and creation modal
+- [x] 03-05-PLAN.md — Trip detail page (financial card, orders, expenses, status workflow)
+- [x] 03-06-PLAN.md — Order-to-trip assignment from order detail page
 
 **Key Deliverables:**
-- Database tables: trips (with denormalized financial columns)
+- Database tables: trips, trip_expenses (with denormalized financial columns + route summary)
 - Trip CRUD: create (truck + driver + date range), edit, list, detail view
-- Order-to-trip assignment (select orders, assign to trip)
+- Order-to-trip assignment (bidirectional: from trip detail and order detail)
 - Trip status workflow: PLANNED -> IN_PROGRESS -> AT_TERMINAL -> COMPLETED
-- Trip financial calculations:
+- Trip financial calculations (TDD with 8+ test cases):
   - Total revenue (sum of order revenues)
   - Carrier pay / broker fees
-  - Driver pay (% cut for company drivers, dispatch fee % for owner-operators)
+  - Driver pay (3 models: company %, owner-operator dispatch fee %, per-car flat rate)
   - Trip expenses
   - Net profit
-- Dispatch board: filterable list view with trip/order assignment
+- Dispatch board: status-grouped filterable list view with trip creation modal
 - Unassigned orders view (orders not yet on a trip)
+- Financial summary card with 6 key numbers and inline carrier pay editing
 
 **Research Flags:** Reference Horizon Star trip financial logic but reimplement in TypeScript (see PROJECT.md Reference Material).
 
 **Success Criteria:**
-- [ ] Dispatcher can create a trip and assign multiple orders
-- [ ] Trip financial summary auto-calculates on order assignment
-- [ ] Company driver pay calculated as % of carrier pay
-- [ ] Owner-operator dispatch fee calculated as % of revenue
-- [ ] Dispatch board shows trips with order counts and financial totals
-- [ ] Unassigned orders are visible and assignable
+- [x] Dispatcher can create a trip and assign multiple orders
+- [x] Trip financial summary auto-calculates on order assignment
+- [x] Company driver pay calculated as % of carrier pay
+- [x] Owner-operator dispatch fee calculated as % of revenue
+- [x] Dispatch board shows trips with order counts and financial totals
+- [x] Unassigned orders are visible and assignable
 
 ---
 
