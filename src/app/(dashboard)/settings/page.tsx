@@ -3,6 +3,8 @@ import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { redirect } from 'next/navigation'
 import { BillingSection } from './billing-section'
 import { UsageSection } from './usage-section'
+import { TeamSection } from './team-section'
+import type { TenantRole } from '@/types'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -13,6 +15,7 @@ export default async function SettingsPage() {
   }
 
   const tenantId = user.app_metadata?.tenant_id
+  const userRole = user.app_metadata?.role as TenantRole
 
   if (!tenantId) {
     redirect('/login')
@@ -29,12 +32,31 @@ export default async function SettingsPage() {
     redirect('/login')
   }
 
-  // Fetch counts for usage section
+  // Fetch counts for usage section and team members via service role
   const admin = createServiceRoleClient()
-  const [trucksCount, membershipsCount] = await Promise.all([
+  const [trucksCount, membershipsResult, pendingInvitesResult] = await Promise.all([
     supabase.from('trucks').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
-    admin.from('tenant_memberships').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+    admin.from('tenant_memberships').select('id, user_id, role, created_at', { count: 'exact' }).eq('tenant_id', tenantId).order('created_at', { ascending: true }),
+    supabase.from('invites').select('id, email, role, created_at, expires_at').eq('tenant_id', tenantId).eq('status', 'pending').order('created_at', { ascending: false }),
   ])
+
+  const memberships = membershipsResult.data || []
+  const membershipsCount = membershipsResult.count ?? 0
+
+  // Fetch user details for each membership
+  const { data: usersData } = await admin.auth.admin.listUsers({ perPage: 100 })
+  const userMap = new Map(
+    (usersData?.users || []).map(u => [u.id, { email: u.email || '', name: u.user_metadata?.full_name || '' }])
+  )
+
+  const teamMembers = memberships.map(m => ({
+    id: m.id,
+    userId: m.user_id,
+    email: userMap.get(m.user_id)?.email || 'Unknown',
+    name: userMap.get(m.user_id)?.name || '',
+    role: m.role as TenantRole,
+    joinedAt: m.created_at,
+  }))
 
   return (
     <div className="space-y-6">
@@ -54,9 +76,20 @@ export default async function SettingsPage() {
         <UsageSection
           plan={tenant.plan}
           truckCount={trucksCount.count ?? 0}
-          userCount={membershipsCount.count ?? 0}
+          userCount={membershipsCount}
         />
       </div>
+
+      {/* Team management for admins and owners */}
+      {(userRole === 'owner' || userRole === 'admin') && (
+        <TeamSection
+          teamMembers={teamMembers}
+          pendingInvites={pendingInvitesResult.data || []}
+          currentUserId={user.id}
+          userRole={userRole}
+          plan={tenant.plan}
+        />
+      )}
     </div>
   )
 }
