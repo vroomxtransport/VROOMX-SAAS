@@ -12,7 +12,7 @@ export const driverSchema = z.object({
   licenseNumber: z.string().optional().or(z.literal('')),
   driverType: z.enum(['company', 'owner_operator']).default('company'),
   driverStatus: z.enum(['active', 'inactive']).default('active'),
-  payType: z.enum(['percentage_of_carrier_pay', 'dispatch_fee_percent', 'per_mile']).default('percentage_of_carrier_pay'),
+  payType: z.enum(['percentage_of_carrier_pay', 'dispatch_fee_percent', 'per_mile', 'per_car']).default('percentage_of_carrier_pay'),
   payRate: z.coerce.number().min(0, 'Pay rate must be 0 or more').max(100, 'Pay rate cannot exceed 100').default(0),
   notes: z.string().optional().or(z.literal('')),
 })

@@ -41,7 +41,7 @@ export type TruckType = '7_car' | '8_car' | '9_car' | 'flatbed' | 'enclosed'
 
 export type TruckStatus = 'active' | 'inactive' | 'maintenance'
 
-export type DriverPayType = 'percentage_of_carrier_pay' | 'dispatch_fee_percent' | 'per_mile'
+export type DriverPayType = 'percentage_of_carrier_pay' | 'dispatch_fee_percent' | 'per_mile' | 'per_car'
 
 export type PaymentTerms = 'NET15' | 'NET30' | 'NET45' | 'NET60'
 
@@ -74,7 +74,7 @@ export const TRUCK_STATUSES: readonly TruckStatus[] = [
 ] as const
 
 export const DRIVER_PAY_TYPES: readonly DriverPayType[] = [
-  'percentage_of_carrier_pay', 'dispatch_fee_percent', 'per_mile',
+  'percentage_of_carrier_pay', 'dispatch_fee_percent', 'per_mile', 'per_car',
 ] as const
 
 export const PAYMENT_TERMS_OPTIONS: readonly PaymentTerms[] = [
@@ -131,6 +131,7 @@ export const DRIVER_PAY_TYPE_LABELS: Record<DriverPayType, string> = {
   percentage_of_carrier_pay: '% of Carrier Pay',
   dispatch_fee_percent: 'Dispatch Fee %',
   per_mile: 'Per Mile',
+  per_car: 'Per Car',
 }
 
 export const PAYMENT_TERMS_LABELS: Record<PaymentTerms, string> = {
@@ -163,4 +164,47 @@ export const TRUCK_STATUS_COLORS: Record<TruckStatus, string> = {
   active: 'bg-green-50 text-green-700 border-green-200',
   inactive: 'bg-gray-50 text-gray-700 border-gray-200',
   maintenance: 'bg-amber-50 text-amber-700 border-amber-200',
+}
+
+// ============================================================================
+// Phase 3: Dispatch Workflow Types
+// ============================================================================
+
+export type TripStatus = 'planned' | 'in_progress' | 'at_terminal' | 'completed'
+export type ExpenseCategory = 'fuel' | 'tolls' | 'repairs' | 'lodging' | 'misc'
+
+// Const arrays
+export const TRIP_STATUSES: readonly TripStatus[] = ['planned', 'in_progress', 'at_terminal', 'completed'] as const
+export const EXPENSE_CATEGORIES: readonly ExpenseCategory[] = ['fuel', 'tolls', 'repairs', 'lodging', 'misc'] as const
+
+// Labels
+export const TRIP_STATUS_LABELS: Record<TripStatus, string> = {
+  planned: 'Planned',
+  in_progress: 'In Progress',
+  at_terminal: 'At Terminal',
+  completed: 'Completed',
+}
+export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
+  fuel: 'Fuel',
+  tolls: 'Tolls',
+  repairs: 'Repairs',
+  lodging: 'Lodging',
+  misc: 'Miscellaneous',
+}
+
+// Colors (trip status)
+export const TRIP_STATUS_COLORS: Record<TripStatus, string> = {
+  planned: 'bg-blue-50 text-blue-700 border-blue-200',
+  in_progress: 'bg-amber-50 text-amber-700 border-amber-200',
+  at_terminal: 'bg-purple-50 text-purple-700 border-purple-200',
+  completed: 'bg-green-50 text-green-700 border-green-200',
+}
+
+// Truck capacity lookup (derived from truck_type)
+export const TRUCK_CAPACITY: Record<TruckType, number> = {
+  '7_car': 7,
+  '8_car': 8,
+  '9_car': 9,
+  'flatbed': 4,
+  'enclosed': 6,
 }

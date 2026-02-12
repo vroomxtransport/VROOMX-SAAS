@@ -21,7 +21,7 @@ export const truckTypeEnum = pgEnum('truck_type', ['7_car', '8_car', '9_car', 'f
 export const truckStatusEnum = pgEnum('truck_status', ['active', 'inactive', 'maintenance'])
 
 export const driverPayTypeEnum = pgEnum('driver_pay_type', [
-  'percentage_of_carrier_pay', 'dispatch_fee_percent', 'per_mile',
+  'percentage_of_carrier_pay', 'dispatch_fee_percent', 'per_mile', 'per_car',
 ])
 
 export const paymentTermsEnum = pgEnum('payment_terms', ['NET15', 'NET30', 'NET45', 'NET60'])
@@ -199,6 +199,8 @@ export const orders = pgTable('orders', {
   carrierPay: numeric('carrier_pay', { precision: 12, scale: 2 }).default('0'),
   brokerFee: numeric('broker_fee', { precision: 12, scale: 2 }).default('0'),
   paymentType: paymentTypeEnum('payment_type').default('COP'),
+  // Trip assignment
+  tripId: uuid('trip_id'),
   // Metadata
   notes: text('notes'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -208,6 +210,80 @@ export const orders = pgTable('orders', {
   index('idx_orders_tenant_status').on(table.tenantId, table.status),
   index('idx_orders_tenant_broker').on(table.tenantId, table.brokerId),
   index('idx_orders_tenant_driver').on(table.tenantId, table.driverId),
+  index('idx_orders_tenant_trip').on(table.tenantId, table.tripId),
+])
+
+// ============================================================================
+// Phase 3 Enums
+// ============================================================================
+
+export const tripStatusEnum = pgEnum('trip_status', [
+  'planned', 'in_progress', 'at_terminal', 'completed',
+])
+
+export const expenseCategoryEnum = pgEnum('expense_category', [
+  'fuel', 'tolls', 'repairs', 'lodging', 'misc',
+])
+
+// ============================================================================
+// Phase 3 Tables: Dispatch Workflow
+// ============================================================================
+
+/**
+ * Trips Table
+ * Groups orders into a single dispatch run with driver/truck assignment.
+ */
+export const trips = pgTable('trips', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  tripNumber: text('trip_number'),
+  driverId: uuid('driver_id').notNull().references(() => drivers.id),
+  truckId: uuid('truck_id').notNull().references(() => trucks.id),
+  status: tripStatusEnum('status').notNull().default('planned'),
+  startDate: date('start_date').notNull(),
+  endDate: date('end_date').notNull(),
+  // Manually entered financials
+  carrierPay: numeric('carrier_pay', { precision: 12, scale: 2 }).default('0'),
+  // Denormalized financial summary (computed by app code)
+  totalRevenue: numeric('total_revenue', { precision: 12, scale: 2 }).default('0'),
+  totalBrokerFees: numeric('total_broker_fees', { precision: 12, scale: 2 }).default('0'),
+  driverPay: numeric('driver_pay', { precision: 12, scale: 2 }).default('0'),
+  totalExpenses: numeric('total_expenses', { precision: 12, scale: 2 }).default('0'),
+  netProfit: numeric('net_profit', { precision: 12, scale: 2 }).default('0'),
+  orderCount: integer('order_count').default(0),
+  // Denormalized route summary (computed by app code from assigned orders)
+  originSummary: text('origin_summary'),
+  destinationSummary: text('destination_summary'),
+  // Metadata
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_trips_tenant_id').on(table.tenantId),
+  index('idx_trips_tenant_status').on(table.tenantId, table.status),
+  index('idx_trips_tenant_driver').on(table.tenantId, table.driverId),
+  index('idx_trips_tenant_truck').on(table.tenantId, table.truckId),
+  index('idx_trips_tenant_dates').on(table.tenantId, table.startDate, table.endDate),
+])
+
+/**
+ * Trip Expenses Table
+ * Individual expense line items for a trip.
+ */
+export const tripExpenses = pgTable('trip_expenses', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  tripId: uuid('trip_id').notNull().references(() => trips.id, { onDelete: 'cascade' }),
+  category: expenseCategoryEnum('category').notNull().default('misc'),
+  customLabel: text('custom_label'),
+  amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
+  notes: text('notes'),
+  expenseDate: date('expense_date'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_trip_expenses_tenant_id').on(table.tenantId),
+  index('idx_trip_expenses_trip_id').on(table.tripId),
 ])
 
 // ============================================================================
@@ -231,3 +307,9 @@ export type Truck = typeof trucks.$inferSelect
 export type NewTruck = typeof trucks.$inferInsert
 export type Order = typeof orders.$inferSelect
 export type NewOrder = typeof orders.$inferInsert
+
+// Phase 3
+export type DrizzleTrip = typeof trips.$inferSelect
+export type NewTrip = typeof trips.$inferInsert
+export type DrizzleTripExpense = typeof tripExpenses.$inferSelect
+export type NewTripExpense = typeof tripExpenses.$inferInsert

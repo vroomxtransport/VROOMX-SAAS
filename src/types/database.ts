@@ -58,7 +58,7 @@ export interface Driver {
   license_number: string | null
   driver_type: 'company' | 'owner_operator'
   driver_status: 'active' | 'inactive'
-  pay_type: 'percentage_of_carrier_pay' | 'dispatch_fee_percent' | 'per_mile'
+  pay_type: 'percentage_of_carrier_pay' | 'dispatch_fee_percent' | 'per_mile' | 'per_car'
   pay_rate: number
   notes: string | null
   created_at: string
@@ -93,6 +93,7 @@ export interface Order {
   vehicle_model: string | null
   vehicle_type: string | null
   vehicle_color: string | null
+  trip_id: string | null
   status: 'new' | 'assigned' | 'picked_up' | 'delivered' | 'invoiced' | 'paid' | 'cancelled'
   cancelled_reason: string | null
   pickup_location: string | null
@@ -116,6 +117,42 @@ export interface Order {
   broker_fee: string
   payment_type: 'COD' | 'COP' | 'CHECK' | 'BILL' | 'SPLIT' | null
   notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface Trip {
+  id: string
+  tenant_id: string
+  trip_number: string | null
+  driver_id: string
+  truck_id: string
+  status: 'planned' | 'in_progress' | 'at_terminal' | 'completed'
+  start_date: string
+  end_date: string
+  carrier_pay: string
+  total_revenue: string
+  total_broker_fees: string
+  driver_pay: string
+  total_expenses: string
+  net_profit: string
+  order_count: number
+  origin_summary: string | null
+  destination_summary: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface TripExpense {
+  id: string
+  tenant_id: string
+  trip_id: string
+  category: 'fuel' | 'tolls' | 'repairs' | 'lodging' | 'misc'
+  custom_label: string | null
+  amount: string
+  notes: string | null
+  expense_date: string | null
   created_at: string
   updated_at: string
 }
