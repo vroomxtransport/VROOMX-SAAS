@@ -8,10 +8,10 @@
 |------|--------|
 | **Milestone** | v1.0 — MVP Launch |
 | **Current Phase** | Phase 4 (Billing & Invoicing) -- Executing |
-| **Next Action** | Execute 04-03 (Payment Data Layer) |
+| **Next Action** | Execute 04-04 (Order Detail Billing Section) |
 | **Blockers** | None |
 
-Phase 4 in progress: 2/5 plans done. Invoice PDF generation and email delivery pipeline complete. Ready for payment data layer (Plan 03) and UI integration (Plans 04-05).
+Phase 4 in progress: 3/5 plans done. Payment data layer complete: server actions, receivables/aging queries, Realtime hooks. Ready for UI integration (Plans 04-05).
 
 ## Completed Work
 
@@ -40,6 +40,7 @@ Phase 4 in progress: 2/5 plans done. Invoice PDF generation and email delivery p
 | 03-06 | Done | 2026-02-12 | Order-side trip assignment: AssignToTrip component, trip relation in order queries |
 | 04-01 | Done | 2026-02-12 | DB foundation for billing: payment_status enum, payments table, types, Zod validation |
 | 04-02 | Done | 2026-02-12 | Invoice PDF template, Resend client, email template, PDF download + send API routes |
+| 04-03 | Done | 2026-02-12 | Payment server actions, receivables/aging queries, Realtime payment hooks |
 
 ## Phase Status
 
@@ -48,13 +49,13 @@ Phase 4 in progress: 2/5 plans done. Invoice PDF generation and email delivery p
 | 1 | Project Setup + Auth + Multi-Tenancy | Complete | 8/8 |
 | 2 | Data Model + Core Entities | Complete | 6/6 |
 | 3 | Dispatch Workflow | Complete | 6/6 |
-| 4 | Billing & Invoicing | In Progress | 2/5 |
+| 4 | Billing & Invoicing | In Progress | 3/5 |
 | 5 | Onboarding + Stripe Polish | Not Started | 0/? |
 | 6 | iOS Driver App | Not Started | 0/? |
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-██████████████████████ 88% (22/25 plans complete across Phases 1-4)
+███████████████████████ 92% (23/25 plans complete across Phases 1-4)
 
 ## Key Decisions Log
 
@@ -149,23 +150,27 @@ Phase 4 in progress: 2/5 plans done. Invoice PDF generation and email delivery p
 | 2026-02-12 | Uint8Array conversion for Response body in PDF route | Node Buffer not accepted by Web Response API in strict TS | 04-02 |
 | 2026-02-12 | Invoice number INV-{orderId} using full UUID | Per locked decision; simple and unique per order | 04-02 |
 | 2026-02-12 | Conditional status updates on invoice send (idempotent re-send) | Only advance from unpaid/delivered; preserve original invoice_date | 04-02 |
+| 2026-02-12 | Supabase broker relation cast via unknown for type safety | Array vs object return from .select() with joins | 04-03 |
+| 2026-02-12 | Collection rate includes paid orders for accurate percentage | Denominator is all invoiced orders, not just outstanding | 04-03 |
+| 2026-02-12 | Overdue threshold 30 days from invoice_date | Standard accounts receivable aging convention | 04-03 |
 
 ## Session Continuity
 
 **Last session:** 2026-02-12 08:17 UTC
-**Stopped at:** Completed 04-02-PLAN.md
+**Stopped at:** Completed 04-03-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Phase 4 Plan 02: Invoice PDF Generation & Email Delivery
-- InvoiceDocument component with company header, bill-to, line items, VIN, total, footer
-- Resend client singleton using RESEND_API_KEY env var
-- InvoiceEmail React Email template with inline styles
-- GET /api/invoices/[orderId]/pdf returns PDF buffer with proper Content-Type
-- POST /api/invoices/[orderId]/send generates PDF, emails broker, updates payment_status/invoice_date/status
+- Phase 4 Plan 03: Payment Data Layer
+- recordPayment server action with balance validation and auto-status transition
+- batchMarkPaid server action for bulk payment processing with Promise.allSettled
+- fetchBrokerReceivables aggregation query grouped by broker
+- fetchAgingAnalysis with current/1-30/31-60/61-90/90+ day buckets
+- fetchCollectionRate computing invoiced vs collected percentage
+- usePaymentsByOrder hook with Realtime subscription
 
-**Next action:** Execute 04-03-PLAN.md (Payment Data Layer)
+**Next action:** Execute 04-04-PLAN.md (Order Detail Billing Section)
 
-**Phase 4 in progress.** Database foundation and invoice pipeline complete. Payment data layer (Plan 03) and UI integration (Plans 04-05) remain.
+**Phase 4 in progress.** Database foundation, invoice pipeline, and payment data layer complete. UI integration (Plans 04-05) remain.
