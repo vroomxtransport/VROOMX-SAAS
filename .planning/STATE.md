@@ -7,11 +7,11 @@
 | Item | Status |
 |------|--------|
 | **Milestone** | v1.0 — MVP Launch |
-| **Current Phase** | Phase 5 (Onboarding + Stripe Polish) -- Complete |
-| **Next Action** | Begin Phase 6 planning (iOS Driver App) |
+| **Current Phase** | Phase 6 (iOS Driver App) -- In Progress |
+| **Next Action** | Execute 06-02-PLAN.md |
 | **Blockers** | None |
 
-Phase 5 complete: 5/5 plans done. All onboarding, billing, tier enforcement, dunning, and team invite features implemented.
+Phase 6 in progress: 1/13 plans done. DB migration and Xcode scaffold complete.
 
 ## Completed Work
 
@@ -48,6 +48,7 @@ Phase 5 complete: 5/5 plans done. All onboarding, billing, tier enforcement, dun
 | 05-03 | Done | 2026-02-12 | Stripe dunning flow (14-day grace period) + Billing Portal Server Action |
 | 05-04 | Done | 2026-02-12 | Team invite flow: send/accept/revoke invites, settings page team management |
 | 05-05 | Done | 2026-02-12 | Dashboard onboarding wizard, settings billing/usage sections, layout dunning banners |
+| 06-01 | Done | 2026-02-12 | DB migration (7 tables, 5 enums, RLS) + Xcode SwiftUI scaffold with supabase-swift |
 
 ## Phase Status
 
@@ -58,11 +59,11 @@ Phase 5 complete: 5/5 plans done. All onboarding, billing, tier enforcement, dun
 | 3 | Dispatch Workflow | Complete | 6/6 |
 | 4 | Billing & Invoicing | Complete | 5/5 |
 | 5 | Onboarding + Stripe Polish | Complete | 5/5 |
-| 6 | iOS Driver App | Not Started | 0/? |
+| 6 | iOS Driver App | In Progress | 1/13 |
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-██████████████████████████████████████████████████████ 100% (30/30 plans complete across Phases 1-5)
+███████████████████████████████████████████████░░░░░░░ 72% (31/43 plans complete across Phases 1-6)
 
 ## Key Decisions Log
 
@@ -189,21 +190,27 @@ Phase 5 complete: 5/5 plans done. All onboarding, billing, tier enforcement, dun
 | 2026-02-12 | Inline server actions with dynamic import for billing portal | Avoids loading Stripe code on every page render | 05-05 |
 | 2026-02-12 | Service role client for tenant_memberships count | RLS prevents authenticated user from counting across memberships | 05-05 |
 | 2026-02-12 | Usage progress bars: blue/amber/red color coding | Visual at-a-glance resource utilization | 05-05 |
+| 2026-02-12 | Info.plist with camera/location/photo permissions upfront | Inspection features need all three from the start | 06-01 |
+| 2026-02-12 | Config enum for constants (not struct) | Pure namespace, no instantiation needed | 06-01 |
+| 2026-02-12 | SPM-based iOS project (no .xcodeproj) | Package.swift at VroomXDriver/ root for dependency management | 06-01 |
+| 2026-02-12 | Partial unique index on drivers.auth_user_id | WHERE NOT NULL allows multiple unlinked driver records | 06-01 |
+| 2026-02-12 | Storage buckets as SQL comments (manual setup) | Supabase storage buckets require Dashboard/CLI creation | 06-01 |
 
 ## Session Continuity
 
-**Last session:** 2026-02-12 09:31 UTC
-**Stopped at:** Completed 05-05-PLAN.md (Phase 5 complete)
+**Last session:** 2026-02-12 10:35 UTC
+**Stopped at:** Completed 06-01-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Phase 5 Plan 05: Onboarding Wizard + Settings Billing/Usage
-- Dashboard shows smart onboarding CTA gated by onboarding_completed_at AND entity counts
-- Dashboard stat cards now show real truck/driver/order counts and MTD revenue
-- Layout shows amber grace period banner and red suspension banner with Stripe portal links
-- Settings page created with BillingSection and UsageSection components
-- Phase 5 is fully complete (5/5 plans, 30/30 total plans across Phases 1-5)
+- Phase 6 Plan 01: DB Migration + Xcode Scaffold
+- Migration 00006 adds 7 tables (vehicle_inspections, inspection_photos, inspection_videos, inspection_damages, order_attachments, driver_notifications, device_tokens) with full RLS
+- Drivers table now has auth_user_id (linking Supabase Auth) and pin_hash columns
+- Orders table now has pickup_eta and delivery_eta columns
+- Trip_expenses table now has receipt_url column
+- VroomXDriver/ directory created with Package.swift (supabase-swift, KeychainAccess), entry point, config, and Info.plist
+- Storage buckets (inspection-media, receipts, bol-documents) need manual creation in Supabase
 
-**Next:** Phase 6 (iOS Driver App) or Phase 7 (Polish & Launch Prep)
+**Next:** Execute 06-02-PLAN.md (Swift models and Supabase client)
