@@ -220,7 +220,9 @@ Plans:
 
 ---
 
-## Phase 6: iOS Driver App
+## Phase 6: iOS Driver App ✓
+
+**Status:** Complete (2026-02-12)
 
 **Goal:** Drivers have a full-featured iOS app (SwiftUI) with Horizon Star parity: view trips, update order statuses, run 6-step vehicle inspections, generate BOLs, track earnings/settlements, and receive push notifications. The app connects to the same multi-tenant Supabase backend.
 
@@ -229,19 +231,19 @@ Plans:
 **Plans:** 13 plans
 
 Plans:
-- [ ] 06-01-PLAN.md — DB migration (inspection tables, auth_user_id, ETAs, storage buckets) + Xcode project scaffold
-- [ ] 06-02-PLAN.md — Theme system (VroomX blue/violet palette) + all data models (UUID-based) + core services (Supabase, network, cache)
-- [ ] 06-03-PLAN.md — Auth flow (email OTP + biometric + PIN) + ContentView routing + 5-tab MainTabView shell
-- [ ] 06-04-PLAN.md — Data layer (DataManager: fetch, cache, Realtime, mutations) + offline queues + shared UI components
-- [ ] 06-05-PLAN.md — Home tab (greeting, stats, module tabs, order cards with quick actions)
-- [ ] 06-06-PLAN.md — Trips tab (trip list, trip detail with financials/orders/expenses, trip history)
-- [ ] 06-07-PLAN.md — Order detail (timeline, status updates, ETA, map links, contacts, file grid)
-- [ ] 06-08-PLAN.md — Inspection steps 1-3 (photo capture, video walkthrough, exterior SVG damage diagrams)
-- [ ] 06-09-PLAN.md — Inspection steps 4-6 (notes/GPS, driver signature, customer sign-off)
-- [ ] 06-10-PLAN.md — BOL generation (2-page PDF) + preview + email delivery via Edge Function
-- [ ] 06-11-PLAN.md — Earnings tab (pay period hero card, financial breakdown, settlement detail with PDF/CSV export)
-- [ ] 06-12-PLAN.md — Messages tab + push notifications (APNs registration, device tokens, notification history)
-- [ ] 06-13-PLAN.md — Profile tab (driver stats, theme toggle, cache info, sign out)
+- [x] 06-01-PLAN.md — DB migration (inspection tables, auth_user_id, ETAs, storage buckets) + Xcode project scaffold
+- [x] 06-02-PLAN.md — Theme system (VroomX blue/violet palette) + all data models (UUID-based) + core services (Supabase, network, cache)
+- [x] 06-03-PLAN.md — Auth flow (email OTP + biometric + PIN) + ContentView routing + 5-tab MainTabView shell
+- [x] 06-04-PLAN.md — Data layer (DataManager: fetch, cache, Realtime, mutations) + offline queues + shared UI components
+- [x] 06-05-PLAN.md — Home tab (greeting, stats, module tabs, order cards with quick actions)
+- [x] 06-06-PLAN.md — Trips tab (trip list, trip detail with financials/orders/expenses, trip history)
+- [x] 06-07-PLAN.md — Order detail (timeline, status updates, ETA, map links, contacts, file grid)
+- [x] 06-08-PLAN.md — Inspection steps 1-3 (photo capture, video walkthrough, exterior SVG damage diagrams)
+- [x] 06-09-PLAN.md — Inspection steps 4-6 (notes/GPS, driver signature, customer sign-off)
+- [x] 06-10-PLAN.md — BOL generation (2-page PDF) + preview + email delivery via Edge Function
+- [x] 06-11-PLAN.md — Earnings tab (pay period hero card, financial breakdown, settlement detail with PDF/CSV export)
+- [x] 06-12-PLAN.md — Messages tab + push notifications (APNs registration, device tokens, notification history)
+- [x] 06-13-PLAN.md — Profile tab (driver stats, theme toggle, cache info, sign out)
 
 **Key Deliverables:**
 - Fresh SwiftUI project (separate from Horizon Star driver app)
@@ -261,12 +263,12 @@ Plans:
 **Research Flags:** Multi-tenant iOS auth needs tenant_id in JWT (see PITFALLS.md MOD-10). Use Swift actor for token refresh serialization. Clear all caches on tenant switch.
 
 **Success Criteria:**
-- [ ] Driver can log in and see assigned trips
-- [ ] Driver can update order status from the field
-- [ ] Vehicle inspection captures photos and signature
-- [ ] BOL PDF generates correctly and can be emailed
-- [ ] Expenses can be added to trips
-- [ ] Data syncs in real-time with web dashboard
+- [x] Driver can log in and see assigned trips
+- [x] Driver can update order status from the field
+- [x] Vehicle inspection captures photos and signature
+- [x] BOL PDF generates correctly and can be emailed
+- [x] Expenses can be added to trips
+- [ ] Data syncs in real-time with web dashboard — human verification needed
 
 ---
 

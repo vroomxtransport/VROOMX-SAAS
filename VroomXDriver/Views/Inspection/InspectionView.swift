@@ -11,6 +11,7 @@ struct InspectionView: View {
     let inspectionType: InspectionType
 
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var authManager: AuthManager
 
     // MARK: - Flow State
 
@@ -167,6 +168,54 @@ struct InspectionView: View {
             .task {
                 await createOrLoadInspection()
             }
+            .fullScreenCover(isPresented: $showBOLPreview) {
+                // Dismiss inspection flow after BOL preview is closed
+                dismiss()
+            } content: {
+                if let completedInspectionId {
+                    BOLPreviewView(
+                        inspectionId: completedInspectionId,
+                        order: order,
+                        inspection: VehicleInspection(
+                            id: completedInspectionId,
+                            tenantId: order.tenantId,
+                            orderId: order.id,
+                            driverId: DataManager.shared.driverId ?? "",
+                            inspectionType: inspectionType,
+                            status: .completed,
+                            odometerReading: Int(odometerReading),
+                            interiorCondition: interiorCondition.rawValue,
+                            notes: inspectionNotes.isEmpty ? nil : inspectionNotes,
+                            gpsLatitude: gpsLatitude,
+                            gpsLongitude: gpsLongitude,
+                            gpsAddress: gpsAddress,
+                            driverSignatureUrl: nil,
+                            customerSignatureUrl: nil,
+                            customerName: customerName.isEmpty ? nil : customerName,
+                            customerNotes: customerNotes.isEmpty ? nil : customerNotes,
+                            completedAt: ISO8601DateFormatter().string(from: Date()),
+                            createdAt: "",
+                            updatedAt: ""
+                        ),
+                        damages: damages.map { local in
+                            InspectionDamage(
+                                id: local.id,
+                                tenantId: order.tenantId,
+                                inspectionId: completedInspectionId,
+                                damageType: local.damageType,
+                                view: local.view,
+                                xPosition: local.xPosition,
+                                yPosition: local.yPosition,
+                                description: local.description,
+                                createdAt: ""
+                            )
+                        },
+                        driverSignatureImage: driverSignatureImage,
+                        customerSignatureImage: customerSignatureImage,
+                        driverName: authManager.currentDriver?.fullName ?? "Driver"
+                    )
+                }
+            }
         }
     }
 
@@ -307,9 +356,6 @@ struct InspectionView: View {
                     onComplete: { completedId in
                         completedInspectionId = completedId
                         showBOLPreview = true
-                        // BOLPreviewView will be wired in Plan 10
-                        // For now, dismiss the inspection flow
-                        dismiss()
                     }
                 )
             } else {

@@ -295,6 +295,9 @@ final class AuthManager: ObservableObject {
         // Clear biometric flag
         UserDefaults.standard.removeObject(forKey: biometricEnabledKey)
 
+        // Deregister push notification token
+        await NotificationManager.shared.deregisterDeviceToken()
+
         // Clear all cached data
         CacheManager.shared.clearAllCache()
     }
