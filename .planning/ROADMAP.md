@@ -222,26 +222,41 @@ Plans:
 
 ## Phase 6: iOS Driver App
 
-**Goal:** Drivers have a functional iOS app to view trips, update order statuses, run vehicle inspections, and generate BOLs. The app connects to the same multi-tenant Supabase backend.
+**Goal:** Drivers have a full-featured iOS app (SwiftUI) with Horizon Star parity: view trips, update order statuses, run 6-step vehicle inspections, generate BOLs, track earnings/settlements, and receive push notifications. The app connects to the same multi-tenant Supabase backend.
 
 **Requirements:** APP-1, APP-2, APP-3, APP-4, APP-5, APP-6, APP-7
+
+**Plans:** 13 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — DB migration (inspection tables, auth_user_id, ETAs, storage buckets) + Xcode project scaffold
+- [ ] 06-02-PLAN.md — Theme system (VroomX blue/violet palette) + all data models (UUID-based) + core services (Supabase, network, cache)
+- [ ] 06-03-PLAN.md — Auth flow (email OTP + biometric + PIN) + ContentView routing + 5-tab MainTabView shell
+- [ ] 06-04-PLAN.md — Data layer (DataManager: fetch, cache, Realtime, mutations) + offline queues + shared UI components
+- [ ] 06-05-PLAN.md — Home tab (greeting, stats, module tabs, order cards with quick actions)
+- [ ] 06-06-PLAN.md — Trips tab (trip list, trip detail with financials/orders/expenses, trip history)
+- [ ] 06-07-PLAN.md — Order detail (timeline, status updates, ETA, map links, contacts, file grid)
+- [ ] 06-08-PLAN.md — Inspection steps 1-3 (photo capture, video walkthrough, exterior SVG damage diagrams)
+- [ ] 06-09-PLAN.md — Inspection steps 4-6 (notes/GPS, driver signature, customer sign-off)
+- [ ] 06-10-PLAN.md — BOL generation (2-page PDF) + preview + email delivery via Edge Function
+- [ ] 06-11-PLAN.md — Earnings tab (pay period hero card, financial breakdown, settlement detail with PDF/CSV export)
+- [ ] 06-12-PLAN.md — Messages tab + push notifications (APNs registration, device tokens, notification history)
+- [ ] 06-13-PLAN.md — Profile tab (driver stats, theme toggle, cache info, sign out)
 
 **Key Deliverables:**
 - Fresh SwiftUI project (separate from Horizon Star driver app)
 - Supabase Swift SDK integration (Auth + DB + Storage + Realtime)
-- Driver login (email/password + PIN quick-access)
-- Trip list view (assigned trips, real-time status)
-- Trip detail view (orders, route info, financial summary)
-- Order status updates (mark picked up, in transit, delivered)
-- Vehicle inspection flow:
-  - Photo capture (front, back, left, right, interior)
-  - Damage marker overlay on vehicle diagram
-  - Driver notes
-  - Customer signature capture
-- BOL generation (PDF from inspection + order data)
-- BOL email delivery via Supabase Edge Function
+- Driver login (email OTP + biometric unlock + PIN quick-access)
+- 5-tab navigation: Home, Trips, Earnings, Messages, Profile
+- Trip list and detail views (assigned trips, real-time status, financials)
+- Order detail with status updates, ETA submission, map links, contact actions
+- 6-step vehicle inspection flow (photos, video, SVG damage diagrams, notes/GPS, driver signature, customer sign-off)
+- BOL generation (2-page PDF) with email delivery via Supabase Edge Function
+- Earnings/settlement views with PDF and CSV export
 - Per-trip expense tracking (fuel, tolls, repairs, meals)
-- Push notifications for trip assignments
+- Push notifications for trip assignments and status changes
+- Offline support (cache, pending actions queue, upload queue with retry)
+- VroomX branding (blue/violet palette, dark mode default)
 
 **Research Flags:** Multi-tenant iOS auth needs tenant_id in JWT (see PITFALLS.md MOD-10). Use Swift actor for token refresh serialization. Clear all caches on tenant switch.
 
