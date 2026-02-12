@@ -7,6 +7,8 @@ import {
   handleSubscriptionUpdated,
   handleSubscriptionDeleted,
   handlePaymentFailed,
+  handleInvoicePaid,
+  handlePaymentFailedWithGrace,
 } from '@/lib/stripe/webhook-handlers'
 import type Stripe from 'stripe'
 
@@ -56,8 +58,11 @@ export async function POST(req: Request) {
       case 'customer.subscription.deleted':
         await handleSubscriptionDeleted(event.data.object as Stripe.Subscription)
         break
+      case 'invoice.paid':
+        await handleInvoicePaid(event.data.object as Stripe.Invoice)
+        break
       case 'invoice.payment_failed':
-        await handlePaymentFailed(event.data.object as Stripe.Invoice)
+        await handlePaymentFailedWithGrace(event.data.object as Stripe.Invoice)
         break
       default:
         console.log(`Unhandled Stripe event type: ${event.type}`)

@@ -129,3 +129,96 @@ export async function handlePaymentFailed(invoice: Stripe.Invoice) {
     throw error
   }
 }
+
+/**
+ * Handle successful invoice payment - clears grace period and suspension.
+ * Fires on every successful payment (initial, renewal, manual retry).
+ */
+export async function handleInvoicePaid(invoice: Stripe.Invoice) {
+  const supabase = createServiceRoleClient()
+
+  const subscription = (invoice as any).subscription
+  if (!subscription) return
+
+  const subscriptionId = typeof subscription === 'string'
+    ? subscription
+    : subscription.id
+
+  if (!subscriptionId) return
+
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('id')
+    .eq('stripe_subscription_id', subscriptionId)
+    .single()
+
+  if (!tenant) {
+    console.error('invoice.paid: no tenant found for subscription', subscriptionId)
+    return
+  }
+
+  // Clear grace period and suspension on successful payment
+  const { error } = await supabase
+    .from('tenants')
+    .update({
+      subscription_status: 'active',
+      grace_period_ends_at: null,
+      is_suspended: false,
+    })
+    .eq('id', tenant.id)
+
+  if (error) {
+    console.error('invoice.paid: failed to update tenant', error)
+    throw error
+  }
+}
+
+/**
+ * Handle payment failure with grace period.
+ * Replaces simple status update with grace period logic.
+ * Sets grace_period_ends_at to 14 days from now (only if not already in grace).
+ */
+export async function handlePaymentFailedWithGrace(invoice: Stripe.Invoice) {
+  const supabase = createServiceRoleClient()
+
+  const subscription = (invoice as any).subscription
+  if (!subscription) return
+
+  const subscriptionId = typeof subscription === 'string'
+    ? subscription
+    : subscription.id
+
+  if (!subscriptionId) return
+
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('id, grace_period_ends_at')
+    .eq('stripe_subscription_id', subscriptionId)
+    .single()
+
+  if (!tenant) {
+    console.error('payment_failed_grace: no tenant found for subscription', subscriptionId)
+    return
+  }
+
+  // Build update: always set past_due, only set grace period if not already in one
+  const updates: Record<string, any> = {
+    subscription_status: 'past_due',
+  }
+
+  if (!tenant.grace_period_ends_at) {
+    updates.grace_period_ends_at = new Date(
+      Date.now() + 14 * 24 * 60 * 60 * 1000  // 14 days
+    ).toISOString()
+  }
+
+  const { error } = await supabase
+    .from('tenants')
+    .update(updates)
+    .eq('id', tenant.id)
+
+  if (error) {
+    console.error('payment_failed_grace: failed to update tenant', error)
+    throw error
+  }
+}
