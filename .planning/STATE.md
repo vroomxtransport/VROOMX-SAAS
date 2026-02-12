@@ -7,11 +7,11 @@
 | Item | Status |
 |------|--------|
 | **Milestone** | v1.0 — MVP Launch |
-| **Current Phase** | Phase 5 (Onboarding + Stripe Polish) -- In Progress |
-| **Next Action** | Execute 05-05-PLAN.md |
+| **Current Phase** | Phase 5 (Onboarding + Stripe Polish) -- Complete |
+| **Next Action** | Begin Phase 6 planning (iOS Driver App) |
 | **Blockers** | None |
 
-Phase 5 in progress: 4/5 plans done. Team invite flow and settings page complete. Next: final polish plan.
+Phase 5 complete: 5/5 plans done. All onboarding, billing, tier enforcement, dunning, and team invite features implemented.
 
 ## Completed Work
 
@@ -47,6 +47,7 @@ Phase 5 in progress: 4/5 plans done. Team invite flow and settings page complete
 | 05-02 | Done | 2026-02-12 | Tier enforcement: checkTierLimit + isAccountSuspended in tier.ts, limit checks in createTruck/createDriver |
 | 05-03 | Done | 2026-02-12 | Stripe dunning flow (14-day grace period) + Billing Portal Server Action |
 | 05-04 | Done | 2026-02-12 | Team invite flow: send/accept/revoke invites, settings page team management |
+| 05-05 | Done | 2026-02-12 | Dashboard onboarding wizard, settings billing/usage sections, layout dunning banners |
 
 ## Phase Status
 
@@ -56,12 +57,12 @@ Phase 5 in progress: 4/5 plans done. Team invite flow and settings page complete
 | 2 | Data Model + Core Entities | Complete | 6/6 |
 | 3 | Dispatch Workflow | Complete | 6/6 |
 | 4 | Billing & Invoicing | Complete | 5/5 |
-| 5 | Onboarding + Stripe Polish | In Progress | 4/5 |
+| 5 | Onboarding + Stripe Polish | Complete | 5/5 |
 | 6 | iOS Driver App | Not Started | 0/? |
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-█████████████████████████████████████████████████░░░░░ 97% (29/30 plans complete across Phases 1-5)
+██████████████████████████████████████████████████████ 100% (30/30 plans complete across Phases 1-5)
 
 ## Key Decisions Log
 
@@ -184,23 +185,25 @@ Phase 5 in progress: 4/5 plans done. Team invite flow and settings page complete
 | 2026-02-12 | Invited signups skip tenant/Stripe creation entirely | Cleaner than creating unused placeholder tenant | 05-04 |
 | 2026-02-12 | NEXT_REDIRECT digest re-throw in accept route | Prevents swallowing Next.js redirect throws in catch blocks | 05-04 |
 | 2026-02-12 | Suspense wrapper for useSearchParams in login/signup | Required by Next.js App Router for client-side search params | 05-04 |
+| 2026-02-12 | Onboarding wizard requires BOTH onboarding_completed_at=null AND zero counts | Prevents reappearance after dismiss, even if entities are later deleted | 05-05 |
+| 2026-02-12 | Inline server actions with dynamic import for billing portal | Avoids loading Stripe code on every page render | 05-05 |
+| 2026-02-12 | Service role client for tenant_memberships count | RLS prevents authenticated user from counting across memberships | 05-05 |
+| 2026-02-12 | Usage progress bars: blue/amber/red color coding | Visual at-a-glance resource utilization | 05-05 |
 
 ## Session Continuity
 
-**Last session:** 2026-02-12 09:32 UTC
-**Stopped at:** Completed 05-04-PLAN.md
+**Last session:** 2026-02-12 09:31 UTC
+**Stopped at:** Completed 05-05-PLAN.md (Phase 5 complete)
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Phase 5 Plan 04: Team Invite Flow + Settings Page Team Management
-- sendInvite Server Action: role/permission checks, tier limits, duplicate detection, Resend email
-- revokeInvite Server Action: marks invite as revoked with admin role check
-- InviteEmail React Email template for team invitations
-- Accept route at /invite/accept: token validation, expiry check, membership creation, app_metadata update
-- Login/signup pages wire invite_token through hidden fields with auth action redirect
-- signUpAction skips tenant/Stripe creation for invited users
-- Settings page extended with TeamSection: invite form, member list, pending invites
+- Phase 5 Plan 05: Onboarding Wizard + Settings Billing/Usage
+- Dashboard shows smart onboarding CTA gated by onboarding_completed_at AND entity counts
+- Dashboard stat cards now show real truck/driver/order counts and MTD revenue
+- Layout shows amber grace period banner and red suspension banner with Stripe portal links
+- Settings page created with BillingSection and UsageSection components
+- Phase 5 is fully complete (5/5 plans, 30/30 total plans across Phases 1-5)
 
-**Next:** 05-05
+**Next:** Phase 6 (iOS Driver App) or Phase 7 (Polish & Launch Prep)
