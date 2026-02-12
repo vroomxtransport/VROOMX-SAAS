@@ -21,7 +21,7 @@ final class DataManager: ObservableObject {
 
     // MARK: - Private State
 
-    private var driverId: String?
+    private(set) var driverId: String?
     private var realtimeChannel: RealtimeChannelV2?
     private var networkCancellable: AnyCancellable?
 
