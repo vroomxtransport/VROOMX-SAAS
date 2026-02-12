@@ -7,11 +7,11 @@
 | Item | Status |
 |------|--------|
 | **Milestone** | v1.0 — MVP Launch |
-| **Current Phase** | Phase 6 (iOS Driver App) -- In Progress |
-| **Next Action** | Execute remaining Wave 4 plan (06-10) |
+| **Current Phase** | Phase 7 (Polish & Launch Prep) -- In Progress |
+| **Next Action** | Execute remaining Phase 7 plans |
 | **Blockers** | None |
 
-Phase 6 in progress: 12/13 plans done. Inspection steps 1-6 complete.
+Phase 7 in progress: 1/10 plans done. Magic link login complete.
 
 ## Completed Work
 
@@ -60,6 +60,8 @@ Phase 6 in progress: 12/13 plans done. Inspection steps 1-6 complete.
 | 06-13 | Done | 2026-02-12 | ProfileView: driver info, stats grid, theme/biometric/notification prefs, cache mgmt, sign out |
 | 06-09 | Done | 2026-02-12 | InspectionNotesView (GPS/odometer), SignaturePadView, DriverReviewView, CustomerReviewView, CustomerSignOffView |
 | 06-08 | Done | 2026-02-12 | InspectionView flow controller, InspectionPhotoView (12 slots), InspectionVideoCaptureView (AVFoundation), ExteriorInspectionView, VehicleDiagrams (25 shapes), VehicleDiagramView (interactive damage markers) |
+| 06-10 | Done | 2026-02-12 | BOL generation, PDF preview, email delivery |
+| 07-03 | Done | 2026-02-12 | Magic link login: magicLinkAction + tab-based login UI with password/magic-link toggle |
 
 ## Phase Status
 
@@ -70,11 +72,11 @@ Phase 6 in progress: 12/13 plans done. Inspection steps 1-6 complete.
 | 3 | Dispatch Workflow | Complete | 6/6 |
 | 4 | Billing & Invoicing | Complete | 5/5 |
 | 5 | Onboarding + Stripe Polish | Complete | 5/5 |
-| 6 | iOS Driver App | In Progress | 12/13 |
-| 7 | Polish & Launch Prep | Not Started | 0/? |
+| 6 | iOS Driver App | Complete | 13/13 |
+| 7 | Polish & Launch Prep | In Progress | 1/10 |
 
 ## Progress
-██████████████████████████████████████████████████████████ 98% (42/43 plans complete across Phases 1-6)
+████████████████████████████████████████████████░░░░░░░░░░ 83% (44/53 plans complete across Phases 1-7)
 
 ## Key Decisions Log
 
@@ -256,22 +258,22 @@ Phase 6 in progress: 12/13 plans done. Inspection steps 1-6 complete.
 | 2026-02-12 | Non-isolated RecordingDelegate wrapper for AVFoundation | AVFoundation delegates are non-isolated; bridge to MainActor | 06-08 |
 | 2026-02-12 | Right-side diagrams via scaleEffect(x: -1) mirroring | Avoids duplicating all left-side Shape definitions | 06-08 |
 | 2026-02-12 | Camera session startRunning/stopRunning on Task.detached | AVCaptureSession operations must not run on main thread | 06-08 |
+| 2026-02-12 | shouldCreateUser: false for magic link OTP | Prevents magic link signup bypass; directs to signup page | 07-03 |
+| 2026-02-12 | Redirect magic link to existing /auth-confirm route | Reuses PKCE + OTP callback handling already built | 07-03 |
+| 2026-02-12 | Password tab as default in login Tabs | Preserves existing UX for returning users | 07-03 |
 
 ## Session Continuity
 
-**Last session:** 2026-02-12 11:05 UTC
-**Stopped at:** Completed 06-08-PLAN.md
+**Last session:** 2026-02-12 11:47 UTC
+**Stopped at:** Completed 07-03-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Phase 6 Plan 08: Inspection Steps 1-3
-- InspectionView: 6-step flow controller with progress indicator, vehicle_inspections record creation, Next/Back navigation
-- InspectionPhotoView: 12 photo slots (7 required + 5 optional), UIImagePickerController camera, 80% JPEG compression, InspectionUploadQueue
-- InspectionVideoCaptureView: AVFoundation camera preview, record button, 5s min / 5min max, required step, video preview with re-record
-- VehicleDiagrams: 25 SwiftUI Shape structs (5 vehicle types x 5 views) for sedan/SUV/truck/van/minivan
-- VehicleDiagramView: tap-to-place damage markers, drag to reposition, long-press to edit/delete, normalized 0-1 coordinates
-- ExteriorInspectionView: 5-view tab selector, damage type picker (5 types), damage list, summary count
+- Phase 7 Plan 03: Magic Link Login (AUTH-8)
+- magicLinkAction server action in auth.ts: signInWithOtp, shouldCreateUser: false, /auth-confirm redirect
+- Login page updated with Tabs (Password / Magic Link) - password remains default
+- Existing password login flow completely unchanged
 
-**Next:** Execute remaining Wave 4 plan (06-10 BOL Generation)
+**Next:** Execute remaining Phase 7 plans (07-01, 07-02, 07-04 through 07-10)
