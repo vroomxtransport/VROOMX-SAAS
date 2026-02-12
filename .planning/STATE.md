@@ -8,10 +8,10 @@
 |------|--------|
 | **Milestone** | v1.0 — MVP Launch |
 | **Current Phase** | Phase 6 (iOS Driver App) -- In Progress |
-| **Next Action** | Execute next Wave 3 plan |
+| **Next Action** | Execute remaining Wave 4 plans (06-08, 06-10) |
 | **Blockers** | None |
 
-Phase 6 in progress: 10/13 plans done. Order detail complete.
+Phase 6 in progress: 11/13 plans done. Inspection steps 4-6 complete.
 
 ## Completed Work
 
@@ -58,6 +58,7 @@ Phase 6 in progress: 10/13 plans done. Order detail complete.
 | 06-12 | Done | 2026-02-12 | NotificationManager (APNs, device tokens, badge), MessagesView (grouped list, filters, tap-to-read) |
 | 06-07 | Done | 2026-02-12 | OrderDetailView (9-section ScrollView), TimelineView (7-step), ETAButton, MapLinkButton, ContactActionSheet, FileManagementGrid |
 | 06-13 | Done | 2026-02-12 | ProfileView: driver info, stats grid, theme/biometric/notification prefs, cache mgmt, sign out |
+| 06-09 | Done | 2026-02-12 | InspectionNotesView (GPS/odometer), SignaturePadView, DriverReviewView, CustomerReviewView, CustomerSignOffView |
 
 ## Phase Status
 
@@ -68,11 +69,11 @@ Phase 6 in progress: 10/13 plans done. Order detail complete.
 | 3 | Dispatch Workflow | Complete | 6/6 |
 | 4 | Billing & Invoicing | Complete | 5/5 |
 | 5 | Onboarding + Stripe Polish | Complete | 5/5 |
-| 6 | iOS Driver App | In Progress | 10/13 |
+| 6 | iOS Driver App | In Progress | 11/13 |
 | 7 | Polish & Launch Prep | Not Started | 0/? |
 
 ## Progress
-█████████████████████████████████████████████████████████ 93% (40/43 plans complete across Phases 1-6)
+██████████████████████████████████████████████████████████ 95% (41/43 plans complete across Phases 1-6)
 
 ## Key Decisions Log
 
@@ -241,23 +242,29 @@ Phase 6 in progress: 10/13 plans done. Order detail complete.
 | 2026-02-12 | Inspection actions as placeholders (not NavigationLinks) | InspectionView doesn't exist yet; avoids broken references until Plans 08-09 | 06-07 |
 | 2026-02-12 | Dual upload path in FileManagementGrid (queue + direct) | InspectionUploadQueue provides offline resilience; direct upload provides immediate feedback | 06-07 |
 | 2026-02-12 | OrderAttachment model colocated in FileManagementGrid.swift | Only consumer; can extract to Models/ later if needed | 06-07 |
+| 2026-02-12 | InteriorCondition as enum (not String) for type-safe picker | Provides icon/color per condition, eliminates string typos | 06-09 |
+| 2026-02-12 | InspectionLocationManager uses NSObject + CLLocationManagerDelegate | Delegate pattern requires NSObject conformance | 06-09 |
+| 2026-02-12 | Steps 5-6 hide shared nav buttons, manage own advancement | Sign buttons in DriverReviewView/CustomerSignOffView control flow | 06-09 |
+| 2026-02-12 | Customer review split into two substeps within one InspectionStep | CustomerReviewView (review) + CustomerSignOffView (sign) via boolean toggle | 06-09 |
+| 2026-02-12 | Driver signature uploaded eagerly in step 5, re-uploaded in step 6 | Ensures persistence even if step 5 upload failed (offline resilience) | 06-09 |
+| 2026-02-12 | Upsert for inspection_photos/damages/videos records | Handles resume of in-progress inspections without duplicates | 06-09 |
+| 2026-02-12 | BOL navigation as placeholder (showBOLPreview + completedInspectionId) | Plan 10 will wire to BOLPreviewView | 06-09 |
 
 ## Session Continuity
 
-**Last session:** 2026-02-12 10:52 UTC
-**Stopped at:** Completed 06-07-PLAN.md
+**Last session:** 2026-02-12 11:03 UTC
+**Stopped at:** Completed 06-09-PLAN.md
 **Resume file:** None
 
 ## Context for Next Session
 
 **What was just completed:**
-- Phase 6 Plan 07: Order Detail View
-- OrderDetailView: 9-section ScrollView (header, vehicle info, timeline, status actions, pickup, delivery, financial, files, notes, inspections)
-- TimelineView: 7-step vertical timeline with color-coded states (complete/active/pending)
-- ETAButton: DatePicker sheet for pickup/delivery ETA submission via DataManager.submitETA
-- MapLinkButton: Google Maps preferred, Apple Maps fallback
-- ContactActionSheet: call/SMS/copy with haptic feedback
-- FileManagementGrid: order_attachments fetch, 2-column grid, PhotosPicker upload via InspectionUploadQueue to bol-documents bucket
-- OrderStatus.level extension added for timeline comparison
+- Phase 6 Plan 09: Inspection Steps 4-6
+- InspectionNotesView: odometer (numberPad), InteriorCondition picker (4 options), TextEditor notes, GPS via CoreLocation with reverse geocoding
+- SignaturePadView: reusable Canvas drawing with min 2 strokes, Clear/Done, export to UIImage via UIGraphicsImageRenderer
+- DriverReviewView: read-only summary (photos, video, damages, notes, GPS), driver certification, signature upload to Storage
+- CustomerReviewView: simplified customer-facing summary, required name field, optional notes, "Proceed to Sign"
+- CustomerSignOffView: customer signature + full inspection data persistence to 4 DB tables (vehicle_inspections, inspection_photos, inspection_damages, inspection_videos), offline queueing
+- InspectionView wired: steps 4-6 use real views, conditional nav buttons
 
-**Next:** Execute remaining Wave 3 plans (06-08, 06-09, 06-10)
+**Next:** Execute remaining Wave 4 plans (06-08, 06-10)
