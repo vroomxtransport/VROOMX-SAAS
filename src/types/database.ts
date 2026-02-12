@@ -7,6 +7,11 @@ export interface Tenant {
   stripe_customer_id: string | null
   stripe_subscription_id: string | null
   trial_ends_at: string | null
+  address: string | null
+  city: string | null
+  state: string | null
+  zip: string | null
+  phone: string | null
   created_at: string
   updated_at: string
 }
@@ -116,6 +121,9 @@ export interface Order {
   carrier_pay: string
   broker_fee: string
   payment_type: 'COD' | 'COP' | 'CHECK' | 'BILL' | 'SPLIT' | null
+  payment_status: 'unpaid' | 'invoiced' | 'partially_paid' | 'paid'
+  invoice_date: string | null
+  amount_paid: string
   notes: string | null
   created_at: string
   updated_at: string
@@ -153,6 +161,17 @@ export interface TripExpense {
   amount: string
   notes: string | null
   expense_date: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface Payment {
+  id: string
+  tenant_id: string
+  order_id: string
+  amount: string
+  payment_date: string
+  notes: string | null
   created_at: string
   updated_at: string
 }

@@ -208,3 +208,27 @@ export const TRUCK_CAPACITY: Record<TruckType, number> = {
   'flatbed': 4,
   'enclosed': 6,
 }
+
+// ============================================================================
+// Phase 4: Billing & Invoicing Types
+// ============================================================================
+
+export type PaymentStatus = 'unpaid' | 'invoiced' | 'partially_paid' | 'paid'
+
+export const PAYMENT_STATUSES: readonly PaymentStatus[] = [
+  'unpaid', 'invoiced', 'partially_paid', 'paid',
+] as const
+
+export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
+  unpaid: 'Unpaid',
+  invoiced: 'Invoiced',
+  partially_paid: 'Partially Paid',
+  paid: 'Paid',
+}
+
+export const PAYMENT_STATUS_COLORS: Record<PaymentStatus, string> = {
+  unpaid: 'bg-gray-50 text-gray-700 border-gray-200',
+  invoiced: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+  partially_paid: 'bg-amber-50 text-amber-700 border-amber-200',
+  paid: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+}

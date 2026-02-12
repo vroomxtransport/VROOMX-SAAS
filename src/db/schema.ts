@@ -26,6 +26,10 @@ export const driverPayTypeEnum = pgEnum('driver_pay_type', [
 
 export const paymentTermsEnum = pgEnum('payment_terms', ['NET15', 'NET30', 'NET45', 'NET60'])
 
+export const paymentStatusEnum = pgEnum('payment_status', [
+  'unpaid', 'invoiced', 'partially_paid', 'paid',
+])
+
 // ============================================================================
 // Phase 1 Tables
 // ============================================================================
@@ -43,6 +47,12 @@ export const tenants = pgTable('tenants', {
   stripeCustomerId: text('stripe_customer_id'),
   stripeSubscriptionId: text('stripe_subscription_id'),
   trialEndsAt: timestamp('trial_ends_at', { withTimezone: true }),
+  // Company info (Phase 4 - for invoice headers)
+  address: text('address'),
+  city: text('city'),
+  state: text('state'),
+  zip: text('zip'),
+  phone: text('phone'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
@@ -201,6 +211,10 @@ export const orders = pgTable('orders', {
   paymentType: paymentTypeEnum('payment_type').default('COP'),
   // Trip assignment
   tripId: uuid('trip_id'),
+  // Billing (Phase 4)
+  paymentStatus: paymentStatusEnum('payment_status').notNull().default('unpaid'),
+  invoiceDate: timestamp('invoice_date', { withTimezone: true }),
+  amountPaid: numeric('amount_paid', { precision: 12, scale: 2 }).default('0'),
   // Metadata
   notes: text('notes'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -211,6 +225,8 @@ export const orders = pgTable('orders', {
   index('idx_orders_tenant_broker').on(table.tenantId, table.brokerId),
   index('idx_orders_tenant_driver').on(table.tenantId, table.driverId),
   index('idx_orders_tenant_trip').on(table.tenantId, table.tripId),
+  index('idx_orders_tenant_payment_status').on(table.tenantId, table.paymentStatus),
+  index('idx_orders_tenant_invoice_date').on(table.tenantId, table.invoiceDate),
 ])
 
 // ============================================================================
@@ -287,6 +303,28 @@ export const tripExpenses = pgTable('trip_expenses', {
 ])
 
 // ============================================================================
+// Phase 4 Tables: Billing & Invoicing
+// ============================================================================
+
+/**
+ * Payments Table
+ * Individual payment records against orders.
+ */
+export const payments = pgTable('payments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  orderId: uuid('order_id').notNull().references(() => orders.id, { onDelete: 'cascade' }),
+  amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
+  paymentDate: date('payment_date').notNull(),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_payments_tenant_id').on(table.tenantId),
+  index('idx_payments_order_id').on(table.orderId),
+])
+
+// ============================================================================
 // Type Exports
 // ============================================================================
 
@@ -313,3 +351,7 @@ export type DrizzleTrip = typeof trips.$inferSelect
 export type NewTrip = typeof trips.$inferInsert
 export type DrizzleTripExpense = typeof tripExpenses.$inferSelect
 export type NewTripExpense = typeof tripExpenses.$inferInsert
+
+// Phase 4
+export type DrizzlePayment = typeof payments.$inferSelect
+export type NewPayment = typeof payments.$inferInsert
