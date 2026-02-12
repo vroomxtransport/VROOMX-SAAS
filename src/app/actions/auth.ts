@@ -158,3 +158,28 @@ export async function signUpAction(prevState: any, formData: FormData) {
 
   return { error: 'Failed to create checkout session' }
 }
+
+export async function magicLinkAction(prevState: any, formData: FormData) {
+  const email = formData.get('email') as string
+  if (!email || !email.includes('@')) {
+    return { error: 'Please enter a valid email address' }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      shouldCreateUser: false,
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth-confirm`,
+    },
+  })
+
+  if (error) {
+    if (error.message.includes('Signups not allowed')) {
+      return { error: 'No account found with this email. Please sign up first.' }
+    }
+    return { error: error.message }
+  }
+
+  return { success: true, message: 'Check your email for the login link. It expires in 1 hour.' }
+}
