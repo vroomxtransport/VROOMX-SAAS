@@ -176,7 +176,9 @@ Plans:
 
 ---
 
-## Phase 5: Onboarding + Stripe Polish
+## Phase 5: Onboarding + Stripe Polish ✓
+
+**Status:** Complete (2026-02-12)
 
 **Goal:** The full signup-to-dispatch experience is smooth. Team invites work. Stripe billing is production-ready with webhook handling, dunning, and plan enforcement.
 
@@ -185,34 +187,36 @@ Plans:
 **Plans:** 5 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — DB foundation: invites table, tenant dunning columns, tier enforcement triggers, types/validations
-- [ ] 05-02-PLAN.md — Tier limit enforcement: checkTierLimit/isAccountSuspended utilities, Server Action guards on createTruck/createDriver
-- [ ] 05-03-PLAN.md — Stripe Billing Portal Server Action + webhook expansion with dunning (invoice.paid, payment_failed grace period)
-- [ ] 05-04-PLAN.md — Team invite flow: send/revoke actions, React Email template, accept route, settings team section
-- [ ] 05-05-PLAN.md — Onboarding wizard on dashboard, billing/usage sections on settings, grace period/suspension banners in layout
+- [x] 05-01-PLAN.md — DB foundation: invites table, tenant dunning columns, tier enforcement triggers, types/validations
+- [x] 05-02-PLAN.md — Tier limit enforcement: checkTierLimit/isAccountSuspended utilities, Server Action guards on createTruck/createDriver
+- [x] 05-03-PLAN.md — Stripe Billing Portal Server Action + webhook expansion with dunning (invoice.paid, payment_failed grace period)
+- [x] 05-04-PLAN.md — Team invite flow: send/revoke actions, React Email template, accept route, settings team section
+- [x] 05-05-PLAN.md — Onboarding wizard on dashboard, billing/usage sections on settings, grace period/suspension banners in layout
 
 **Key Deliverables:**
 - Team invite flow (email invite -> accept -> join tenant with role)
 - Stripe Billing Portal integration (upgrade/downgrade/cancel)
-- Stripe webhook handling (payment_intent.succeeded, customer.subscription.updated/deleted, invoice.payment_failed)
-- Webhook idempotency (processed_events table)
+- Stripe webhook handling (invoice.paid, invoice.payment_failed with dunning)
+- Webhook idempotency (stripe_events table)
 - Tier-based limits enforcement:
   - Starter: 5 trucks, 3 users
   - Pro: 20 trucks, 10 users
   - Enterprise: unlimited
+- Dual enforcement: Server Action checks + DB triggers
 - Guided onboarding wizard (add first driver -> truck -> order)
 - Usage dashboard (current plan, limits, upgrade CTA)
-- Dunning flow (failed payment -> grace period -> account suspension)
+- Dunning flow (failed payment -> 14-day grace period -> account suspension)
+- Settings page with billing, usage, and team management sections
 
 **Research Flags:** Stripe webhook idempotency is critical (see PITFALLS.md CRIT-4). Use Vercel API routes for webhooks, not Edge Functions (see PITFALLS.md MOD-2).
 
 **Success Criteria:**
-- [ ] Team member can be invited and join with correct role
-- [ ] Stripe Billing Portal works for plan changes
-- [ ] Webhook events processed correctly (idempotent)
-- [ ] Tier limits enforced (Starter user cannot add 6th truck)
-- [ ] Onboarding wizard guides new user through first setup
-- [ ] Failed payment triggers grace period, not immediate lockout
+- [x] Team member can be invited and join with correct role
+- [x] Stripe Billing Portal works for plan changes
+- [x] Webhook events processed correctly (idempotent)
+- [x] Tier limits enforced (Starter user cannot add 6th truck)
+- [x] Onboarding wizard guides new user through first setup
+- [x] Failed payment triggers grace period, not immediate lockout
 
 ---
 
