@@ -10,7 +10,8 @@ import { Pagination } from '@/components/shared/pagination'
 import { EmptyState } from '@/components/shared/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
-import { Plus, PackageOpen } from 'lucide-react'
+import { Plus, PackageOpen, Upload } from 'lucide-react'
+import { CSVImportDialog } from './csv-import-dialog'
 import type { OrderWithRelations } from '@/lib/queries/orders'
 
 const PAGE_SIZE = 20
@@ -21,6 +22,7 @@ export function OrderList() {
   const searchParams = useSearchParams()
 
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [csvImportOpen, setCsvImportOpen] = useState(false)
   const [editingOrder, setEditingOrder] = useState<OrderWithRelations | undefined>(undefined)
 
   // Parse URL search params for filters
@@ -96,10 +98,16 @@ export function OrderList() {
             Manage vehicle transport orders and track their status.
           </p>
         </div>
-        <Button onClick={handleAddOrder}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Order
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setCsvImportOpen(true)}>
+            <Upload className="mr-2 h-4 w-4" />
+            Import CSV
+          </Button>
+          <Button onClick={handleAddOrder}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Order
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -173,6 +181,12 @@ export function OrderList() {
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
         order={editingOrder}
+      />
+
+      {/* CSV Import Dialog */}
+      <CSVImportDialog
+        open={csvImportOpen}
+        onOpenChange={setCsvImportOpen}
       />
     </div>
   )

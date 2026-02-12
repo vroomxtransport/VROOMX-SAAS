@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useDriver } from '@/hooks/use-drivers'
 import { deleteDriver, updateDriverStatus } from '@/app/actions/drivers'
 import { DriverDrawer } from '../_components/driver-drawer'
+import { DriverEarnings } from './_components/driver-earnings'
+import { DriverDocuments } from './_components/driver-documents'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { Badge } from '@/components/ui/badge'
@@ -258,16 +260,13 @@ export default function DriverDetailPage({ params }: DriverDetailPageProps) {
           </p>
         </div>
 
-        {/* Earnings Summary (Placeholder) */}
-        <div className="rounded-lg border bg-white p-5">
-          <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-900">
-            <FileText className="h-4 w-4" />
-            Earnings Summary
-          </h3>
-          <p className="text-sm text-gray-400">
-            Earnings tracking will be available when billing and invoicing is built.
-          </p>
-        </div>
+        {/* Documents */}
+        <DriverDocuments driverId={id} tenantId={driver.tenant_id} />
+      </div>
+
+      {/* Earnings -- full width below the grid */}
+      <div className="mt-6">
+        <DriverEarnings driverId={id} />
       </div>
 
       {/* Notes */}
