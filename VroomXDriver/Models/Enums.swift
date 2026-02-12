@@ -309,6 +309,46 @@ enum NotificationType: String, Codable, CaseIterable, Identifiable {
     }
 }
 
+// MARK: - Inspection Step
+
+/// Client-side enum for 6-step inspection workflow progression.
+/// Not stored in the database directly.
+enum InspectionStep: Int, CaseIterable, Identifiable {
+    case photos = 0
+    case video = 1
+    case exterior = 2
+    case notes = 3
+    case driverReview = 4
+    case customerReview = 5
+
+    var id: Int { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .photos: return "Photos"
+        case .video: return "Video"
+        case .exterior: return "Exterior"
+        case .notes: return "Notes"
+        case .driverReview: return "Review"
+        case .customerReview: return "Sign Off"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .photos: return "camera.fill"
+        case .video: return "video.fill"
+        case .exterior: return "car.fill"
+        case .notes: return "note.text"
+        case .driverReview: return "checkmark.circle.fill"
+        case .customerReview: return "signature"
+        }
+    }
+
+    /// The total number of steps in the inspection workflow.
+    static var totalSteps: Int { allCases.count }
+}
+
 // MARK: - Order Module
 
 /// Client-side enum for Home tab order filtering.
