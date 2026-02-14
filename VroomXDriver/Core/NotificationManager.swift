@@ -141,7 +141,7 @@ final class NotificationManager: NSObject, ObservableObject {
                 .from("driver_notifications")
                 .select("id", head: false)
                 .eq("driver_id", value: driverId)
-                .is("read_at", value: "null")
+                .filter("read_at", operator: "is", value: "null")
                 .execute()
 
             // Parse the response data to count rows
@@ -155,13 +155,13 @@ final class NotificationManager: NSObject, ObservableObject {
         }
 
         // Update app icon badge
-        UNUserNotificationCenter.current().setBadgeCount(unreadCount)
+        try? await UNUserNotificationCenter.current().setBadgeCount(unreadCount)
     }
 
     /// Convenience to refresh badge from local DataManager notifications array.
     func updateBadgeFromLocal() {
         unreadCount = DataManager.shared.notifications.filter { !$0.isRead }.count
-        UNUserNotificationCenter.current().setBadgeCount(unreadCount)
+        Task { try? await UNUserNotificationCenter.current().setBadgeCount(unreadCount) }
     }
 
     // MARK: - Notification Parsing

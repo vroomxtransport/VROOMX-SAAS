@@ -6,20 +6,25 @@ import { useTrips } from '@/hooks/use-trips'
 import { TripRow } from './trip-row'
 import { TripFilters } from './trip-filters'
 import { NewTripDialog } from './new-trip-dialog'
+import { ViewToggle } from './view-toggle'
+import { DispatchSummary } from './dispatch-summary'
+import { DispatchKanban } from './dispatch-kanban'
+import { UnassignedOrdersPanel } from './unassigned-orders-panel'
 import { Pagination } from '@/components/shared/pagination'
 import { EmptyState } from '@/components/shared/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Plus, Truck, ChevronDown, ChevronRight } from 'lucide-react'
 import { HelpTooltip } from '@/components/help-tooltip'
-import { TRIP_STATUSES, TRIP_STATUS_LABELS, TRIP_STATUS_COLORS } from '@/types'
-import type { TripStatus } from '@/types'
+import { PageHeader } from '@/components/shared/page-header'
+import { TRIP_STATUSES, TRIP_STATUS_LABELS, TRIP_STATUS_COLORS, TRUCK_CAPACITY } from '@/types'
+import type { TripStatus, TruckType } from '@/types'
 import type { TripWithRelations } from '@/lib/queries/trips'
 import { cn } from '@/lib/utils'
 
 const PAGE_SIZE = 50
 
-// Section accent colors (left border)
+// Section accent colors (left border) — used by list view
 const SECTION_BORDER_COLORS: Record<TripStatus, string> = {
   planned: 'border-l-blue-500',
   in_progress: 'border-l-amber-500',
@@ -28,10 +33,10 @@ const SECTION_BORDER_COLORS: Record<TripStatus, string> = {
 }
 
 const SECTION_BG_COLORS: Record<TripStatus, string> = {
-  planned: 'bg-blue-50/50',
-  in_progress: 'bg-amber-50/50',
-  at_terminal: 'bg-purple-50/50',
-  completed: 'bg-green-50/50',
+  planned: 'bg-blue-50/50 dark:bg-blue-950/20',
+  in_progress: 'bg-amber-50/50 dark:bg-amber-950/20',
+  at_terminal: 'bg-purple-50/50 dark:bg-purple-950/20',
+  completed: 'bg-green-50/50 dark:bg-green-950/20',
 }
 
 export function DispatchBoard() {
@@ -40,6 +45,7 @@ export function DispatchBoard() {
   const searchParams = useSearchParams()
 
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [viewMode, setViewMode] = useState<'board' | 'list'>('board')
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
     completed: true, // Completed starts collapsed
   })
@@ -135,43 +141,78 @@ export function DispatchBoard() {
     return groups
   }, [data?.trips])
 
+  // Compute summary stats
+  const summaryStats = useMemo(() => {
+    if (!groupedTrips) return { planned: 0, inProgress: 0, capacity: { used: 0, total: 0 } }
+
+    const planned = groupedTrips.planned.length
+    const inProgress = groupedTrips.in_progress.length + groupedTrips.at_terminal.length
+
+    // Calculate total capacity from active (non-completed) trips
+    let totalCapacity = 0
+    let usedCapacity = 0
+    const activeStatuses: TripStatus[] = ['planned', 'in_progress', 'at_terminal']
+    for (const s of activeStatuses) {
+      for (const trip of groupedTrips[s]) {
+        const truckType = trip.truck?.truck_type as TruckType | undefined
+        const maxCap = truckType ? TRUCK_CAPACITY[truckType] : 0
+        totalCapacity += maxCap
+        usedCapacity += trip.order_count ?? 0
+      }
+    }
+
+    return { planned, inProgress, capacity: { used: usedCapacity, total: totalCapacity } }
+  }, [groupedTrips])
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
-            Dispatch Board
-            <HelpTooltip
-              content="Create trips, assign orders, and track driver progress. Trips flow from Planned to In Progress to Completed."
-              side="right"
-            />
-          </h1>
-          <p className="mt-1 text-sm text-gray-500">
-            {data ? `Showing ${data.trips.length} of ${data.total} trips` : 'Manage trips and dispatching.'}
-          </p>
-        </div>
+      <PageHeader
+        title="Dispatch Board"
+        subtitle={data ? `Showing ${data.trips.length} of ${data.total} trips` : 'Manage trips and dispatching.'}
+      >
+        <HelpTooltip
+          content="Create trips, assign orders, and track driver progress. Trips flow from Planned to In Progress to Completed."
+          side="right"
+        />
         <Button onClick={() => setDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           New Trip
         </Button>
-      </div>
+      </PageHeader>
 
-      {/* Filters */}
-      <TripFilters
-        activeFilters={activeFilters}
-        onFilterChange={setFilter}
-        startDate={startDate}
-        endDate={endDate}
-        onStartDateChange={(v) => handleDateChange('startDate', v)}
-        onEndDateChange={(v) => handleDateChange('endDate', v)}
-      />
+      {/* Summary Strip */}
+      {groupedTrips && (
+        <DispatchSummary
+          planned={summaryStats.planned}
+          inProgress={summaryStats.inProgress}
+          capacity={summaryStats.capacity}
+        />
+      )}
+
+      {/* Filters + View Toggle */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <TripFilters
+            activeFilters={activeFilters}
+            onFilterChange={setFilter}
+            startDate={startDate}
+            endDate={endDate}
+            onStartDateChange={(v) => handleDateChange('startDate', v)}
+            onEndDateChange={(v) => handleDateChange('endDate', v)}
+          />
+        </div>
+        {/* Hide view toggle on mobile/tablet — force list view */}
+        <div className="hidden lg:block shrink-0 pt-0.5">
+          <ViewToggle viewMode={viewMode} onViewChange={setViewMode} />
+        </div>
+      </div>
 
       {/* Content */}
       {isPending ? (
         <div className="space-y-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-4 rounded-lg border border-gray-200 bg-white px-4 py-3">
+            <div key={i} className="flex items-center gap-4 rounded-lg border border-border-subtle bg-surface px-4 py-3">
               <Skeleton className="h-4 w-24" />
               <Skeleton className="h-4 w-16" />
               <Skeleton className="h-4 w-20" />
@@ -183,7 +224,7 @@ export function DispatchBoard() {
           ))}
         </div>
       ) : isError ? (
-        <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
+        <div className="rounded-md bg-red-50 dark:bg-red-950/20 p-4 text-sm text-red-700 dark:text-red-400">
           Failed to load trips: {error?.message ?? 'Unknown error'}
         </div>
       ) : data && data.trips.length === 0 ? (
@@ -198,74 +239,30 @@ export function DispatchBoard() {
         />
       ) : groupedTrips ? (
         <>
-          {/* Column header row */}
-          <div className="hidden items-center gap-4 px-4 text-xs font-medium uppercase tracking-wider text-gray-500 lg:flex">
-            <div className="w-28 shrink-0">Trip #</div>
-            <div className="w-20 shrink-0">Truck</div>
-            <div className="w-24 shrink-0">Driver</div>
-            <div className="w-14 shrink-0">Cap</div>
-            <div className="min-w-0 flex-1">Route</div>
-            <div className="w-28 shrink-0">Status</div>
-            <div className="w-32 shrink-0 text-right">Dates</div>
-          </div>
-
-          {/* Status-grouped sections */}
-          <div className="space-y-4">
-            {TRIP_STATUSES.map((sectionStatus) => {
-              const trips = groupedTrips[sectionStatus]
-              const isCollapsed = !!collapsedSections[sectionStatus]
-              const count = trips.length
-
-              return (
-                <div
-                  key={sectionStatus}
-                  className={cn(
-                    'rounded-lg border-l-4',
-                    SECTION_BORDER_COLORS[sectionStatus]
-                  )}
-                >
-                  {/* Section header */}
-                  <button
-                    type="button"
-                    onClick={() => toggleSection(sectionStatus)}
-                    className={cn(
-                      'flex w-full items-center justify-between rounded-t-lg px-4 py-2.5 text-left transition-colors hover:bg-gray-100',
-                      SECTION_BG_COLORS[sectionStatus]
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      {isCollapsed ? (
-                        <ChevronRight className="h-4 w-4 text-gray-500" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4 text-gray-500" />
-                      )}
-                      <span className="text-sm font-semibold text-gray-900">
-                        {TRIP_STATUS_LABELS[sectionStatus]}
-                      </span>
-                      <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-600">
-                        {count}
-                      </span>
-                    </div>
-                  </button>
-
-                  {/* Section content */}
-                  {!isCollapsed && (
-                    <div className="space-y-1 p-2">
-                      {count === 0 ? (
-                        <p className="px-4 py-3 text-sm italic text-gray-400">
-                          No trips
-                        </p>
-                      ) : (
-                        trips.map((trip) => (
-                          <TripRow key={trip.id} trip={trip} />
-                        ))
-                      )}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
+          {/* Board View (desktop only — hidden below lg) */}
+          {viewMode === 'board' ? (
+            <div>
+              {/* Kanban — hidden on mobile/tablet, shown on lg+ */}
+              <div className="hidden lg:block">
+                <DispatchKanban groupedTrips={groupedTrips} />
+              </div>
+              {/* On mobile/tablet, fall back to list view */}
+              <div className="lg:hidden">
+                <ListView
+                  groupedTrips={groupedTrips}
+                  collapsedSections={collapsedSections}
+                  toggleSection={toggleSection}
+                />
+              </div>
+            </div>
+          ) : (
+            /* List View */
+            <ListView
+              groupedTrips={groupedTrips}
+              collapsedSections={collapsedSections}
+              toggleSection={toggleSection}
+            />
+          )}
 
           {/* Pagination */}
           {data && (
@@ -276,6 +273,13 @@ export function DispatchBoard() {
               onPageChange={setPage}
             />
           )}
+
+          {/* Unassigned Orders Panel (board view on desktop) */}
+          {viewMode === 'board' && (
+            <div className="hidden lg:block">
+              <UnassignedOrdersPanel />
+            </div>
+          )}
         </>
       ) : null}
 
@@ -285,5 +289,88 @@ export function DispatchBoard() {
         onOpenChange={setDialogOpen}
       />
     </div>
+  )
+}
+
+// ─── List View (extracted) ──────────────────────────────────────────────────
+
+interface ListViewProps {
+  groupedTrips: Record<TripStatus, TripWithRelations[]>
+  collapsedSections: Record<string, boolean>
+  toggleSection: (status: string) => void
+}
+
+function ListView({ groupedTrips, collapsedSections, toggleSection }: ListViewProps) {
+  return (
+    <>
+      {/* Column header row */}
+      <div className="hidden items-center gap-4 px-4 text-xs font-medium uppercase tracking-wider text-muted-foreground lg:flex">
+        <div className="w-28 shrink-0">Trip #</div>
+        <div className="w-20 shrink-0">Truck</div>
+        <div className="w-24 shrink-0">Driver</div>
+        <div className="w-14 shrink-0">Cap</div>
+        <div className="min-w-0 flex-1">Route</div>
+        <div className="w-28 shrink-0">Status</div>
+        <div className="w-32 shrink-0 text-right">Dates</div>
+      </div>
+
+      {/* Status-grouped sections */}
+      <div className="space-y-4">
+        {TRIP_STATUSES.map((sectionStatus) => {
+          const trips = groupedTrips[sectionStatus]
+          const isCollapsed = !!collapsedSections[sectionStatus]
+          const count = trips.length
+
+          return (
+            <div
+              key={sectionStatus}
+              className={cn(
+                'rounded-lg border-l-4',
+                SECTION_BORDER_COLORS[sectionStatus]
+              )}
+            >
+              {/* Section header */}
+              <button
+                type="button"
+                onClick={() => toggleSection(sectionStatus)}
+                className={cn(
+                  'flex w-full items-center justify-between rounded-t-lg px-4 py-2.5 text-left transition-colors hover:bg-accent/50',
+                  SECTION_BG_COLORS[sectionStatus]
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  {isCollapsed ? (
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  )}
+                  <span className="text-sm font-semibold text-foreground">
+                    {TRIP_STATUS_LABELS[sectionStatus]}
+                  </span>
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                    {count}
+                  </span>
+                </div>
+              </button>
+
+              {/* Section content */}
+              {!isCollapsed && (
+                <div className="space-y-1 p-2">
+                  {count === 0 ? (
+                    <p className="px-4 py-3 text-sm italic text-muted-foreground">
+                      No trips
+                    </p>
+                  ) : (
+                    trips.map((trip) => (
+                      <TripRow key={trip.id} trip={trip} />
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </>
   )
 }

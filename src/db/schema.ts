@@ -138,6 +138,8 @@ export const drivers = pgTable('drivers', {
   driverStatus: driverStatusEnum('driver_status').notNull().default('active'),
   payType: driverPayTypeEnum('pay_type').notNull().default('percentage_of_carrier_pay'),
   payRate: numeric('pay_rate', { precision: 5, scale: 2 }).notNull().default('0'),
+  authUserId: uuid('auth_user_id'),
+  pinHash: text('pin_hash'),
   notes: text('notes'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -446,6 +448,203 @@ export const truckDocuments = pgTable('truck_documents', {
 ])
 
 // ============================================================================
+// Phase 8 Enums
+// ============================================================================
+
+export const taskStatusEnum = pgEnum('task_status', ['pending', 'in_progress', 'completed'])
+export const taskPriorityEnum = pgEnum('task_priority', ['low', 'medium', 'high', 'urgent'])
+export const localDriveStatusEnum = pgEnum('local_drive_status', ['pending', 'in_progress', 'completed', 'cancelled'])
+export const maintenanceTypeEnum = pgEnum('maintenance_type', ['preventive', 'repair', 'inspection', 'tire', 'oil_change', 'other'])
+export const maintenanceStatusEnum = pgEnum('maintenance_status', ['scheduled', 'in_progress', 'completed'])
+export const complianceDocTypeEnum = pgEnum('compliance_doc_type', ['dqf', 'vehicle_qualification', 'company_document'])
+export const complianceEntityTypeEnum = pgEnum('compliance_entity_type', ['driver', 'truck', 'company'])
+
+// ============================================================================
+// Phase 8 Tables: New Modules
+// ============================================================================
+
+/**
+ * Tasks Table
+ * Internal team tasks and to-dos.
+ */
+export const tasks = pgTable('tasks', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  description: text('description'),
+  status: taskStatusEnum('status').notNull().default('pending'),
+  priority: taskPriorityEnum('priority').notNull().default('medium'),
+  dueDate: date('due_date'),
+  assignedTo: uuid('assigned_to'),
+  assignedName: text('assigned_name'),
+  category: text('category'),
+  createdBy: uuid('created_by'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_tasks_tenant_id').on(table.tenantId),
+  index('idx_tasks_tenant_status').on(table.tenantId, table.status),
+  index('idx_tasks_tenant_assigned').on(table.tenantId, table.assignedTo),
+  index('idx_tasks_tenant_due').on(table.tenantId, table.dueDate),
+])
+
+/**
+ * Chat Channels Table
+ * Team chat channels per tenant.
+ */
+export const chatChannels = pgTable('chat_channels', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  description: text('description'),
+  createdBy: uuid('created_by'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_chat_channels_tenant_id').on(table.tenantId),
+])
+
+/**
+ * Chat Messages Table
+ * Messages within chat channels.
+ */
+export const chatMessages = pgTable('chat_messages', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  channelId: uuid('channel_id').notNull().references(() => chatChannels.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull(),
+  userName: text('user_name'),
+  content: text('content').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_chat_messages_tenant_id').on(table.tenantId),
+  index('idx_chat_messages_channel_id').on(table.channelId),
+  index('idx_chat_messages_channel_created').on(table.channelId, table.createdAt),
+])
+
+/**
+ * Local Drives Table
+ * Short-distance, non-trip vehicle transports.
+ */
+export const localDrives = pgTable('local_drives', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  driverId: uuid('driver_id').references(() => drivers.id),
+  truckId: uuid('truck_id').references(() => trucks.id),
+  status: localDriveStatusEnum('status').notNull().default('pending'),
+  pickupLocation: text('pickup_location'),
+  pickupCity: text('pickup_city'),
+  pickupState: text('pickup_state'),
+  deliveryLocation: text('delivery_location'),
+  deliveryCity: text('delivery_city'),
+  deliveryState: text('delivery_state'),
+  scheduledDate: date('scheduled_date'),
+  completedDate: timestamp('completed_date', { withTimezone: true }),
+  revenue: numeric('revenue', { precision: 12, scale: 2 }).default('0'),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_local_drives_tenant_id').on(table.tenantId),
+  index('idx_local_drives_tenant_status').on(table.tenantId, table.status),
+  index('idx_local_drives_tenant_driver').on(table.tenantId, table.driverId),
+])
+
+/**
+ * Fuel Entries Table
+ * Fuel purchase records for fleet vehicles.
+ */
+export const fuelEntries = pgTable('fuel_entries', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  truckId: uuid('truck_id').references(() => trucks.id),
+  driverId: uuid('driver_id').references(() => drivers.id),
+  date: date('date').notNull(),
+  gallons: numeric('gallons', { precision: 10, scale: 3 }).notNull(),
+  costPerGallon: numeric('cost_per_gallon', { precision: 6, scale: 3 }).notNull(),
+  totalCost: numeric('total_cost', { precision: 12, scale: 2 }).notNull(),
+  odometer: integer('odometer'),
+  location: text('location'),
+  state: text('state'),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_fuel_entries_tenant_id').on(table.tenantId),
+  index('idx_fuel_entries_tenant_truck').on(table.tenantId, table.truckId),
+  index('idx_fuel_entries_tenant_date').on(table.tenantId, table.date),
+])
+
+/**
+ * Maintenance Records Table
+ * Vehicle maintenance and repair tracking.
+ */
+export const maintenanceRecords = pgTable('maintenance_records', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  truckId: uuid('truck_id').references(() => trucks.id),
+  maintenanceType: maintenanceTypeEnum('maintenance_type').notNull().default('other'),
+  status: maintenanceStatusEnum('status').notNull().default('scheduled'),
+  description: text('description'),
+  vendor: text('vendor'),
+  cost: numeric('cost', { precision: 12, scale: 2 }).default('0'),
+  scheduledDate: date('scheduled_date'),
+  completedDate: timestamp('completed_date', { withTimezone: true }),
+  odometer: integer('odometer'),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_maintenance_records_tenant_id').on(table.tenantId),
+  index('idx_maintenance_records_tenant_truck').on(table.tenantId, table.truckId),
+  index('idx_maintenance_records_tenant_status').on(table.tenantId, table.status),
+])
+
+/**
+ * Compliance Documents Table
+ * Regulatory compliance document tracking with expiration alerts.
+ */
+export const complianceDocuments = pgTable('compliance_documents', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  documentType: complianceDocTypeEnum('document_type').notNull(),
+  entityType: complianceEntityTypeEnum('entity_type').notNull(),
+  entityId: uuid('entity_id'),
+  name: text('name').notNull(),
+  fileName: text('file_name'),
+  storagePath: text('storage_path'),
+  fileSize: integer('file_size'),
+  expiresAt: date('expires_at'),
+  uploadedBy: uuid('uploaded_by'),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_compliance_documents_tenant_id').on(table.tenantId),
+  index('idx_compliance_documents_tenant_type').on(table.tenantId, table.documentType),
+  index('idx_compliance_documents_tenant_entity').on(table.tenantId, table.entityType, table.entityId),
+  index('idx_compliance_documents_expires').on(table.tenantId, table.expiresAt),
+])
+
+/**
+ * Driver Locations Table
+ * Real-time driver location tracking for live map.
+ */
+export const driverLocations = pgTable('driver_locations', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  driverId: uuid('driver_id').notNull().references(() => drivers.id, { onDelete: 'cascade' }),
+  latitude: doublePrecision('latitude').notNull(),
+  longitude: doublePrecision('longitude').notNull(),
+  speed: doublePrecision('speed'),
+  heading: doublePrecision('heading'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_driver_locations_tenant_id').on(table.tenantId),
+  index('idx_driver_locations_driver').on(table.tenantId, table.driverId),
+])
+
+// ============================================================================
 // Type Exports
 // ============================================================================
 
@@ -492,3 +691,21 @@ export type DrizzleDriverDocument = typeof driverDocuments.$inferSelect
 export type NewDriverDocument = typeof driverDocuments.$inferInsert
 export type DrizzleTruckDocument = typeof truckDocuments.$inferSelect
 export type NewTruckDocument = typeof truckDocuments.$inferInsert
+
+// Phase 8
+export type DrizzleTask = typeof tasks.$inferSelect
+export type NewTask = typeof tasks.$inferInsert
+export type DrizzleChatChannel = typeof chatChannels.$inferSelect
+export type NewChatChannel = typeof chatChannels.$inferInsert
+export type DrizzleChatMessage = typeof chatMessages.$inferSelect
+export type NewChatMessage = typeof chatMessages.$inferInsert
+export type DrizzleLocalDrive = typeof localDrives.$inferSelect
+export type NewLocalDrive = typeof localDrives.$inferInsert
+export type DrizzleFuelEntry = typeof fuelEntries.$inferSelect
+export type NewFuelEntry = typeof fuelEntries.$inferInsert
+export type DrizzleMaintenanceRecord = typeof maintenanceRecords.$inferSelect
+export type NewMaintenanceRecord = typeof maintenanceRecords.$inferInsert
+export type DrizzleComplianceDocument = typeof complianceDocuments.$inferSelect
+export type NewComplianceDocument = typeof complianceDocuments.$inferInsert
+export type DrizzleDriverLocation = typeof driverLocations.$inferSelect
+export type NewDriverLocation = typeof driverLocations.$inferInsert

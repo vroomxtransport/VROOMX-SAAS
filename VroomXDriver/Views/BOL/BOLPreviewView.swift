@@ -391,11 +391,11 @@ struct BOLPreviewView: View {
             try await SupabaseManager.shared.client.functions.invoke(
                 "send-bol-email",
                 options: .init(body: [
-                    "to": .string(emailAddress),
-                    "orderNumber": .string(order.orderNumber ?? ""),
-                    "pdfStoragePath": .string(storagePath),
-                    "tenantName": .string("VroomX Transport")
-                ])
+                    "to": emailAddress,
+                    "orderNumber": order.orderNumber ?? "",
+                    "pdfStoragePath": storagePath,
+                    "tenantName": "VroomX Transport"
+                ] as [String: String])
             )
 
             print("[BOLPreview] Email sent to \(emailAddress)")

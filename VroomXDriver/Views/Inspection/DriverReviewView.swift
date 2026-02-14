@@ -30,6 +30,7 @@ struct DriverReviewView: View {
 
     // MARK: - State
 
+    @EnvironmentObject private var authManager: AuthManager
     @State private var isUploading = false
     @State private var errorMessage: String?
 
@@ -37,7 +38,7 @@ struct DriverReviewView: View {
 
     /// The current driver's full name, from AuthManager.
     private var driverName: String {
-        AuthManager.shared.currentDriver?.fullName ?? "Driver"
+        authManager.currentDriver?.fullName ?? "Driver"
     }
 
     /// Count of unique views that have damages.

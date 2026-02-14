@@ -1,10 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { redirect } from 'next/navigation'
-import { BillingSection } from './billing-section'
-import { UsageSection } from './usage-section'
+import { SubscriptionSection } from './subscription-section'
 import { TeamSection } from './team-section'
 import { SeedSection } from './seed-section'
+import { PageHeader } from '@/components/shared/page-header'
 import type { TenantRole } from '@/types'
 
 export default async function SettingsPage() {
@@ -22,27 +22,39 @@ export default async function SettingsPage() {
     redirect('/login')
   }
 
-  // Fetch tenant details
-  const { data: tenant } = await supabase
-    .from('tenants')
-    .select('name, plan, subscription_status, stripe_customer_id')
-    .eq('id', tenantId)
-    .single()
+  // Fetch tenant details and resource counts in parallel
+  const admin = createServiceRoleClient()
+  const [tenantResult, trucksResult, membershipsResult, pendingInvitesResult] = await Promise.all([
+    supabase
+      .from('tenants')
+      .select('name, plan, subscription_status, stripe_customer_id, grace_period_ends_at, trial_ends_at')
+      .eq('id', tenantId)
+      .single(),
+    supabase
+      .from('trucks')
+      .select('id', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId),
+    admin
+      .from('tenant_memberships')
+      .select('id, user_id, role, created_at', { count: 'exact' })
+      .eq('tenant_id', tenantId)
+      .order('created_at', { ascending: true }),
+    supabase
+      .from('invites')
+      .select('id, email, role, created_at, expires_at')
+      .eq('tenant_id', tenantId)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false }),
+  ])
 
+  const tenant = tenantResult.data
   if (!tenant) {
     redirect('/login')
   }
 
-  // Fetch counts for usage section and team members via service role
-  const admin = createServiceRoleClient()
-  const [trucksCount, membershipsResult, pendingInvitesResult] = await Promise.all([
-    supabase.from('trucks').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
-    admin.from('tenant_memberships').select('id, user_id, role, created_at', { count: 'exact' }).eq('tenant_id', tenantId).order('created_at', { ascending: true }),
-    supabase.from('invites').select('id, email, role, created_at, expires_at').eq('tenant_id', tenantId).eq('status', 'pending').order('created_at', { ascending: false }),
-  ])
-
   const memberships = membershipsResult.data || []
   const membershipsCount = membershipsResult.count ?? 0
+  const truckCount = trucksResult.count ?? 0
 
   // Fetch user details for each membership
   const { data: usersData } = await admin.auth.admin.listUsers({ perPage: 100 })
@@ -60,26 +72,22 @@ export default async function SettingsPage() {
   }))
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-        <p className="mt-2 text-gray-600">
-          Manage your subscription, usage, and team.
-        </p>
-      </div>
+    <div className="space-y-8">
+      <PageHeader
+        title="Settings"
+        subtitle="Manage your subscription, team, and account preferences."
+      />
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <BillingSection
-          plan={tenant.plan}
-          subscriptionStatus={tenant.subscription_status}
-          hasStripeCustomer={!!tenant.stripe_customer_id}
-        />
-        <UsageSection
-          plan={tenant.plan}
-          truckCount={trucksCount.count ?? 0}
-          userCount={membershipsCount}
-        />
-      </div>
+      {/* Subscription & Plan Management */}
+      <SubscriptionSection
+        currentPlan={tenant.plan}
+        subscriptionStatus={tenant.subscription_status}
+        hasStripeCustomer={!!tenant.stripe_customer_id}
+        gracePeriodEndsAt={tenant.grace_period_ends_at}
+        trialEndsAt={tenant.trial_ends_at}
+        truckCount={truckCount}
+        userCount={membershipsCount}
+      />
 
       {/* Team management for admins and owners */}
       {(userRole === 'owner' || userRole === 'admin') && (

@@ -9,27 +9,33 @@ interface EntityCardProps {
 }
 
 export function EntityCard({ children, onClick, className }: EntityCardProps) {
+  const classes = cn(
+    'rounded-xl border border-border-subtle bg-surface p-4 shadow-sm text-left w-full',
+    onClick && 'cursor-pointer card-hover hover:border-brand/30 focus-visible:ring-2 focus-visible:ring-brand/30 focus-visible:outline-none',
+    className
+  )
+
+  if (onClick) {
+    return (
+      <div
+        role="button"
+        tabIndex={0}
+        className={classes}
+        onClick={onClick}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onClick()
+          }
+        }}
+      >
+        {children}
+      </div>
+    )
+  }
+
   return (
-    <div
-      className={cn(
-        'rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-colors',
-        onClick && 'cursor-pointer hover:border-gray-300 hover:shadow-md',
-        className
-      )}
-      onClick={onClick}
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      onKeyDown={
-        onClick
-          ? (e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                onClick()
-              }
-            }
-          : undefined
-      }
-    >
+    <div className={classes}>
       {children}
     </div>
   )

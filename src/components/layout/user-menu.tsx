@@ -45,15 +45,18 @@ export function UserMenu({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-        <Avatar className="h-8 w-8">
-          <AvatarFallback className="bg-blue-600 text-white text-sm">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
+      <DropdownMenuTrigger className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/30 transition-colors">
+        <div className="relative">
+          <Avatar className="h-8 w-8 shadow-sm">
+            <AvatarFallback className="bg-gradient-to-br from-brand to-amber-500 text-white text-xs font-bold">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-background bg-emerald-400" />
+        </div>
         <div className="hidden md:block text-left">
-          <p className="text-sm font-medium text-gray-900">{userName}</p>
-          <p className="text-xs text-gray-500">{userRole}</p>
+          <p className="text-sm font-medium leading-none text-foreground">{userName}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground capitalize">{userRole}</p>
         </div>
       </DropdownMenuTrigger>
 
@@ -61,22 +64,22 @@ export function UserMenu({
         <DropdownMenuLabel>
           <div className="space-y-1">
             <p className="text-sm font-medium">{userName}</p>
-            <p className="text-xs text-gray-500">{userEmail}</p>
+            <p className="text-xs text-muted-foreground">{userEmail}</p>
           </div>
         </DropdownMenuLabel>
 
         <DropdownMenuSeparator />
 
         <div className="px-2 py-1.5">
-          <p className="text-xs font-medium text-gray-500">Organization</p>
-          <p className="text-sm font-medium text-gray-900">{tenantName}</p>
+          <p className="text-xs font-medium text-muted-foreground">Organization</p>
+          <p className="text-sm font-medium text-foreground">{tenantName}</p>
           <div className="mt-2 flex gap-2">
             <span
               className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${getStatusBadgeColor(subscriptionStatus)}`}
             >
               {subscriptionStatus}
             </span>
-            <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+            <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
               {getTierDisplayName(plan)}
             </span>
           </div>

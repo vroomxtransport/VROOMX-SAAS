@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
-import { resend } from '@/lib/resend/client'
+import { getResend } from '@/lib/resend/client'
 import { inviteSchema } from '@/lib/validations/invite'
 import { checkTierLimit, hasMinRole } from '@/lib/tier'
 import { InviteEmail } from '@/components/email/invite-email'
@@ -85,7 +85,7 @@ export async function sendInvite(data: unknown) {
   const inviterName = user.user_metadata?.full_name || user.email || 'A team member'
 
   try {
-    await resend.emails.send({
+    await getResend().emails.send({
       from: `${tenant?.name || 'VroomX'} <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
       to: [parsed.data.email],
       subject: `You've been invited to join ${tenant?.name || 'a team'} on VroomX`,

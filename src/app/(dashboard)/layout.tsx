@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Header } from '@/components/layout/header'
+import { SidebarLayoutWrapper } from '@/components/layout/sidebar-layout-wrapper'
 import { QueryProvider } from '@/components/providers/query-provider'
 import { AlertTriangle } from 'lucide-react'
 import type { TenantRole, SubscriptionStatus } from '@/types'
@@ -42,10 +43,10 @@ export default async function DashboardLayout({
   const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
+    <div className="flex h-screen overflow-hidden bg-content-bg">
       <Sidebar userRole={userRole} tenantName={tenant.name} />
 
-      <div className="flex flex-1 flex-col overflow-hidden lg:pl-64">
+      <SidebarLayoutWrapper>
         <Header
           userName={userName}
           userEmail={user.email!}
@@ -58,7 +59,7 @@ export default async function DashboardLayout({
         <main className="flex-1 overflow-y-auto">
           {/* Suspension overlay */}
           {tenant.is_suspended && (
-            <div className="mx-4 mb-4 mt-4 rounded-lg border border-red-200 bg-red-50 p-4 lg:mx-6">
+            <div className="mx-4 mb-4 mt-4 rounded-xl border border-red-200 bg-red-50 p-4 lg:mx-8">
               <div className="flex items-center gap-3">
                 <AlertTriangle className="h-5 w-5 text-red-600 shrink-0" />
                 <div className="flex-1">
@@ -79,7 +80,7 @@ export default async function DashboardLayout({
 
           {/* Grace period warning */}
           {!tenant.is_suspended && tenant.grace_period_ends_at && (
-            <div className="mx-4 mb-4 mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 lg:mx-6">
+            <div className="mx-4 mb-4 mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 lg:mx-8">
               <div className="flex items-center gap-3">
                 <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
                 <div className="flex-1">
@@ -98,13 +99,13 @@ export default async function DashboardLayout({
             </div>
           )}
 
-          <div className="p-4 lg:p-6">
+          <div className="p-4 lg:px-8 lg:py-6">
             <QueryProvider>
               {children}
             </QueryProvider>
           </div>
         </main>
-      </div>
+      </SidebarLayoutWrapper>
     </div>
   )
 }

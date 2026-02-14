@@ -229,3 +229,131 @@ export interface TruckDocument {
   uploaded_by: string | null
   created_at: string
 }
+
+// ============================================================================
+// Phase 8: New Module Interfaces
+// ============================================================================
+
+export interface Task {
+  id: string
+  tenant_id: string
+  title: string
+  description: string | null
+  status: 'pending' | 'in_progress' | 'completed'
+  priority: 'low' | 'medium' | 'high' | 'urgent'
+  due_date: string | null
+  assigned_to: string | null
+  assigned_name: string | null
+  category: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ChatChannel {
+  id: string
+  tenant_id: string
+  name: string
+  description: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ChatMessage {
+  id: string
+  tenant_id: string
+  channel_id: string
+  user_id: string
+  user_name: string | null
+  content: string
+  created_at: string
+}
+
+export interface LocalDrive {
+  id: string
+  tenant_id: string
+  driver_id: string | null
+  truck_id: string | null
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled'
+  pickup_location: string | null
+  pickup_city: string | null
+  pickup_state: string | null
+  delivery_location: string | null
+  delivery_city: string | null
+  delivery_state: string | null
+  scheduled_date: string | null
+  completed_date: string | null
+  revenue: string
+  notes: string | null
+  driver?: Driver
+  truck?: Truck
+  created_at: string
+  updated_at: string
+}
+
+export interface FuelEntry {
+  id: string
+  tenant_id: string
+  truck_id: string | null
+  driver_id: string | null
+  date: string
+  gallons: string
+  cost_per_gallon: string
+  total_cost: string
+  odometer: number | null
+  location: string | null
+  state: string | null
+  notes: string | null
+  driver?: Driver
+  truck?: Truck
+  created_at: string
+  updated_at: string
+}
+
+export interface MaintenanceRecord {
+  id: string
+  tenant_id: string
+  truck_id: string | null
+  maintenance_type: 'preventive' | 'repair' | 'inspection' | 'tire' | 'oil_change' | 'other'
+  status: 'scheduled' | 'in_progress' | 'completed'
+  description: string | null
+  vendor: string | null
+  cost: string
+  scheduled_date: string | null
+  completed_date: string | null
+  odometer: number | null
+  notes: string | null
+  truck?: Truck
+  created_at: string
+  updated_at: string
+}
+
+export interface ComplianceDocument {
+  id: string
+  tenant_id: string
+  document_type: 'dqf' | 'vehicle_qualification' | 'company_document'
+  entity_type: 'driver' | 'truck' | 'company'
+  entity_id: string | null
+  name: string
+  file_name: string | null
+  storage_path: string | null
+  file_size: number | null
+  expires_at: string | null
+  uploaded_by: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface DriverLocation {
+  id: string
+  tenant_id: string
+  driver_id: string
+  latitude: number
+  longitude: number
+  speed: number | null
+  heading: number | null
+  updated_at: string
+  driver?: Driver
+}

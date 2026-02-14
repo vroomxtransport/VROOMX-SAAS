@@ -7,21 +7,18 @@ import { useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import { deleteOrder } from '@/app/actions/orders'
 import { OrderStatusActions } from './order-status-actions'
-import { OrderTimeline } from './order-timeline'
+import { OrderHeaderBar } from './order-header-bar'
+import { OrderTimelineEnhanced } from './order-timeline-enhanced'
+import { OrderRouteVisual } from './order-route-visual'
+import { OrderInspections } from './order-inspections'
 import { OrderDrawer } from './order-drawer'
 import { AssignToTrip } from './assign-to-trip'
 import { PaymentRecorder } from './payment-recorder'
 import { InvoiceButton } from './invoice-button'
 import { OrderAttachments } from './order-attachments'
-import { StatusBadge } from '@/components/shared/status-badge'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
-import { Button } from '@/components/ui/button'
 import {
-  Pencil,
-  Trash2,
   Car,
-  MapPin,
-  ArrowRight,
   DollarSign,
   Users,
   FileText,
@@ -29,6 +26,7 @@ import {
   Building2,
   User,
   Receipt,
+  ExternalLink,
 } from 'lucide-react'
 import { PAYMENT_TYPE_LABELS } from '@/types'
 import type { OrderStatus, TripStatus, PaymentStatus } from '@/types'
@@ -58,20 +56,6 @@ function formatDateTime(dateStr: string): string {
   })
 }
 
-function formatDate(dateStr: string | null | undefined): string {
-  if (!dateStr) return '--'
-  return new Date(dateStr).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
-}
-
-function buildAddress(location: string | null, city: string | null, state: string | null, zip: string | null): string {
-  const parts = [location, city, state, zip].filter(Boolean)
-  return parts.length > 0 ? parts.join(', ') : 'Not specified'
-}
-
 export function OrderDetail({ order }: OrderDetailProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -85,19 +69,7 @@ export function OrderDetail({ order }: OrderDetailProps) {
   const carrierPay = parseFloat(order.carrier_pay)
   const brokerFee = parseFloat(order.broker_fee)
   const margin = revenue - carrierPay - brokerFee
-
-  const pickupAddress = buildAddress(
-    order.pickup_location,
-    order.pickup_city,
-    order.pickup_state,
-    order.pickup_zip
-  )
-  const deliveryAddress = buildAddress(
-    order.delivery_location,
-    order.delivery_city,
-    order.delivery_state,
-    order.delivery_zip
-  )
+  const marginPercent = revenue > 0 ? (margin / revenue) * 100 : 0
 
   const vehicleInfo = [
     order.vehicle_year,
@@ -118,54 +90,28 @@ export function OrderDetail({ order }: OrderDetailProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-gray-900">
-                {order.order_number ?? 'Draft Order'}
-              </h1>
-              <StatusBadge status={order.status} type="order" />
-            </div>
-            <p className="mt-1 text-sm text-gray-500">{vehicleInfo}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setDrawerOpen(true)}>
-            <Pencil className="mr-2 h-4 w-4" />
-            Edit
-          </Button>
-          {canDelete && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-red-600 hover:bg-red-50 hover:text-red-700"
-              onClick={() => setDeleteDialogOpen(true)}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </Button>
-          )}
-        </div>
-      </div>
+      {/* Header Bar */}
+      <OrderHeaderBar
+        order={order}
+        onEdit={() => setDrawerOpen(true)}
+        onDelete={() => setDeleteDialogOpen(true)}
+        canDelete={canDelete}
+      />
 
       {/* Status Actions */}
       <OrderStatusActions orderId={order.id} currentStatus={status} />
 
       {/* Timeline */}
-      <div className="rounded-lg border bg-white p-6">
-        <OrderTimeline
-          currentStatus={status}
-          createdAt={order.created_at}
-          actualPickupDate={order.actual_pickup_date}
-          actualDeliveryDate={order.actual_delivery_date}
-        />
-      </div>
+      <OrderTimelineEnhanced
+        currentStatus={status}
+        createdAt={order.created_at}
+        actualPickupDate={order.actual_pickup_date}
+        actualDeliveryDate={order.actual_delivery_date}
+      />
 
       {/* Cancelled Reason */}
       {status === 'cancelled' && order.cancelled_reason && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4">
           <h3 className="text-sm font-semibold text-red-800">Cancellation Reason</h3>
           <p className="mt-1 text-sm text-red-700">{order.cancelled_reason}</p>
         </div>
@@ -181,237 +127,194 @@ export function OrderDetail({ order }: OrderDetailProps) {
         />
       )}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Vehicle Info */}
-        <div className="rounded-lg border bg-white p-6">
-          <div className="mb-4 flex items-center gap-2">
-            <Car className="h-5 w-5 text-gray-400" />
-            <h2 className="text-lg font-semibold text-gray-900">Vehicle Information</h2>
-          </div>
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-4">
+      {/* Main content grid: 12-column layout */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        {/* Left Column (7 cols) */}
+        <div className="space-y-6 lg:col-span-7">
+          {/* Vehicle Card - Enhanced */}
+          <div className="rounded-xl border border-border-subtle bg-surface p-6">
+            <div className="mb-4 flex items-center gap-2">
+              <Car className="h-5 w-5 text-muted-foreground" />
+              <h2 className="text-lg font-semibold text-foreground">Vehicle Information</h2>
+            </div>
+            <div className="space-y-4">
               <div>
-                <p className="text-xs font-medium uppercase text-gray-500">Year / Make / Model</p>
-                <p className="text-sm text-gray-900">{vehicleInfo}</p>
+                <p className="text-xl font-semibold text-foreground">{vehicleInfo}</p>
+                {order.vehicle_vin && (
+                  <p className="mt-2 font-mono text-sm bg-accent/50 rounded px-2 py-1 inline-block">
+                    {order.vehicle_vin}
+                  </p>
+                )}
               </div>
-              {order.vehicle_vin && (
-                <div>
-                  <p className="text-xs font-medium uppercase text-gray-500">VIN</p>
-                  <p className="font-mono text-sm text-gray-900">{order.vehicle_vin}</p>
-                </div>
-              )}
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              {order.vehicle_type && (
-                <div>
-                  <p className="text-xs font-medium uppercase text-gray-500">Type</p>
-                  <p className="text-sm text-gray-900">{order.vehicle_type}</p>
-                </div>
-              )}
-              {order.vehicle_color && (
-                <div>
-                  <p className="text-xs font-medium uppercase text-gray-500">Color</p>
-                  <p className="text-sm text-gray-900">{order.vehicle_color}</p>
-                </div>
-              )}
+              <div className="grid grid-cols-2 gap-4">
+                {order.vehicle_type && (
+                  <div>
+                    <p className="text-xs font-medium uppercase text-muted-foreground">Type</p>
+                    <p className="text-sm text-foreground">{order.vehicle_type}</p>
+                  </div>
+                )}
+                {order.vehicle_color && (
+                  <div>
+                    <p className="text-xs font-medium uppercase text-muted-foreground">Color</p>
+                    <p className="text-sm text-foreground">{order.vehicle_color}</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
+
+          {/* Route Visual */}
+          <OrderRouteVisual order={order} />
+
+          {/* Inspections */}
+          <OrderInspections orderId={order.id} />
+
+          {/* Notes */}
+          {order.notes && (
+            <div className="rounded-xl border border-border-subtle bg-surface p-6">
+              <div className="mb-4 flex items-center gap-2">
+                <FileText className="h-5 w-5 text-muted-foreground" />
+                <h2 className="text-lg font-semibold text-foreground">Notes</h2>
+              </div>
+              <p className="whitespace-pre-wrap text-sm text-foreground">{order.notes}</p>
+            </div>
+          )}
         </div>
 
-        {/* Financial Summary */}
-        <div className="rounded-lg border bg-white p-6">
-          <div className="mb-4 flex items-center gap-2">
-            <DollarSign className="h-5 w-5 text-gray-400" />
-            <h2 className="text-lg font-semibold text-gray-900">Financial Summary</h2>
-          </div>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Revenue</span>
-              <span className="text-sm font-medium text-gray-900">{formatCurrency(revenue)}</span>
+        {/* Right Column (5 cols) */}
+        <div className="space-y-6 lg:col-span-5">
+          {/* Financial Summary - Enhanced */}
+          <div className="rounded-xl border border-border-subtle bg-surface p-6">
+            <div className="mb-4 flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-muted-foreground" />
+              <h2 className="text-lg font-semibold text-foreground">Financial Summary</h2>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Carrier Pay</span>
-              <span className="text-sm font-medium text-gray-900">{formatCurrency(carrierPay)}</span>
+
+            {/* Large margin display */}
+            <div className="mb-4 text-center rounded-lg bg-accent/50 p-4">
+              <p className="text-xs font-medium uppercase text-muted-foreground">Net Margin</p>
+              <p
+                className={cn(
+                  'text-3xl font-bold tabular-nums',
+                  margin >= 0 ? 'text-emerald-600' : 'text-red-600'
+                )}
+              >
+                {formatCurrency(margin)}
+              </p>
+              <p
+                className={cn(
+                  'text-sm tabular-nums',
+                  margin >= 0 ? 'text-emerald-600' : 'text-red-600'
+                )}
+              >
+                {marginPercent >= 0 ? '+' : ''}{marginPercent.toFixed(1)}%
+              </p>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Broker Fee</span>
-              <span className="text-sm font-medium text-gray-900">{formatCurrency(brokerFee)}</span>
-            </div>
-            <div className="border-t border-gray-100 pt-3">
+
+            <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-gray-900">Margin</span>
-                <span
-                  className={cn(
-                    'text-sm font-semibold',
-                    margin >= 0 ? 'text-green-700' : 'text-red-700'
-                  )}
-                >
-                  {formatCurrency(margin)}
-                </span>
+                <span className="text-sm text-muted-foreground">Revenue</span>
+                <span className="text-sm font-medium tabular-nums text-foreground">{formatCurrency(revenue)}</span>
               </div>
-            </div>
-            {order.payment_type && (
-              <div className="border-t border-gray-100 pt-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Payment Type</span>
-                  <span className="text-sm font-medium text-gray-900">
-                    {PAYMENT_TYPE_LABELS[order.payment_type]}
-                  </span>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Carrier Pay</span>
+                <span className="text-sm font-medium tabular-nums text-foreground">{formatCurrency(carrierPay)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Broker Fee</span>
+                <span className="text-sm font-medium tabular-nums text-foreground">{formatCurrency(brokerFee)}</span>
+              </div>
+              {order.payment_type && (
+                <div className="border-t border-border-subtle pt-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Payment Type</span>
+                    <span className="text-sm font-medium text-foreground">
+                      {PAYMENT_TYPE_LABELS[order.payment_type]}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Billing -- shown for orders past assignment stage */}
-        {(['picked_up', 'delivered', 'invoiced', 'paid'] as OrderStatus[]).includes(status) && (
-          <div className="rounded-lg border bg-white p-6 lg:col-span-2">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Receipt className="h-5 w-5 text-gray-400" />
-                <h2 className="text-lg font-semibold text-gray-900">Billing</h2>
+          {/* Billing -- shown for orders past assignment stage */}
+          {(['picked_up', 'delivered', 'invoiced', 'paid'] as OrderStatus[]).includes(status) && (
+            <div className="rounded-xl border border-border-subtle bg-surface p-6">
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Receipt className="h-5 w-5 text-muted-foreground" />
+                  <h2 className="text-lg font-semibold text-foreground">Billing</h2>
+                </div>
+                <InvoiceButton
+                  orderId={order.id}
+                  orderNumber={order.order_number}
+                  paymentStatus={order.payment_status as PaymentStatus}
+                  invoiceDate={order.invoice_date}
+                  hasBrokerEmail={!!order.broker?.email}
+                />
               </div>
-              <InvoiceButton
+              <PaymentRecorder
                 orderId={order.id}
-                orderNumber={order.order_number}
+                carrierPay={carrierPay}
+                amountPaid={parseFloat(order.amount_paid ?? '0')}
                 paymentStatus={order.payment_status as PaymentStatus}
-                invoiceDate={order.invoice_date}
-                hasBrokerEmail={!!order.broker?.email}
               />
             </div>
-            <PaymentRecorder
-              orderId={order.id}
-              carrierPay={carrierPay}
-              amountPaid={parseFloat(order.amount_paid ?? '0')}
-              paymentStatus={order.payment_status as PaymentStatus}
-            />
-          </div>
-        )}
+          )}
 
-        {/* Route */}
-        <div className="rounded-lg border bg-white p-6 lg:col-span-2">
-          <div className="mb-4 flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-gray-400" />
-            <h2 className="text-lg font-semibold text-gray-900">Route</h2>
-          </div>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-            {/* Pickup */}
-            <div className="flex-1 rounded-lg bg-gray-50 p-4">
-              <p className="mb-2 text-xs font-semibold uppercase text-gray-500">Pickup</p>
-              <p className="text-sm font-medium text-gray-900">{pickupAddress}</p>
-              {order.pickup_contact_name && (
-                <p className="mt-2 text-xs text-gray-600">
-                  Contact: {order.pickup_contact_name}
-                  {order.pickup_contact_phone && ` - ${order.pickup_contact_phone}`}
-                </p>
-              )}
-              <p className="mt-1 text-xs text-gray-500">
-                Scheduled: {formatDate(order.pickup_date)}
-              </p>
-              {order.actual_pickup_date && (
-                <p className="text-xs text-green-600">
-                  Actual: {formatDate(order.actual_pickup_date)}
-                </p>
-              )}
-            </div>
-
-            {/* Arrow */}
-            <div className="flex items-center justify-center sm:pt-8">
-              <ArrowRight className="h-5 w-5 text-gray-400" />
-            </div>
-
-            {/* Delivery */}
-            <div className="flex-1 rounded-lg bg-gray-50 p-4">
-              <p className="mb-2 text-xs font-semibold uppercase text-gray-500">Delivery</p>
-              <p className="text-sm font-medium text-gray-900">{deliveryAddress}</p>
-              {order.delivery_contact_name && (
-                <p className="mt-2 text-xs text-gray-600">
-                  Contact: {order.delivery_contact_name}
-                  {order.delivery_contact_phone && ` - ${order.delivery_contact_phone}`}
-                </p>
-              )}
-              <p className="mt-1 text-xs text-gray-500">
-                Scheduled: {formatDate(order.delivery_date)}
-              </p>
-              {order.actual_delivery_date && (
-                <p className="text-xs text-green-600">
-                  Actual: {formatDate(order.actual_delivery_date)}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Assignments */}
-        <div className="rounded-lg border bg-white p-6">
-          <div className="mb-4 flex items-center gap-2">
-            <Users className="h-5 w-5 text-gray-400" />
-            <h2 className="text-lg font-semibold text-gray-900">Assignments</h2>
-          </div>
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <Building2 className="h-4 w-4 shrink-0 text-gray-400" />
-              <div>
-                <p className="text-xs font-medium uppercase text-gray-500">Broker</p>
-                {order.broker ? (
-                  <Link
-                    href={'/brokers/' + order.broker.id}
-                    className="text-sm font-medium text-blue-600 hover:underline"
-                  >
-                    {order.broker.name}
-                  </Link>
-                ) : (
-                  <p className="text-sm text-gray-500">Unassigned</p>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <User className="h-4 w-4 shrink-0 text-gray-400" />
-              <div>
-                <p className="text-xs font-medium uppercase text-gray-500">Driver</p>
-                {order.driver ? (
-                  <Link
-                    href={'/drivers/' + order.driver.id}
-                    className="text-sm font-medium text-blue-600 hover:underline"
-                  >
-                    {order.driver.first_name + ' ' + order.driver.last_name}
-                  </Link>
-                ) : (
-                  <p className="text-sm text-gray-500">Unassigned</p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Notes */}
-        {order.notes && (
-          <div className="rounded-lg border bg-white p-6">
+          {/* Assignments - Enhanced */}
+          <div className="rounded-xl border border-border-subtle bg-surface p-6">
             <div className="mb-4 flex items-center gap-2">
-              <FileText className="h-5 w-5 text-gray-400" />
-              <h2 className="text-lg font-semibold text-gray-900">Notes</h2>
+              <Users className="h-5 w-5 text-muted-foreground" />
+              <h2 className="text-lg font-semibold text-foreground">Assignments</h2>
             </div>
-            <p className="whitespace-pre-wrap text-sm text-gray-700">{order.notes}</p>
-          </div>
-        )}
-
-        {/* Metadata */}
-        <div className={cn(
-          'rounded-lg border bg-white p-6',
-          !order.notes && 'lg:col-span-1'
-        )}>
-          <div className="mb-4 flex items-center gap-2">
-            <Clock className="h-5 w-5 text-gray-400" />
-            <h2 className="text-lg font-semibold text-gray-900">Metadata</h2>
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium uppercase text-gray-500">Created</span>
-              <span className="text-sm text-gray-900">{formatDateTime(order.created_at)}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium uppercase text-gray-500">Updated</span>
-              <span className="text-sm text-gray-900">{formatDateTime(order.updated_at)}</span>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 rounded-lg bg-accent/50 p-3">
+                <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <div className="flex-1">
+                  <p className="text-xs font-medium uppercase text-muted-foreground">Broker</p>
+                  {order.broker ? (
+                    <Link
+                      href={'/brokers/' + order.broker.id}
+                      className="text-sm font-medium text-brand hover:underline"
+                    >
+                      {order.broker.name}
+                    </Link>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Unassigned</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-3 rounded-lg bg-accent/50 p-3">
+                <User className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <div className="flex-1">
+                  <p className="text-xs font-medium uppercase text-muted-foreground">Driver</p>
+                  {order.driver ? (
+                    <Link
+                      href={'/drivers/' + order.driver.id}
+                      className="text-sm font-medium text-brand hover:underline"
+                    >
+                      {order.driver.first_name + ' ' + order.driver.last_name}
+                    </Link>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Unassigned</p>
+                  )}
+                </div>
+              </div>
+              {order.trip && (
+                <div className="flex items-center gap-3 rounded-lg bg-accent/50 p-3">
+                  <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <div className="flex-1">
+                    <p className="text-xs font-medium uppercase text-muted-foreground">Trip</p>
+                    <Link
+                      href={'/trips/' + order.trip.id}
+                      className="text-sm font-medium text-brand hover:underline"
+                    >
+                      {order.trip.trip_number ?? 'View Trip'}
+                    </Link>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -419,6 +322,22 @@ export function OrderDetail({ order }: OrderDetailProps) {
 
       {/* Attachments */}
       <OrderAttachments orderId={order.id} tenantId={order.tenant_id} />
+
+      {/* Metadata footer */}
+      <div className="rounded-xl border border-border-subtle bg-surface p-4">
+        <div className="flex flex-wrap items-center gap-6">
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">Created</span>
+            <span className="text-xs font-medium text-foreground">{formatDateTime(order.created_at)}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">Updated</span>
+            <span className="text-xs font-medium text-foreground">{formatDateTime(order.updated_at)}</span>
+          </div>
+        </div>
+      </div>
 
       {/* Edit Drawer */}
       <OrderDrawer

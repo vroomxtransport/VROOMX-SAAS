@@ -20,45 +20,83 @@ interface StatusBadgeProps {
   status: string
   type: StatusBadgeType
   className?: string
+  pulsing?: boolean
 }
 
-function getColorClasses(status: string, type: StatusBadgeType): string {
-  switch (type) {
-    case 'order':
-      return ORDER_STATUS_COLORS[status as OrderStatus] ?? 'bg-gray-50 text-gray-700 border-gray-200'
-    case 'driver':
-      return DRIVER_STATUS_COLORS[status as DriverStatus] ?? 'bg-gray-50 text-gray-700 border-gray-200'
-    case 'truck':
-      return TRUCK_STATUS_COLORS[status as TruckStatus] ?? 'bg-gray-50 text-gray-700 border-gray-200'
-    case 'trip':
-      return TRIP_STATUS_COLORS[status as TripStatus] ?? 'bg-gray-50 text-gray-700 border-gray-200'
-    default:
-      return 'bg-gray-50 text-gray-700 border-gray-200'
-  }
+type StatusConfig = {
+  colors: Record<string, string>
+  labels: Record<string, string>
+  dotColors: Record<string, string>
 }
 
-function getLabel(status: string, type: StatusBadgeType): string {
-  switch (type) {
-    case 'order':
-      return ORDER_STATUS_LABELS[status as OrderStatus] ?? status
-    case 'driver':
-      return DRIVER_STATUS_LABELS[status as DriverStatus] ?? status
-    case 'truck':
-      return TRUCK_STATUS_LABELS[status as TruckStatus] ?? status
-    case 'trip':
-      return TRIP_STATUS_LABELS[status as TripStatus] ?? status
-    default:
-      return status
-  }
+const STATUS_CONFIG: Record<StatusBadgeType, StatusConfig> = {
+  order: {
+    colors: ORDER_STATUS_COLORS as Record<string, string>,
+    labels: ORDER_STATUS_LABELS as Record<string, string>,
+    dotColors: {
+      new: 'bg-blue-400',
+      assigned: 'bg-amber-400',
+      picked_up: 'bg-purple-400',
+      delivered: 'bg-green-400',
+      invoiced: 'bg-indigo-400',
+      paid: 'bg-emerald-500',
+      cancelled: 'bg-red-400',
+    },
+  },
+  driver: {
+    colors: DRIVER_STATUS_COLORS as Record<string, string>,
+    labels: DRIVER_STATUS_LABELS as Record<string, string>,
+    dotColors: {
+      active: 'bg-green-400',
+      inactive: 'bg-gray-400',
+      on_trip: 'bg-blue-400',
+    },
+  },
+  truck: {
+    colors: TRUCK_STATUS_COLORS as Record<string, string>,
+    labels: TRUCK_STATUS_LABELS as Record<string, string>,
+    dotColors: {
+      active: 'bg-green-400',
+      inactive: 'bg-gray-400',
+      maintenance: 'bg-amber-400',
+      available: 'bg-green-400',
+      in_use: 'bg-blue-400',
+      retired: 'bg-gray-400',
+    },
+  },
+  trip: {
+    colors: TRIP_STATUS_COLORS as Record<string, string>,
+    labels: TRIP_STATUS_LABELS as Record<string, string>,
+    dotColors: {
+      planned: 'bg-blue-400',
+      in_progress: 'bg-amber-400',
+      at_terminal: 'bg-purple-400',
+      completed: 'bg-green-400',
+    },
+  },
 }
 
-export function StatusBadge({ status, type, className }: StatusBadgeProps) {
+const FALLBACK_COLORS = 'bg-gray-50 text-gray-700 border-gray-200'
+const FALLBACK_DOT = 'bg-gray-400'
+
+export function StatusBadge({ status, type, className, pulsing }: StatusBadgeProps) {
+  const config = STATUS_CONFIG[type]
+  const colorClasses = config.colors[status] ?? FALLBACK_COLORS
+  const dotColor = config.dotColors[status] ?? FALLBACK_DOT
+  const label = config.labels[status] ?? status
+
   return (
     <Badge
       variant="outline"
-      className={cn(getColorClasses(status, type), className)}
+      className={cn('gap-1.5', colorClasses, className)}
     >
-      {getLabel(status, type)}
+      <span className="relative flex h-1.5 w-1.5">
+        {pulsing && (
+          <span className={cn('absolute inline-flex h-full w-full animate-ping rounded-full opacity-75', dotColor)} />
+        )}
+        <span className={cn('relative inline-flex h-1.5 w-1.5 rounded-full', dotColor)} />
+      </span>
+      {label}
     </Badge>
   )
 }

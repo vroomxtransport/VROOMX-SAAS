@@ -1,6 +1,6 @@
 import { renderToBuffer } from '@react-pdf/renderer'
 import { createClient } from '@/lib/supabase/server'
-import { resend } from '@/lib/resend/client'
+import { getResend } from '@/lib/resend/client'
 import { InvoiceDocument } from '@/lib/pdf/invoice-template'
 import { InvoiceEmail } from '@/components/email/invoice-email'
 
@@ -75,7 +75,7 @@ export async function POST(
     const fromEmail =
       process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
 
-    const { data, error: emailError } = await resend.emails.send({
+    const { data, error: emailError } = await getResend().emails.send({
       from: `${tenant.name} <${fromEmail}>`,
       to: [order.broker.email],
       subject: `Invoice ${invoiceNumber}`,

@@ -2,12 +2,40 @@
 
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface PaginationProps {
   page: number
   pageSize: number
   total: number
   onPageChange: (page: number) => void
+}
+
+function getPageNumbers(currentPage: number, totalPages: number): (number | 'ellipsis')[] {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, i) => i)
+  }
+
+  const pages: (number | 'ellipsis')[] = [0]
+
+  if (currentPage > 2) {
+    pages.push('ellipsis')
+  }
+
+  const start = Math.max(1, currentPage - 1)
+  const end = Math.min(totalPages - 2, currentPage + 1)
+
+  for (let i = start; i <= end; i++) {
+    pages.push(i)
+  }
+
+  if (currentPage < totalPages - 3) {
+    pages.push('ellipsis')
+  }
+
+  pages.push(totalPages - 1)
+
+  return pages
 }
 
 export function Pagination({ page, pageSize, total, onPageChange }: PaginationProps) {
@@ -21,15 +49,17 @@ export function Pagination({ page, pageSize, total, onPageChange }: PaginationPr
     return null
   }
 
+  const pageNumbers = getPageNumbers(page, totalPages)
+
   return (
-    <div className="flex items-center justify-between border-t border-gray-200 px-1 py-3">
-      <p className="text-sm text-gray-600">
-        Showing <span className="font-medium">{start}</span> to{' '}
-        <span className="font-medium">{end}</span> of{' '}
-        <span className="font-medium">{total}</span> results
+    <div className="flex items-center justify-between border-t border-border-subtle px-1 py-3">
+      <p className="text-sm text-muted-foreground">
+        Showing <span className="font-medium text-foreground">{start}</span> to{' '}
+        <span className="font-medium text-foreground">{end}</span> of{' '}
+        <span className="font-medium text-foreground">{total}</span> results
       </p>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         <Button
           variant="outline"
           size="sm"
@@ -41,9 +71,26 @@ export function Pagination({ page, pageSize, total, onPageChange }: PaginationPr
           Previous
         </Button>
 
-        <span className="text-sm text-gray-600">
-          Page {page + 1} of {totalPages}
-        </span>
+        {totalPages > 1 && pageNumbers.map((p, i) =>
+          p === 'ellipsis' ? (
+            <span key={`ellipsis-${i}`} className="px-1 text-sm text-muted-foreground">
+              ...
+            </span>
+          ) : (
+            <Button
+              key={p}
+              variant={p === page ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => onPageChange(p)}
+              className={cn(
+                'h-8 w-8 p-0',
+                p === page && 'pointer-events-none'
+              )}
+            >
+              {p + 1}
+            </Button>
+          )
+        )}
 
         <Button
           variant="outline"

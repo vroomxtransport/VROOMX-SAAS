@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect, useRef } from 'react'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -30,6 +31,48 @@ interface FilterBarProps {
   activeFilters: Record<string, string>
 }
 
+function DebouncedSearchInput({
+  filterKey,
+  placeholder,
+  value,
+  onFilterChange,
+}: {
+  filterKey: string
+  placeholder: string
+  value: string
+  onFilterChange: (key: string, value: string | undefined) => void
+}) {
+  const [localValue, setLocalValue] = useState(value)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    setLocalValue(value)
+  }, [value])
+
+  const handleChange = (newValue: string) => {
+    setLocalValue(newValue)
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    timeoutRef.current = setTimeout(() => {
+      onFilterChange(filterKey, newValue || undefined)
+    }, 300)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    }
+  }, [])
+
+  return (
+    <Input
+      placeholder={placeholder}
+      value={localValue}
+      onChange={(e) => handleChange(e.target.value)}
+      className="h-9 w-[200px]"
+    />
+  )
+}
+
 export function FilterBar({ filters, onFilterChange, activeFilters }: FilterBarProps) {
   const hasActiveFilters = Object.values(activeFilters).some((v) => v !== undefined && v !== '')
 
@@ -44,14 +87,12 @@ export function FilterBar({ filters, onFilterChange, activeFilters }: FilterBarP
       {filters.map((filter) => {
         if (filter.type === 'search') {
           return (
-            <Input
+            <DebouncedSearchInput
               key={filter.key}
-              placeholder={filter.placeholder ?? `Search...`}
+              filterKey={filter.key}
+              placeholder={filter.placeholder ?? 'Search...'}
               value={activeFilters[filter.key] ?? ''}
-              onChange={(e) =>
-                onFilterChange(filter.key, e.target.value || undefined)
-              }
-              className="h-9 w-[200px]"
+              onFilterChange={onFilterChange}
             />
           )
         }
@@ -88,7 +129,7 @@ export function FilterBar({ filters, onFilterChange, activeFilters }: FilterBarP
           variant="ghost"
           size="sm"
           onClick={clearAllFilters}
-          className="h-9 px-2 text-gray-500 hover:text-gray-700"
+          className="h-9 px-2 text-muted-foreground hover:text-foreground"
         >
           <X className="mr-1 h-4 w-4" />
           Clear filters

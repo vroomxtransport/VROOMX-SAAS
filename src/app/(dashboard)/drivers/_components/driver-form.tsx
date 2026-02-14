@@ -3,7 +3,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { driverSchema, type DriverFormValues, type DriverFormInput } from '@/lib/validations/driver'
-import { createDriver, updateDriver } from '@/app/actions/drivers'
+import { createDriver, updateDriver, sendDriverAppInvitation } from '@/app/actions/drivers'
 import { useDraftStore } from '@/stores/draft-store'
 import {
   Form,
@@ -23,7 +23,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Checkbox } from '@/components/ui/checkbox'
 import { useEffect, useState, useCallback } from 'react'
+import { Smartphone, Check } from 'lucide-react'
 import type { Driver } from '@/types/database'
 import type { DriverPayType } from '@/types'
 
@@ -53,6 +55,9 @@ export function DriverForm({ driver, onSuccess, onCancel }: DriverFormProps) {
   const { saveDraft, loadDraft, clearDraft } = useDraftStore()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
+  const [sendInvite, setSendInvite] = useState(false)
+  const [inviteStatus, setInviteStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+  const [inviteError, setInviteError] = useState<string | null>(null)
 
   const defaultValues: DriverFormInput = driver
     ? {
@@ -102,6 +107,7 @@ export function DriverForm({ driver, onSuccess, onCancel }: DriverFormProps) {
   })
 
   const watchedPayType = (form.watch('payType') ?? 'percentage_of_carrier_pay') as DriverPayType
+  const watchedEmail = form.watch('email')
 
   // Auto-save draft for create mode
   const formValues = form.watch()
@@ -138,6 +144,11 @@ export function DriverForm({ driver, onSuccess, onCancel }: DriverFormProps) {
           : 'Validation failed. Please check the form.'
         setServerError(errorMessage)
         return
+      }
+
+      // Send app invitation for new driver if checkbox was checked
+      if (!isEdit && sendInvite && 'data' in result && result.data) {
+        await sendDriverAppInvitation(result.data.id).catch(() => {})
       }
 
       if (!isEdit) {
@@ -412,6 +423,65 @@ export function DriverForm({ driver, onSuccess, onCancel }: DriverFormProps) {
             </FormItem>
           )}
         />
+
+        {/* App Invitation */}
+        <div className="rounded-lg border border-border-subtle bg-surface p-4">
+          <h4 className="mb-2 text-sm font-medium text-gray-900 flex items-center gap-2">
+            <Smartphone className="h-4 w-4 text-muted-foreground" />
+            Driver App Invitation
+          </h4>
+          {isEdit ? (
+            // Edit mode: direct send button
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">
+                {driver.email
+                  ? `Send a download link to ${driver.email}`
+                  : 'Add an email address to send an app invitation'}
+              </p>
+              {inviteStatus === 'sent' && (
+                <div className="flex items-center gap-1.5 text-xs text-emerald-600">
+                  <Check className="h-3.5 w-3.5" />
+                  Invitation sent successfully
+                </div>
+              )}
+              {inviteStatus === 'error' && inviteError && (
+                <p className="text-xs text-red-600">{inviteError}</p>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!driver.email || inviteStatus === 'sending'}
+                onClick={async () => {
+                  setInviteStatus('sending')
+                  setInviteError(null)
+                  const result = await sendDriverAppInvitation(driver.id)
+                  if ('error' in result && result.error) {
+                    setInviteStatus('error')
+                    setInviteError(typeof result.error === 'string' ? result.error : 'Failed to send')
+                  } else {
+                    setInviteStatus('sent')
+                  }
+                }}
+              >
+                <Smartphone className="mr-2 h-4 w-4" />
+                {inviteStatus === 'sending' ? 'Sending...' : 'Send App Invitation'}
+              </Button>
+            </div>
+          ) : (
+            // Create mode: checkbox
+            <label className="flex items-center gap-2 cursor-pointer">
+              <Checkbox
+                checked={sendInvite}
+                onCheckedChange={(checked) => setSendInvite(checked === true)}
+                disabled={!watchedEmail}
+              />
+              <span className={`text-sm ${watchedEmail ? 'text-foreground' : 'text-muted-foreground'}`}>
+                Send app invitation after creating
+              </span>
+            </label>
+          )}
+        </div>
 
         {/* Actions */}
         <div className="flex justify-end gap-3 border-t pt-4">

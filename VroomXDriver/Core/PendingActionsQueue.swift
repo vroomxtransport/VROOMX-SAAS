@@ -1,4 +1,5 @@
 import Foundation
+import Supabase
 
 /// A pending mutation action queued while offline.
 /// Persisted to UserDefaults so it survives app restarts.

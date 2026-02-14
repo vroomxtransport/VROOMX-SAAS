@@ -292,3 +292,120 @@ export const PAYMENT_STATUS_COLORS: Record<PaymentStatus, string> = {
   partially_paid: 'bg-amber-50 text-amber-700 border-amber-200',
   paid: 'bg-emerald-50 text-emerald-700 border-emerald-200',
 }
+
+// ============================================================================
+// Phase 8: New Module Types
+// ============================================================================
+
+// Task types
+export type TaskStatus = 'pending' | 'in_progress' | 'completed'
+export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent'
+
+export const TASK_STATUSES: readonly TaskStatus[] = ['pending', 'in_progress', 'completed'] as const
+export const TASK_PRIORITIES: readonly TaskPriority[] = ['low', 'medium', 'high', 'urgent'] as const
+
+export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
+  pending: 'Pending',
+  in_progress: 'In Progress',
+  completed: 'Completed',
+}
+
+export const TASK_PRIORITY_LABELS: Record<TaskPriority, string> = {
+  low: 'Low',
+  medium: 'Medium',
+  high: 'High',
+  urgent: 'Urgent',
+}
+
+export const TASK_STATUS_COLORS: Record<TaskStatus, string> = {
+  pending: 'bg-gray-50 text-gray-700 border-gray-200',
+  in_progress: 'bg-blue-50 text-blue-700 border-blue-200',
+  completed: 'bg-green-50 text-green-700 border-green-200',
+}
+
+export const TASK_PRIORITY_COLORS: Record<TaskPriority, string> = {
+  low: 'bg-gray-50 text-gray-700 border-gray-200',
+  medium: 'bg-blue-50 text-blue-700 border-blue-200',
+  high: 'bg-amber-50 text-amber-700 border-amber-200',
+  urgent: 'bg-red-50 text-red-700 border-red-200',
+}
+
+// Local Drive types
+export type LocalDriveStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled'
+
+export const LOCAL_DRIVE_STATUSES: readonly LocalDriveStatus[] = ['pending', 'in_progress', 'completed', 'cancelled'] as const
+
+export const LOCAL_DRIVE_STATUS_LABELS: Record<LocalDriveStatus, string> = {
+  pending: 'Pending',
+  in_progress: 'In Progress',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+}
+
+export const LOCAL_DRIVE_STATUS_COLORS: Record<LocalDriveStatus, string> = {
+  pending: 'bg-gray-50 text-gray-700 border-gray-200',
+  in_progress: 'bg-blue-50 text-blue-700 border-blue-200',
+  completed: 'bg-green-50 text-green-700 border-green-200',
+  cancelled: 'bg-red-50 text-red-700 border-red-200',
+}
+
+// Maintenance types
+export type MaintenanceType = 'preventive' | 'repair' | 'inspection' | 'tire' | 'oil_change' | 'other'
+export type MaintenanceStatus = 'scheduled' | 'in_progress' | 'completed'
+
+export const MAINTENANCE_TYPES: readonly MaintenanceType[] = ['preventive', 'repair', 'inspection', 'tire', 'oil_change', 'other'] as const
+export const MAINTENANCE_STATUSES: readonly MaintenanceStatus[] = ['scheduled', 'in_progress', 'completed'] as const
+
+export const MAINTENANCE_TYPE_LABELS: Record<MaintenanceType, string> = {
+  preventive: 'Preventive',
+  repair: 'Repair',
+  inspection: 'Inspection',
+  tire: 'Tire',
+  oil_change: 'Oil Change',
+  other: 'Other',
+}
+
+export const MAINTENANCE_STATUS_LABELS: Record<MaintenanceStatus, string> = {
+  scheduled: 'Scheduled',
+  in_progress: 'In Progress',
+  completed: 'Completed',
+}
+
+export const MAINTENANCE_STATUS_COLORS: Record<MaintenanceStatus, string> = {
+  scheduled: 'bg-blue-50 text-blue-700 border-blue-200',
+  in_progress: 'bg-amber-50 text-amber-700 border-amber-200',
+  completed: 'bg-green-50 text-green-700 border-green-200',
+}
+
+// Compliance types
+export type ComplianceDocType = 'dqf' | 'vehicle_qualification' | 'company_document'
+export type ComplianceEntityType = 'driver' | 'truck' | 'company'
+export type ComplianceDocStatus = 'valid' | 'expiring_soon' | 'expired'
+
+export const COMPLIANCE_DOC_TYPES: readonly ComplianceDocType[] = ['dqf', 'vehicle_qualification', 'company_document'] as const
+export const COMPLIANCE_ENTITY_TYPES: readonly ComplianceEntityType[] = ['driver', 'truck', 'company'] as const
+export const COMPLIANCE_DOC_STATUSES: readonly ComplianceDocStatus[] = ['valid', 'expiring_soon', 'expired'] as const
+
+export const COMPLIANCE_DOC_TYPE_LABELS: Record<ComplianceDocType, string> = {
+  dqf: 'Driver Qualification',
+  vehicle_qualification: 'Vehicle Qualification',
+  company_document: 'Company Document',
+}
+
+export const COMPLIANCE_ENTITY_TYPE_LABELS: Record<ComplianceEntityType, string> = {
+  driver: 'Driver',
+  truck: 'Truck',
+  company: 'Company',
+}
+
+export const COMPLIANCE_DOC_STATUS_LABELS: Record<ComplianceDocStatus, string> = {
+  valid: 'Valid',
+  expiring_soon: 'Expiring Soon',
+  expired: 'Expired',
+}
+
+export const COMPLIANCE_DOC_STATUS_COLORS: Record<ComplianceDocStatus, string> = {
+  valid: 'bg-green-50 text-green-700 border-green-200',
+  expiring_soon: 'bg-amber-50 text-amber-700 border-amber-200',
+  expired: 'bg-red-50 text-red-700 border-red-200',
+}

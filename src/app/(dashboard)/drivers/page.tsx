@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import { DriverList } from './_components/driver-list'
+import { PageHeader } from '@/components/shared/page-header'
 
 export const metadata = {
   title: 'Drivers | VroomX',
@@ -7,13 +8,11 @@ export const metadata = {
 
 export default function DriversPage() {
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Drivers</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Manage your fleet drivers, pay configuration, and status.
-        </p>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Drivers"
+        subtitle="Manage your fleet drivers, pay configuration, and status"
+      />
       <Suspense fallback={null}>
         <DriverList />
       </Suspense>

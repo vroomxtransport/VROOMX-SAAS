@@ -5,7 +5,10 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { useDrivers } from '@/hooks/use-drivers'
 import { updateDriverStatus } from '@/app/actions/drivers'
 import { DriverCard } from './driver-card'
+import { DriverRow } from './driver-row'
 import { DriverDrawer } from './driver-drawer'
+import { ViewToggle } from '@/components/shared/view-toggle'
+import { useViewMode, useViewStore } from '@/stores/view-store'
 import { FilterBar, type FilterConfig } from '@/components/shared/filter-bar'
 import { Pagination } from '@/components/shared/pagination'
 import { EmptyState } from '@/components/shared/empty-state'
@@ -48,6 +51,8 @@ export function DriverList() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const queryClient = useQueryClient()
+  const viewMode = useViewMode('drivers')
+  const setView = useViewStore((s) => s.setView)
 
   // Parse filters from URL
   const currentPage = parseInt(searchParams.get('page') ?? '0', 10)
@@ -126,11 +131,19 @@ export function DriverList() {
           <Skeleton className="h-9 w-[200px]" />
           <Skeleton className="h-9 w-[120px]" />
         </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-[180px] rounded-lg" />
-          ))}
-        </div>
+        {viewMode === 'grid' ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-[180px] rounded-lg" />
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-[52px] rounded-lg" />
+            ))}
+          </div>
+        )}
       </div>
     )
   }
@@ -146,10 +159,13 @@ export function DriverList() {
           onFilterChange={handleFilterChange}
           activeFilters={activeFilters}
         />
-        <Button onClick={handleAddDriver}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Driver
-        </Button>
+        <div className="flex items-center gap-2">
+          <ViewToggle viewMode={viewMode} onViewChange={(mode) => setView('drivers', mode)} />
+          <Button onClick={handleAddDriver}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Driver
+          </Button>
+        </div>
       </div>
 
       {drivers.length === 0 ? (
@@ -164,20 +180,37 @@ export function DriverList() {
         />
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {drivers.map((driver) => (
-              <DriverCard
-                key={driver.id}
-                driver={driver}
-                onClick={() => handleCardClick(driver)}
-                onEdit={(e) => {
-                  e.stopPropagation()
-                  handleEditDriver(driver)
-                }}
-                onStatusToggle={(checked) => handleStatusToggle(driver, checked)}
-              />
-            ))}
-          </div>
+          {viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {drivers.map((driver) => (
+                <DriverCard
+                  key={driver.id}
+                  driver={driver}
+                  onClick={() => handleCardClick(driver)}
+                  onEdit={(e) => {
+                    e.stopPropagation()
+                    handleEditDriver(driver)
+                  }}
+                  onStatusToggle={(checked) => handleStatusToggle(driver, checked)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {drivers.map((driver) => (
+                <DriverRow
+                  key={driver.id}
+                  driver={driver}
+                  onClick={() => handleCardClick(driver)}
+                  onEdit={(e) => {
+                    e.stopPropagation()
+                    handleEditDriver(driver)
+                  }}
+                  onStatusToggle={(checked) => handleStatusToggle(driver, checked)}
+                />
+              ))}
+            </div>
+          )}
 
           <div className="mt-6">
             <Pagination

@@ -4,7 +4,10 @@ import { useState, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useTrucks } from '@/hooks/use-trucks'
 import { TruckCard } from './truck-card'
+import { TruckRow } from './truck-row'
 import { TruckDrawer } from './truck-drawer'
+import { ViewToggle } from '@/components/shared/view-toggle'
+import { useViewMode, useViewStore } from '@/stores/view-store'
 import { FilterBar, type FilterConfig } from '@/components/shared/filter-bar'
 import { Pagination } from '@/components/shared/pagination'
 import { EmptyState } from '@/components/shared/empty-state'
@@ -49,6 +52,8 @@ const FILTER_CONFIG: FilterConfig[] = [
 export function TruckList() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const viewMode = useViewMode('trucks')
+  const setView = useViewStore((s) => s.setView)
 
   // Parse filters from URL
   const currentPage = parseInt(searchParams.get('page') ?? '0', 10)
@@ -121,11 +126,19 @@ export function TruckList() {
           <Skeleton className="h-9 w-[200px]" />
           <Skeleton className="h-9 w-[120px]" />
         </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-[180px] rounded-lg" />
-          ))}
-        </div>
+        {viewMode === 'grid' ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-[180px] rounded-lg" />
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-[52px] rounded-lg" />
+            ))}
+          </div>
+        )}
       </div>
     )
   }
@@ -141,10 +154,13 @@ export function TruckList() {
           onFilterChange={handleFilterChange}
           activeFilters={activeFilters}
         />
-        <Button onClick={handleAddTruck}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Truck
-        </Button>
+        <div className="flex items-center gap-2">
+          <ViewToggle viewMode={viewMode} onViewChange={(mode) => setView('trucks', mode)} />
+          <Button onClick={handleAddTruck}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Truck
+          </Button>
+        </div>
       </div>
 
       {trucks.length === 0 ? (
@@ -159,16 +175,29 @@ export function TruckList() {
         />
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {trucks.map((truck) => (
-              <TruckCard
-                key={truck.id}
-                truck={truck}
-                onClick={() => handleCardClick(truck)}
-                onEdit={() => handleEditTruck(truck)}
-              />
-            ))}
-          </div>
+          {viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {trucks.map((truck) => (
+                <TruckCard
+                  key={truck.id}
+                  truck={truck}
+                  onClick={() => handleCardClick(truck)}
+                  onEdit={() => handleEditTruck(truck)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {trucks.map((truck) => (
+                <TruckRow
+                  key={truck.id}
+                  truck={truck}
+                  onClick={() => handleCardClick(truck)}
+                  onEdit={() => handleEditTruck(truck)}
+                />
+              ))}
+            </div>
+          )}
 
           <div className="mt-6">
             <Pagination

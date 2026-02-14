@@ -1,0 +1,39 @@
+name: VroomXDriver
+options:
+  bundleIdPrefix: com.vroomx
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "16.0"
+  generateEmptyDirectories: false
+
+packages:
+  Supabase:
+    url: https://github.com/supabase/supabase-swift.git
+    from: "2.41.0"
+  KeychainAccess:
+    url: https://github.com/kishikawakatsumi/KeychainAccess.git
+    from: "4.2.2"
+
+targets:
+  VroomXDriver:
+    type: application
+    platform: iOS
+    sources:
+      - path: Config.swift
+      - path: VroomXDriverApp.swift
+      - path: Core
+      - path: Models
+      - path: Theme
+      - path: Views
+    settings:
+      base:
+        INFOPLIST_FILE: Info.plist
+        PRODUCT_BUNDLE_IDENTIFIER: com.vroomx.driver
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "5.9"
+        TARGETED_DEVICE_FAMILY: "1"
+    dependencies:
+      - package: Supabase
+        product: Supabase
+      - package: KeychainAccess

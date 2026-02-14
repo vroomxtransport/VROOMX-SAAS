@@ -107,16 +107,41 @@ final class AuthManager: ObservableObject {
     // MARK: - Driver Record Linking
 
     /// Queries the `drivers` table for a record linked to the authenticated user.
+    /// On first login, falls back to email matching and auto-links the driver record.
     /// Sets `currentDriver` and `isAuthenticated` on success.
     func fetchDriverRecord(authUserId: String) async {
         do {
-            let drivers: [VroomXDriverModel] = try await supabase
+            // Try by auth_user_id first (returning user)
+            var drivers: [VroomXDriverModel] = try await supabase
                 .from("drivers")
                 .select()
                 .eq("auth_user_id", value: authUserId)
                 .limit(1)
                 .execute()
                 .value
+
+            // If not found, try matching by email (first login)
+            if drivers.isEmpty {
+                let user = try await supabase.auth.user()
+                if let email = user.email {
+                    drivers = try await supabase
+                        .from("drivers")
+                        .select()
+                        .eq("email", value: email)
+                        .limit(1)
+                        .execute()
+                        .value
+
+                    // Auto-link the driver record
+                    if let driver = drivers.first {
+                        try await supabase
+                            .from("drivers")
+                            .update(["auth_user_id": authUserId])
+                            .eq("id", value: driver.id)
+                            .execute()
+                    }
+                }
+            }
 
             if let driver = drivers.first {
                 currentDriver = driver

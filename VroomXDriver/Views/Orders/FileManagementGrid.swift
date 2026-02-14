@@ -492,7 +492,7 @@ private struct AttachmentPreviewSheet: View {
                     // Load image from Supabase Storage
                     AsyncImage(url: storageURL) { phase in
                         switch phase {
-                        case .loading:
+                        case .empty:
                             ProgressView()
                                 .progressViewStyle(.circular)
                                 .tint(.white)

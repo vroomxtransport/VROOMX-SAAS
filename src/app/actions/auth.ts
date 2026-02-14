@@ -32,11 +32,15 @@ export async function loginAction(prevState: any, formData: FormData) {
   const password = formData.get('password') as string
   const inviteToken = formData.get('invite_token') as string | null
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) {
+    console.error('[LOGIN] Auth error:', error.message)
     return { error: error.message }
   }
+
+  console.log('[LOGIN] Success for:', email, 'user_id:', data.user?.id)
+  console.log('[LOGIN] app_metadata:', JSON.stringify(data.user?.app_metadata))
 
   revalidatePath('/', 'layout')
 

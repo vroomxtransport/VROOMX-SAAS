@@ -47,48 +47,47 @@ enum VehicleDiagrams {
     /// Returns a vehicle outline Shape for the given type and view.
     /// The shape is drawn within a unit coordinate space (0-1) and should be
     /// scaled to fit the diagram container via .aspectRatio.
-    @ViewBuilder
-    static func outline(for vehicleType: String, view: DiagramView) -> some View {
+    static func outline(for vehicleType: String, view: DiagramView) -> AnyShape {
         let type = diagramType(for: vehicleType)
 
         switch (type, view) {
         // MARK: Sedan
-        case ("sedan", .front):  SedanFrontShape()
-        case ("sedan", .rear):   SedanRearShape()
-        case ("sedan", .left):   SedanSideShape()
-        case ("sedan", .right):  SedanSideShape().scaleEffect(x: -1, y: 1)
-        case ("sedan", .top):    SedanTopShape()
+        case ("sedan", .front):  return AnyShape(SedanFrontShape())
+        case ("sedan", .rear):   return AnyShape(SedanRearShape())
+        case ("sedan", .left):   return AnyShape(SedanSideShape())
+        case ("sedan", .right):  return AnyShape(SedanSideShape().scale(x: -1, y: 1))
+        case ("sedan", .top):    return AnyShape(SedanTopShape())
 
         // MARK: SUV
-        case ("suv", .front):    SUVFrontShape()
-        case ("suv", .rear):     SUVRearShape()
-        case ("suv", .left):     SUVSideShape()
-        case ("suv", .right):    SUVSideShape().scaleEffect(x: -1, y: 1)
-        case ("suv", .top):      SUVTopShape()
+        case ("suv", .front):    return AnyShape(SUVFrontShape())
+        case ("suv", .rear):     return AnyShape(SUVRearShape())
+        case ("suv", .left):     return AnyShape(SUVSideShape())
+        case ("suv", .right):    return AnyShape(SUVSideShape().scale(x: -1, y: 1))
+        case ("suv", .top):      return AnyShape(SUVTopShape())
 
         // MARK: Truck
-        case ("truck", .front):  TruckFrontShape()
-        case ("truck", .rear):   TruckRearShape()
-        case ("truck", .left):   TruckSideShape()
-        case ("truck", .right):  TruckSideShape().scaleEffect(x: -1, y: 1)
-        case ("truck", .top):    TruckTopShape()
+        case ("truck", .front):  return AnyShape(TruckFrontShape())
+        case ("truck", .rear):   return AnyShape(TruckRearShape())
+        case ("truck", .left):   return AnyShape(TruckSideShape())
+        case ("truck", .right):  return AnyShape(TruckSideShape().scale(x: -1, y: 1))
+        case ("truck", .top):    return AnyShape(TruckTopShape())
 
         // MARK: Van
-        case ("van", .front):    VanFrontShape()
-        case ("van", .rear):     VanRearShape()
-        case ("van", .left):     VanSideShape()
-        case ("van", .right):    VanSideShape().scaleEffect(x: -1, y: 1)
-        case ("van", .top):      VanTopShape()
+        case ("van", .front):    return AnyShape(VanFrontShape())
+        case ("van", .rear):     return AnyShape(VanRearShape())
+        case ("van", .left):     return AnyShape(VanSideShape())
+        case ("van", .right):    return AnyShape(VanSideShape().scale(x: -1, y: 1))
+        case ("van", .top):      return AnyShape(VanTopShape())
 
         // MARK: Minivan
-        case ("minivan", .front): MinivanFrontShape()
-        case ("minivan", .rear):  MinivanRearShape()
-        case ("minivan", .left):  MinivanSideShape()
-        case ("minivan", .right): MinivanSideShape().scaleEffect(x: -1, y: 1)
-        case ("minivan", .top):   MinivanTopShape()
+        case ("minivan", .front): return AnyShape(MinivanFrontShape())
+        case ("minivan", .rear):  return AnyShape(MinivanRearShape())
+        case ("minivan", .left):  return AnyShape(MinivanSideShape())
+        case ("minivan", .right): return AnyShape(MinivanSideShape().scale(x: -1, y: 1))
+        case ("minivan", .top):   return AnyShape(MinivanTopShape())
 
         // Fallback
-        default: SedanFrontShape()
+        default: return AnyShape(SedanFrontShape())
         }
     }
 }

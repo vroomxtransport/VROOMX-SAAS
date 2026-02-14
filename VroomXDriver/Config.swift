@@ -1,8 +1,8 @@
 import Foundation
 
 enum Config {
-    static let supabaseURL = "YOUR_SUPABASE_URL"
-    static let supabaseAnonKey = "YOUR_SUPABASE_ANON_KEY"
+    static let supabaseURL = "https://hqoynittztyqmurnvkxx.supabase.co"
+    static let supabaseAnonKey = "sb_publishable_GvnJgsGnT3QQQZ7Z9KYkEw_0t8iNo6h"
 
     static let appName = "VroomX Driver"
     static let appVersion = "1.0.0"

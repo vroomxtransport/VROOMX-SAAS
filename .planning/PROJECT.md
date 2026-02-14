@@ -146,3 +146,85 @@ The Horizon Star TMS at `/Users/reepsy/Desktop/OG TMS CLAUDE/` contains battle-t
 - BOL generation from inspection data
 
 These workflows should be referenced during phase planning — not copied, but reimplemented properly in the new architecture.
+
+## Design System — UI Polish (Implemented)
+
+### Established Patterns
+
+The landing page and dashboard use a cohesive dark-atmospheric design system with the following CSS classes and conventions:
+
+**CSS Utility Classes** (defined in `src/app/globals.css`):
+- `glass-card` — Frosted glass card with backdrop-blur, subtle border, layered box-shadow (light/dark variants)
+- `glass-card-hover` — Hover lift with brand-glow box-shadow transition
+- `shimmer-border` — Pseudo-element gradient border shimmer on hover
+- `card-hover` — Simple translateY(-2px) hover lift
+- `hero-grid-bg` — Background grid pattern with radial mask fade
+- `hero-radial-glow` — Dual radial gradient glow orbs
+- `animate-marquee` — Infinite horizontal scroll (30s), pauses on hover
+- `marquee-fade-mask` — Gradient transparency on left/right edges for seamless marquee
+- `animate-pulse-glow` — Pulsing brand-color box-shadow
+- `animate-pulse-ring` — Expanding/fading ring animation (for alerts)
+- `gradient-border-animated` — Rotating conic-gradient border via `border-rotate` keyframe
+- `animate-shimmer` — Moving gradient highlight
+- `animate-fade-up` — Opacity + translateY entrance animation
+- `sidebar-noise` — Subtle SVG noise texture overlay
+
+**Brand Colors** (oklch):
+- Brand primary: `oklch(0.55 0.22 260)` (deep indigo-blue)
+- Brand gradient: `from-[oklch(0.55_0.22_260)] to-[oklch(0.55_0.2_290)]`
+- CSS vars: `--brand`, `--brand-glow`, `--brand-glow-lg`, `--brand-gradient`, `--brand-gradient-vivid`
+- Accent palette: `--accent-blue`, `--accent-violet`, `--accent-amber`, `--accent-emerald` (each with `-bg` variant)
+
+**Component Accent Patterns**:
+- Testimonials: per-card accent colors (blue/violet/emerald) for left-border gradients, avatar rings, quote watermarks
+- Pricing cards: per-tier accents (blue/brand/violet), Pro plan uses gradient border wrapper + "Most Popular" glow badge
+- Activity feed: event-type color coding — order(blue), trip(amber), invoice(emerald), driver(violet), maintenance(red)
+- Fleet pulse: gradient progress bars with glow shadow when fill > 50%, pulse-ring alert when capacity > 85%
+- Loads pipeline: hover tooltips on segments, brand-color highlight on order numbers, left accent border on section headers
+
+### Files Modified in Design Polish Pass
+
+| File | What Changed |
+|------|-------------|
+| `src/app/globals.css` | Added marquee, border-rotate, pulse-ring keyframes + utility classes |
+| `src/components/marketing/testimonials.tsx` | Glass cards, decorative quote watermarks, gradient left-borders, avatar rings |
+| `src/components/marketing/pricing-teaser.tsx` | Vertical pricing cards, feature bullets, gradient Pro card, tier accents |
+| `src/components/marketing/logo-strip.tsx` | Infinite marquee scroll, 10 carriers, fade masks, hover pause |
+| `src/components/marketing/final-cta.tsx` | Atmospheric bg (grid + orbs), rotating gradient border, pulse-glow CTA |
+| `src/components/marketing/problem-solution.tsx` | Fixed broken arrow, gradient connector, hover lift, stronger gradients |
+| `src/app/(dashboard)/dashboard/_components/loads-pipeline.tsx` | Rounded segments, hover tooltips, table hover effects, brand highlights |
+| `src/app/(dashboard)/dashboard/_components/fleet-pulse.tsx` | Gradient bars, glow shadows, pulse-ring alerts, trend indicators |
+| `src/app/(dashboard)/dashboard/_components/activity-feed.tsx` | Color-coded dots/icons by type, gradient connector, time-group headers |
+
+### Dashboard Widget Customization
+
+Users can toggle dashboard widgets on/off via a "Customize" popover in the hero header. Preferences persist in localStorage via Zustand.
+
+**Architecture**: The dashboard page remains a server component for data fetching. A `DashboardWidgets` client wrapper receives pre-rendered widgets as props and conditionally renders them based on store state. This avoids converting the page to a client component.
+
+**Files**:
+| File | Purpose |
+|------|---------|
+| `src/stores/dashboard-store.ts` | Zustand store with `persist` — tracks `visibleWidgets` (Record of 6 widget IDs → boolean), `toggleWidget()`, `resetDefaults()` |
+| `src/app/(dashboard)/dashboard/_components/customize-dashboard.tsx` | Popover with `Switch` toggles for each widget + "Reset to Default" |
+| `src/app/(dashboard)/dashboard/_components/dashboard-widgets.tsx` | Client wrapper — reads store, conditionally renders widgets, handles grid reflow |
+
+**Widget IDs**: `statCards`, `loadsPipeline`, `revenueChart`, `fleetPulse`, `upcomingPickups`, `activityFeed`
+
+**Storage key**: `vroomx-dashboard` (localStorage)
+
+### Grid/List View Toggle (Drivers & Trucks)
+
+Users can switch between a 3-column card grid and a compact list (table-row) view on the Drivers and Trucks pages. Preference persists per-section in localStorage via Zustand.
+
+**Architecture**: A shared `ViewToggle` pill component and a `useViewStore` Zustand persist store manage independent `'grid' | 'list'` preferences for each section. List views use dedicated row components (`DriverRow`, `TruckRow`) that display the same data as their card counterparts in a single horizontal line.
+
+**Files**:
+| File | Purpose |
+|------|---------|
+| `src/components/shared/view-toggle.tsx` | Shared grid/list toggle pill (generalized from dispatch board/list toggle) |
+| `src/stores/view-store.ts` | Zustand store with `persist` — tracks `views` (`Record<'drivers' \| 'trucks', 'grid' \| 'list'>`) |
+| `src/app/(dashboard)/drivers/_components/driver-row.tsx` | Compact list row: name, status/type badges, phone, email, pay info, status switch + edit |
+| `src/app/(dashboard)/trucks/_components/truck-row.tsx` | Compact list row: unit #, status/type/ownership badges, vehicle line, VIN, status select + edit |
+
+**Storage key**: `vroomx-views` (localStorage)

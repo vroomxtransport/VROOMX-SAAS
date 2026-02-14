@@ -14,7 +14,10 @@ let package = Package(
             dependencies: [
                 .product(name: "Supabase", package: "supabase-swift"),
                 .product(name: "KeychainAccess", package: "KeychainAccess"),
-            ]
+            ],
+            path: ".",
+            exclude: ["Info.plist", "Package.resolved"],
+            sources: ["Config.swift", "VroomXDriverApp.swift", "Core", "Models", "Views", "Theme"]
         ),
     ]
 )
