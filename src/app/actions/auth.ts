@@ -17,6 +17,13 @@ const signUpSchema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters'),
   company_name: z.string().min(1, 'Company name is required'),
   plan: z.enum(['starter', 'pro', 'enterprise']),
+  dot_number: z.string().optional(),
+  mc_number: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zip: z.string().optional(),
+  phone: z.string().optional(),
 })
 
 const PRICE_MAP: Record<string, string> = {
@@ -60,6 +67,13 @@ export async function signUpAction(prevState: any, formData: FormData) {
     password: formData.get('password'),
     company_name: formData.get('company_name'),
     plan: formData.get('plan'),
+    dot_number: formData.get('dot_number') || undefined,
+    mc_number: formData.get('mc_number') || undefined,
+    address: formData.get('address') || undefined,
+    city: formData.get('city') || undefined,
+    state: formData.get('state') || undefined,
+    zip: formData.get('zip') || undefined,
+    phone: formData.get('phone') || undefined,
   })
 
   if (!parsed.success) {
@@ -67,7 +81,7 @@ export async function signUpAction(prevState: any, formData: FormData) {
     return { error: firstError }
   }
 
-  const { full_name, email, password, company_name, plan } = parsed.data
+  const { full_name, email, password, company_name, plan, dot_number, mc_number, address, city, state, zip, phone } = parsed.data
   const supabase = await createClient()
 
   // 2. Create Supabase Auth user
@@ -117,6 +131,13 @@ export async function signUpAction(prevState: any, formData: FormData) {
       subscription_status: 'trialing',
       stripe_customer_id: customer.id,
       trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+      ...(dot_number && { dot_number }),
+      ...(mc_number && { mc_number }),
+      ...(address && { address }),
+      ...(city && { city }),
+      ...(state && { state }),
+      ...(zip && { zip }),
+      ...(phone && { phone }),
     })
     .select()
     .single()

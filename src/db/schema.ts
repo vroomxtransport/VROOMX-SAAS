@@ -47,6 +47,9 @@ export const tenants = pgTable('tenants', {
   stripeCustomerId: text('stripe_customer_id'),
   stripeSubscriptionId: text('stripe_subscription_id'),
   trialEndsAt: timestamp('trial_ends_at', { withTimezone: true }),
+  // FMCSA / DOT info
+  dotNumber: text('dot_number'),
+  mcNumber: text('mc_number'),
   // Company info (Phase 4 - for invoice headers)
   address: text('address'),
   city: text('city'),
