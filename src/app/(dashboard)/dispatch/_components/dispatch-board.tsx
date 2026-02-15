@@ -1,7 +1,19 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useTransition } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragStartEvent,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import { toast } from 'sonner'
+import { useQueryClient } from '@tanstack/react-query'
 import { useTrips } from '@/hooks/use-trips'
 import { TripRow } from './trip-row'
 import { TripFilters } from './trip-filters'
@@ -10,6 +22,7 @@ import { ViewToggle } from './view-toggle'
 import { DispatchSummary } from './dispatch-summary'
 import { DispatchKanban } from './dispatch-kanban'
 import { UnassignedOrdersPanel } from './unassigned-orders-panel'
+import { TripDragOverlay, OrderDragOverlay } from './drag-overlays'
 import { Pagination } from '@/components/shared/pagination'
 import { EmptyState } from '@/components/shared/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -17,9 +30,10 @@ import { Button } from '@/components/ui/button'
 import { Plus, Truck, ChevronDown, ChevronRight } from 'lucide-react'
 import { HelpTooltip } from '@/components/help-tooltip'
 import { PageHeader } from '@/components/shared/page-header'
-import { TRIP_STATUSES, TRIP_STATUS_LABELS, TRIP_STATUS_COLORS, TRUCK_CAPACITY } from '@/types'
+import { TRIP_STATUSES, TRIP_STATUS_LABELS, TRUCK_CAPACITY } from '@/types'
 import type { TripStatus, TruckType } from '@/types'
 import type { TripWithRelations } from '@/lib/queries/trips'
+import { updateTripStatus, assignOrderToTrip } from '@/app/actions/trips'
 import { cn } from '@/lib/utils'
 
 const PAGE_SIZE = 50
@@ -43,12 +57,28 @@ export function DispatchBoard() {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const queryClient = useQueryClient()
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [viewMode, setViewMode] = useState<'board' | 'list'>('board')
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
     completed: true, // Completed starts collapsed
   })
+
+  // Drag state
+  const [activeId, setActiveId] = useState<string | null>(null)
+  const [activeDragType, setActiveDragType] = useState<'trip' | 'order' | null>(null)
+  const [activeDragData, setActiveDragData] = useState<unknown>(null)
+  const [, startTransition] = useTransition()
+
+  // Sensors with activation constraints
+  const pointerSensor = useSensor(PointerSensor, {
+    activationConstraint: { distance: 8 },
+  })
+  const touchSensor = useSensor(TouchSensor, {
+    activationConstraint: { delay: 200, tolerance: 5 },
+  })
+  const sensors = useSensors(pointerSensor, touchSensor)
 
   // Parse URL search params for filters
   const search = searchParams.get('q') ?? undefined
@@ -164,6 +194,81 @@ export function DispatchBoard() {
     return { planned, inProgress, capacity: { used: usedCapacity, total: totalCapacity } }
   }, [groupedTrips])
 
+  // ─── Drag Handlers ──────────────────────────────────────────────────────────
+
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    const { active } = event
+    const type = active.data.current?.type as 'trip' | 'order' | undefined
+    if (!type) return
+
+    setActiveId(String(active.id))
+    setActiveDragType(type)
+
+    if (type === 'trip') {
+      setActiveDragData(active.data.current?.trip)
+    } else if (type === 'order') {
+      setActiveDragData(active.data.current?.order)
+    }
+  }, [])
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event
+
+    // Reset drag state
+    setActiveId(null)
+    setActiveDragType(null)
+    setActiveDragData(null)
+
+    if (!over) return
+
+    const activeType = active.data.current?.type
+    const overType = over.data.current?.type
+
+    // Trip dropped on a column → change status
+    if (activeType === 'trip' && overType === 'column') {
+      const tripId = String(active.id)
+      const newStatus = over.data.current?.status as TripStatus
+      const trip = active.data.current?.trip as TripWithRelations
+
+      // Don't do anything if same status
+      if (trip.status === newStatus) return
+
+      startTransition(async () => {
+        const result = await updateTripStatus(tripId, newStatus)
+        if (result.error) {
+          toast.error('Failed to update trip status', { description: String(result.error) })
+        } else {
+          toast.success(`Trip moved to ${newStatus.replace('_', ' ')}`)
+          queryClient.invalidateQueries({ queryKey: ['trips'] })
+          queryClient.invalidateQueries({ queryKey: ['unassigned-orders'] })
+        }
+      })
+    }
+
+    // Order dropped on a trip card → assign order to trip
+    if (activeType === 'order' && overType === 'trip-card') {
+      const orderId = String(active.id)
+      const tripId = over.data.current?.tripId as string
+
+      startTransition(async () => {
+        const result = await assignOrderToTrip(orderId, tripId)
+        if (result.error) {
+          toast.error('Failed to assign order', { description: String(result.error) })
+        } else {
+          toast.success('Order assigned to trip')
+          queryClient.invalidateQueries({ queryKey: ['trips'] })
+          queryClient.invalidateQueries({ queryKey: ['unassigned-orders'] })
+        }
+      })
+    }
+  }, [])
+
+  const handleDragCancel = useCallback(() => {
+    setActiveId(null)
+    setActiveDragType(null)
+    setActiveDragData(null)
+  }, [])
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -172,7 +277,7 @@ export function DispatchBoard() {
         subtitle={data ? `Showing ${data.trips.length} of ${data.total} trips` : 'Manage trips and dispatching.'}
       >
         <HelpTooltip
-          content="Create trips, assign orders, and track driver progress. Trips flow from Planned to In Progress to Completed."
+          content="Create trips, assign orders, and track driver progress. Drag trip cards between columns to change status. Drag orders onto trips to assign them."
           side="right"
         />
         <Button onClick={() => setDialogOpen(true)}>
@@ -238,13 +343,23 @@ export function DispatchBoard() {
           }}
         />
       ) : groupedTrips ? (
-        <>
+        <DndContext
+          sensors={sensors}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDragCancel={handleDragCancel}
+        >
           {/* Board View (desktop only — hidden below lg) */}
           {viewMode === 'board' ? (
             <div>
               {/* Kanban — hidden on mobile/tablet, shown on lg+ */}
               <div className="hidden lg:block">
-                <DispatchKanban groupedTrips={groupedTrips} />
+                <DispatchKanban
+                  groupedTrips={groupedTrips}
+                  isDraggingTrip={activeDragType === 'trip'}
+                  isDraggingOrder={activeDragType === 'order'}
+                  activeId={activeId}
+                />
               </div>
               {/* On mobile/tablet, fall back to list view */}
               <div className="lg:hidden">
@@ -277,10 +392,20 @@ export function DispatchBoard() {
           {/* Unassigned Orders Panel (board view on desktop) */}
           {viewMode === 'board' && (
             <div className="hidden lg:block">
-              <UnassignedOrdersPanel />
+              <UnassignedOrdersPanel forceExpanded={activeDragType === 'order'} />
             </div>
           )}
-        </>
+
+          {/* Drag Overlay */}
+          <DragOverlay dropAnimation={null}>
+            {activeId && activeDragType === 'trip' && activeDragData ? (
+              <TripDragOverlay trip={activeDragData as TripWithRelations} />
+            ) : null}
+            {activeId && activeDragType === 'order' && activeDragData ? (
+              <OrderDragOverlay order={activeDragData as import('@/hooks/use-unassigned-orders').UnassignedOrderWithBroker} />
+            ) : null}
+          </DragOverlay>
+        </DndContext>
       ) : null}
 
       {/* New Trip Dialog */}

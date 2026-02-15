@@ -1,8 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useDraggable } from '@dnd-kit/core'
 import { PackageSearch, ChevronUp, ChevronDown } from 'lucide-react'
 import { useUnassignedOrders } from '@/hooks/use-unassigned-orders'
+import type { UnassignedOrderWithBroker } from '@/hooks/use-unassigned-orders'
 import { cn } from '@/lib/utils'
 
 function formatCurrency(amount: string | number): string {
@@ -15,11 +17,20 @@ function formatCurrency(amount: string | number): string {
   }).format(num)
 }
 
-export function UnassignedOrdersPanel() {
+interface UnassignedOrdersPanelProps {
+  forceExpanded?: boolean
+}
+
+export function UnassignedOrdersPanel({ forceExpanded }: UnassignedOrdersPanelProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const { data: orders } = useUnassignedOrders()
 
   const count = orders?.length ?? 0
+
+  // Auto-expand when forceExpanded is true (e.g., while dragging an order)
+  useEffect(() => {
+    if (forceExpanded) setIsExpanded(true)
+  }, [forceExpanded])
 
   return (
     <div className="rounded-lg border border-border-subtle bg-surface overflow-hidden">
@@ -56,46 +67,65 @@ export function UnassignedOrdersPanel() {
           </div>
         ) : (
           <div className="p-4 overflow-x-auto flex gap-3 border-t border-border-subtle">
-            {orders?.map((order) => {
-              const vehicleName = [order.vehicle_year, order.vehicle_make, order.vehicle_model]
-                .filter(Boolean)
-                .join(' ') || 'Unknown Vehicle'
-
-              const route = [
-                order.pickup_city && order.pickup_state
-                  ? `${order.pickup_city}, ${order.pickup_state}`
-                  : null,
-                order.delivery_city && order.delivery_state
-                  ? `${order.delivery_city}, ${order.delivery_state}`
-                  : null,
-              ]
-                .filter(Boolean)
-                .join(' \u2192 ') || 'No route'
-
-              return (
-                <div
-                  key={order.id}
-                  className="min-w-[220px] max-w-[220px] rounded-lg border border-border-subtle bg-surface p-3 shrink-0 cursor-grab hover:border-brand/30 transition-colors"
-                >
-                  <div className="text-sm font-medium text-foreground truncate" title={vehicleName}>
-                    {vehicleName}
-                  </div>
-                  <div className="mt-1 text-xs text-muted-foreground truncate" title={route}>
-                    {route}
-                  </div>
-                  <div className="mt-2 flex items-center justify-between">
-                    <span className="text-sm font-semibold text-foreground">
-                      {formatCurrency(order.revenue)}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {order.order_number ?? 'N/A'}
-                    </span>
-                  </div>
-                </div>
-              )
-            })}
+            {orders?.map((order) => (
+              <DraggableOrderCard key={order.id} order={order} />
+            ))}
           </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+function DraggableOrderCard({ order }: { order: UnassignedOrderWithBroker }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    isDragging,
+  } = useDraggable({
+    id: order.id,
+    data: { type: 'order', order },
+  })
+
+  const vehicleName = [order.vehicle_year, order.vehicle_make, order.vehicle_model]
+    .filter(Boolean)
+    .join(' ') || 'Unknown Vehicle'
+
+  const route = [
+    order.pickup_city && order.pickup_state
+      ? `${order.pickup_city}, ${order.pickup_state}`
+      : null,
+    order.delivery_city && order.delivery_state
+      ? `${order.delivery_city}, ${order.delivery_state}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(' \u2192 ') || 'No route'
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      className={cn(
+        'min-w-[220px] max-w-[220px] rounded-lg border border-border-subtle bg-surface p-3 shrink-0 cursor-grab active:cursor-grabbing hover:border-brand/30 transition-all duration-150 touch-none',
+        isDragging && 'opacity-40 scale-95'
+      )}
+    >
+      <div className="text-sm font-medium text-foreground truncate" title={vehicleName}>
+        {vehicleName}
+      </div>
+      <div className="mt-1 text-xs text-muted-foreground truncate" title={route}>
+        {route}
+      </div>
+      <div className="mt-2 flex items-center justify-between">
+        <span className="text-sm font-semibold text-foreground">
+          {formatCurrency(order.revenue)}
+        </span>
+        <span className="text-xs text-muted-foreground">
+          {order.order_number ?? 'N/A'}
+        </span>
       </div>
     </div>
   )

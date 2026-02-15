@@ -2,6 +2,8 @@
 
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
+import { useDraggable, useDroppable } from '@dnd-kit/core'
+import { GripVertical } from 'lucide-react'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { TRUCK_CAPACITY } from '@/types'
 import type { TripStatus } from '@/types'
@@ -10,6 +12,8 @@ import { cn } from '@/lib/utils'
 
 interface DispatchTripCardProps {
   trip: TripWithRelations
+  isDraggingOrder?: boolean
+  activeId?: string | null
 }
 
 const CARD_BORDER_COLORS: Record<TripStatus, string> = {
@@ -35,7 +39,7 @@ function formatDateRange(startDate: string, endDate: string): string {
   }
 }
 
-export function DispatchTripCard({ trip }: DispatchTripCardProps) {
+export function DispatchTripCard({ trip, isDraggingOrder, activeId }: DispatchTripCardProps) {
   const router = useRouter()
   const truckUnit = trip.truck?.unit_number ?? 'N/A'
   const driverName = formatDriverName(trip.driver)
@@ -44,6 +48,7 @@ export function DispatchTripCard({ trip }: DispatchTripCardProps) {
   const orderCount = trip.order_count ?? 0
   const capacityPercent = maxCapacity > 0 ? (orderCount / maxCapacity) * 100 : 0
   const dateRange = formatDateRange(trip.start_date, trip.end_date)
+  const isAtCapacity = maxCapacity > 0 && orderCount >= maxCapacity
 
   const origin = trip.origin_summary
   const destination = trip.destination_summary
@@ -55,14 +60,77 @@ export function DispatchTripCard({ trip }: DispatchTripCardProps) {
         ? `... \u2192 ${destination}`
         : 'No route'
 
+  // Draggable: for moving trip between columns
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setDragRef,
+    isDragging,
+  } = useDraggable({
+    id: trip.id,
+    data: { type: 'trip', trip },
+  })
+
+  // Droppable: for receiving orders (only active when an order is being dragged)
+  const {
+    setNodeRef: setDropRef,
+    isOver,
+  } = useDroppable({
+    id: `trip-drop-${trip.id}`,
+    data: { type: 'trip-card', tripId: trip.id },
+    disabled: !isDraggingOrder,
+  })
+
+  // Combine refs
+  const setRefs = (node: HTMLElement | null) => {
+    setDragRef(node)
+    setDropRef(node)
+  }
+
+  // Hide the source card while dragging (overlay shows instead)
+  const isBeingDragged = isDragging || activeId === trip.id
+
   return (
     <div
-      onClick={() => router.push(`/trips/${trip.id}`)}
+      ref={setRefs}
+      onClick={(e) => {
+        // Don't navigate if we just finished a drag
+        if (isDragging) return
+        router.push(`/trips/${trip.id}`)
+      }}
       className={cn(
-        'rounded-lg border border-border-subtle bg-surface p-3 cursor-pointer card-hover hover:border-brand/30 border-l-[3px]',
-        CARD_BORDER_COLORS[trip.status as TripStatus]
+        'rounded-lg border border-border-subtle bg-surface p-3 cursor-pointer card-hover hover:border-brand/30 border-l-[3px] relative group transition-all duration-150',
+        CARD_BORDER_COLORS[trip.status as TripStatus],
+        isBeingDragged && 'opacity-40 scale-95',
+        isDraggingOrder && !isOver && 'ring-1 ring-dashed ring-brand/20',
+        isOver && !isAtCapacity && 'ring-2 ring-green-500/60 bg-green-950/10 scale-[1.02]',
+        isOver && isAtCapacity && 'ring-2 ring-amber-500/60 bg-amber-950/10 scale-[1.02]',
       )}
     >
+      {/* Drag handle — visible on hover */}
+      <button
+        className="absolute -left-1 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center h-8 w-5 rounded-sm opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+        {...attributes}
+        {...listeners}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
+      </button>
+
+      {/* Drop indicator for order */}
+      {isOver && (
+        <div className="absolute inset-0 rounded-lg flex items-center justify-center pointer-events-none z-10">
+          <span className={cn(
+            'text-xs font-medium px-2 py-1 rounded-full',
+            isAtCapacity
+              ? 'bg-amber-500/20 text-amber-400'
+              : 'bg-green-500/20 text-green-400'
+          )}>
+            {isAtCapacity ? 'At Capacity' : 'Drop to Assign'}
+          </span>
+        </div>
+      )}
+
       {/* Top: Trip number + status */}
       <div className="flex items-center justify-between gap-2">
         <span className="text-sm font-semibold text-foreground">
