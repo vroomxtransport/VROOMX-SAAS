@@ -24,7 +24,7 @@ export async function createCustomRole(data: unknown) {
   const { name, description, permissions } = parsed.data
 
   // Validate all permissions are valid
-  const invalidPerms = permissions.filter(p => !ALL_PERMISSIONS.includes(p))
+  const invalidPerms = permissions.filter(p => !(ALL_PERMISSIONS as readonly string[]).includes(p))
   if (invalidPerms.length > 0) {
     return { error: `Invalid permissions: ${invalidPerms.join(', ')}` }
   }
@@ -64,7 +64,7 @@ export async function updateCustomRole(id: string, data: unknown) {
   const { name, description, permissions } = parsed.data
 
   // Validate all permissions are valid
-  const invalidPerms = permissions.filter(p => !ALL_PERMISSIONS.includes(p))
+  const invalidPerms = permissions.filter(p => !(ALL_PERMISSIONS as readonly string[]).includes(p))
   if (invalidPerms.length > 0) {
     return { error: `Invalid permissions: ${invalidPerms.join(', ')}` }
   }

@@ -13,7 +13,7 @@ const TRIP_TO_ORDER_STATUS: Partial<Record<TripStatus, string>> = {
   planned: 'assigned',
 }
 
-const VALID_TRIP_STATUSES: TripStatus[] = ['planned', 'in_progress', 'completed', 'cancelled']
+const VALID_TRIP_STATUSES: TripStatus[] = ['planned', 'in_progress', 'at_terminal', 'completed']
 
 export async function createTrip(data: unknown) {
   const parsed = tripSchema.safeParse(data)

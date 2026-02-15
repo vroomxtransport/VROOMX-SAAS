@@ -59,7 +59,7 @@ export function RolesSection({ customRoles: initialRoles }: RolesSectionProps) {
   }
 
   function toggleCategory(category: string) {
-    const categoryPerms = PERMISSION_CATEGORIES[category as keyof typeof PERMISSION_CATEGORIES]
+    const categoryPerms: string[] = [...PERMISSION_CATEGORIES[category as keyof typeof PERMISSION_CATEGORIES]]
     const allSelected = categoryPerms.every(p => selectedPermissions.includes(p))
     if (allSelected) {
       setSelectedPermissions(prev => prev.filter(p => !categoryPerms.includes(p)))

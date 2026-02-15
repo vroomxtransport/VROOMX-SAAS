@@ -1,5 +1,3 @@
-'use server'
-
 import { createClient } from '@/lib/supabase/server'
 import { isAccountSuspended } from '@/lib/tier'
 import { hasPermission, getBuiltInRolePermissions } from '@/lib/permissions'
