@@ -46,7 +46,7 @@ export async function createTrailer(data: unknown) {
     return { error: error.message }
   }
 
-  revalidatePath('/trucks')
+  revalidatePath('/trailers')
   return { data: trailer }
 }
 
@@ -93,7 +93,7 @@ export async function updateTrailer(id: string, data: unknown) {
     return { error: error.message }
   }
 
-  revalidatePath('/trucks')
+  revalidatePath('/trailers')
   return { data: trailer }
 }
 
@@ -124,7 +124,7 @@ export async function deleteTrailer(id: string) {
     return { error: error.message }
   }
 
-  revalidatePath('/trucks')
+  revalidatePath('/trailers')
   return { success: true }
 }
 
@@ -157,7 +157,7 @@ export async function assignTrailerToTruck(truckId: string, trailerId: string) {
     return { error: error.message }
   }
 
-  revalidatePath('/trucks')
+  revalidatePath('/trailers')
   return { data: truck }
 }
 
@@ -190,6 +190,6 @@ export async function unassignTrailerFromTruck(truckId: string) {
     return { error: error.message }
   }
 
-  revalidatePath('/trucks')
+  revalidatePath('/trailers')
   return { data: truck }
 }

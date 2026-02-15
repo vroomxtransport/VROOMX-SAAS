@@ -3,11 +3,18 @@ import type { Trailer } from '@/types/database'
 
 export interface TrailerFilters {
   status?: string
+  trailerType?: string
   search?: string
+  page?: number
+  pageSize?: number
+}
+
+export interface TrailerWithTruck extends Trailer {
+  assigned_truck: { id: string; unit_number: string } | null
 }
 
 export interface TrailersResult {
-  trailers: Trailer[]
+  trailers: TrailerWithTruck[]
   total: number
 }
 
@@ -15,15 +22,20 @@ export async function fetchTrailers(
   supabase: SupabaseClient,
   filters: TrailerFilters = {}
 ): Promise<TrailersResult> {
-  const { status, search } = filters
+  const { status, trailerType, search, page = 0, pageSize = 20 } = filters
 
   let query = supabase
     .from('trailers')
-    .select('*', { count: 'exact' })
+    .select('*, assigned_truck:trucks!trailer_id(id, unit_number)', { count: 'exact' })
     .order('trailer_number', { ascending: true })
+    .range(page * pageSize, (page + 1) * pageSize - 1)
 
   if (status) {
     query = query.eq('status', status)
+  }
+
+  if (trailerType) {
+    query = query.eq('trailer_type', trailerType)
   }
 
   if (search) {
@@ -36,8 +48,16 @@ export async function fetchTrailers(
 
   if (error) throw error
 
+  // Normalize the assigned_truck join (could be array from Supabase)
+  const trailers = (data ?? []).map((t) => {
+    const truck = Array.isArray(t.assigned_truck)
+      ? t.assigned_truck[0] ?? null
+      : t.assigned_truck ?? null
+    return { ...t, assigned_truck: truck } as TrailerWithTruck
+  })
+
   return {
-    trailers: (data ?? []) as Trailer[],
+    trailers,
     total: count ?? 0,
   }
 }

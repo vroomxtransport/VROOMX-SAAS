@@ -10,11 +10,13 @@ import {
   TRUCK_STATUS_LABELS,
   TRIP_STATUS_COLORS,
   TRIP_STATUS_LABELS,
+  TRAILER_STATUS_COLORS,
+  TRAILER_STATUS_LABELS,
 } from '@/types'
-import type { OrderStatus, DriverStatus, TruckStatus, TripStatus } from '@/types'
+import type { OrderStatus, DriverStatus, TruckStatus, TripStatus, TrailerStatus } from '@/types'
 import { cn } from '@/lib/utils'
 
-type StatusBadgeType = 'order' | 'driver' | 'truck' | 'trip'
+type StatusBadgeType = 'order' | 'driver' | 'truck' | 'trip' | 'trailer'
 
 interface StatusBadgeProps {
   status: string
@@ -72,6 +74,15 @@ const STATUS_CONFIG: Record<StatusBadgeType, StatusConfig> = {
       in_progress: 'bg-amber-400',
       at_terminal: 'bg-purple-400',
       completed: 'bg-green-400',
+    },
+  },
+  trailer: {
+    colors: TRAILER_STATUS_COLORS as Record<string, string>,
+    labels: TRAILER_STATUS_LABELS as Record<string, string>,
+    dotColors: {
+      active: 'bg-green-400',
+      inactive: 'bg-gray-400',
+      maintenance: 'bg-amber-400',
     },
   },
 }

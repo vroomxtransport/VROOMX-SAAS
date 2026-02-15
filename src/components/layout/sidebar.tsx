@@ -27,6 +27,7 @@ import {
   MessageSquare,
   ShieldCheck,
   DollarSign,
+  Container,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -69,6 +70,7 @@ const NAV_CATEGORIES: NavCategory[] = [
     label: 'Fleet',
     items: [
       { name: 'Trucks', href: '/trucks', icon: Truck },
+      { name: 'Trailers', href: '/trailers', icon: Container },
       { name: 'Drivers', href: '/drivers', icon: UserCog, minRole: 'dispatcher' },
       { name: 'Local Drives', href: '/local-drives', icon: Navigation, minRole: 'dispatcher' },
       { name: 'Maintenance', href: '/maintenance', icon: Wrench, minRole: 'dispatcher' },

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-type ViewSection = 'drivers' | 'trucks' | 'orders' | 'tasks' | 'local-drives' | 'fuel' | 'maintenance' | 'compliance' | 'dispatchers'
+type ViewSection = 'drivers' | 'trucks' | 'trailers' | 'orders' | 'tasks' | 'local-drives' | 'fuel' | 'maintenance' | 'compliance' | 'dispatchers'
 
 interface ViewStore {
   views: Record<ViewSection, 'grid' | 'list'>
@@ -15,6 +15,7 @@ export const useViewStore = create<ViewStore>()(
       views: {
         drivers: 'grid',
         trucks: 'grid',
+        trailers: 'grid',
         orders: 'grid',
         tasks: 'list',
         'local-drives': 'list',

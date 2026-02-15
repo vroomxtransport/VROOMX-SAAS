@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import {
   fetchBrokerReceivables,
@@ -7,6 +8,7 @@ import {
 import { ReceivablesTable } from './_components/receivables-table'
 import { AgingTable } from './_components/aging-table'
 import { CollectionRate } from './_components/collection-rate'
+import { ReadyToInvoice } from './_components/ready-to-invoice'
 import { HelpTooltip } from '@/components/help-tooltip'
 import { PageHeader } from '@/components/shared/page-header'
 
@@ -24,7 +26,7 @@ export default async function BillingPage() {
       {/* Header */}
       <PageHeader title="Billing" subtitle="Track receivables, aging, and collection performance">
         <HelpTooltip
-          content="Track outstanding invoices and payment collection. Aging Analysis shows how long invoices have been unpaid."
+          content="Track outstanding invoices and payment collection. Send invoices to brokers for delivered loads, then track aging and collection."
           side="right"
         />
         <CollectionRate
@@ -33,6 +35,11 @@ export default async function BillingPage() {
           rate={collection.rate}
         />
       </PageHeader>
+
+      {/* Ready to Invoice — delivered loads not yet invoiced */}
+      <Suspense fallback={null}>
+        <ReadyToInvoice />
+      </Suspense>
 
       {/* Receivables Section */}
       <section>

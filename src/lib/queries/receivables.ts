@@ -244,3 +244,58 @@ export async function fetchCollectionRate(
     rate,
   }
 }
+
+// ============================================================================
+// Ready to Invoice — Delivered orders not yet invoiced
+// ============================================================================
+
+export interface ReadyToInvoiceOrder {
+  id: string
+  orderNumber: string | null
+  vehicleName: string
+  carrierPay: number
+  route: string
+  updatedAt: string
+  broker: { id: string; name: string; email: string | null } | null
+}
+
+export async function fetchReadyToInvoice(
+  supabase: SupabaseClient
+): Promise<ReadyToInvoiceOrder[]> {
+  const { data: orders, error } = await supabase
+    .from('orders')
+    .select(
+      'id, order_number, vehicle_year, vehicle_make, vehicle_model, carrier_pay, pickup_city, pickup_state, delivery_city, delivery_state, updated_at, broker:brokers(id, name, email)'
+    )
+    .eq('status', 'delivered')
+    .eq('payment_status', 'unpaid')
+    .order('updated_at', { ascending: true })
+
+  if (error) throw error
+
+  return (orders ?? []).map((o) => {
+    const brokerRaw = o.broker as unknown as { id: string; name: string; email: string | null } | { id: string; name: string; email: string | null }[] | null
+    const broker = Array.isArray(brokerRaw) ? brokerRaw[0] ?? null : brokerRaw
+
+    const vehicleName = [o.vehicle_year, o.vehicle_make, o.vehicle_model]
+      .filter(Boolean)
+      .join(' ') || 'Unknown Vehicle'
+
+    const route = [
+      o.pickup_city && o.pickup_state ? `${o.pickup_city}, ${o.pickup_state}` : null,
+      o.delivery_city && o.delivery_state ? `${o.delivery_city}, ${o.delivery_state}` : null,
+    ]
+      .filter(Boolean)
+      .join(' \u2192 ') || 'No route'
+
+    return {
+      id: o.id,
+      orderNumber: o.order_number,
+      vehicleName,
+      carrierPay: parseFloat(o.carrier_pay),
+      route,
+      updatedAt: o.updated_at,
+      broker,
+    }
+  })
+}
