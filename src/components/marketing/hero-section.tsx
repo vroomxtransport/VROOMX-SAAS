@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowRight, Truck } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { BrowserFrame } from './browser-frame'
 
 function DashboardMockup() {
@@ -83,17 +83,7 @@ export function HeroSection() {
         <div className="grid items-center gap-16 lg:grid-cols-2">
           {/* Left column */}
           <div className="animate-fade-up">
-            {/* Eyebrow */}
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 backdrop-blur-sm">
-              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-brand to-amber-500">
-                <Truck className="h-3 w-3 text-white" />
-              </div>
-              <span className="text-xs font-semibold tracking-wider uppercase text-amber-200/80">
-                Built for Auto Transport Carriers
-              </span>
-            </div>
-
-            <h1 className="mt-8 text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-[3.5rem] lg:leading-[1.1]">
+            <h1 className="mt-0 text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-[3.5rem] lg:leading-[1.1]">
               Stop dispatching{' '}
               <span className="relative">
                 from spreadsheets
