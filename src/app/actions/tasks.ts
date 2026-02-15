@@ -67,6 +67,11 @@ export async function updateTask(id: string, data: unknown) {
     return { error: 'Not authenticated' }
   }
 
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { error: 'No tenant found' }
+  }
+
   const { data: task, error } = await supabase
     .from('tasks')
     .update({
@@ -79,6 +84,7 @@ export async function updateTask(id: string, data: unknown) {
       category: parsed.data.category || null,
     })
     .eq('id', id)
+    .eq('tenant_id', tenantId)
     .select()
     .single()
 
@@ -102,7 +108,16 @@ export async function deleteTask(id: string) {
     return { error: 'Not authenticated' }
   }
 
-  const { error } = await supabase.from('tasks').delete().eq('id', id)
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { error: 'No tenant found' }
+  }
+
+  const { error } = await supabase
+    .from('tasks')
+    .delete()
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
 
   if (error) {
     return { error: error.message }
@@ -124,10 +139,16 @@ export async function toggleTaskStatus(id: string, status: 'pending' | 'in_progr
     return { error: 'Not authenticated' }
   }
 
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { error: 'No tenant found' }
+  }
+
   const { data: task, error } = await supabase
     .from('tasks')
     .update({ status })
     .eq('id', id)
+    .eq('tenant_id', tenantId)
     .select()
     .single()
 

@@ -68,6 +68,11 @@ export async function updateMaintenanceRecord(id: string, data: unknown) {
     return { error: 'Not authenticated' }
   }
 
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { error: 'No tenant found' }
+  }
+
   const { data: record, error } = await supabase
     .from('maintenance_records')
     .update({
@@ -82,6 +87,7 @@ export async function updateMaintenanceRecord(id: string, data: unknown) {
       notes: parsed.data.notes || null,
     })
     .eq('id', id)
+    .eq('tenant_id', tenantId)
     .select()
     .single()
 
@@ -105,7 +111,16 @@ export async function deleteMaintenanceRecord(id: string) {
     return { error: 'Not authenticated' }
   }
 
-  const { error } = await supabase.from('maintenance_records').delete().eq('id', id)
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { error: 'No tenant found' }
+  }
+
+  const { error } = await supabase
+    .from('maintenance_records')
+    .delete()
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
 
   if (error) {
     return { error: error.message }
@@ -130,6 +145,11 @@ export async function updateMaintenanceStatus(
     return { error: 'Not authenticated' }
   }
 
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { error: 'No tenant found' }
+  }
+
   const updateData: Record<string, string> = { status }
   if (status === 'completed') {
     updateData.completed_date = new Date().toISOString()
@@ -139,6 +159,7 @@ export async function updateMaintenanceStatus(
     .from('maintenance_records')
     .update(updateData)
     .eq('id', id)
+    .eq('tenant_id', tenantId)
     .select()
     .single()
 

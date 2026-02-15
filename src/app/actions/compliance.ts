@@ -65,6 +65,11 @@ export async function updateComplianceDoc(id: string, data: unknown) {
     return { error: 'Not authenticated' }
   }
 
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { error: 'No tenant found' }
+  }
+
   const { data: doc, error } = await supabase
     .from('compliance_documents')
     .update({
@@ -76,6 +81,7 @@ export async function updateComplianceDoc(id: string, data: unknown) {
       notes: parsed.data.notes || null,
     })
     .eq('id', id)
+    .eq('tenant_id', tenantId)
     .select()
     .single()
 
@@ -99,10 +105,16 @@ export async function deleteComplianceDoc(id: string) {
     return { error: 'Not authenticated' }
   }
 
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { error: 'No tenant found' }
+  }
+
   const { error } = await supabase
     .from('compliance_documents')
     .delete()
     .eq('id', id)
+    .eq('tenant_id', tenantId)
 
   if (error) {
     return { error: error.message }

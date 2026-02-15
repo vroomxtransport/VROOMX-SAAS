@@ -31,6 +31,7 @@ export async function recordPayment(orderId: string, data: unknown) {
     .from('orders')
     .select('carrier_pay, amount_paid, payment_status')
     .eq('id', orderId)
+    .eq('tenant_id', tenantId)
     .single()
 
   if (orderError || !order) {
@@ -84,6 +85,7 @@ export async function recordPayment(orderId: string, data: unknown) {
       payment_status: newPaymentStatus,
     })
     .eq('id', orderId)
+    .eq('tenant_id', tenantId)
 
   if (updateError) {
     return { error: updateError.message }
@@ -127,6 +129,7 @@ export async function batchMarkPaid(orderIds: string[], paymentDate: string) {
         .from('orders')
         .select('carrier_pay, amount_paid')
         .eq('id', orderId)
+        .eq('tenant_id', tenantId)
         .single()
 
       if (orderError || !order) {
@@ -162,6 +165,7 @@ export async function batchMarkPaid(orderIds: string[], paymentDate: string) {
           payment_status: 'paid',
         })
         .eq('id', orderId)
+        .eq('tenant_id', tenantId)
 
       if (updateError) {
         throw new Error(updateError.message)

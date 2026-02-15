@@ -71,6 +71,11 @@ export async function updateFuelEntry(id: string, data: unknown) {
     return { error: 'Not authenticated' }
   }
 
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { error: 'No tenant found' }
+  }
+
   const totalCost = parsed.data.gallons * parsed.data.costPerGallon
 
   const { data: entry, error } = await supabase
@@ -88,6 +93,7 @@ export async function updateFuelEntry(id: string, data: unknown) {
       notes: parsed.data.notes || null,
     })
     .eq('id', id)
+    .eq('tenant_id', tenantId)
     .select()
     .single()
 
@@ -111,7 +117,16 @@ export async function deleteFuelEntry(id: string) {
     return { error: 'Not authenticated' }
   }
 
-  const { error } = await supabase.from('fuel_entries').delete().eq('id', id)
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { error: 'No tenant found' }
+  }
+
+  const { error } = await supabase
+    .from('fuel_entries')
+    .delete()
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
 
   if (error) {
     return { error: error.message }

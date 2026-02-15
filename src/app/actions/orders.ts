@@ -129,10 +129,16 @@ export async function updateOrder(id: string, data: unknown) {
   if (v.brokerId !== undefined) updateData.broker_id = v.brokerId || null
   if (v.driverId !== undefined) updateData.driver_id = v.driverId || null
 
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { error: 'No tenant found' }
+  }
+
   const { data: order, error } = await supabase
     .from('orders')
     .update(updateData)
     .eq('id', id)
+    .eq('tenant_id', tenantId)
     .select()
     .single()
 
@@ -156,7 +162,16 @@ export async function deleteOrder(id: string) {
     return { error: 'Not authenticated' }
   }
 
-  const { error } = await supabase.from('orders').delete().eq('id', id)
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { error: 'No tenant found' }
+  }
+
+  const { error } = await supabase
+    .from('orders')
+    .delete()
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
 
   if (error) {
     return { error: error.message }
@@ -207,10 +222,16 @@ export async function updateOrderStatus(
     updateData.actual_delivery_date = new Date().toISOString()
   }
 
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { error: 'No tenant found' }
+  }
+
   const { data: order, error } = await supabase
     .from('orders')
     .update(updateData)
     .eq('id', id)
+    .eq('tenant_id', tenantId)
     .select()
     .single()
 
@@ -392,11 +413,17 @@ export async function rollbackOrderStatus(id: string) {
     return { error: 'Not authenticated' }
   }
 
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { error: 'No tenant found' }
+  }
+
   // Fetch current order
   const { data: current, error: fetchError } = await supabase
     .from('orders')
     .select('status')
     .eq('id', id)
+    .eq('tenant_id', tenantId)
     .single()
 
   if (fetchError || !current) {
@@ -439,6 +466,7 @@ export async function rollbackOrderStatus(id: string) {
     .from('orders')
     .update(updateData)
     .eq('id', id)
+    .eq('tenant_id', tenantId)
     .select()
     .single()
 

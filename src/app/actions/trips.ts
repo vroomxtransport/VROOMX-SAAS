@@ -87,10 +87,16 @@ export async function updateTrip(id: string, data: unknown) {
   if (v.carrier_pay !== undefined) updateData.carrier_pay = String(v.carrier_pay)
   if (v.notes !== undefined) updateData.notes = v.notes || null
 
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { error: 'No tenant found' }
+  }
+
   const { data: trip, error } = await supabase
     .from('trips')
     .update(updateData)
     .eq('id', id)
+    .eq('tenant_id', tenantId)
     .select()
     .single()
 
@@ -120,6 +126,11 @@ export async function deleteTrip(id: string) {
     return { error: 'Not authenticated' }
   }
 
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { error: 'No tenant found' }
+  }
+
   // Unassign all orders from this trip before deleting
   const { error: unassignError } = await supabase
     .from('orders')
@@ -130,7 +141,11 @@ export async function deleteTrip(id: string) {
     return { error: unassignError.message }
   }
 
-  const { error } = await supabase.from('trips').delete().eq('id', id)
+  const { error } = await supabase
+    .from('trips')
+    .delete()
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
 
   if (error) {
     return { error: error.message }
@@ -153,11 +168,17 @@ export async function updateTripStatus(id: string, newStatus: TripStatus) {
     return { error: 'Not authenticated' }
   }
 
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { error: 'No tenant found' }
+  }
+
   // Update trip status
   const { data: trip, error } = await supabase
     .from('trips')
     .update({ status: newStatus })
     .eq('id', id)
+    .eq('tenant_id', tenantId)
     .select()
     .single()
 
@@ -288,6 +309,14 @@ export async function unassignOrderFromTrip(orderId: string) {
 
 export async function recalculateTripFinancials(tripId: string) {
   const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Not authenticated' }
+  }
 
   // Fetch trip with driver relation for pay calculation
   const { data: trip, error: tripError } = await supabase

@@ -18,11 +18,17 @@ export async function GET(
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return Response.json({ error: 'No tenant found' }, { status: 403 })
+  }
+
   // Fetch order with broker relation
   const { data: order, error: orderError } = await supabase
     .from('orders')
     .select('*, broker:brokers(id, name, email)')
     .eq('id', orderId)
+    .eq('tenant_id', tenantId)
     .single()
 
   if (orderError || !order) {

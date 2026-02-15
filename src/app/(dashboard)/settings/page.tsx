@@ -56,11 +56,15 @@ export default async function SettingsPage() {
   const membershipsCount = membershipsResult.count ?? 0
   const truckCount = trucksResult.count ?? 0
 
-  // Fetch user details for each membership
-  const { data: usersData } = await admin.auth.admin.listUsers({ perPage: 100 })
-  const userMap = new Map(
-    (usersData?.users || []).map(u => [u.id, { email: u.email || '', name: u.user_metadata?.full_name || '' }])
-  )
+  // Fetch user details only for this tenant's members
+  const memberUserIds = memberships.map(m => m.user_id)
+  const userMap = new Map<string, { email: string; name: string }>()
+  for (const uid of memberUserIds) {
+    const { data } = await admin.auth.admin.getUserById(uid)
+    if (data?.user) {
+      userMap.set(uid, { email: data.user.email || '', name: data.user.user_metadata?.full_name || '' })
+    }
+  }
 
   const teamMembers = memberships.map(m => ({
     id: m.id,

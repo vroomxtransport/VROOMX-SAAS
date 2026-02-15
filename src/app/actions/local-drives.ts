@@ -70,6 +70,11 @@ export async function updateLocalDrive(id: string, data: unknown) {
     return { error: 'Not authenticated' }
   }
 
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { error: 'No tenant found' }
+  }
+
   const { data: localDrive, error } = await supabase
     .from('local_drives')
     .update({
@@ -86,6 +91,7 @@ export async function updateLocalDrive(id: string, data: unknown) {
       notes: parsed.data.notes || null,
     })
     .eq('id', id)
+    .eq('tenant_id', tenantId)
     .select()
     .single()
 
@@ -109,7 +115,16 @@ export async function deleteLocalDrive(id: string) {
     return { error: 'Not authenticated' }
   }
 
-  const { error } = await supabase.from('local_drives').delete().eq('id', id)
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { error: 'No tenant found' }
+  }
+
+  const { error } = await supabase
+    .from('local_drives')
+    .delete()
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
 
   if (error) {
     return { error: error.message }
@@ -131,6 +146,11 @@ export async function updateLocalDriveStatus(id: string, status: 'pending' | 'in
     return { error: 'Not authenticated' }
   }
 
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { error: 'No tenant found' }
+  }
+
   const updateData: Record<string, string> = { status }
   if (status === 'completed') {
     updateData.completed_date = new Date().toISOString()
@@ -140,6 +160,7 @@ export async function updateLocalDriveStatus(id: string, status: 'pending' | 'in
     .from('local_drives')
     .update(updateData)
     .eq('id', id)
+    .eq('tenant_id', tenantId)
     .select()
     .single()
 

@@ -78,6 +78,11 @@ export async function updateTruck(id: string, data: unknown) {
     return { error: 'Not authenticated' }
   }
 
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { error: 'No tenant found' }
+  }
+
   const { data: truck, error } = await supabase
     .from('trucks')
     .update({
@@ -92,6 +97,7 @@ export async function updateTruck(id: string, data: unknown) {
       notes: parsed.data.notes || null,
     })
     .eq('id', id)
+    .eq('tenant_id', tenantId)
     .select()
     .single()
 
@@ -115,7 +121,16 @@ export async function deleteTruck(id: string) {
     return { error: 'Not authenticated' }
   }
 
-  const { error } = await supabase.from('trucks').delete().eq('id', id)
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { error: 'No tenant found' }
+  }
+
+  const { error } = await supabase
+    .from('trucks')
+    .delete()
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
 
   if (error) {
     return { error: error.message }
@@ -140,10 +155,16 @@ export async function updateTruckStatus(
     return { error: 'Not authenticated' }
   }
 
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { error: 'No tenant found' }
+  }
+
   const { data: truck, error } = await supabase
     .from('trucks')
     .update({ truck_status: status })
     .eq('id', id)
+    .eq('tenant_id', tenantId)
     .select()
     .single()
 

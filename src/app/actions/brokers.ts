@@ -70,6 +70,11 @@ export async function updateBroker(id: string, data: unknown) {
     return { error: 'Not authenticated' }
   }
 
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { error: 'No tenant found' }
+  }
+
   const { data: broker, error } = await supabase
     .from('brokers')
     .update({
@@ -85,6 +90,7 @@ export async function updateBroker(id: string, data: unknown) {
       notes: parsed.data.notes || null,
     })
     .eq('id', id)
+    .eq('tenant_id', tenantId)
     .select()
     .single()
 
@@ -108,7 +114,16 @@ export async function deleteBroker(id: string) {
     return { error: 'Not authenticated' }
   }
 
-  const { error } = await supabase.from('brokers').delete().eq('id', id)
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { error: 'No tenant found' }
+  }
+
+  const { error } = await supabase
+    .from('brokers')
+    .delete()
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
 
   if (error) {
     return { error: error.message }

@@ -82,10 +82,16 @@ export async function updateTripExpense(id: string, tripId: string, data: unknow
   if (v.notes !== undefined) updateData.notes = v.notes || null
   if (v.expense_date !== undefined) updateData.expense_date = v.expense_date || null
 
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { error: 'No tenant found' }
+  }
+
   const { data: expense, error } = await supabase
     .from('trip_expenses')
     .update(updateData)
     .eq('id', id)
+    .eq('tenant_id', tenantId)
     .select()
     .single()
 
@@ -113,7 +119,16 @@ export async function deleteTripExpense(id: string, tripId: string) {
     return { error: 'Not authenticated' }
   }
 
-  const { error } = await supabase.from('trip_expenses').delete().eq('id', id)
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { error: 'No tenant found' }
+  }
+
+  const { error } = await supabase
+    .from('trip_expenses')
+    .delete()
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
 
   if (error) {
     return { error: error.message }

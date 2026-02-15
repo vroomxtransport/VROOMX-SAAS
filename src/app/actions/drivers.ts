@@ -84,6 +84,11 @@ export async function updateDriver(id: string, data: unknown) {
     return { error: 'Not authenticated' }
   }
 
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { error: 'No tenant found' }
+  }
+
   const { data: driver, error } = await supabase
     .from('drivers')
     .update({
@@ -103,6 +108,7 @@ export async function updateDriver(id: string, data: unknown) {
       notes: parsed.data.notes || null,
     })
     .eq('id', id)
+    .eq('tenant_id', tenantId)
     .select()
     .single()
 
@@ -126,7 +132,16 @@ export async function deleteDriver(id: string) {
     return { error: 'Not authenticated' }
   }
 
-  const { error } = await supabase.from('drivers').delete().eq('id', id)
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { error: 'No tenant found' }
+  }
+
+  const { error } = await supabase
+    .from('drivers')
+    .delete()
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
 
   if (error) {
     return { error: error.message }
@@ -148,10 +163,16 @@ export async function updateDriverStatus(id: string, status: 'active' | 'inactiv
     return { error: 'Not authenticated' }
   }
 
+  const tenantId = user.app_metadata?.tenant_id
+  if (!tenantId) {
+    return { error: 'No tenant found' }
+  }
+
   const { data: driver, error } = await supabase
     .from('drivers')
     .update({ driver_status: status })
     .eq('id', id)
+    .eq('tenant_id', tenantId)
     .select()
     .single()
 
@@ -180,11 +201,12 @@ export async function sendDriverAppInvitation(driverId: string) {
     return { error: 'No tenant found' }
   }
 
-  // Fetch driver
+  // Fetch driver (scoped to tenant)
   const { data: driver, error: driverError } = await supabase
     .from('drivers')
     .select('first_name, last_name, email')
     .eq('id', driverId)
+    .eq('tenant_id', tenantId)
     .single()
 
   if (driverError || !driver) {
