@@ -4,6 +4,14 @@ import { Toaster } from "sonner";
 import "./globals.css";
 import { Providers } from "./providers";
 
+function safeUrl(url: string | undefined, fallback: string): URL {
+  try {
+    return new URL(url || fallback)
+  } catch {
+    return new URL(fallback)
+  }
+}
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -33,7 +41,7 @@ export const metadata: Metadata = {
   },
   description:
     'VroomX is a modern SaaS transportation management system for auto-transport carriers. Dispatch smarter, deliver faster.',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
+  metadataBase: safeUrl(process.env.NEXT_PUBLIC_APP_URL, 'http://localhost:3000'),
   robots: {
     index: true,
     follow: true,
