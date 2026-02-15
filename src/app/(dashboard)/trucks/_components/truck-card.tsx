@@ -103,7 +103,7 @@ export function TruckCard({ truck, onClick, onEdit }: TruckCardProps) {
         </div>
       </div>
 
-      <div className="mt-3 space-y-1">
+      <div className="mt-2 space-y-1">
         {vehicleLine && (
           <p className="text-xs text-gray-500">{vehicleLine}</p>
         )}

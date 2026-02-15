@@ -22,7 +22,7 @@ export function BrokerCard({ broker, onClick, onEdit }: BrokerCardProps) {
             {broker.name}
           </h3>
 
-          <div className="mt-2 space-y-1.5">
+          <div className="mt-1.5 space-y-1.5">
             {broker.email && (
               <div className="flex items-center gap-2 text-sm text-gray-500">
                 <Mail className="h-3.5 w-3.5 shrink-0" />
@@ -44,7 +44,7 @@ export function BrokerCard({ broker, onClick, onEdit }: BrokerCardProps) {
           </div>
 
           {broker.payment_terms && (
-            <div className="mt-3">
+            <div className="mt-2">
               <Badge variant="outline" className="text-xs">
                 {PAYMENT_TERMS_LABELS[broker.payment_terms]}
               </Badge>

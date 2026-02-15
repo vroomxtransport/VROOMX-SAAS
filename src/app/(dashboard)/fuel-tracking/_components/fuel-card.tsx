@@ -45,7 +45,7 @@ export function FuelCard({ entry, onEdit }: FuelCardProps) {
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-3 gap-3 text-center">
+      <div className="mt-2 grid grid-cols-3 gap-3 text-center">
         <div>
           <p className="text-xs text-muted-foreground">Gallons</p>
           <p className="text-sm font-semibold text-foreground">{gallons.toFixed(2)}</p>
@@ -61,7 +61,7 @@ export function FuelCard({ entry, onEdit }: FuelCardProps) {
       </div>
 
       {(entry.odometer || entry.location) && (
-        <div className="mt-3 flex items-center gap-3 border-t border-border-subtle pt-2 text-xs text-muted-foreground">
+        <div className="mt-2 flex items-center gap-3 border-t border-border-subtle pt-1.5 text-xs text-muted-foreground">
           {entry.odometer && (
             <span className="flex items-center gap-1">
               <Gauge className="h-3 w-3" />

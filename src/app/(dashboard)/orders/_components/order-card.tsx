@@ -87,7 +87,7 @@ export function OrderCard({ order, onClick, onEdit }: OrderCardProps) {
         </p>
       )}
 
-      <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-2">
+      <div className="mt-2 flex items-center justify-between border-t border-gray-100 pt-1.5">
         <span className="text-sm font-semibold text-gray-900">
           {revenue > 0 ? formatCurrency(revenue) : '--'}
         </span>

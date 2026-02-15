@@ -6,17 +6,48 @@ import { GripVertical, ChevronUp, ChevronDown } from 'lucide-react'
 import { type ReactNode } from 'react'
 import { type WidgetId } from '@/stores/dashboard-store'
 
-const WIDGET_SPANS: Record<Exclude<WidgetId, 'statCards'>, string> = {
-  loadsPipeline: 'lg:col-span-8',
-  revenueChart: 'lg:col-span-8',
-  fleetPulse: 'lg:col-span-4',
-  upcomingPickups: 'lg:col-span-4',
-  activityFeed: 'lg:col-span-12',
+const PREFERRED_SPANS: Record<string, number> = {
+  loadsPipeline: 8,
+  revenueChart: 8,
+  fleetPulse: 4,
+  upcomingPickups: 4,
+  activityFeed: 12,
+}
+
+export function computeDynamicSpans(visibleWidgetIds: string[]): Record<string, number> {
+  const spans: Record<string, number> = {}
+  let col = 0
+
+  for (let i = 0; i < visibleWidgetIds.length; i++) {
+    const id = visibleWidgetIds[i]
+    let span = PREFERRED_SPANS[id] || 12
+
+    // Start new row if widget doesn't fit
+    if (col + span > 12) col = 0
+
+    const afterSpace = 12 - col - span
+
+    if (afterSpace > 0) {
+      // Check if next widget fits in remaining space
+      const nextId = visibleWidgetIds[i + 1]
+      const nextSpan = nextId ? (PREFERRED_SPANS[nextId] || 12) : Infinity
+      if (nextSpan > afterSpace) {
+        span = 12 - col // expand to fill row
+      }
+    }
+
+    spans[id] = span
+    col += span
+    if (col >= 12) col = 0
+  }
+
+  return spans
 }
 
 interface DraggableWidgetProps {
   id: Exclude<WidgetId, 'statCards'>
   editMode: boolean
+  spanClass: string
   children: ReactNode
   onMoveUp?: () => void
   onMoveDown?: () => void
@@ -27,6 +58,7 @@ interface DraggableWidgetProps {
 export function DraggableWidget({
   id,
   editMode,
+  spanClass,
   children,
   onMoveUp,
   onMoveDown,
@@ -46,8 +78,6 @@ export function DraggableWidget({
     transform: CSS.Transform.toString(transform),
     transition,
   }
-
-  const spanClass = WIDGET_SPANS[id]
 
   return (
     <div

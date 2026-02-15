@@ -58,7 +58,7 @@ export function LocalDriveRow({ localDrive, onClick, onEdit }: LocalDriveRowProp
           onClick()
         }
       }}
-      className="flex w-full items-center gap-4 rounded-lg border border-border-subtle bg-surface px-3 py-2.5 text-left shadow-sm transition-colors card-hover hover:border-brand/30 focus-visible:ring-2 focus-visible:ring-brand/30 focus-visible:outline-none"
+      className="flex w-full items-center gap-3 rounded-lg border border-border-subtle bg-surface px-3 py-2.5 text-left shadow-sm transition-colors card-hover hover:border-brand/30 focus-visible:ring-2 focus-visible:ring-brand/30 focus-visible:outline-none"
     >
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">

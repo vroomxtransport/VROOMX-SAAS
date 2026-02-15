@@ -80,7 +80,7 @@ export function DocumentList({ documentType, onEdit, onAdd }: DocumentListProps)
         <div className="mb-4">
           <Skeleton className="h-9 w-[200px]" />
         </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="h-[130px] rounded-lg" />
           ))}
@@ -114,7 +114,7 @@ export function DocumentList({ documentType, onEdit, onAdd }: DocumentListProps)
         />
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {docs.map((doc) => (
               <DocumentCard
                 key={doc.id}

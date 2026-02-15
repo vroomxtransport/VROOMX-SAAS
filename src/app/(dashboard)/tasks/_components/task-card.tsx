@@ -86,7 +86,7 @@ export function TaskCard({ task, onClick, onEdit, onToggleComplete }: TaskCardPr
             )}
           </div>
 
-          <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+          <div className="mt-1.5 flex items-center gap-3 text-xs text-muted-foreground">
             {dueLabel && (
               <div className={cn('flex items-center gap-1', overdue && 'text-red-600 font-medium')}>
                 <Calendar className="h-3 w-3" />

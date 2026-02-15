@@ -36,7 +36,7 @@ export function MaintenanceRow({ record, onClick, onEdit }: MaintenanceRowProps)
           onClick()
         }
       }}
-      className="flex w-full items-center gap-4 rounded-lg border border-border-subtle bg-surface px-4 py-3 text-left shadow-sm transition-colors card-hover hover:border-brand/30 focus-visible:ring-2 focus-visible:ring-brand/30 focus-visible:outline-none"
+      className="flex w-full items-center gap-3 rounded-lg border border-border-subtle bg-surface px-3 py-2.5 text-left shadow-sm transition-colors card-hover hover:border-brand/30 focus-visible:ring-2 focus-visible:ring-brand/30 focus-visible:outline-none"
     >
       <div className="min-w-0 flex-1">
         <span className="text-sm font-semibold text-gray-900">{truckUnit}</span>
@@ -58,7 +58,7 @@ export function MaintenanceRow({ record, onClick, onEdit }: MaintenanceRowProps)
         </Badge>
       </div>
 
-      <div className="hidden md:flex items-center gap-4 text-xs text-gray-500 shrink-0 w-[200px]">
+      <div className="hidden md:flex items-center gap-3 text-xs text-gray-500 shrink-0 w-[200px]">
         {record.scheduled_date && (
           <span className="flex items-center gap-1">
             <Calendar className="h-3 w-3" />

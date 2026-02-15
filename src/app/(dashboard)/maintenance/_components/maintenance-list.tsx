@@ -147,7 +147,7 @@ export function MaintenanceList() {
           <Skeleton className="h-9 w-[120px]" />
         </div>
         {viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {Array.from({ length: 6 }).map((_, i) => (
               <Skeleton key={i} className="h-[180px] rounded-lg" />
             ))}
@@ -200,7 +200,7 @@ export function MaintenanceList() {
       ) : (
         <>
           {viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {records.map((record) => (
                 <MaintenanceCard
                   key={record.id}

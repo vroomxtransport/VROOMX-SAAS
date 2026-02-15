@@ -145,7 +145,7 @@ export function TaskList() {
           <Skeleton className="h-9 w-[200px]" />
           <Skeleton className="h-9 w-[120px]" />
         </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="h-[140px] rounded-lg" />
           ))}
@@ -203,7 +203,7 @@ export function TaskList() {
         />
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {tasks.map((task) => (
               <TaskCard
                 key={task.id}

@@ -75,7 +75,7 @@ export function LocalDriveCard({ localDrive, onClick, onEdit }: LocalDriveCardPr
         </div>
       </div>
 
-      <div className="mt-3 space-y-1">
+      <div className="mt-2 space-y-1">
         {driverName && (
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <User className="h-3 w-3" />
@@ -94,7 +94,7 @@ export function LocalDriveCard({ localDrive, onClick, onEdit }: LocalDriveCardPr
         </div>
       </div>
 
-      <div className="mt-3 border-t border-gray-100 pt-2">
+      <div className="mt-2 border-t border-gray-100 pt-1.5">
         <div className="flex items-center gap-1 text-xs font-medium text-gray-600">
           <DollarSign className="h-3 w-3" />
           <span>{formatRevenue(localDrive.revenue)}</span>

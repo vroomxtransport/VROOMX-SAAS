@@ -17,8 +17,8 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable'
 import { useDashboardStore, useOrderedVisibleWidgets, type WidgetId } from '@/stores/dashboard-store'
-import { DraggableWidget } from './draggable-widget'
-import { type ReactNode, useState, useCallback } from 'react'
+import { DraggableWidget, computeDynamicSpans } from './draggable-widget'
+import { type ReactNode, useState, useCallback, useMemo } from 'react'
 
 interface DashboardWidgetsProps {
   statCards: ReactNode
@@ -27,6 +27,12 @@ interface DashboardWidgetsProps {
   fleetPulse: ReactNode
   upcomingPickups: ReactNode
   activityFeed: ReactNode
+}
+
+const SPAN_CLASSES: Record<number, string> = {
+  4: 'lg:col-span-4',
+  8: 'lg:col-span-8',
+  12: 'lg:col-span-12',
 }
 
 const widgetContent: Record<Exclude<WidgetId, 'statCards'>, keyof DashboardWidgetsProps> = {
@@ -100,6 +106,10 @@ export function DashboardWidgets(props: DashboardWidgetsProps) {
   }, [orderedWidgets, widgetLayout, reorderWidgets])
 
   const orderedWidgetIds = orderedWidgets.map((w) => w.id)
+  const dynamicSpans = useMemo(
+    () => computeDynamicSpans(orderedWidgetIds),
+    [orderedWidgetIds.join(',')]
+  )
 
   return (
     <>
@@ -119,6 +129,7 @@ export function DashboardWidgets(props: DashboardWidgetsProps) {
                   key={widget.id}
                   id={widget.id as Exclude<WidgetId, 'statCards'>}
                   editMode={editMode}
+                  spanClass={SPAN_CLASSES[dynamicSpans[widget.id] ?? 12] ?? 'lg:col-span-12'}
                   onMoveUp={() => handleMoveUp(widget.id as Exclude<WidgetId, 'statCards'>)}
                   onMoveDown={() => handleMoveDown(widget.id as Exclude<WidgetId, 'statCards'>)}
                   isFirst={index === 0}

@@ -76,7 +76,7 @@ export function StatCard({ label, value, sublabel, icon: Icon, accent, trend }: 
           </div>
         </div>
         <div className={cn('rounded-lg p-1.5', styles.iconBg)}>
-          <Icon className={cn('h-5 w-5', styles.iconText)} />
+          <Icon className={cn('h-4 w-4', styles.iconText)} />
         </div>
       </div>
     </div>

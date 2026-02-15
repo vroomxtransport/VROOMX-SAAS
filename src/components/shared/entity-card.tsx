@@ -10,7 +10,7 @@ interface EntityCardProps {
 
 export function EntityCard({ children, onClick, className }: EntityCardProps) {
   const classes = cn(
-    'rounded-xl border border-border-subtle bg-surface p-3 shadow-sm text-left w-full',
+    'rounded-xl border border-border-subtle bg-surface p-2.5 shadow-sm text-left w-full',
     onClick && 'cursor-pointer card-hover hover:border-brand/30 focus-visible:ring-2 focus-visible:ring-brand/30 focus-visible:outline-none',
     className
   )

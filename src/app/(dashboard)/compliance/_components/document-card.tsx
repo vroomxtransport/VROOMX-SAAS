@@ -65,7 +65,7 @@ export function DocumentCard({ doc, onEdit, onDelete }: DocumentCardProps) {
         </div>
       </div>
 
-      <div className="mt-3 flex items-center justify-between">
+      <div className="mt-2 flex items-center justify-between">
         {doc.expires_at ? (
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Calendar className="h-3.5 w-3.5" />
