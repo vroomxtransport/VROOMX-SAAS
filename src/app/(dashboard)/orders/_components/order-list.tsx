@@ -95,7 +95,7 @@ export function OrderList() {
   )
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
       <PageHeader title="Orders" subtitle="Manage vehicle transport orders and track their status.">
         <ViewToggle viewMode={viewMode} onViewChange={(mode) => setView('orders', mode)} />
@@ -118,7 +118,7 @@ export function OrderList() {
       {/* Content */}
       {isPending ? (
         viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
               <Skeleton key={i} className="h-[140px] rounded-lg" />
             ))}
@@ -147,7 +147,7 @@ export function OrderList() {
       ) : (
         <>
           {viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3">
               {data?.orders.map((order) => (
                 <OrderCard
                   key={order.id}

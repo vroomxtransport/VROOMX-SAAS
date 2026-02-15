@@ -193,11 +193,11 @@ export default async function DashboardPage({
       )}
 
       {/* Hero Header */}
-      <div className="space-y-6">
+      <div className="space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
           <div>
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{dayOfWeek}, {fullDate}</p>
-            <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground lg:text-3xl">
+            <h1 className="mt-1 text-xl font-bold tracking-tight text-foreground lg:text-2xl">
               Welcome back, {userName}!
             </h1>
             {orderCount > 0 ? (

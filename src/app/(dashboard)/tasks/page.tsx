@@ -8,7 +8,7 @@ export const metadata = {
 
 export default function TasksPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         title="Tasks"
         subtitle="Manage team tasks, assignments, and deadlines"

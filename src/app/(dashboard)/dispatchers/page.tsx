@@ -6,7 +6,7 @@ export const metadata = { title: 'Dispatchers | VroomX' }
 
 export default function DispatchersPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader title="Dispatchers" subtitle="View your team's dispatchers and their activity" />
       <Suspense fallback={null}>
         <DispatcherList />

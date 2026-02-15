@@ -19,7 +19,7 @@ export default function OrderDetailPage({
 
   if (isPending) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         <div className="flex items-center gap-4">
           <Skeleton className="h-8 w-8" />
           <Skeleton className="h-8 w-48" />
@@ -47,7 +47,7 @@ export default function OrderDetailPage({
 
   if (isError) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         <Button
           variant="ghost"
           size="sm"
@@ -65,7 +65,7 @@ export default function OrderDetailPage({
 
   if (!order) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         <Button
           variant="ghost"
           size="sm"
@@ -82,7 +82,7 @@ export default function OrderDetailPage({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Back link */}
       <Button
         variant="ghost"

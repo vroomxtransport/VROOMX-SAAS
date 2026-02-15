@@ -34,7 +34,7 @@ export function LoadsPipeline({ pipelineCounts, recentOrders }: LoadsPipelinePro
   return (
     <div className="rounded-xl border border-border-subtle bg-surface p-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-lg font-semibold text-foreground">Loads Pipeline</h3>
+        <h3 className="text-base font-semibold text-foreground">Loads Pipeline</h3>
         <span className="text-sm text-muted-foreground">{total} total</span>
       </div>
 

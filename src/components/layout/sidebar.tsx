@@ -137,7 +137,7 @@ export function Sidebar({ userRole, tenantName }: SidebarProps) {
         )}
       >
         {/* Logo area */}
-        <div className="flex h-14 items-center justify-between border-b border-[var(--sidebar-border-color)] px-4">
+        <div className="flex h-12 items-center justify-between border-b border-[var(--sidebar-border-color)] px-4">
           <div className="flex items-center gap-2.5 overflow-hidden">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#fb7232] to-[#f59e0b] shadow-[var(--brand-glow)]">
               <Truck className="h-4.5 w-4.5 text-white" />
@@ -164,7 +164,7 @@ export function Sidebar({ userRole, tenantName }: SidebarProps) {
         {/* Tenant name */}
         <div
           className={cn(
-            'border-b border-[var(--sidebar-border-color)] px-4 py-3 overflow-hidden',
+            'border-b border-[var(--sidebar-border-color)] px-4 py-2 overflow-hidden',
             isCollapsed && 'lg:hidden'
           )}
         >
@@ -172,7 +172,7 @@ export function Sidebar({ userRole, tenantName }: SidebarProps) {
         </div>
 
         {/* Collapse toggle (desktop only) */}
-        <div className="hidden lg:flex px-3 py-2">
+        <div className="hidden lg:flex px-3 py-1.5">
           <button
             onClick={toggleCollapse}
             className={cn(
@@ -193,7 +193,7 @@ export function Sidebar({ userRole, tenantName }: SidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-4">
+        <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-3">
           {filteredCategories.map((category, catIndex) => (
             <div key={category.label}>
               {/* Category label or divider */}
@@ -220,7 +220,7 @@ export function Sidebar({ userRole, tenantName }: SidebarProps) {
                       href={item.href}
                       onClick={() => close()}
                       className={cn(
-                        'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 relative',
+                        'group flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-all duration-150 relative',
                         isActive
                           ? 'bg-[var(--sidebar-active)] text-[var(--sidebar-text-active)] shadow-[inset_0_0_0_1px_rgba(251,114,50,0.15),var(--brand-glow)]'
                           : 'text-[var(--sidebar-text)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-text-active)]',
@@ -271,7 +271,7 @@ export function Sidebar({ userRole, tenantName }: SidebarProps) {
         </nav>
 
         {/* Footer */}
-        <div className="border-t border-[var(--sidebar-border-color)] px-4 py-3">
+        <div className="border-t border-[var(--sidebar-border-color)] px-4 py-2">
           <p
             className={cn(
               'text-xs text-[var(--sidebar-category)] text-center',

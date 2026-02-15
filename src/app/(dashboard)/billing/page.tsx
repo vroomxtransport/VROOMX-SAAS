@@ -20,7 +20,7 @@ export default async function BillingPage() {
   ])
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
       <PageHeader title="Billing" subtitle="Track receivables, aging, and collection performance">
         <HelpTooltip

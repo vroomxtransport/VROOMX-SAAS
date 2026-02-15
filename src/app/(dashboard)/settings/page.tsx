@@ -76,7 +76,7 @@ export default async function SettingsPage() {
   }))
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader
         title="Settings"
         subtitle="Manage your subscription, team, and account preferences."

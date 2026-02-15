@@ -43,11 +43,11 @@ export function TripDetail({ trip }: TripDetailProps) {
   const payType = trip.driver?.pay_type as DriverPayType | undefined
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-xl font-bold text-gray-900">
             {trip.trip_number ?? 'Draft Trip'}
           </h1>
           <StatusBadge status={trip.status} type="trip" />

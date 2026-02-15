@@ -65,7 +65,7 @@ export function TripRow({ trip }: TripRowProps) {
   return (
     <Link
       href={`/trips/${trip.id}`}
-      className="group flex items-center gap-4 rounded-lg border border-gray-200 bg-white px-4 py-3 transition-colors hover:bg-gray-50"
+      className="group flex items-center gap-4 rounded-lg border border-gray-200 bg-white px-3 py-2.5 transition-colors hover:bg-gray-50"
     >
       {/* Trip # */}
       <div className="w-28 shrink-0">

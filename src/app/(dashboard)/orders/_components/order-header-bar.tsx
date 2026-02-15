@@ -68,7 +68,7 @@ export function OrderHeaderBar({ order, onEdit, onDelete, canDelete }: OrderHead
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           {/* Left: Order number + status */}
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-foreground">
+            <h1 className="text-xl font-bold text-foreground">
               {order.order_number ?? 'Draft Order'}
             </h1>
             <StatusBadge status={order.status} type="order" />

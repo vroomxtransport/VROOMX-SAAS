@@ -113,7 +113,7 @@ export function DashboardWidgets(props: DashboardWidgetsProps) {
           onDragEnd={handleDragEnd}
         >
           <SortableContext items={orderedWidgetIds} strategy={verticalListSortingStrategy}>
-            <section className="grid gap-4 grid-cols-12 items-start">
+            <section className="grid gap-3 grid-cols-12 items-start">
               {orderedWidgets.map((widget, index) => (
                 <DraggableWidget
                   key={widget.id}

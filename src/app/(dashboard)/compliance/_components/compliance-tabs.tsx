@@ -31,7 +31,7 @@ export function ComplianceTabs() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <ExpirationAlerts />
 
       <div className="flex flex-wrap items-center justify-between gap-3">

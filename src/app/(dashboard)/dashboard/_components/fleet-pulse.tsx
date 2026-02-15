@@ -93,7 +93,7 @@ function ProgressRow({
 export function FleetPulse({ trucks, drivers, capacity }: FleetPulseProps) {
   return (
     <div className="rounded-xl border border-border-subtle bg-surface p-4">
-      <h3 className="text-lg font-semibold text-foreground mb-3">Fleet Pulse</h3>
+      <h3 className="text-base font-semibold text-foreground mb-3">Fleet Pulse</h3>
       <div className="space-y-3">
         <ProgressRow
           icon={Truck}

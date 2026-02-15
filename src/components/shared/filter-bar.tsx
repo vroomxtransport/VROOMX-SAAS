@@ -83,7 +83,7 @@ export function FilterBar({ filters, onFilterChange, activeFilters }: FilterBarP
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-wrap items-center gap-2">
       {filters.map((filter) => {
         if (filter.type === 'search') {
           return (

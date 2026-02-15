@@ -116,7 +116,7 @@ export function ReceivablesTable({ receivables }: ReceivablesTableProps) {
 
   if (receivables.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-lg border bg-white py-12 text-center">
+      <div className="flex flex-col items-center justify-center rounded-lg border bg-white py-8 text-center">
         <Package className="mb-3 h-10 w-10 text-gray-300" />
         <p className="text-sm font-medium text-gray-500">
           No outstanding receivables

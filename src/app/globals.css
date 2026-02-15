@@ -65,7 +65,7 @@
 }
 
 :root {
-  --radius: 16px;
+  --radius: 12px;
   --font-sans: "Verlag", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
   --font-mono: monospace;
   --font-serif: "ChronicleCondensed", "ChronicleTextG1Roman", "IBM Plex Serif", serif;

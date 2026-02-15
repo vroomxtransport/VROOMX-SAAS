@@ -45,14 +45,14 @@ export function StatCard({ label, value, sublabel, icon: Icon, accent, trend }: 
   return (
     <div
       className={cn(
-        'rounded-xl border border-border-subtle bg-surface p-4 border-l-[3px] card-hover',
+        'rounded-xl border border-border-subtle bg-surface p-3 border-l-[3px] card-hover',
         styles.border
       )}
     >
       <div className="flex items-start justify-between">
         <div className="space-y-1">
           <p className="text-sm font-medium text-muted-foreground">{label}</p>
-          <p className="text-2xl font-semibold tracking-tight text-foreground">{value}</p>
+          <p className="text-xl font-semibold tracking-tight text-foreground">{value}</p>
           <div className="flex items-center gap-2">
             {trend && (
               <span
@@ -75,7 +75,7 @@ export function StatCard({ label, value, sublabel, icon: Icon, accent, trend }: 
             )}
           </div>
         </div>
-        <div className={cn('rounded-lg p-2', styles.iconBg)}>
+        <div className={cn('rounded-lg p-1.5', styles.iconBg)}>
           <Icon className={cn('h-5 w-5', styles.iconText)} />
         </div>
       </div>

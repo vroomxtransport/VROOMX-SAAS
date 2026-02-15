@@ -52,7 +52,7 @@ export function Pagination({ page, pageSize, total, onPageChange }: PaginationPr
   const pageNumbers = getPageNumbers(page, totalPages)
 
   return (
-    <div className="flex items-center justify-between border-t border-border-subtle px-1 py-3">
+    <div className="flex items-center justify-between border-t border-border-subtle px-1 py-2">
       <p className="text-sm text-muted-foreground">
         Showing <span className="font-medium text-foreground">{start}</span> to{' '}
         <span className="font-medium text-foreground">{end}</span> of{' '}

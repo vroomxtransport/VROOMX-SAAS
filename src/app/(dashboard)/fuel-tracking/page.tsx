@@ -8,7 +8,7 @@ export const metadata = {
 
 export default function FuelTrackingPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         title="Fuel Tracking"
         subtitle="Track fuel purchases, costs, and consumption across your fleet"

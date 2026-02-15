@@ -88,7 +88,7 @@ export function BrokerList() {
   )
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
       <PageHeader title="Brokers" subtitle="Manage your broker directory and payment terms.">
         <Button onClick={handleAddBroker}>
@@ -106,7 +106,7 @@ export function BrokerList() {
 
       {/* Content */}
       {isPending ? (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="rounded-lg border border-gray-200 bg-white p-4">
               <div className="space-y-3">
@@ -133,7 +133,7 @@ export function BrokerList() {
         />
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             {data?.brokers.map((broker) => (
               <BrokerCard
                 key={broker.id}

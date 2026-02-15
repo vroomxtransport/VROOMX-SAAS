@@ -59,7 +59,7 @@ export default function TruckDetailPage({ params }: TruckDetailPageProps) {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         <Skeleton className="h-8 w-[200px]" />
         <Skeleton className="h-[400px] rounded-lg" />
       </div>
@@ -88,7 +88,7 @@ export default function TruckDetailPage({ params }: TruckDetailPageProps) {
   return (
     <div>
       {/* Header */}
-      <div className="mb-6">
+      <div className="mb-4">
         <Button
           variant="ghost"
           size="sm"
@@ -101,7 +101,7 @@ export default function TruckDetailPage({ params }: TruckDetailPageProps) {
 
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{truck.unit_number}</h1>
+            <h1 className="text-xl font-bold text-gray-900">{truck.unit_number}</h1>
             <div className="mt-2 flex items-center gap-2">
               <StatusBadge status={truck.truck_status} type="truck" />
               <Badge variant="outline">

@@ -89,7 +89,7 @@ export function OrderDetail({ order }: OrderDetailProps) {
   }, [order.id, queryClient, router])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header Bar */}
       <OrderHeaderBar
         order={order}
@@ -130,7 +130,7 @@ export function OrderDetail({ order }: OrderDetailProps) {
       {/* Main content grid: 12-column layout */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Left Column (7 cols) */}
-        <div className="space-y-6 lg:col-span-7">
+        <div className="space-y-4 lg:col-span-7">
           {/* Vehicle Card - Enhanced */}
           <div className="rounded-xl border border-border-subtle bg-surface p-6">
             <div className="mb-4 flex items-center gap-2">
@@ -182,7 +182,7 @@ export function OrderDetail({ order }: OrderDetailProps) {
         </div>
 
         {/* Right Column (5 cols) */}
-        <div className="space-y-6 lg:col-span-5">
+        <div className="space-y-4 lg:col-span-5">
           {/* Financial Summary - Enhanced */}
           <div className="rounded-xl border border-border-subtle bg-surface p-6">
             <div className="mb-4 flex items-center gap-2">

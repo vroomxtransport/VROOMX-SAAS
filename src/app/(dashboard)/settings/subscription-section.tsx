@@ -387,7 +387,7 @@ export function SubscriptionSection({ currentPlan, subscriptionStatus, hasStripe
   const statusBadge = getStatusBadgeColor(subscriptionStatus)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <StatusBanner subscriptionStatus={subscriptionStatus} gracePeriodEndsAt={gracePeriodEndsAt} />
 
       {/* Two-column layout */}

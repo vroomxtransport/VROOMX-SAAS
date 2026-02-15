@@ -122,12 +122,12 @@ export function TruckList() {
   if (isLoading) {
     return (
       <div>
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-4 flex items-center justify-between">
           <Skeleton className="h-9 w-[200px]" />
           <Skeleton className="h-9 w-[120px]" />
         </div>
         {viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
               <Skeleton key={i} className="h-[180px] rounded-lg" />
             ))}
@@ -148,7 +148,7 @@ export function TruckList() {
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <FilterBar
           filters={FILTER_CONFIG}
           onFilterChange={handleFilterChange}
@@ -176,7 +176,7 @@ export function TruckList() {
       ) : (
         <>
           {viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {trucks.map((truck) => (
                 <TruckCard
                   key={truck.id}

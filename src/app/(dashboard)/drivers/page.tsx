@@ -8,7 +8,7 @@ export const metadata = {
 
 export default function DriversPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         title="Drivers"
         subtitle="Manage your fleet drivers, pay configuration, and status"

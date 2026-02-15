@@ -59,7 +59,7 @@ export function RevenueChart() {
   return (
     <div className="rounded-xl border border-border-subtle bg-surface p-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-lg font-semibold text-foreground">Revenue</h3>
+        <h3 className="text-base font-semibold text-foreground">Revenue</h3>
         <div className="flex rounded-lg bg-muted p-0.5">
           {(['7D', '30D', '90D'] as Period[]).map((p) => (
             <button
@@ -78,7 +78,7 @@ export function RevenueChart() {
         </div>
       </div>
 
-      <div className="h-[220px]">
+      <div className="h-[180px]">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
             <defs>

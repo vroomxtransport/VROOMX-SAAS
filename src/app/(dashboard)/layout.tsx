@@ -99,7 +99,7 @@ export default async function DashboardLayout({
             </div>
           )}
 
-          <div className="p-4 lg:px-8 lg:py-6">
+          <div className="p-3 lg:px-6 lg:py-4">
             <QueryProvider>
               {children}
             </QueryProvider>

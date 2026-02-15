@@ -6,7 +6,7 @@ export const metadata = { title: 'Maintenance | VroomX' }
 
 export default function MaintenancePage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader title="Maintenance" subtitle="Track vehicle maintenance, repairs, and inspections" />
       <Suspense fallback={null}>
         <MaintenanceList />

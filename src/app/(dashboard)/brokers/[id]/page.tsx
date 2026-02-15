@@ -49,7 +49,7 @@ export default function BrokerDetailPage({
 
   if (isPending) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         <div className="flex items-center gap-4">
           <Skeleton className="h-8 w-8" />
           <Skeleton className="h-8 w-48" />
@@ -68,7 +68,7 @@ export default function BrokerDetailPage({
 
   if (isError) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         <Button
           variant="ghost"
           size="sm"
@@ -86,7 +86,7 @@ export default function BrokerDetailPage({
 
   if (!broker) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         <Button
           variant="ghost"
           size="sm"
@@ -106,7 +106,7 @@ export default function BrokerDetailPage({
   const fullAddress = addressParts.length > 0 ? addressParts.join(', ') : null
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -119,7 +119,7 @@ export default function BrokerDetailPage({
             <span className="sr-only">Back to Brokers</span>
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{broker.name}</h1>
+            <h1 className="text-xl font-bold text-gray-900">{broker.name}</h1>
             {broker.payment_terms && (
               <Badge variant="outline" className="mt-1">
                 {PAYMENT_TERMS_LABELS[broker.payment_terms]}

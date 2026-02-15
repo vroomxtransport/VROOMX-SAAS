@@ -8,7 +8,7 @@ export const metadata = {
 
 export default function TrucksPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         title="Fleet"
         subtitle="Manage your trucks and fleet vehicles"

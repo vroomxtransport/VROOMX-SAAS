@@ -19,7 +19,7 @@ export default function TripDetailPage({
 
   if (isPending) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         <div className="flex items-center gap-4">
           <Skeleton className="h-8 w-8" />
           <Skeleton className="h-8 w-48" />
@@ -50,7 +50,7 @@ export default function TripDetailPage({
 
   if (isError) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         <Button
           variant="ghost"
           size="sm"
@@ -68,7 +68,7 @@ export default function TripDetailPage({
 
   if (!trip) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         <Button
           variant="ghost"
           size="sm"
@@ -85,7 +85,7 @@ export default function TripDetailPage({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <Button
         variant="ghost"
         size="sm"

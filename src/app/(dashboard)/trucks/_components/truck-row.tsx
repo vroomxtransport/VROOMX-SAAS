@@ -57,7 +57,7 @@ export function TruckRow({ truck, onClick, onEdit }: TruckRowProps) {
           onClick()
         }
       }}
-      className="flex w-full items-center gap-4 rounded-lg border border-border-subtle bg-surface px-4 py-3 text-left shadow-sm transition-colors card-hover hover:border-brand/30 focus-visible:ring-2 focus-visible:ring-brand/30 focus-visible:outline-none"
+      className="flex w-full items-center gap-4 rounded-lg border border-border-subtle bg-surface px-3 py-2.5 text-left shadow-sm transition-colors card-hover hover:border-brand/30 focus-visible:ring-2 focus-visible:ring-brand/30 focus-visible:outline-none"
     >
       <div className="flex items-center gap-2 min-w-0 shrink-0 w-[100px]">
         <TruckIcon className="h-4 w-4 shrink-0 text-gray-400" />

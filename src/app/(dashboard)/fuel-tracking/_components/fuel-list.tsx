@@ -124,17 +124,17 @@ export function FuelList() {
   if (isLoading) {
     return (
       <div>
-        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-[100px] rounded-xl" />
           ))}
         </div>
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-4 flex items-center justify-between">
           <Skeleton className="h-9 w-[200px]" />
           <Skeleton className="h-9 w-[120px]" />
         </div>
         {viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
               <Skeleton key={i} className="h-[180px] rounded-lg" />
             ))}
@@ -155,11 +155,11 @@ export function FuelList() {
 
   return (
     <div>
-      <div className="mb-6">
+      <div className="mb-4">
         <FuelStats />
       </div>
 
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <FilterBar
           filters={FILTER_CONFIG}
           onFilterChange={handleFilterChange}
@@ -187,7 +187,7 @@ export function FuelList() {
       ) : (
         <>
           {viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {entries.map((entry) => (
                 <FuelCard
                   key={entry.id}

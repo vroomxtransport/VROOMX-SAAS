@@ -8,7 +8,7 @@ export const metadata = {
 
 export default function LocalDrivesPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         title="Local Drives"
         subtitle="Manage short-distance vehicle transports"

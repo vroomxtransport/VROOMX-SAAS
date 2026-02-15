@@ -12,7 +12,7 @@ export function FuelStats() {
   const avgCostPerGallon = data?.avgCostPerGallon ?? 0
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
       <StatCard
         label="Total Gallons"
         value={totalGallons.toLocaleString(undefined, { maximumFractionDigits: 1 })}

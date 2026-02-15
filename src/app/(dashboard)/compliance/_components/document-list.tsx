@@ -77,10 +77,10 @@ export function DocumentList({ documentType, onEdit, onAdd }: DocumentListProps)
   if (isLoading) {
     return (
       <div>
-        <div className="mb-6">
+        <div className="mb-4">
           <Skeleton className="h-9 w-[200px]" />
         </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="h-[130px] rounded-lg" />
           ))}
@@ -94,7 +94,7 @@ export function DocumentList({ documentType, onEdit, onAdd }: DocumentListProps)
 
   return (
     <div>
-      <div className="mb-6">
+      <div className="mb-4">
         <FilterBar
           filters={FILTER_CONFIG}
           onFilterChange={handleFilterChange}
@@ -114,7 +114,7 @@ export function DocumentList({ documentType, onEdit, onAdd }: DocumentListProps)
         />
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {docs.map((doc) => (
               <DocumentCard
                 key={doc.id}

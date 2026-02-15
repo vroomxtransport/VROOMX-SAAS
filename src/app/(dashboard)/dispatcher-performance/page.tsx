@@ -7,7 +7,7 @@ export const metadata = { title: 'Dispatcher Performance | VroomX' }
 
 export default function DispatcherPerformancePage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader title="Dispatcher Performance" subtitle="Track team productivity, order completion, and revenue metrics" />
       <Suspense fallback={null}>
         <PerformanceStats />

@@ -6,7 +6,7 @@ export const metadata = { title: 'Compliance | VroomX' }
 
 export default function CompliancePage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader title="Compliance" subtitle="Track regulatory documents, certifications, and expiration dates" />
       <Suspense fallback={null}>
         <ComplianceTabs />

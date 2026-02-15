@@ -58,7 +58,7 @@ export function ActivityFeed() {
 
   return (
     <div className="rounded-xl border border-border-subtle bg-surface p-4">
-      <h3 className="text-lg font-semibold text-foreground mb-3">Recent Activity</h3>
+      <h3 className="text-base font-semibold text-foreground mb-3">Recent Activity</h3>
       <div className="relative">
         <div className="absolute left-[11px] top-6 bottom-0 w-0.5 bg-gradient-to-b from-border-subtle via-border-subtle/50 to-transparent" />
         <div className="space-y-0">
