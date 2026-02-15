@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { authorize, safeError } from '@/lib/authz'
 import { tripExpenseSchema } from '@/lib/validations/trip-expense'
 import { revalidatePath } from 'next/cache'
 import { recalculateTripFinancials } from '@/app/actions/trips'
@@ -11,21 +11,9 @@ export async function createTripExpense(tripId: string, data: unknown) {
     return { error: parsed.error.flatten().fieldErrors }
   }
 
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('trip_expenses.create', { rateLimit: { key: 'createTripExpense', limit: 30, windowMs: 60_000 } })
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const v = parsed.data
 
@@ -44,7 +32,7 @@ export async function createTripExpense(tripId: string, data: unknown) {
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'createTripExpense') }
   }
 
   // Recalculate trip financials after adding expense
@@ -61,16 +49,9 @@ export async function updateTripExpense(id: string, tripId: string, data: unknow
     return { error: parsed.error.flatten().fieldErrors }
   }
 
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
+  const auth = await authorize('trip_expenses.update')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const v = parsed.data
 
@@ -82,11 +63,6 @@ export async function updateTripExpense(id: string, tripId: string, data: unknow
   if (v.notes !== undefined) updateData.notes = v.notes || null
   if (v.expense_date !== undefined) updateData.expense_date = v.expense_date || null
 
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
-
   const { data: expense, error } = await supabase
     .from('trip_expenses')
     .update(updateData)
@@ -96,7 +72,7 @@ export async function updateTripExpense(id: string, tripId: string, data: unknow
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'updateTripExpense') }
   }
 
   // Recalculate trip financials after updating expense
@@ -108,21 +84,9 @@ export async function updateTripExpense(id: string, tripId: string, data: unknow
 }
 
 export async function deleteTripExpense(id: string, tripId: string) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('trip_expenses.delete')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const { error } = await supabase
     .from('trip_expenses')
@@ -131,7 +95,7 @@ export async function deleteTripExpense(id: string, tripId: string) {
     .eq('tenant_id', tenantId)
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'deleteTripExpense') }
   }
 
   // Recalculate trip financials after removing expense

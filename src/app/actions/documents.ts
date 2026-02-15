@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { authorize, safeError } from '@/lib/authz'
 import { documentSchema } from '@/lib/validations/document'
 import { deleteFile } from '@/lib/storage'
 import { revalidatePath } from 'next/cache'
@@ -29,21 +29,9 @@ export async function createDocument(
     return { error: parsed.error.flatten().fieldErrors }
   }
 
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('documents.create', { rateLimit: { key: 'createDocument', limit: 30, windowMs: 60_000 } })
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId, user } = auth.ctx
 
   const table = getTable(entityType)
   const foreignKey = getForeignKey(entityType)
@@ -64,7 +52,7 @@ export async function createDocument(
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'createDocument') }
   }
 
   revalidatePath(getRevalidatePath(entityType))
@@ -75,21 +63,9 @@ export async function deleteDocument(
   entityType: EntityType,
   documentId: string
 ) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('documents.delete')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const table = getTable(entityType)
 
@@ -127,7 +103,7 @@ export async function deleteDocument(
     .eq('tenant_id', tenantId)
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'deleteDocument') }
   }
 
   revalidatePath(getRevalidatePath(entityType))

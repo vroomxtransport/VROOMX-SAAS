@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { authorize, safeError } from '@/lib/authz'
 import { tripSchema } from '@/lib/validations/trip'
 import { revalidatePath } from 'next/cache'
 import { calculateTripFinancials } from '@/lib/financial/trip-calculations'
@@ -13,27 +13,17 @@ const TRIP_TO_ORDER_STATUS: Partial<Record<TripStatus, string>> = {
   planned: 'assigned',
 }
 
+const VALID_TRIP_STATUSES: TripStatus[] = ['planned', 'in_progress', 'completed', 'cancelled']
+
 export async function createTrip(data: unknown) {
   const parsed = tripSchema.safeParse(data)
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors }
   }
 
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('trips.create', { rateLimit: { key: 'createTrip', limit: 30, windowMs: 60_000 } })
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const v = parsed.data
 
@@ -52,7 +42,7 @@ export async function createTrip(data: unknown) {
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'createTrip') }
   }
 
   revalidatePath('/dispatch')
@@ -65,16 +55,9 @@ export async function updateTrip(id: string, data: unknown) {
     return { error: parsed.error.flatten().fieldErrors }
   }
 
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
+  const auth = await authorize('trips.update')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const v = parsed.data
 
@@ -87,11 +70,6 @@ export async function updateTrip(id: string, data: unknown) {
   if (v.carrier_pay !== undefined) updateData.carrier_pay = String(v.carrier_pay)
   if (v.notes !== undefined) updateData.notes = v.notes || null
 
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
-
   const { data: trip, error } = await supabase
     .from('trips')
     .update(updateData)
@@ -101,7 +79,7 @@ export async function updateTrip(id: string, data: unknown) {
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'updateTrip') }
   }
 
   // If carrier_pay changed, recalculate financials
@@ -115,30 +93,19 @@ export async function updateTrip(id: string, data: unknown) {
 }
 
 export async function deleteTrip(id: string) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('trips.delete')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   // Unassign all orders from this trip before deleting
   const { error: unassignError } = await supabase
     .from('orders')
     .update({ trip_id: null, status: 'new' })
     .eq('trip_id', id)
+    .eq('tenant_id', tenantId)
 
   if (unassignError) {
-    return { error: unassignError.message }
+    return { error: safeError(unassignError, 'deleteTrip.unassign') }
   }
 
   const { error } = await supabase
@@ -148,7 +115,7 @@ export async function deleteTrip(id: string) {
     .eq('tenant_id', tenantId)
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'deleteTrip') }
   }
 
   revalidatePath('/dispatch')
@@ -157,21 +124,14 @@ export async function deleteTrip(id: string) {
 }
 
 export async function updateTripStatus(id: string, newStatus: TripStatus) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
+  // Runtime validation of status
+  if (!VALID_TRIP_STATUSES.includes(newStatus)) {
+    return { error: 'Invalid trip status' }
   }
 
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('trips.update')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   // Update trip status
   const { data: trip, error } = await supabase
@@ -183,7 +143,7 @@ export async function updateTripStatus(id: string, newStatus: TripStatus) {
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'updateTripStatus') }
   }
 
   // Auto-sync order statuses based on trip status change
@@ -193,9 +153,10 @@ export async function updateTripStatus(id: string, newStatus: TripStatus) {
       .from('orders')
       .update({ status: orderStatus })
       .eq('trip_id', id)
+      .eq('tenant_id', tenantId)
 
     if (syncError) {
-      return { error: syncError.message }
+      return { error: safeError(syncError, 'updateTripStatus.syncOrders') }
     }
   }
 
@@ -206,26 +167,20 @@ export async function updateTripStatus(id: string, newStatus: TripStatus) {
 }
 
 export async function assignOrderToTrip(orderId: string, tripId: string) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
+  const auth = await authorize('trips.update')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   // Get the order's current trip_id (old trip) before reassignment
   const { data: currentOrder, error: fetchError } = await supabase
     .from('orders')
     .select('trip_id')
     .eq('id', orderId)
+    .eq('tenant_id', tenantId)
     .single()
 
   if (fetchError || !currentOrder) {
-    return { error: fetchError?.message ?? 'Order not found' }
+    return { error: 'Order not found' }
   }
 
   const oldTripId = currentOrder.trip_id
@@ -235,9 +190,10 @@ export async function assignOrderToTrip(orderId: string, tripId: string) {
     .from('orders')
     .update({ trip_id: tripId, status: 'assigned' })
     .eq('id', orderId)
+    .eq('tenant_id', tenantId)
 
   if (updateError) {
-    return { error: updateError.message }
+    return { error: safeError(updateError, 'assignOrderToTrip') }
   }
 
   // Recalculate old trip financials if the order was previously assigned
@@ -259,26 +215,20 @@ export async function assignOrderToTrip(orderId: string, tripId: string) {
 }
 
 export async function unassignOrderFromTrip(orderId: string) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
+  const auth = await authorize('trips.update')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   // Get the order's current trip_id
   const { data: currentOrder, error: fetchError } = await supabase
     .from('orders')
     .select('trip_id')
     .eq('id', orderId)
+    .eq('tenant_id', tenantId)
     .single()
 
   if (fetchError || !currentOrder) {
-    return { error: fetchError?.message ?? 'Order not found' }
+    return { error: 'Order not found' }
   }
 
   const oldTripId = currentOrder.trip_id
@@ -292,9 +242,10 @@ export async function unassignOrderFromTrip(orderId: string) {
     .from('orders')
     .update({ trip_id: null, status: 'new' })
     .eq('id', orderId)
+    .eq('tenant_id', tenantId)
 
   if (updateError) {
-    return { error: updateError.message }
+    return { error: safeError(updateError, 'unassignOrderFromTrip') }
   }
 
   // Recalculate old trip financials
@@ -308,25 +259,20 @@ export async function unassignOrderFromTrip(orderId: string) {
 }
 
 export async function recalculateTripFinancials(tripId: string) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { error: 'Not authenticated' }
-  }
+  const auth = await authorize('trips.view', { checkSuspension: false })
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   // Fetch trip with driver relation for pay calculation
   const { data: trip, error: tripError } = await supabase
     .from('trips')
     .select('*, driver:drivers(driver_type, pay_type, pay_rate)')
     .eq('id', tripId)
+    .eq('tenant_id', tenantId)
     .single()
 
   if (tripError || !trip) {
-    return { error: tripError?.message ?? 'Trip not found' }
+    return { error: 'Trip not found' }
   }
 
   // Fetch trip's orders for revenue and route summary
@@ -334,10 +280,11 @@ export async function recalculateTripFinancials(tripId: string) {
     .from('orders')
     .select('revenue, broker_fee, pickup_state, delivery_state, created_at')
     .eq('trip_id', tripId)
+    .eq('tenant_id', tenantId)
     .order('created_at', { ascending: true })
 
   if (ordersError) {
-    return { error: ordersError.message }
+    return { error: safeError(ordersError, 'recalculateTripFinancials.orders') }
   }
 
   // Fetch trip's expenses
@@ -345,9 +292,10 @@ export async function recalculateTripFinancials(tripId: string) {
     .from('trip_expenses')
     .select('amount')
     .eq('trip_id', tripId)
+    .eq('tenant_id', tenantId)
 
   if (expensesError) {
-    return { error: expensesError.message }
+    return { error: safeError(expensesError, 'recalculateTripFinancials.expenses') }
   }
 
   // Parse order data: financial fields + route fields
@@ -431,9 +379,10 @@ export async function recalculateTripFinancials(tripId: string) {
       destination_summary: destinationSummary,
     })
     .eq('id', tripId)
+    .eq('tenant_id', tenantId)
 
   if (updateError) {
-    return { error: updateError.message }
+    return { error: safeError(updateError, 'recalculateTripFinancials.update') }
   }
 
   return { success: true }

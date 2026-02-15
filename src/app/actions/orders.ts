@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { authorize, safeError } from '@/lib/authz'
 import { createOrderSchema } from '@/lib/validations/order'
 import { revalidatePath } from 'next/cache'
 import type { OrderStatus } from '@/types'
@@ -19,21 +19,9 @@ export async function createOrder(data: unknown) {
     return { error: parsed.error.flatten().fieldErrors }
   }
 
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('orders.create', { rateLimit: { key: 'createOrder', limit: 30, windowMs: 60_000 } })
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const v = parsed.data
 
@@ -69,12 +57,13 @@ export async function createOrder(data: unknown) {
       payment_type: v.paymentType,
       broker_id: v.brokerId || null,
       driver_id: v.driverId || null,
+      distance_miles: v.distanceMiles ? String(v.distanceMiles) : null,
     })
     .select()
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'createOrder') }
   }
 
   revalidatePath('/orders')
@@ -87,16 +76,9 @@ export async function updateOrder(id: string, data: unknown) {
     return { error: parsed.error.flatten().fieldErrors }
   }
 
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
+  const auth = await authorize('orders.update')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const v = parsed.data
 
@@ -128,11 +110,7 @@ export async function updateOrder(id: string, data: unknown) {
   if (v.paymentType !== undefined) updateData.payment_type = v.paymentType
   if (v.brokerId !== undefined) updateData.broker_id = v.brokerId || null
   if (v.driverId !== undefined) updateData.driver_id = v.driverId || null
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  if (v.distanceMiles !== undefined) updateData.distance_miles = v.distanceMiles ? String(v.distanceMiles) : null
 
   const { data: order, error } = await supabase
     .from('orders')
@@ -143,7 +121,7 @@ export async function updateOrder(id: string, data: unknown) {
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'updateOrder') }
   }
 
   revalidatePath('/orders')
@@ -151,21 +129,9 @@ export async function updateOrder(id: string, data: unknown) {
 }
 
 export async function deleteOrder(id: string) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('orders.delete')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const { error } = await supabase
     .from('orders')
@@ -174,7 +140,7 @@ export async function deleteOrder(id: string) {
     .eq('tenant_id', tenantId)
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'deleteOrder') }
   }
 
   revalidatePath('/orders')
@@ -194,16 +160,9 @@ export async function updateOrderStatus(
     return { error: 'A reason is required when cancelling an order' }
   }
 
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
+  const auth = await authorize('orders.update')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   // Build update payload
   const updateData: Record<string, unknown> = {
@@ -222,11 +181,6 @@ export async function updateOrderStatus(
     updateData.actual_delivery_date = new Date().toISOString()
   }
 
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
-
   const { data: order, error } = await supabase
     .from('orders')
     .update(updateData)
@@ -236,7 +190,7 @@ export async function updateOrderStatus(
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'updateOrderStatus') }
   }
 
   revalidatePath(`/orders/${id}`)
@@ -284,20 +238,13 @@ export interface BatchImportResult {
 export async function batchCreateOrders(
   rows: CsvOrderRow[]
 ): Promise<BatchImportResult> {
-  const supabase = await createClient()
+  const auth = await authorize('orders.create', { rateLimit: { key: 'batchCreateOrders', limit: 5, windowMs: 60_000 } })
+  if (!auth.ok) return { created: 0, errors: [{ row: 0, message: auth.error }] }
+  const { supabase, tenantId } = auth.ctx
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { created: 0, errors: [{ row: 0, message: 'Not authenticated' }] }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { created: 0, errors: [{ row: 0, message: 'No tenant found' }] }
+  // Cap batch size to prevent abuse
+  if (rows.length > 500) {
+    return { created: 0, errors: [{ row: 0, message: 'Maximum 500 rows per batch import' }] }
   }
 
   const result: BatchImportResult = { created: 0, errors: [] }
@@ -391,7 +338,7 @@ export async function batchCreateOrders(
     })
 
     if (error) {
-      result.errors.push({ row: i + 1, message: error.message })
+      result.errors.push({ row: i + 1, message: 'Failed to create order' })
     } else {
       result.created++
     }
@@ -402,21 +349,9 @@ export async function batchCreateOrders(
 }
 
 export async function rollbackOrderStatus(id: string) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('orders.update')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   // Fetch current order
   const { data: current, error: fetchError } = await supabase
@@ -427,7 +362,7 @@ export async function rollbackOrderStatus(id: string) {
     .single()
 
   if (fetchError || !current) {
-    return { error: fetchError?.message ?? 'Order not found' }
+    return { error: 'Order not found' }
   }
 
   const currentStatus = current.status as OrderStatus
@@ -442,7 +377,7 @@ export async function rollbackOrderStatus(id: string) {
 
   const currentIndex = STATUS_ORDER.indexOf(currentStatus)
   if (currentIndex < 0) {
-    return { error: `Cannot determine previous status for: ${currentStatus}` }
+    return { error: 'Cannot determine previous status' }
   }
 
   const previousStatus = STATUS_ORDER[currentIndex - 1]
@@ -471,7 +406,7 @@ export async function rollbackOrderStatus(id: string) {
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'rollbackOrderStatus') }
   }
 
   revalidatePath(`/orders/${id}`)

@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { authorize, safeError } from '@/lib/authz'
 import { localDriveSchema } from '@/lib/validations/local-drive'
 import { revalidatePath } from 'next/cache'
 
@@ -10,21 +10,9 @@ export async function createLocalDrive(data: unknown) {
     return { error: parsed.error.flatten().fieldErrors }
   }
 
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('local_drives.create', { rateLimit: { key: 'createLocalDrive', limit: 30, windowMs: 60_000 } })
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const { data: localDrive, error } = await supabase
     .from('local_drives')
@@ -46,7 +34,7 @@ export async function createLocalDrive(data: unknown) {
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'createLocalDrive') }
   }
 
   revalidatePath('/local-drives')
@@ -59,21 +47,9 @@ export async function updateLocalDrive(id: string, data: unknown) {
     return { error: parsed.error.flatten().fieldErrors }
   }
 
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('local_drives.update')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const { data: localDrive, error } = await supabase
     .from('local_drives')
@@ -96,7 +72,7 @@ export async function updateLocalDrive(id: string, data: unknown) {
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'updateLocalDrive') }
   }
 
   revalidatePath('/local-drives')
@@ -104,21 +80,9 @@ export async function updateLocalDrive(id: string, data: unknown) {
 }
 
 export async function deleteLocalDrive(id: string) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('local_drives.delete')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const { error } = await supabase
     .from('local_drives')
@@ -127,7 +91,7 @@ export async function deleteLocalDrive(id: string) {
     .eq('tenant_id', tenantId)
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'deleteLocalDrive') }
   }
 
   revalidatePath('/local-drives')
@@ -135,21 +99,9 @@ export async function deleteLocalDrive(id: string) {
 }
 
 export async function updateLocalDriveStatus(id: string, status: 'pending' | 'in_progress' | 'completed' | 'cancelled') {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('local_drives.update')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const updateData: Record<string, string> = { status }
   if (status === 'completed') {
@@ -165,7 +117,7 @@ export async function updateLocalDriveStatus(id: string, status: 'pending' | 'in
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'updateLocalDriveStatus') }
   }
 
   revalidatePath('/local-drives')

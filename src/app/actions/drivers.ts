@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { authorize, safeError } from '@/lib/authz'
 import { driverSchema } from '@/lib/validations/driver'
 import { checkTierLimit } from '@/lib/tier'
 import { getResend } from '@/lib/resend/client'
@@ -12,23 +12,11 @@ export async function createDriver(data: unknown) {
     return { error: parsed.error.flatten().fieldErrors }
   }
 
-  const supabase = await createClient()
+  const auth = await authorize('drivers.create', { rateLimit: { key: 'createDriver', limit: 30, windowMs: 60_000 } })
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
-
-  // Tier limit check: block if user limit reached or account suspended
+  // Tier limit check: block if user limit reached
   const tierCheck = await checkTierLimit(supabase, tenantId, 'users')
   if (!tierCheck.allowed) {
     if (tierCheck.limit === 0) {
@@ -60,7 +48,7 @@ export async function createDriver(data: unknown) {
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'createDriver') }
   }
 
   revalidatePath('/drivers')
@@ -73,21 +61,9 @@ export async function updateDriver(id: string, data: unknown) {
     return { error: parsed.error.flatten().fieldErrors }
   }
 
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('drivers.update')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const { data: driver, error } = await supabase
     .from('drivers')
@@ -113,7 +89,7 @@ export async function updateDriver(id: string, data: unknown) {
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'updateDriver') }
   }
 
   revalidatePath('/drivers')
@@ -121,21 +97,9 @@ export async function updateDriver(id: string, data: unknown) {
 }
 
 export async function deleteDriver(id: string) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('drivers.delete')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const { error } = await supabase
     .from('drivers')
@@ -144,7 +108,7 @@ export async function deleteDriver(id: string) {
     .eq('tenant_id', tenantId)
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'deleteDriver') }
   }
 
   revalidatePath('/drivers')
@@ -152,21 +116,9 @@ export async function deleteDriver(id: string) {
 }
 
 export async function updateDriverStatus(id: string, status: 'active' | 'inactive') {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('drivers.update')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const { data: driver, error } = await supabase
     .from('drivers')
@@ -177,7 +129,7 @@ export async function updateDriverStatus(id: string, status: 'active' | 'inactiv
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'updateDriverStatus') }
   }
 
   revalidatePath('/drivers')
@@ -185,21 +137,9 @@ export async function updateDriverStatus(id: string, status: 'active' | 'inactiv
 }
 
 export async function sendDriverAppInvitation(driverId: string) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('drivers.update', { rateLimit: { key: 'sendDriverAppInvite', limit: 5, windowMs: 60_000 } })
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   // Fetch driver (scoped to tenant)
   const { data: driver, error: driverError } = await supabase

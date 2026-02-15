@@ -1,5 +1,6 @@
 'use server'
 
+import { authorize } from '@/lib/authz'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { generateSampleData } from '@/lib/seed-data'
@@ -29,15 +30,9 @@ export async function dismissOnboarding() {
 const SAMPLE_TAG = '[SAMPLE DATA]'
 
 export async function seedSampleData() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Not authenticated' }
-
-  const role = user.app_metadata?.role
-  if (role !== 'owner') return { error: 'Only the account owner can load sample data' }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) return { error: 'No tenant found' }
+  const auth = await authorize('settings.manage', { rateLimit: { key: 'seedSampleData', limit: 3, windowMs: 60_000 } })
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   // Check if sample data already exists
   const { count: existingCount } = await supabase
@@ -160,15 +155,9 @@ export async function seedSampleData() {
 }
 
 export async function clearSampleData() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Not authenticated' }
-
-  const role = user.app_metadata?.role
-  if (role !== 'owner') return { error: 'Only the account owner can clear sample data' }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) return { error: 'No tenant found' }
+  const auth = await authorize('settings.manage', { rateLimit: { key: 'clearSampleData', limit: 3, windowMs: 60_000 } })
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   try {
     // Delete in reverse dependency order:

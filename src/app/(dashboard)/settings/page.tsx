@@ -3,6 +3,7 @@ import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { redirect } from 'next/navigation'
 import { SubscriptionSection } from './subscription-section'
 import { TeamSection } from './team-section'
+import { RolesSection } from './roles-section'
 import { SeedSection } from './seed-section'
 import { PageHeader } from '@/components/shared/page-header'
 import type { TenantRole } from '@/types'
@@ -24,7 +25,7 @@ export default async function SettingsPage() {
 
   // Fetch tenant details and resource counts in parallel
   const admin = createServiceRoleClient()
-  const [tenantResult, trucksResult, membershipsResult, pendingInvitesResult] = await Promise.all([
+  const [tenantResult, trucksResult, membershipsResult, pendingInvitesResult, customRolesResult] = await Promise.all([
     supabase
       .from('tenants')
       .select('name, plan, subscription_status, stripe_customer_id, grace_period_ends_at, trial_ends_at')
@@ -45,6 +46,11 @@ export default async function SettingsPage() {
       .eq('tenant_id', tenantId)
       .eq('status', 'pending')
       .order('created_at', { ascending: false }),
+    supabase
+      .from('custom_roles')
+      .select('id, name, description, permissions, created_at')
+      .eq('tenant_id', tenantId)
+      .order('name', { ascending: true }),
   ])
 
   const tenant = tenantResult.data
@@ -93,7 +99,7 @@ export default async function SettingsPage() {
         userCount={membershipsCount}
       />
 
-      {/* Team management for admins and owners */}
+      {/* Team management for admins */}
       {(userRole === 'owner' || userRole === 'admin') && (
         <TeamSection
           teamMembers={teamMembers}
@@ -104,8 +110,13 @@ export default async function SettingsPage() {
         />
       )}
 
-      {/* Sample data management for owners */}
-      <SeedSection isOwner={userRole === 'owner'} />
+      {/* Roles & Permissions for admins */}
+      {(userRole === 'owner' || userRole === 'admin') && (
+        <RolesSection customRoles={customRolesResult.data || []} />
+      )}
+
+      {/* Sample data management for admins */}
+      <SeedSection isOwner={userRole === 'owner' || userRole === 'admin'} />
     </div>
   )
 }

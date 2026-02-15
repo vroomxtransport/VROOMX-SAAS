@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ComplianceDocument } from '@/types/database'
+import { sanitizeSearch } from '@/lib/sanitize-search'
 
 export interface ComplianceDocFilters {
   documentType?: string
@@ -35,7 +36,10 @@ export async function fetchComplianceDocs(
   }
 
   if (search) {
-    query = query.ilike('name', `%${search}%`)
+    const s = sanitizeSearch(search)
+    if (s) {
+      query = query.ilike('name', `%${s}%`)
+    }
   }
 
   const { data, error, count } = await query

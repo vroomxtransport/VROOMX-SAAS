@@ -45,11 +45,10 @@ export async function loginAction(prevState: any, formData: FormData) {
 
   if (error) {
     console.error('[LOGIN] Auth error:', error.message)
-    return { error: error.message }
+    return { error: 'Invalid email or password' }
   }
 
-  console.log('[LOGIN] Success for:', email, 'user_id:', data.user?.id)
-  console.log('[LOGIN] app_metadata:', JSON.stringify(data.user?.app_metadata))
+  // Auth success logged without PII
 
   revalidatePath('/', 'layout')
 
@@ -146,21 +145,22 @@ export async function signUpAction(prevState: any, formData: FormData) {
     .single()
 
   if (tenantError || !tenant) {
-    return { error: tenantError?.message || 'Failed to create organization' }
+    console.error('[SIGNUP] Tenant creation failed:', tenantError?.message)
+    return { error: 'Failed to create organization' }
   }
 
-  // 5. Create tenant membership (owner role)
+  // 5. Create tenant membership (admin role)
   await admin.from('tenant_memberships').insert({
     tenant_id: tenant.id,
     user_id: authData.user.id,
-    role: 'owner',
+    role: 'admin',
   })
 
   // 6. Set app_metadata on user
   await admin.auth.admin.updateUserById(authData.user.id, {
     app_metadata: {
       tenant_id: tenant.id,
-      role: 'owner',
+      role: 'admin',
       plan: 'trial',
     },
   })

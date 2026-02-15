@@ -63,6 +63,7 @@ function mapOrderToFormValues(order: OrderWithRelations): CreateOrderInput {
     revenue: parseFloat(order.revenue) || 0,
     carrierPay: parseFloat(order.carrier_pay) || 0,
     brokerFee: parseFloat(order.broker_fee) || 0,
+    distanceMiles: order.distance_miles ? parseFloat(order.distance_miles) : undefined,
     paymentType: order.payment_type ?? 'COP',
     brokerId: order.broker_id ?? '',
     driverId: order.driver_id ?? '',

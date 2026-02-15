@@ -10,38 +10,39 @@ export const orderVehicleSchema = z.object({
       message: 'VIN must be exactly 17 characters',
     }),
   vehicleYear: z.coerce.number().min(1900).max(new Date().getFullYear() + 2),
-  vehicleMake: z.string().min(1, 'Make is required'),
-  vehicleModel: z.string().min(1, 'Model is required'),
-  vehicleType: z.string().optional().or(z.literal('')),
-  vehicleColor: z.string().optional().or(z.literal('')),
+  vehicleMake: z.string().min(1, 'Make is required').max(200),
+  vehicleModel: z.string().min(1, 'Model is required').max(200),
+  vehicleType: z.string().max(200).optional().or(z.literal('')),
+  vehicleColor: z.string().max(200).optional().or(z.literal('')),
 })
 
 // Step 2: Pickup and delivery locations
 export const orderLocationSchema = z.object({
-  pickupLocation: z.string().min(1, 'Pickup location is required'),
-  pickupCity: z.string().min(1, 'Pickup city is required'),
+  pickupLocation: z.string().min(1, 'Pickup location is required').max(500),
+  pickupCity: z.string().min(1, 'Pickup city is required').max(500),
   pickupState: z.string().min(2, 'State required').max(2, 'Use 2-letter state code'),
-  pickupZip: z.string().optional().or(z.literal('')),
-  pickupContactName: z.string().optional().or(z.literal('')),
-  pickupContactPhone: z.string().optional().or(z.literal('')),
-  pickupDate: z.string().optional().or(z.literal('')),
-  deliveryLocation: z.string().min(1, 'Delivery location is required'),
-  deliveryCity: z.string().min(1, 'Delivery city is required'),
+  pickupZip: z.string().max(20).optional().or(z.literal('')),
+  pickupContactName: z.string().max(200).optional().or(z.literal('')),
+  pickupContactPhone: z.string().max(30).optional().or(z.literal('')),
+  pickupDate: z.string().max(200).optional().or(z.literal('')),
+  deliveryLocation: z.string().min(1, 'Delivery location is required').max(500),
+  deliveryCity: z.string().min(1, 'Delivery city is required').max(500),
   deliveryState: z.string().min(2, 'State required').max(2, 'Use 2-letter state code'),
-  deliveryZip: z.string().optional().or(z.literal('')),
-  deliveryContactName: z.string().optional().or(z.literal('')),
-  deliveryContactPhone: z.string().optional().or(z.literal('')),
-  deliveryDate: z.string().optional().or(z.literal('')),
+  deliveryZip: z.string().max(20).optional().or(z.literal('')),
+  deliveryContactName: z.string().max(200).optional().or(z.literal('')),
+  deliveryContactPhone: z.string().max(30).optional().or(z.literal('')),
+  deliveryDate: z.string().max(200).optional().or(z.literal('')),
 })
 
 // Step 3: Pricing and broker assignment
 export const orderPricingSchema = z.object({
-  revenue: z.coerce.number().min(0, 'Revenue must be 0 or more'),
-  carrierPay: z.coerce.number().min(0, 'Carrier pay must be 0 or more'),
-  brokerFee: z.coerce.number().min(0, 'Broker fee must be 0 or more').default(0),
+  revenue: z.coerce.number().min(0, 'Revenue must be 0 or more').max(10_000_000),
+  carrierPay: z.coerce.number().min(0, 'Carrier pay must be 0 or more').max(10_000_000),
+  brokerFee: z.coerce.number().min(0, 'Broker fee must be 0 or more').max(10_000_000).default(0),
+  distanceMiles: z.coerce.number().min(0, 'Distance must be 0 or more').max(1_000_000).optional(),
   paymentType: z.enum(['COD', 'COP', 'CHECK', 'BILL', 'SPLIT']).default('COP'),
-  brokerId: z.string().uuid('Invalid broker ID').optional().or(z.literal('')),
-  driverId: z.string().uuid('Invalid driver ID').optional().or(z.literal('')),
+  brokerId: z.string().max(36).uuid('Invalid broker ID').optional().or(z.literal('')),
+  driverId: z.string().max(36).uuid('Invalid driver ID').optional().or(z.literal('')),
 })
 
 // Combined schema for server-side validation

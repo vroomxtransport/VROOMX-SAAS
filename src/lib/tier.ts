@@ -108,8 +108,11 @@ export async function isAccountSuspended(
   if (tenant.grace_period_ends_at && !tenant.is_suspended) {
     const graceEnd = new Date(tenant.grace_period_ends_at)
     if (graceEnd < new Date()) {
-      // Grace period expired -- mark as suspended
-      await supabase
+      // Grace period expired -- mark as suspended via service role
+      // (restricted UPDATE RLS prevents authenticated users from changing is_suspended)
+      const { createServiceRoleClient } = await import('@/lib/supabase/service-role')
+      const adminClient = createServiceRoleClient()
+      await adminClient
         .from('tenants')
         .update({ is_suspended: true })
         .eq('id', tenantId)

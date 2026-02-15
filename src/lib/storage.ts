@@ -1,5 +1,20 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 
+const ALLOWED_EXTENSIONS = new Set([
+  'pdf', 'png', 'jpg', 'jpeg', 'gif', 'webp',
+  'doc', 'docx', 'xls', 'xlsx', 'csv', 'txt',
+])
+
+const ALLOWED_MIME_PREFIXES = [
+  'image/',
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats',
+  'text/',
+]
+
+const MAX_FILE_SIZE = 25 * 1024 * 1024 // 25 MB
+
 /**
  * Upload a file to a tenant-scoped path in Supabase Storage.
  *
@@ -12,7 +27,23 @@ export async function uploadFile(
   entityId: string,
   file: File,
 ): Promise<{ path: string; error: string | null }> {
-  const ext = file.name.split('.').pop()?.toLowerCase() ?? 'bin'
+  if (file.size === 0) {
+    return { path: '', error: 'File is empty.' }
+  }
+
+  if (file.size > MAX_FILE_SIZE) {
+    return { path: '', error: 'File too large. Maximum size is 25MB.' }
+  }
+
+  const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
+  if (!ALLOWED_EXTENSIONS.has(ext)) {
+    return { path: '', error: `File type .${ext} is not allowed.` }
+  }
+
+  if (file.type && !ALLOWED_MIME_PREFIXES.some(prefix => file.type.startsWith(prefix))) {
+    return { path: '', error: `File type ${file.type} is not allowed.` }
+  }
+
   const fileName = `${crypto.randomUUID()}.${ext}`
   const storagePath = `${tenantId}/${entityId}/${fileName}`
 

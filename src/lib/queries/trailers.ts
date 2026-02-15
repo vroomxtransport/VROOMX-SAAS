@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Trailer } from '@/types/database'
+import { sanitizeSearch } from '@/lib/sanitize-search'
 
 export interface TrailerFilters {
   status?: string
@@ -39,9 +40,12 @@ export async function fetchTrailers(
   }
 
   if (search) {
-    query = query.or(
-      `trailer_number.ilike.%${search}%,make.ilike.%${search}%,model.ilike.%${search}%`
-    )
+    const s = sanitizeSearch(search)
+    if (s) {
+      query = query.or(
+        `trailer_number.ilike.%${s}%,make.ilike.%${s}%,model.ilike.%${s}%`
+      )
+    }
   }
 
   const { data, error, count } = await query

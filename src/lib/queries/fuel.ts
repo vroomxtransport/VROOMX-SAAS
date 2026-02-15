@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { FuelEntry } from '@/types/database'
+import { sanitizeSearch } from '@/lib/sanitize-search'
 
 export interface FuelFilters {
   truckId?: string
@@ -41,7 +42,10 @@ export async function fetchFuelEntries(
   }
 
   if (search) {
-    query = query.or(`location.ilike.%${search}%,state.ilike.%${search}%,notes.ilike.%${search}%`)
+    const s = sanitizeSearch(search)
+    if (s) {
+      query = query.or(`location.ilike.%${s}%,state.ilike.%${s}%,notes.ilike.%${s}%`)
+    }
   }
 
   const { data, error, count } = await query

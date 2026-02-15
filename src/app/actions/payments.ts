@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { authorize, safeError } from '@/lib/authz'
 import { recordPaymentSchema } from '@/lib/validations/payment'
 import { revalidatePath } from 'next/cache'
 
@@ -10,21 +10,9 @@ export async function recordPayment(orderId: string, data: unknown) {
     return { error: parsed.error.flatten().fieldErrors }
   }
 
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('payments.create', { rateLimit: { key: 'recordPayment', limit: 30, windowMs: 60_000 } })
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   // Fetch the order to get current carrier_pay and amount_paid
   const { data: order, error: orderError } = await supabase
@@ -61,7 +49,7 @@ export async function recordPayment(orderId: string, data: unknown) {
     .single()
 
   if (insertError) {
-    return { error: insertError.message }
+    return { error: safeError(insertError, 'recordPayment') }
   }
 
   // Calculate new total paid
@@ -88,7 +76,7 @@ export async function recordPayment(orderId: string, data: unknown) {
     .eq('tenant_id', tenantId)
 
   if (updateError) {
-    return { error: updateError.message }
+    return { error: safeError(updateError, 'recordPayment') }
   }
 
   revalidatePath(`/orders/${orderId}`)
@@ -105,21 +93,9 @@ export async function batchMarkPaid(orderIds: string[], paymentDate: string) {
     return { error: 'Payment date is required' }
   }
 
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('payments.create', { rateLimit: { key: 'batchMarkPaid', limit: 5, windowMs: 60_000 } })
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   // Process each order: insert remaining balance as payment and mark as paid
   const results = await Promise.allSettled(

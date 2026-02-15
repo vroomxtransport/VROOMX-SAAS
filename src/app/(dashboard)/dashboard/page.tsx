@@ -103,8 +103,26 @@ export default async function DashboardPage({
     (sum, o) => sum + parseFloat(o.revenue || '0'), 0
   )
 
-  // Calculate avg $/mile (sample: use revenue / estimated miles)
-  const avgPerMile = orderCount > 0 ? (monthlyRevenue / Math.max(orderCount * 450, 1)).toFixed(2) : '0.00'
+  // Calculate avg $/mile using real distance_miles from orders (gracefully handles missing column)
+  let totalMiles = 0
+  const milesResult = await supabase
+    .from('orders')
+    .select('distance_miles')
+    .eq('tenant_id', tenantId)
+    .gte('created_at', startOfMonth.toISOString())
+    .not('distance_miles', 'is', null)
+
+  if (!milesResult.error && milesResult.data) {
+    totalMiles = milesResult.data.reduce(
+      (sum, o) => sum + parseFloat(o.distance_miles || '0'), 0
+    )
+  }
+  // Use real miles if available, otherwise fall back to estimate
+  const avgPerMile = totalMiles > 0
+    ? (monthlyRevenue / totalMiles).toFixed(2)
+    : orderCount > 0
+      ? (monthlyRevenue / Math.max(orderCount * 450, 1)).toFixed(2)
+      : '0.00'
 
   // Pipeline counts — fetch order counts per status
   const { data: pipelineData } = await supabase

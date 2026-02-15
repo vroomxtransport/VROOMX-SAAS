@@ -1,10 +1,10 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { authorize, safeError } from '@/lib/authz'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { getResend } from '@/lib/resend/client'
 import { inviteSchema } from '@/lib/validations/invite'
-import { checkTierLimit, hasMinRole } from '@/lib/tier'
+import { checkTierLimit } from '@/lib/tier'
 import { InviteEmail } from '@/components/email/invite-email'
 import { revalidatePath } from 'next/cache'
 
@@ -14,18 +14,9 @@ export async function sendInvite(data: unknown) {
     return { error: parsed.error.flatten().fieldErrors }
   }
 
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Not authenticated' }
-
-  const tenantId = user.app_metadata?.tenant_id
-  const userRole = user.app_metadata?.role
-  if (!tenantId) return { error: 'No tenant found' }
-
-  // Only admins and owners can invite
-  if (!hasMinRole(userRole, 'admin')) {
-    return { error: 'You do not have permission to invite team members' }
-  }
+  const auth = await authorize('settings.manage', { rateLimit: { key: 'sendInvite', limit: 5, windowMs: 60_000 } })
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   // Check user limit before inviting (count accepted members only)
   const tierCheck = await checkTierLimit(supabase, tenantId, 'users')
@@ -63,7 +54,7 @@ export async function sendInvite(data: unknown) {
       email: parsed.data.email,
       role: parsed.data.role,
       token,
-      invited_by: user.id,
+      invited_by: auth.ctx.user.id,
       expires_at: expiresAt.toISOString(),
       status: 'pending',
     })
@@ -82,7 +73,7 @@ export async function sendInvite(data: unknown) {
 
   // Send invite email via Resend with React Email template
   const acceptUrl = `${process.env.NEXT_PUBLIC_APP_URL}/invite/accept?token=${token}`
-  const inviterName = user.user_metadata?.full_name || user.email || 'A team member'
+  const inviterName = auth.ctx.user.email || 'A team member'
 
   try {
     await getResend().emails.send({
@@ -106,16 +97,10 @@ export async function sendInvite(data: unknown) {
 }
 
 export async function revokeInvite(inviteId: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Not authenticated' }
+  const auth = await authorize('settings.manage')
+  if (!auth.ok) return { error: auth.error }
+  const { tenantId } = auth.ctx
 
-  const userRole = user.app_metadata?.role
-  if (!hasMinRole(userRole, 'admin')) {
-    return { error: 'You do not have permission to revoke invites' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
   const admin = createServiceRoleClient()
 
   const { error } = await admin
@@ -125,7 +110,7 @@ export async function revokeInvite(inviteId: string) {
     .eq('tenant_id', tenantId) // Security: only revoke own tenant's invites
 
   if (error) {
-    return { error: 'Failed to revoke invite' }
+    return { error: safeError(error, 'revokeInvite') }
   }
 
   revalidatePath('/settings')

@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { authorize, safeError } from '@/lib/authz'
 import { taskSchema } from '@/lib/validations/task'
 import { revalidatePath } from 'next/cache'
 
@@ -10,21 +10,9 @@ export async function createTask(data: unknown) {
     return { error: parsed.error.flatten().fieldErrors }
   }
 
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('tasks.create', { rateLimit: { key: 'createTask', limit: 30, windowMs: 60_000 } })
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId, user } = auth.ctx
 
   const { data: task, error } = await supabase
     .from('tasks')
@@ -43,7 +31,7 @@ export async function createTask(data: unknown) {
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'createTask') }
   }
 
   revalidatePath('/tasks')
@@ -56,21 +44,9 @@ export async function updateTask(id: string, data: unknown) {
     return { error: parsed.error.flatten().fieldErrors }
   }
 
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('tasks.update')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const { data: task, error } = await supabase
     .from('tasks')
@@ -89,7 +65,7 @@ export async function updateTask(id: string, data: unknown) {
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'updateTask') }
   }
 
   revalidatePath('/tasks')
@@ -97,21 +73,9 @@ export async function updateTask(id: string, data: unknown) {
 }
 
 export async function deleteTask(id: string) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('tasks.delete')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const { error } = await supabase
     .from('tasks')
@@ -120,7 +84,7 @@ export async function deleteTask(id: string) {
     .eq('tenant_id', tenantId)
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'deleteTask') }
   }
 
   revalidatePath('/tasks')
@@ -128,21 +92,9 @@ export async function deleteTask(id: string) {
 }
 
 export async function toggleTaskStatus(id: string, status: 'pending' | 'in_progress' | 'completed') {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('tasks.update')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const { data: task, error } = await supabase
     .from('tasks')
@@ -153,7 +105,7 @@ export async function toggleTaskStatus(id: string, status: 'pending' | 'in_progr
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'toggleTaskStatus') }
   }
 
   revalidatePath('/tasks')

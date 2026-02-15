@@ -5,6 +5,18 @@ import { differenceInDays, startOfMonth, endOfMonth } from 'date-fns'
 // Types
 // ============================================================================
 
+export interface PaymentStatusBreakdown {
+  status: string
+  count: number
+  amount: number
+}
+
+export interface RecentPayment {
+  orderNumber: string
+  amount: number
+  paymentDate: string
+}
+
 export interface BrokerReceivable {
   brokerId: string
   brokerName: string
@@ -298,4 +310,138 @@ export async function fetchReadyToInvoice(
       broker,
     }
   })
+}
+
+// ============================================================================
+// Payment / AR Query Functions (moved from financials)
+// ============================================================================
+
+/**
+ * Fetch payment status breakdown.
+ */
+export async function fetchPaymentStatusBreakdown(
+  supabase: SupabaseClient
+): Promise<PaymentStatusBreakdown[]> {
+  const { data: orders, error } = await supabase
+    .from('orders')
+    .select('payment_status, carrier_pay')
+
+  if (error) throw error
+
+  const statusMap = new Map<string, { count: number; amount: number }>()
+
+  for (const o of orders ?? []) {
+    const status = o.payment_status ?? 'unpaid'
+    if (!statusMap.has(status)) {
+      statusMap.set(status, { count: 0, amount: 0 })
+    }
+    const entry = statusMap.get(status)!
+    entry.count += 1
+    entry.amount += parseFloat(o.carrier_pay ?? '0')
+  }
+
+  return Array.from(statusMap.entries()).map(([status, data]) => ({
+    status,
+    count: data.count,
+    amount: Math.round(data.amount * 100) / 100,
+  }))
+}
+
+/**
+ * Fetch the 10 most recent payments.
+ */
+export async function fetchRecentPayments(
+  supabase: SupabaseClient
+): Promise<RecentPayment[]> {
+  const { data: paymentsData, error } = await supabase
+    .from('payments')
+    .select('amount, payment_date, order:orders(order_number)')
+    .order('payment_date', { ascending: false })
+    .limit(10)
+
+  if (error) throw error
+
+  return (paymentsData ?? []).map((p) => {
+    const orderRaw = p.order as unknown as { order_number: string | null } | { order_number: string | null }[] | null
+    const order = Array.isArray(orderRaw) ? orderRaw[0] ?? null : orderRaw
+    return {
+      orderNumber: order?.order_number ?? 'N/A',
+      amount: parseFloat(p.amount ?? '0'),
+      paymentDate: p.payment_date,
+    }
+  })
+}
+
+/**
+ * Fetch total outstanding AR (invoiced + partially_paid orders, SUM of carrier_pay - amount_paid).
+ */
+export async function fetchOutstandingAR(
+  supabase: SupabaseClient
+): Promise<number> {
+  const { data: orders, error } = await supabase
+    .from('orders')
+    .select('carrier_pay, amount_paid')
+    .in('payment_status', ['invoiced', 'partially_paid'])
+
+  if (error) throw error
+
+  let total = 0
+  for (const o of orders ?? []) {
+    total += parseFloat(o.carrier_pay ?? '0') - parseFloat(o.amount_paid ?? '0')
+  }
+
+  return Math.round(total * 100) / 100
+}
+
+/**
+ * Fetch total carrier_pay for orders invoiced this month.
+ */
+export async function fetchInvoicedMTD(
+  supabase: SupabaseClient
+): Promise<number> {
+  const now = new Date()
+  const monthStart = startOfMonth(now).toISOString().split('T')[0]
+  const monthEnd = endOfMonth(now).toISOString().split('T')[0]
+
+  const { data: orders, error } = await supabase
+    .from('orders')
+    .select('carrier_pay')
+    .not('invoice_date', 'is', null)
+    .gte('invoice_date', monthStart)
+    .lte('invoice_date', monthEnd)
+
+  if (error) throw error
+
+  let total = 0
+  for (const o of orders ?? []) {
+    total += parseFloat(o.carrier_pay ?? '0')
+  }
+
+  return Math.round(total * 100) / 100
+}
+
+/**
+ * Fetch total payment amount collected this month.
+ */
+export async function fetchCollectedMTD(
+  supabase: SupabaseClient
+): Promise<number> {
+  const now = new Date()
+  const monthStart = startOfMonth(now).toISOString().split('T')[0]
+  const monthEnd = endOfMonth(now).toISOString().split('T')[0]
+
+  const { data: payments, error } = await supabase
+    .from('payments')
+    .select('amount')
+    .gte('payment_date', monthStart)
+    .lte('payment_date', monthEnd)
+
+  if (error) throw error
+
+  let total = 0
+  for (const p of payments ?? []) {
+    total += parseFloat(p.amount ?? '0')
+  }
+
+  return Math.round(total * 100) / 100
 }

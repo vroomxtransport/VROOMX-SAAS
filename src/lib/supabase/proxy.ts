@@ -1,5 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { rateLimit } from '@/lib/rate-limit'
+
+const AUTH_PATHS = ['/login', '/signup']
 
 export async function updateSession(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -7,6 +10,20 @@ export async function updateSession(request: NextRequest) {
 
   if (!supabaseUrl || !supabaseKey) {
     return NextResponse.next({ request })
+  }
+
+  // Rate limit auth endpoints (POST only = form submissions)
+  if (request.method === 'POST' && AUTH_PATHS.some(p => request.nextUrl.pathname === p)) {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+      ?? request.headers.get('x-real-ip')
+      ?? 'unknown'
+    const { allowed } = rateLimit(`auth:${ip}`, { limit: 10, windowMs: 60_000 })
+    if (!allowed) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429 }
+      )
+    }
   }
 
   let supabaseResponse = NextResponse.next({ request })

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { LocalDrive } from '@/types/database'
+import { sanitizeSearch } from '@/lib/sanitize-search'
 
 export interface LocalDriveFilters {
   status?: string
@@ -30,7 +31,10 @@ export async function fetchLocalDrives(
   }
 
   if (search) {
-    query = query.or(`pickup_city.ilike.%${search}%,delivery_city.ilike.%${search}%,pickup_location.ilike.%${search}%,delivery_location.ilike.%${search}%`)
+    const s = sanitizeSearch(search)
+    if (s) {
+      query = query.or(`pickup_city.ilike.%${s}%,delivery_city.ilike.%${s}%,pickup_location.ilike.%${s}%,delivery_location.ilike.%${s}%`)
+    }
   }
 
   const { data, error, count } = await query

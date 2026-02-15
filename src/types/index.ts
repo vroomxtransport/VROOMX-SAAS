@@ -2,8 +2,8 @@
 // Phase 1: Auth & Multi-Tenancy Types
 // ============================================================================
 
-// Tenant roles
-export type TenantRole = 'owner' | 'admin' | 'dispatcher' | 'viewer'
+// Tenant roles (built-in). 'owner' is legacy alias for 'admin'.
+export type TenantRole = 'admin' | 'dispatcher' | 'billing' | 'safety' | 'owner'
 
 // Subscription plans
 export type SubscriptionPlan = 'starter' | 'pro' | 'enterprise'
@@ -18,11 +18,11 @@ export const INVITE_STATUSES: readonly InviteStatus[] = [
   'pending', 'accepted', 'expired', 'revoked',
 ] as const
 
-// Invitable roles (owner cannot be invited, must be the creator)
-export type InvitableRole = 'admin' | 'dispatcher' | 'viewer'
+// Invitable roles (all built-in roles can be invited)
+export type InvitableRole = 'admin' | 'dispatcher' | 'billing' | 'safety'
 
 export const INVITABLE_ROLES: readonly InvitableRole[] = [
-  'admin', 'dispatcher', 'viewer',
+  'admin', 'dispatcher', 'billing', 'safety',
 ] as const
 
 // Tier limits

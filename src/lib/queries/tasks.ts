@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Task } from '@/types/database'
+import { sanitizeSearch } from '@/lib/sanitize-search'
 
 export interface TaskFilters {
   status?: string
@@ -43,7 +44,10 @@ export async function fetchTasks(
   }
 
   if (search) {
-    query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`)
+    const s = sanitizeSearch(search)
+    if (s) {
+      query = query.or(`title.ilike.%${s}%,description.ilike.%${s}%`)
+    }
   }
 
   // Tab-based filters

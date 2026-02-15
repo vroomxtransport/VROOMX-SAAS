@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Trip, Driver, Truck } from '@/types/database'
 import type { TripStatus } from '@/types'
+import { sanitizeSearch } from '@/lib/sanitize-search'
 
 export interface TripFilters {
   status?: TripStatus
@@ -58,7 +59,10 @@ export async function fetchTrips(
   }
 
   if (search) {
-    query = query.ilike('trip_number', `%${search}%`)
+    const s = sanitizeSearch(search)
+    if (s) {
+      query = query.ilike('trip_number', `%${s}%`)
+    }
   }
 
   const { data, error, count } = await query

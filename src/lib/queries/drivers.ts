@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Driver } from '@/types/database'
+import { sanitizeSearch } from '@/lib/sanitize-search'
 
 export interface DriverFilters {
   status?: string
@@ -36,7 +37,10 @@ export async function fetchDrivers(
   }
 
   if (search) {
-    query = query.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%`)
+    const s = sanitizeSearch(search)
+    if (s) {
+      query = query.or(`first_name.ilike.%${s}%,last_name.ilike.%${s}%`)
+    }
   }
 
   const { data, error, count } = await query

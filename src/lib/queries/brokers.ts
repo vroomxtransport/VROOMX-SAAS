@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Broker } from '@/types/database'
+import { sanitizeSearch } from '@/lib/sanitize-search'
 
 export interface BrokerFilters {
   search?: string
@@ -25,7 +26,10 @@ export async function fetchBrokers(
     .range(page * pageSize, (page + 1) * pageSize - 1)
 
   if (search) {
-    query = query.ilike('name', `%${search}%`)
+    const s = sanitizeSearch(search)
+    if (s) {
+      query = query.ilike('name', `%${s}%`)
+    }
   }
 
   const { data, error, count } = await query

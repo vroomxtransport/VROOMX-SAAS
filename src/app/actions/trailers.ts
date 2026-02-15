@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { authorize, safeError } from '@/lib/authz'
 import { trailerSchema } from '@/lib/validations/trailer'
 import { revalidatePath } from 'next/cache'
 
@@ -10,21 +10,9 @@ export async function createTrailer(data: unknown) {
     return { error: parsed.error.flatten().fieldErrors }
   }
 
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('trailers.create', { rateLimit: { key: 'createTrailer', limit: 30, windowMs: 60_000 } })
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const { data: trailer, error } = await supabase
     .from('trailers')
@@ -43,7 +31,7 @@ export async function createTrailer(data: unknown) {
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'createTrailer') }
   }
 
   revalidatePath('/trailers')
@@ -56,21 +44,9 @@ export async function updateTrailer(id: string, data: unknown) {
     return { error: parsed.error.flatten().fieldErrors }
   }
 
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('trailers.update')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const { data: trailer, error } = await supabase
     .from('trailers')
@@ -90,7 +66,7 @@ export async function updateTrailer(id: string, data: unknown) {
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'updateTrailer') }
   }
 
   revalidatePath('/trailers')
@@ -98,21 +74,9 @@ export async function updateTrailer(id: string, data: unknown) {
 }
 
 export async function deleteTrailer(id: string) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('trailers.delete')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const { error } = await supabase
     .from('trailers')
@@ -121,7 +85,7 @@ export async function deleteTrailer(id: string) {
     .eq('tenant_id', tenantId)
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'deleteTrailer') }
   }
 
   revalidatePath('/trailers')
@@ -129,21 +93,9 @@ export async function deleteTrailer(id: string) {
 }
 
 export async function assignTrailerToTruck(truckId: string, trailerId: string) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('trailers.update')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const { data: truck, error } = await supabase
     .from('trucks')
@@ -154,7 +106,7 @@ export async function assignTrailerToTruck(truckId: string, trailerId: string) {
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'assignTrailerToTruck') }
   }
 
   revalidatePath('/trailers')
@@ -162,21 +114,9 @@ export async function assignTrailerToTruck(truckId: string, trailerId: string) {
 }
 
 export async function unassignTrailerFromTruck(truckId: string) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('trailers.update')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const { data: truck, error } = await supabase
     .from('trucks')
@@ -187,7 +127,7 @@ export async function unassignTrailerFromTruck(truckId: string) {
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'unassignTrailerFromTruck') }
   }
 
   revalidatePath('/trailers')

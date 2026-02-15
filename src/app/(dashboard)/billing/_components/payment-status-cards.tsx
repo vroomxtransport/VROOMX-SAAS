@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import type { PaymentStatusBreakdown } from '@/lib/queries/financials'
+import type { PaymentStatusBreakdown } from '@/lib/queries/receivables'
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   unpaid: { label: 'Unpaid', color: 'text-red-600', bg: 'bg-red-500/10' },
@@ -12,7 +12,7 @@ interface PaymentStatusCardsProps {
   data: PaymentStatusBreakdown[]
 }
 
-export function PaymentStatusCards({ data }: PaymentStatusCardsProps) {
+export function PaymentStatusCards({ data = [] }: PaymentStatusCardsProps) {
   // Ensure all statuses are represented
   const allStatuses = ['unpaid', 'invoiced', 'partially_paid', 'paid']
   const statusMap = new Map(data.map((d) => [d.status, d]))

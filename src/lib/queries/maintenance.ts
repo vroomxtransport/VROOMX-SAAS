@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { MaintenanceRecord } from '@/types/database'
+import { sanitizeSearch } from '@/lib/sanitize-search'
 
 export interface MaintenanceFilters {
   truckId?: string
@@ -46,9 +47,12 @@ export async function fetchMaintenanceRecords(
   }
 
   if (search) {
-    query = query.or(
-      `description.ilike.%${search}%,vendor.ilike.%${search}%,notes.ilike.%${search}%`
-    )
+    const s = sanitizeSearch(search)
+    if (s) {
+      query = query.or(
+        `description.ilike.%${s}%,vendor.ilike.%${s}%,notes.ilike.%${s}%`
+      )
+    }
   }
 
   const { data, error, count } = await query

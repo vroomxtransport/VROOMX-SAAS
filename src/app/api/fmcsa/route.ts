@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+import { rateLimit } from '@/lib/rate-limit'
 
 function extractField(html: string, label: string): string {
   // Match: label text in <A> or <TH> → next <TD class="queryfield">...</TD>
@@ -45,6 +47,19 @@ function parseAddress(raw: string): { street: string; city: string; state: strin
 }
 
 export async function GET(request: NextRequest) {
+  // Auth check: only authenticated users can use this proxy
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+  }
+
+  // Rate limit: 10 lookups per minute per user
+  const { allowed } = rateLimit(`fmcsa:${user.id}`, { limit: 10, windowMs: 60_000 })
+  if (!allowed) {
+    return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
+  }
+
   const dot = request.nextUrl.searchParams.get('dot')
 
   if (!dot || !/^\d+$/.test(dot)) {

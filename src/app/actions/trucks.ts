@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { authorize, safeError } from '@/lib/authz'
 import { truckSchema } from '@/lib/validations/truck'
 import { checkTierLimit } from '@/lib/tier'
 import { revalidatePath } from 'next/cache'
@@ -11,23 +11,11 @@ export async function createTruck(data: unknown) {
     return { error: parsed.error.flatten().fieldErrors }
   }
 
-  const supabase = await createClient()
+  const auth = await authorize('trucks.create', { rateLimit: { key: 'createTruck', limit: 30, windowMs: 60_000 } })
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
-
-  // Tier limit check: block if truck limit reached or account suspended
+  // Tier limit check: block if truck limit reached
   const tierCheck = await checkTierLimit(supabase, tenantId, 'trucks')
   if (!tierCheck.allowed) {
     if (tierCheck.limit === 0) {
@@ -54,7 +42,7 @@ export async function createTruck(data: unknown) {
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'createTruck') }
   }
 
   revalidatePath('/trucks')
@@ -67,21 +55,9 @@ export async function updateTruck(id: string, data: unknown) {
     return { error: parsed.error.flatten().fieldErrors }
   }
 
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('trucks.update')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const { data: truck, error } = await supabase
     .from('trucks')
@@ -102,7 +78,7 @@ export async function updateTruck(id: string, data: unknown) {
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'updateTruck') }
   }
 
   revalidatePath('/trucks')
@@ -110,21 +86,9 @@ export async function updateTruck(id: string, data: unknown) {
 }
 
 export async function deleteTruck(id: string) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('trucks.delete')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const { error } = await supabase
     .from('trucks')
@@ -133,7 +97,7 @@ export async function deleteTruck(id: string) {
     .eq('tenant_id', tenantId)
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'deleteTruck') }
   }
 
   revalidatePath('/trucks')
@@ -144,21 +108,9 @@ export async function updateTruckStatus(
   id: string,
   status: 'active' | 'inactive' | 'maintenance'
 ) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('trucks.update')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const { data: truck, error } = await supabase
     .from('trucks')
@@ -169,7 +121,7 @@ export async function updateTruckStatus(
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'updateTruckStatus') }
   }
 
   revalidatePath('/trucks')

@@ -1,12 +1,12 @@
 import { z } from 'zod'
 
 export const truckSchema = z.object({
-  unitNumber: z.string().min(1, 'Unit number is required'),
+  unitNumber: z.string().min(1, 'Unit number is required').max(200),
   truckType: z.enum(['7_car', '8_car', '9_car', 'flatbed', 'enclosed']).default('7_car'),
   truckStatus: z.enum(['active', 'inactive', 'maintenance']).default('active'),
   year: z.coerce.number().min(1900).max(2030).optional(),
-  make: z.string().optional().or(z.literal('')),
-  model: z.string().optional().or(z.literal('')),
+  make: z.string().max(200).optional().or(z.literal('')),
+  model: z.string().max(200).optional().or(z.literal('')),
   vin: z
     .string()
     .optional()
@@ -15,7 +15,7 @@ export const truckSchema = z.object({
       message: 'VIN must be exactly 17 characters',
     }),
   ownership: z.enum(['company', 'owner_operator']).optional().default('company'),
-  notes: z.string().optional().or(z.literal('')),
+  notes: z.string().max(5000).optional().or(z.literal('')),
 })
 
 export type TruckFormValues = z.infer<typeof truckSchema>

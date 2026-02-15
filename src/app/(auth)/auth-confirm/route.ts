@@ -6,7 +6,9 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const token_hash = searchParams.get('token_hash')
   const type = searchParams.get('type') as 'signup' | 'recovery' | 'email' | null
-  const next = searchParams.get('next') ?? '/dashboard'
+  const nextParam = searchParams.get('next') ?? '/dashboard'
+  // Prevent open redirect: only allow relative paths starting with /
+  const next = nextParam.startsWith('/') && !nextParam.startsWith('//') ? nextParam : '/dashboard'
 
   // Handle code exchange (PKCE flow)
   const code = searchParams.get('code')

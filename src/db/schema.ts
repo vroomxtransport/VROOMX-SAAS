@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, unique, index, numeric, integer, date, pgEnum, boolean, doublePrecision } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, text, timestamp, unique, index, numeric, integer, date, pgEnum, boolean, doublePrecision, jsonb } from 'drizzle-orm/pg-core'
 
 // ============================================================================
 // Enums
@@ -92,6 +92,25 @@ export const stripeEvents = pgTable('stripe_events', {
   processedAt: timestamp('processed_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
   index('idx_stripe_events_event_id').on(table.eventId),
+])
+
+/**
+ * Custom Roles Table
+ * Tenant-defined roles with arbitrary permission sets.
+ * Built-in roles (admin, dispatcher, billing, safety) are defined in code.
+ * Custom roles are stored here and referenced as 'custom:{uuid}' in memberships.
+ */
+export const customRoles = pgTable('custom_roles', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  description: text('description'),
+  permissions: jsonb('permissions').notNull().default([]),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  unique('custom_roles_tenant_name_unique').on(table.tenantId, table.name),
+  index('idx_custom_roles_tenant_id').on(table.tenantId),
 ])
 
 // ============================================================================
@@ -219,6 +238,8 @@ export const orders = pgTable('orders', {
   carrierPay: numeric('carrier_pay', { precision: 12, scale: 2 }).default('0'),
   brokerFee: numeric('broker_fee', { precision: 12, scale: 2 }).default('0'),
   paymentType: paymentTypeEnum('payment_type').default('COP'),
+  // Distance
+  distanceMiles: numeric('distance_miles', { precision: 10, scale: 1 }),
   // Trip assignment
   tripId: uuid('trip_id'),
   // Billing (Phase 4)

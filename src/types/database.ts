@@ -118,6 +118,7 @@ export interface Order {
   delivery_date: string | null
   actual_pickup_date: string | null
   actual_delivery_date: string | null
+  distance_miles: string | null
   revenue: string
   carrier_pay: string
   broker_fee: string

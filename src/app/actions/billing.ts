@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { authorize } from '@/lib/authz'
 import { redirect } from 'next/navigation'
 import { createPortalSession } from '@/lib/stripe/billing-portal'
 import { getStripeClient, getPriceMap } from '@/lib/stripe/config'
@@ -11,17 +11,9 @@ import type { SubscriptionPlan } from '@/types'
  * Used from Billing page for upgrade/downgrade CTAs.
  */
 export async function createBillingPortalSession() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('billing.manage', { checkSuspension: false })
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   // Fetch stripe_customer_id from tenant
   const { data: tenant } = await supabase
@@ -54,17 +46,9 @@ export async function createBillingPortalSession() {
  * Redirects to Stripe Checkout to collect payment and start subscription.
  */
 export async function createCheckoutSession(plan: SubscriptionPlan) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('billing.manage', { checkSuspension: false })
+  if (!auth.ok) return { error: auth.error }
+  const { user } = auth.ctx
 
   const priceMap = getPriceMap()
   const priceId = priceMap[plan]
@@ -84,7 +68,7 @@ export async function createCheckoutSession(plan: SubscriptionPlan) {
       cancel_url: `${appUrl}/settings?checkout=canceled`,
       customer_email: user.email,
       metadata: {
-        tenant_id: tenantId,
+        tenant_id: auth.ctx.tenantId,
         user_id: user.id,
       },
     })

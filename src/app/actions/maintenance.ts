@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { authorize, safeError } from '@/lib/authz'
 import { maintenanceSchema } from '@/lib/validations/maintenance'
 import { revalidatePath } from 'next/cache'
 
@@ -10,21 +10,9 @@ export async function createMaintenanceRecord(data: unknown) {
     return { error: parsed.error.flatten().fieldErrors }
   }
 
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('maintenance.create', { rateLimit: { key: 'createMaintenance', limit: 30, windowMs: 60_000 } })
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const { data: record, error } = await supabase
     .from('maintenance_records')
@@ -44,7 +32,7 @@ export async function createMaintenanceRecord(data: unknown) {
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'createMaintenanceRecord') }
   }
 
   revalidatePath('/maintenance')
@@ -57,21 +45,9 @@ export async function updateMaintenanceRecord(id: string, data: unknown) {
     return { error: parsed.error.flatten().fieldErrors }
   }
 
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('maintenance.update')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const { data: record, error } = await supabase
     .from('maintenance_records')
@@ -92,7 +68,7 @@ export async function updateMaintenanceRecord(id: string, data: unknown) {
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'updateMaintenanceRecord') }
   }
 
   revalidatePath('/maintenance')
@@ -100,21 +76,9 @@ export async function updateMaintenanceRecord(id: string, data: unknown) {
 }
 
 export async function deleteMaintenanceRecord(id: string) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('maintenance.delete')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const { error } = await supabase
     .from('maintenance_records')
@@ -123,7 +87,7 @@ export async function deleteMaintenanceRecord(id: string) {
     .eq('tenant_id', tenantId)
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'deleteMaintenanceRecord') }
   }
 
   revalidatePath('/maintenance')
@@ -134,21 +98,9 @@ export async function updateMaintenanceStatus(
   id: string,
   status: 'scheduled' | 'in_progress' | 'completed'
 ) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return { error: 'No tenant found' }
-  }
+  const auth = await authorize('maintenance.update')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const updateData: Record<string, string> = { status }
   if (status === 'completed') {
@@ -164,7 +116,7 @@ export async function updateMaintenanceStatus(
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: safeError(error, 'updateMaintenanceStatus') }
   }
 
   revalidatePath('/maintenance')

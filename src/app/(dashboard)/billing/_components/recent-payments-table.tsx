@@ -1,11 +1,11 @@
 import { format } from 'date-fns'
-import type { RecentPayment } from '@/lib/queries/financials'
+import type { RecentPayment } from '@/lib/queries/receivables'
 
 interface RecentPaymentsTableProps {
   data: RecentPayment[]
 }
 
-export function RecentPaymentsTable({ data }: RecentPaymentsTableProps) {
+export function RecentPaymentsTable({ data = [] }: RecentPaymentsTableProps) {
   return (
     <div className="rounded-xl border border-border-subtle bg-surface p-4">
       <h3 className="text-base font-semibold text-foreground mb-3">Recent Payments</h3>

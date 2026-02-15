@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Order, Broker, Driver, Trip } from '@/types/database'
+import { sanitizeSearch } from '@/lib/sanitize-search'
 
 export interface OrderFilters {
   status?: string
@@ -56,7 +57,10 @@ export async function fetchOrders(
   }
 
   if (search) {
-    query = query.or(`vehicle_vin.ilike.%${search}%,vehicle_make.ilike.%${search}%,order_number.ilike.%${search}%`)
+    const s = sanitizeSearch(search)
+    if (s) {
+      query = query.or(`vehicle_vin.ilike.%${s}%,vehicle_make.ilike.%${s}%,order_number.ilike.%${s}%`)
+    }
   }
 
   const { data, error, count } = await query

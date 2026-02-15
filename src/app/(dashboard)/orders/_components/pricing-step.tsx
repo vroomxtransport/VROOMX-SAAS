@@ -122,6 +122,35 @@ export function PricingStep() {
         />
       </div>
 
+      {/* Distance */}
+      <FormField
+        control={form.control}
+        name="distanceMiles"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className="flex items-center gap-1">
+              Distance (miles)
+              <HelpTooltip content="Total route distance in miles. Used for per-mile financial KPIs." side="top" />
+            </FormLabel>
+            <FormControl>
+              <div className="relative">
+                <Input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  placeholder="0"
+                  {...field}
+                  value={field.value as number ?? ''}
+                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">mi</span>
+              </div>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
       {/* Margin summary */}
       <div className="rounded-md bg-gray-50 p-3">
         <div className="flex items-center justify-between">
