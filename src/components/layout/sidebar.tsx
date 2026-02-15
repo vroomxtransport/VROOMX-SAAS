@@ -26,6 +26,7 @@ import {
   TrendingUp,
   MessageSquare,
   ShieldCheck,
+  DollarSign,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -49,14 +50,19 @@ type NavCategory = {
 
 const NAV_CATEGORIES: NavCategory[] = [
   {
-    label: 'Operations',
+    label: 'Main',
     items: [
       { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+      { name: 'Tasks', href: '/tasks', icon: ClipboardCheck },
+      { name: 'Live Map', href: '/live-map', icon: Map },
+      { name: 'Team Chat', href: '/team-chat', icon: MessageSquare },
+    ],
+  },
+  {
+    label: 'Operations',
+    items: [
       { name: 'Orders', href: '/orders', icon: PackageSearch },
       { name: 'Dispatch', href: '/dispatch', icon: Route },
-      { name: 'Live Map', href: '/live-map', icon: Map },
-      { name: 'Tasks', href: '/tasks', icon: ClipboardCheck },
-      { name: 'Local Drives', href: '/local-drives', icon: Navigation, minRole: 'dispatcher' },
     ],
   },
   {
@@ -64,6 +70,7 @@ const NAV_CATEGORIES: NavCategory[] = [
     items: [
       { name: 'Trucks', href: '/trucks', icon: Truck },
       { name: 'Drivers', href: '/drivers', icon: UserCog, minRole: 'dispatcher' },
+      { name: 'Local Drives', href: '/local-drives', icon: Navigation, minRole: 'dispatcher' },
       { name: 'Maintenance', href: '/maintenance', icon: Wrench, minRole: 'dispatcher' },
       { name: 'Fuel Tracking', href: '/fuel-tracking', icon: Fuel, minRole: 'dispatcher' },
     ],
@@ -73,7 +80,6 @@ const NAV_CATEGORIES: NavCategory[] = [
     items: [
       { name: 'Dispatchers', href: '/dispatchers', icon: Users, minRole: 'admin' },
       { name: 'Performance', href: '/dispatcher-performance', icon: TrendingUp, minRole: 'admin' },
-      { name: 'Team Chat', href: '/team-chat', icon: MessageSquare },
     ],
   },
   {
@@ -85,6 +91,7 @@ const NAV_CATEGORIES: NavCategory[] = [
   {
     label: 'Finance',
     items: [
+      { name: 'Financials', href: '/financials', icon: DollarSign, minRole: 'admin' },
       { name: 'Billing', href: '/billing', icon: Receipt, minRole: 'admin' },
       { name: 'Brokers', href: '/brokers', icon: Landmark, minRole: 'dispatcher' },
     ],
