@@ -7,9 +7,11 @@ import { revalidatePath } from 'next/cache'
 import Stripe from 'stripe'
 import { z } from 'zod'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-01-28.clover',
-})
+function getStripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: '2026-01-28.clover',
+  })
+}
 
 const signUpSchema = z.object({
   full_name: z.string().min(1, 'Full name is required'),
@@ -113,6 +115,7 @@ export async function signUpAction(prevState: any, formData: FormData) {
   }
 
   // 3. Create Stripe customer
+  const stripe = getStripe()
   const customer = await stripe.customers.create({
     email,
     name: company_name,
