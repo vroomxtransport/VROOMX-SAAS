@@ -174,6 +174,15 @@ export function OrderForm({ order, onSuccess, onCancel, onStepChange, onDirtyCha
   }
 
   const onSubmit = async (values: CreateOrderInput) => {
+    // Guard: only create/update on the final step.
+    // Pressing Enter on earlier steps advances the wizard instead.
+    if (currentStep < STEPS.length - 1) {
+      await handleNext()
+      return
+    }
+
+    if (isSubmitting) return
+
     setIsSubmitting(true)
     setServerError(null)
 
