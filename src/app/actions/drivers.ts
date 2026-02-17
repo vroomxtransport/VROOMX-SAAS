@@ -52,7 +52,7 @@ export async function createDriver(data: unknown) {
   }
 
   revalidatePath('/drivers')
-  return { data: driver }
+  return { success: true, data: driver }
 }
 
 export async function updateDriver(id: string, data: unknown) {
@@ -93,7 +93,7 @@ export async function updateDriver(id: string, data: unknown) {
   }
 
   revalidatePath('/drivers')
-  return { data: driver }
+  return { success: true, data: driver }
 }
 
 export async function deleteDriver(id: string) {
@@ -133,7 +133,7 @@ export async function updateDriverStatus(id: string, status: 'active' | 'inactiv
   }
 
   revalidatePath('/drivers')
-  return { data: driver }
+  return { success: true, data: driver }
 }
 
 export async function sendDriverAppInvitation(driverId: string) {

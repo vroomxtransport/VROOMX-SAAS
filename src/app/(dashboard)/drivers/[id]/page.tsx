@@ -97,7 +97,7 @@ export default function DriverDetailPage({ params }: DriverDetailPageProps) {
   }
 
   const fullName = `${driver.first_name} ${driver.last_name}`
-  const payRate = typeof driver.pay_rate === 'string' ? parseFloat(driver.pay_rate) : driver.pay_rate
+  const payRate = parseFloat(driver.pay_rate)
   const hasAddress = driver.address || driver.city || driver.state || driver.zip
 
   return (

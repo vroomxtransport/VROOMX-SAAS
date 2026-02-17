@@ -81,7 +81,7 @@ export async function recordPayment(orderId: string, data: unknown) {
 
   revalidatePath(`/orders/${orderId}`)
   revalidatePath('/billing')
-  return { data: payment }
+  return { success: true, data: payment }
 }
 
 export async function batchMarkPaid(orderIds: string[], paymentDate: string) {

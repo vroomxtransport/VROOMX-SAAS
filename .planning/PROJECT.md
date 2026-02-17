@@ -105,7 +105,7 @@ Monthly flat-rate subscription tiers:
 - **Self-service**: No manual provisioning — signup creates tenant + admin user automatically
 - **Mobile**: iOS only for v1 driver app
 - **Payments**: Stripe for subscription billing
-- **Simple deployment**: Vercel + Supabase (no K8s, no Docker in production)
+- **Simple deployment**: Netlify + Supabase (no K8s, no Docker in production)
 - **Fresh codebase**: Not a fork of Horizon Star — reimplemented from scratch
 
 ## Tech Stack
@@ -118,7 +118,7 @@ Monthly flat-rate subscription tiers:
 | Auth | Supabase Auth (email/password + magic link) | Integrated with RLS, handles sessions/tokens |
 | Payments | Stripe Checkout + Billing Portal + Webhooks | Industry standard, self-service flows, webhook provisioning |
 | Mobile | SwiftUI (iOS) | Better native experience for inspections/camera, proven in Horizon Star app |
-| Hosting | Vercel (web) + Supabase Cloud (backend) | Zero-ops, auto-scaling, generous free tiers |
+| Hosting | Netlify (web) + Supabase Cloud (backend) | Zero-ops, auto-scaling, generous free tiers |
 | Monitoring | Sentry (errors) + PostHog (analytics) | Essential observability for SaaS |
 | Email | Resend (transactional emails) | Simple API, good DX, affordable |
 
@@ -228,3 +228,176 @@ Users can switch between a 3-column card grid and a compact list (table-row) vie
 | `src/app/(dashboard)/trucks/_components/truck-row.tsx` | Compact list row: unit #, status/type/ownership badges, vehicle line, VIN, status select + edit |
 
 **Storage key**: `vroomx-views` (localStorage)
+
+## Security Hardening (Implemented)
+
+### Security Headers
+
+Production-grade HTTP security headers added to `next.config.ts`:
+- **CSP**: Restricts script/style/connect/frame sources to app + Supabase + Stripe + PostHog
+- **HSTS**: 2-year max-age with preload
+- **X-Frame-Options**: DENY (clickjacking prevention)
+- **X-Content-Type-Options**: nosniff
+- **Referrer-Policy**: strict-origin-when-cross-origin
+- **Permissions-Policy**: Disables camera, microphone, geolocation, browsing-topics
+
+### Rate Limiting
+
+In-memory token bucket rate limiter (`src/lib/rate-limit.ts`) integrated into the `authorize()` function via an optional `rateLimit` config parameter. Rate limits are per-user per-action.
+
+| Tier | Limit | Actions |
+|------|-------|---------|
+| Strict (3-5/min) | Email sends, batch ops | `sendInvite`, `sendDriverAppInvite`, `batchCreateOrders`, `batchMarkPaid`, `seedSampleData`, `clearSampleData` |
+| Moderate (30/min) | Entity creation | `createOrder`, `createTrip`, `createDriver`, `createTruck`, `createTrailer`, `createBroker`, `createFuelEntry`, `createMaintenanceRecord`, `createComplianceDoc`, `createLocalDrive`, `createTripExpense`, `recordPayment`, `createTask`, `createDocument`, `createCustomRole` |
+| Chat (60/min) | Messages | `sendMessage` |
+| Channel (10/min) | Chat channels | `createChannel` |
+| FMCSA (10/min) | External API | FMCSA carrier lookup |
+
+**Production note**: For multi-instance serverless, replace in-memory store with Upstash Redis.
+
+### Input Validation (Zod Max Bounds)
+
+All 16 Zod validation schemas updated with max-length/max-value constraints:
+- String fields: `.max(200)` for names/labels, `.max(500)` for addresses/descriptions, `.max(5000)` for notes
+- Numeric fields: `.max(10_000_000)` for monetary amounts, `.max(1_000_000)` for volumes/odometer
+- IDs: `.max(36)` for UUID fields
+- Zip codes: `.max(20)`, VIN: `.max(17)`
+
+### Search Sanitization
+
+`src/lib/sanitize-search.ts` strips dangerous PostgREST filter characters (`(),.\'%`) and caps at 200 chars. Applied to all 10 query modules that accept search input: orders, drivers, brokers, compliance, fuel, maintenance, local-drives, trailers, trucks, trips.
+
+### FMCSA API Hardening
+
+`src/app/api/fmcsa/route.ts` now requires Supabase auth (401 if unauthenticated) and rate limits to 10 lookups/min per user (429 if exceeded).
+
+## RBAC & Custom Roles (Implemented)
+
+### Authorization System
+
+`src/lib/authz.ts` — Central `authorize()` function used by all server actions:
+1. Authenticates user via Supabase
+2. Extracts `tenant_id` and `role` from `app_metadata`
+3. Applies optional per-action rate limiting
+4. Resolves permissions (built-in role lookup or custom role DB fetch)
+5. Checks required permission
+6. Checks account suspension status
+
+Returns typed `AuthzContext` with `{ supabase, user, tenantId, role, permissions }` or error.
+
+### Permission System
+
+`src/lib/permissions.ts` — 30 permissions across 18 resource categories:
+
+| Category | Permissions |
+|----------|------------|
+| orders | view, create, update, delete |
+| trips | view, create, update, delete |
+| drivers | view, create, update, delete |
+| trucks | view, create, update, delete |
+| trailers | view, create, update, delete |
+| brokers | create, update, delete |
+| local_drives | create, update, delete |
+| fuel | create, update, delete |
+| maintenance | create, update, delete |
+| compliance | create, update, delete |
+| billing | manage |
+| payments | create, update |
+| invoices | create, send |
+| tasks | create, update, delete |
+| chat | create |
+| documents | create, delete |
+| trip_expenses | create, update, delete |
+| settings | view, manage |
+
+**Built-in roles**:
+- `admin` (and legacy `owner`): Full access (`['*']`)
+- `dispatcher`: Trip/order/driver/truck/broker/local-drive/fuel/maintenance/tasks/chat/documents/trip-expenses
+- `billing`: Orders (view/update), trips (view), billing (manage), payments (all), invoices (all)
+- `safety`: Compliance (full), driver/truck/trailer/documents (view only)
+
+**Wildcard support**: `hasPermission()` checks exact match, global `*`, or category `resource.*`.
+
+### Custom Roles
+
+Tenant-scoped custom roles stored in `custom_roles` table with JSONB permissions array.
+
+**Files**:
+| File | Purpose |
+|------|---------|
+| `src/db/schema.ts` | Drizzle table definition (id, tenant_id, name, description, permissions JSONB) |
+| `src/app/actions/custom-roles.ts` | CRUD server actions (create, update, delete, fetch) |
+| `src/app/(dashboard)/settings/roles-section.tsx` | UI: built-in role viewer + custom role CRUD with permission picker |
+
+**Custom role assignment**: Users assigned role `custom:{uuid}` in `app_metadata`. The `authorize()` function detects the prefix and fetches permissions from DB.
+
+### Database Migrations
+
+| Migration | Purpose |
+|-----------|---------|
+| `00009_restrict_tenants_update.sql` | RLS WITH CHECK policy preventing authenticated users from modifying subscription fields (plan, stripe IDs, suspension status). Only service role can change these. |
+| `00010_custom_roles.sql` | Creates `custom_roles` table with RLS policies (select/insert/update/delete), tenant_id index, and migrates existing `owner` roles to `admin`. |
+
+## API Contract Alignment (Implemented)
+
+### Unified Action Result Type
+
+`src/types/action.ts` — Standardized response types for all server actions:
+
+| Type | Shape | Used By |
+|------|-------|---------|
+| `ActionResult<T>` | `{ success: true, data: T } \| { error }` | Create, update, status-change actions |
+| `ActionResult` (void) | `{ success: true } \| { error }` | Delete actions, void operations |
+| `ActionFieldErrors` | `{ error: Record<string, string[]> }` | Zod validation failures |
+| `ActionError` | `{ error: string }` | Auth, runtime, business logic errors |
+
+Type guards: `isActionError()`, `isFieldError()`, `isStringError()` — re-exported from `src/types/index.ts`.
+
+### Mismatches Fixed
+
+| Issue | Fix | Files |
+|-------|-----|-------|
+| `Driver.pay_rate` typed `number`, DB returns `string` | Changed to `string` in `database.ts`, removed 4 defensive `typeof` hacks, fixed `trips.ts` cast bug | `database.ts`, 4 driver components, `trips.ts` |
+| Inconsistent action return shapes (`{ data }` vs `{ success, data }` vs `{ success, tripId }`) | Unified all 15 action files to `{ success: true, data? }` | All `src/app/actions/*.ts` |
+| `Tenant` interface missing 5 DB columns | Added `dot_number`, `mc_number`, `is_suspended`, `grace_period_ends_at`, `onboarding_completed_at` | `database.ts` |
+| `Driver` interface missing 2 DB columns | Added `auth_user_id`, `pin_hash` | `database.ts` |
+| Drizzle type export naming inconsistency | Prefixed Phase 1-2 exports (`Broker` → `DrizzleBroker`, etc.) | `schema.ts` |
+
+### Type Architecture
+
+Three type layers, now aligned:
+1. **`src/db/schema.ts`** — Drizzle schema (DB truth, migrations only, never imported at runtime)
+2. **`src/types/database.ts`** — Runtime interfaces matching Supabase JS client return shapes
+3. **`src/types/index.ts`** — Enums, constants, labels, colors + action result re-exports
+
+All `numeric()` DB columns → `string` in TypeScript (Supabase returns PostgreSQL numeric as string).
+
+## Financials Dashboard (Implemented)
+
+### KPI Calculations
+
+`src/lib/financial/kpi-calculations.ts` — Pure calculation functions for financial KPIs:
+- Revenue, expenses, net profit, profit margin
+- Revenue per mile, cost per mile
+- Driver pay totals, average revenue per order
+- Period-over-period trend calculations
+
+### Dashboard Components
+
+| Component | Purpose |
+|-----------|---------|
+| `financials-dashboard.tsx` | Orchestrator: fetches data, manages period state, renders sub-components |
+| `period-selector.tsx` | Date range picker (This Month / Last Month / This Quarter / YTD / Custom) |
+| `kpi-cards.tsx` | Revenue, expenses, net profit, margin cards with trend indicators |
+| `kpi-trend-chart.tsx` | Line/area chart showing KPI trends over time |
+| `expense-breakdown-chart.tsx` | Donut chart of expense categories |
+| `profit-by-driver-table.tsx` | Driver profitability ranking table |
+| `profit-by-truck-table.tsx` | Truck profitability ranking table |
+
+### Billing Page Updates
+
+| Component | Purpose |
+|-----------|---------|
+| `billing-kpi-cards.tsx` | Receivables summary cards (total outstanding, overdue, collection rate) |
+| `payment-status-cards.tsx` | Payment status distribution (moved from financials) |
+| `recent-payments-table.tsx` | Latest payments received (moved from financials) |

@@ -7,11 +7,16 @@ export interface Tenant {
   stripe_customer_id: string | null
   stripe_subscription_id: string | null
   trial_ends_at: string | null
+  dot_number: string | null
+  mc_number: string | null
   address: string | null
   city: string | null
   state: string | null
   zip: string | null
   phone: string | null
+  grace_period_ends_at: string | null
+  is_suspended: boolean
+  onboarding_completed_at: string | null
   created_at: string
   updated_at: string
 }
@@ -64,7 +69,9 @@ export interface Driver {
   driver_type: 'company' | 'owner_operator'
   driver_status: 'active' | 'inactive'
   pay_type: 'percentage_of_carrier_pay' | 'dispatch_fee_percent' | 'per_mile' | 'per_car'
-  pay_rate: number
+  pay_rate: string
+  auth_user_id: string | null
+  pin_hash: string | null
   notes: string | null
   created_at: string
   updated_at: string
@@ -274,6 +281,7 @@ export interface ChatMessage {
 export interface LocalDrive {
   id: string
   tenant_id: string
+  order_id: string | null
   driver_id: string | null
   truck_id: string | null
   status: 'pending' | 'in_progress' | 'completed' | 'cancelled'
@@ -289,6 +297,7 @@ export interface LocalDrive {
   notes: string | null
   driver?: Driver
   truck?: Truck
+  order?: Order
   created_at: string
   updated_at: string
 }

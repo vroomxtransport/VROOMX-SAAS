@@ -35,7 +35,7 @@ export async function createTask(data: unknown) {
   }
 
   revalidatePath('/tasks')
-  return { data: task }
+  return { success: true, data: task }
 }
 
 export async function updateTask(id: string, data: unknown) {
@@ -69,7 +69,7 @@ export async function updateTask(id: string, data: unknown) {
   }
 
   revalidatePath('/tasks')
-  return { data: task }
+  return { success: true, data: task }
 }
 
 export async function deleteTask(id: string) {
@@ -109,5 +109,5 @@ export async function toggleTaskStatus(id: string, status: 'pending' | 'in_progr
   }
 
   revalidatePath('/tasks')
-  return { data: task }
+  return { success: true, data: task }
 }

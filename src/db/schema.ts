@@ -553,6 +553,7 @@ export const chatMessages = pgTable('chat_messages', {
 export const localDrives = pgTable('local_drives', {
   id: uuid('id').primaryKey().defaultRandom(),
   tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  orderId: uuid('order_id').references(() => orders.id),
   driverId: uuid('driver_id').references(() => drivers.id),
   truckId: uuid('truck_id').references(() => trucks.id),
   status: localDriveStatusEnum('status').notNull().default('pending'),
@@ -572,6 +573,7 @@ export const localDrives = pgTable('local_drives', {
   index('idx_local_drives_tenant_id').on(table.tenantId),
   index('idx_local_drives_tenant_status').on(table.tenantId, table.status),
   index('idx_local_drives_tenant_driver').on(table.tenantId, table.driverId),
+  index('idx_local_drives_tenant_order').on(table.tenantId, table.orderId),
 ])
 
 /**
@@ -673,21 +675,21 @@ export const driverLocations = pgTable('driver_locations', {
 // ============================================================================
 
 // Phase 1
-export type Tenant = typeof tenants.$inferSelect
+export type DrizzleTenant = typeof tenants.$inferSelect
 export type NewTenant = typeof tenants.$inferInsert
-export type TenantMembership = typeof tenantMemberships.$inferSelect
+export type DrizzleTenantMembership = typeof tenantMemberships.$inferSelect
 export type NewTenantMembership = typeof tenantMemberships.$inferInsert
-export type StripeEvent = typeof stripeEvents.$inferSelect
+export type DrizzleStripeEvent = typeof stripeEvents.$inferSelect
 export type NewStripeEvent = typeof stripeEvents.$inferInsert
 
 // Phase 2
-export type Broker = typeof brokers.$inferSelect
+export type DrizzleBroker = typeof brokers.$inferSelect
 export type NewBroker = typeof brokers.$inferInsert
-export type Driver = typeof drivers.$inferSelect
+export type DrizzleDriver = typeof drivers.$inferSelect
 export type NewDriver = typeof drivers.$inferInsert
-export type Truck = typeof trucks.$inferSelect
+export type DrizzleTruck = typeof trucks.$inferSelect
 export type NewTruck = typeof trucks.$inferInsert
-export type Order = typeof orders.$inferSelect
+export type DrizzleOrder = typeof orders.$inferSelect
 export type NewOrder = typeof orders.$inferInsert
 
 // Phase 3
@@ -701,7 +703,7 @@ export type DrizzlePayment = typeof payments.$inferSelect
 export type NewPayment = typeof payments.$inferInsert
 
 // Phase 5
-export type Invite = typeof invites.$inferSelect
+export type DrizzleInvite = typeof invites.$inferSelect
 export type NewInvite = typeof invites.$inferInsert
 
 // Phase 6

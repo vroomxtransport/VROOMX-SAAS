@@ -41,5 +41,5 @@ export async function createChannel(data: unknown) {
 
   if (error) return { error: safeError(error, 'createChannel') }
   revalidatePath('/team-chat')
-  return { data: channel }
+  return { success: true, data: channel }
 }

@@ -73,7 +73,7 @@ export function DriverForm({ driver, onSuccess, onCancel }: DriverFormProps) {
         driverType: driver.driver_type as 'company' | 'owner_operator',
         driverStatus: driver.driver_status as 'active' | 'inactive',
         payType: driver.pay_type as DriverPayType,
-        payRate: typeof driver.pay_rate === 'string' ? parseFloat(driver.pay_rate) : driver.pay_rate,
+        payRate: parseFloat(driver.pay_rate),
         notes: driver.notes ?? '',
       }
     : {

@@ -1,4 +1,18 @@
 // ============================================================================
+// Unified Action Result Types
+// ============================================================================
+export {
+  type ActionResult,
+  type ActionSuccessWithData,
+  type ActionSuccessVoid,
+  type ActionFieldErrors,
+  type ActionError,
+  isActionError,
+  isFieldError,
+  isStringError,
+} from './action'
+
+// ============================================================================
 // Phase 1: Auth & Multi-Tenancy Types
 // ============================================================================
 

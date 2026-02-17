@@ -46,7 +46,7 @@ export async function createTruck(data: unknown) {
   }
 
   revalidatePath('/trucks')
-  return { data: truck }
+  return { success: true, data: truck }
 }
 
 export async function updateTruck(id: string, data: unknown) {
@@ -82,7 +82,7 @@ export async function updateTruck(id: string, data: unknown) {
   }
 
   revalidatePath('/trucks')
-  return { data: truck }
+  return { success: true, data: truck }
 }
 
 export async function deleteTruck(id: string) {
@@ -125,5 +125,5 @@ export async function updateTruckStatus(
   }
 
   revalidatePath('/trucks')
-  return { data: truck }
+  return { success: true, data: truck }
 }

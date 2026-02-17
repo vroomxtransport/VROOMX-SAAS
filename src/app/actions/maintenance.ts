@@ -36,7 +36,7 @@ export async function createMaintenanceRecord(data: unknown) {
   }
 
   revalidatePath('/maintenance')
-  return { data: record }
+  return { success: true, data: record }
 }
 
 export async function updateMaintenanceRecord(id: string, data: unknown) {
@@ -72,7 +72,7 @@ export async function updateMaintenanceRecord(id: string, data: unknown) {
   }
 
   revalidatePath('/maintenance')
-  return { data: record }
+  return { success: true, data: record }
 }
 
 export async function deleteMaintenanceRecord(id: string) {
@@ -120,5 +120,5 @@ export async function updateMaintenanceStatus(
   }
 
   revalidatePath('/maintenance')
-  return { data: record }
+  return { success: true, data: record }
 }

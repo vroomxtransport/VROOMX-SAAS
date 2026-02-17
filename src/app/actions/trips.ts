@@ -46,7 +46,7 @@ export async function createTrip(data: unknown) {
   }
 
   revalidatePath('/dispatch')
-  return { success: true, tripId: trip.id }
+  return { success: true, data: trip }
 }
 
 export async function updateTrip(id: string, data: unknown) {
@@ -157,6 +157,59 @@ export async function updateTripStatus(id: string, newStatus: TripStatus) {
 
     if (syncError) {
       return { error: safeError(syncError, 'updateTripStatus.syncOrders') }
+    }
+  }
+
+  // Auto-create pending local deliveries for qualifying orders
+  // Criteria: broker_fee > 0 AND delivery_state in PA, NJ, NY
+  if (newStatus === 'at_terminal') {
+    const LOCAL_DELIVERY_STATES = ['PA', 'NJ', 'NY']
+
+    const { data: qualifyingOrders } = await supabase
+      .from('orders')
+      .select('id, delivery_location, delivery_city, delivery_state, broker_fee')
+      .eq('trip_id', id)
+      .eq('tenant_id', tenantId)
+      .gt('broker_fee', '0')
+      .in('delivery_state', LOCAL_DELIVERY_STATES)
+
+    if (qualifyingOrders && qualifyingOrders.length > 0) {
+      // Prevent duplicates — check which orders already have a local drive
+      const orderIds = qualifyingOrders.map((o) => o.id)
+      const { data: existingDrives } = await supabase
+        .from('local_drives')
+        .select('order_id')
+        .eq('tenant_id', tenantId)
+        .in('order_id', orderIds)
+
+      const existingOrderIds = new Set(existingDrives?.map((d) => d.order_id) ?? [])
+
+      const newDrives = qualifyingOrders
+        .filter((o) => !existingOrderIds.has(o.id))
+        .map((order) => ({
+          tenant_id: tenantId,
+          order_id: order.id,
+          status: 'pending' as const,
+          pickup_location: 'Terminal',
+          delivery_location: order.delivery_location,
+          delivery_city: order.delivery_city,
+          delivery_state: order.delivery_state,
+          revenue: order.broker_fee,
+          notes: `Auto-created from trip at-terminal. Delivery to ${order.delivery_city}, ${order.delivery_state}`,
+        }))
+
+      if (newDrives.length > 0) {
+        const { error: driveError } = await supabase
+          .from('local_drives')
+          .insert(newDrives)
+
+        if (driveError) {
+          // Log but don't fail the trip status update
+          safeError(driveError, 'updateTripStatus.createLocalDrives')
+        }
+
+        revalidatePath('/local-drives')
+      }
     }
   }
 
@@ -322,14 +375,14 @@ export async function recalculateTripFinancials(tripId: string) {
   const driverRaw = trip.driver as {
     driver_type: string
     pay_type: string
-    pay_rate: number
+    pay_rate: string
   } | null
 
   const driverConfig = driverRaw
     ? {
         driverType: driverRaw.driver_type as import('@/types').DriverType,
         payType: driverRaw.pay_type as import('@/types').DriverPayType,
-        payRate: driverRaw.pay_rate,
+        payRate: parseFloat(driverRaw.pay_rate || '0'),
       }
     : null
 

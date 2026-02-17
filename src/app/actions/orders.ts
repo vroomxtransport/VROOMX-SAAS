@@ -67,7 +67,7 @@ export async function createOrder(data: unknown) {
   }
 
   revalidatePath('/orders')
-  return { data: order }
+  return { success: true, data: order }
 }
 
 export async function updateOrder(id: string, data: unknown) {
@@ -125,7 +125,7 @@ export async function updateOrder(id: string, data: unknown) {
   }
 
   revalidatePath('/orders')
-  return { data: order }
+  return { success: true, data: order }
 }
 
 export async function deleteOrder(id: string) {
@@ -195,7 +195,7 @@ export async function updateOrderStatus(
 
   revalidatePath(`/orders/${id}`)
   revalidatePath('/orders')
-  return { data: order }
+  return { success: true, data: order }
 }
 
 // ============================================================================
@@ -411,5 +411,5 @@ export async function rollbackOrderStatus(id: string) {
 
   revalidatePath(`/orders/${id}`)
   revalidatePath('/orders')
-  return { data: order }
+  return { success: true, data: order }
 }

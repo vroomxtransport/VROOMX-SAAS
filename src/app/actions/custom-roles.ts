@@ -139,5 +139,5 @@ export async function fetchCustomRoles() {
     return { error: safeError(error, 'fetchCustomRoles'), data: [] }
   }
 
-  return { data: data ?? [] }
+  return { success: true, data: data ?? [] }
 }

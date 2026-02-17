@@ -38,7 +38,7 @@ export async function createLocalDrive(data: unknown) {
   }
 
   revalidatePath('/local-drives')
-  return { data: localDrive }
+  return { success: true, data: localDrive }
 }
 
 export async function updateLocalDrive(id: string, data: unknown) {
@@ -76,7 +76,7 @@ export async function updateLocalDrive(id: string, data: unknown) {
   }
 
   revalidatePath('/local-drives')
-  return { data: localDrive }
+  return { success: true, data: localDrive }
 }
 
 export async function deleteLocalDrive(id: string) {
@@ -121,5 +121,5 @@ export async function updateLocalDriveStatus(id: string, status: 'pending' | 'in
   }
 
   revalidatePath('/local-drives')
-  return { data: localDrive }
+  return { success: true, data: localDrive }
 }

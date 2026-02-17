@@ -39,7 +39,7 @@ export async function createFuelEntry(data: unknown) {
   }
 
   revalidatePath('/fuel-tracking')
-  return { data: entry }
+  return { success: true, data: entry }
 }
 
 export async function updateFuelEntry(id: string, data: unknown) {
@@ -78,7 +78,7 @@ export async function updateFuelEntry(id: string, data: unknown) {
   }
 
   revalidatePath('/fuel-tracking')
-  return { data: entry }
+  return { success: true, data: entry }
 }
 
 export async function deleteFuelEntry(id: string) {

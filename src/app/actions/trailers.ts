@@ -35,7 +35,7 @@ export async function createTrailer(data: unknown) {
   }
 
   revalidatePath('/trailers')
-  return { data: trailer }
+  return { success: true, data: trailer }
 }
 
 export async function updateTrailer(id: string, data: unknown) {
@@ -70,7 +70,7 @@ export async function updateTrailer(id: string, data: unknown) {
   }
 
   revalidatePath('/trailers')
-  return { data: trailer }
+  return { success: true, data: trailer }
 }
 
 export async function deleteTrailer(id: string) {
@@ -110,7 +110,7 @@ export async function assignTrailerToTruck(truckId: string, trailerId: string) {
   }
 
   revalidatePath('/trailers')
-  return { data: truck }
+  return { success: true, data: truck }
 }
 
 export async function unassignTrailerFromTruck(truckId: string) {
@@ -131,5 +131,5 @@ export async function unassignTrailerFromTruck(truckId: string) {
   }
 
   revalidatePath('/trailers')
-  return { data: truck }
+  return { success: true, data: truck }
 }

@@ -37,7 +37,7 @@ export async function createBroker(data: unknown) {
   }
 
   revalidatePath('/brokers')
-  return { data: broker }
+  return { success: true, data: broker }
 }
 
 export async function updateBroker(id: string, data: unknown) {
@@ -74,7 +74,7 @@ export async function updateBroker(id: string, data: unknown) {
   }
 
   revalidatePath('/brokers')
-  return { data: broker }
+  return { success: true, data: broker }
 }
 
 export async function deleteBroker(id: string) {

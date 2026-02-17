@@ -240,9 +240,9 @@ export function NewTripDialog({ open, onOpenChange }: NewTripDialogProps) {
         return
       }
 
-      if (result.success && result.tripId) {
+      if ('success' in result && result.data) {
         onOpenChange(false)
-        router.push(`/trips/${result.tripId}`)
+        router.push(`/trips/${result.data.id}`)
       }
     } catch (err) {
       setServerError('An unexpected error occurred. Please try again.')

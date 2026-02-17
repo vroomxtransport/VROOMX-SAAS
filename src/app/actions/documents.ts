@@ -56,7 +56,7 @@ export async function createDocument(
   }
 
   revalidatePath(getRevalidatePath(entityType))
-  return { data: doc }
+  return { success: true, data: doc }
 }
 
 export async function deleteDocument(

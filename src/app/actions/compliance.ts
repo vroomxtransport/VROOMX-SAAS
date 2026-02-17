@@ -33,7 +33,7 @@ export async function createComplianceDoc(data: unknown) {
   }
 
   revalidatePath('/compliance')
-  return { data: doc }
+  return { success: true, data: doc }
 }
 
 export async function updateComplianceDoc(id: string, data: unknown) {
@@ -66,7 +66,7 @@ export async function updateComplianceDoc(id: string, data: unknown) {
   }
 
   revalidatePath('/compliance')
-  return { data: doc }
+  return { success: true, data: doc }
 }
 
 export async function deleteComplianceDoc(id: string) {

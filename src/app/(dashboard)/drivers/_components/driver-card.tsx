@@ -32,7 +32,7 @@ function formatPayInfo(payType: DriverPayType, payRate: number): string {
 
 export function DriverCard({ driver, onClick, onEdit, onStatusToggle }: DriverCardProps) {
   const fullName = `${driver.first_name} ${driver.last_name}`
-  const payRate = typeof driver.pay_rate === 'string' ? parseFloat(driver.pay_rate) : driver.pay_rate
+  const payRate = parseFloat(driver.pay_rate)
 
   return (
     <EntityCard onClick={onClick}>
