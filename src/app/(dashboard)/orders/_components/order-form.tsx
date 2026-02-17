@@ -144,25 +144,18 @@ export function OrderForm({ order, onSuccess, onCancel, onStepChange, onDirtyCha
     onStepChange?.(currentStep)
   }, [currentStep, onStepChange])
 
-  // Validate current step before advancing
-  const validateCurrentStep = async (): Promise<boolean> => {
+  const handleNext = () => {
     const stepSchema = STEPS[currentStep].schema
     const values = form.getValues()
-
-    // Extract only the fields relevant to the current step
     const result = stepSchema.safeParse(values)
-    if (!result.success) {
-      // Trigger validation on current step fields to show errors
-      const fieldNames = Object.keys(stepSchema.shape) as (keyof CreateOrderInput)[]
-      await form.trigger(fieldNames)
-      return false
-    }
-    return true
-  }
 
-  const handleNext = async () => {
-    const isValid = await validateCurrentStep()
-    if (isValid && currentStep < STEPS.length - 1) {
+    if (!result.success) {
+      const fieldNames = Object.keys(stepSchema.shape) as (keyof CreateOrderInput)[]
+      form.trigger(fieldNames) // fire-and-forget — displays field errors
+      return
+    }
+
+    if (currentStep < STEPS.length - 1) {
       setCurrentStep(currentStep + 1)
     }
   }
@@ -177,7 +170,7 @@ export function OrderForm({ order, onSuccess, onCancel, onStepChange, onDirtyCha
     // Guard: only create/update on the final step.
     // Pressing Enter on earlier steps advances the wizard instead.
     if (currentStep < STEPS.length - 1) {
-      await handleNext()
+      handleNext()
       return
     }
 
