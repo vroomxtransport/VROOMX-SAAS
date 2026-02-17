@@ -226,10 +226,10 @@ export function OrderForm({ order, onSuccess, onCancel, onStepChange, onDirtyCha
               <div
                 className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
                   index < currentStep
-                    ? 'bg-green-100 text-green-700'
+                    ? 'bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-400'
                     : index === currentStep
                       ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-500'
+                      : 'bg-muted text-muted-foreground'
                 }`}
               >
                 {index < currentStep ? (
@@ -241,21 +241,21 @@ export function OrderForm({ order, onSuccess, onCancel, onStepChange, onDirtyCha
               <span
                 className={`ml-2 text-sm ${
                   index === currentStep
-                    ? 'font-medium text-gray-900'
-                    : 'text-gray-500'
+                    ? 'font-medium text-foreground'
+                    : 'text-muted-foreground'
                 }`}
               >
                 {step.label}
               </span>
               {index < STEPS.length - 1 && (
-                <div className="mx-4 h-px w-8 bg-gray-200" />
+                <div className="mx-4 h-px w-8 bg-muted" />
               )}
             </div>
           ))}
         </div>
 
         {serverError && (
-          <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
+          <div className="rounded-md bg-red-50 dark:bg-red-950/30 p-3 text-sm text-red-700 dark:text-red-400">
             {serverError}
           </div>
         )}
@@ -268,7 +268,7 @@ export function OrderForm({ order, onSuccess, onCancel, onStepChange, onDirtyCha
         </div>
 
         {/* Navigation buttons */}
-        <div className="flex justify-between border-t border-gray-200 pt-4">
+        <div className="flex justify-between border-t border-border pt-4">
           <div>
             {currentStep > 0 && (
               <Button

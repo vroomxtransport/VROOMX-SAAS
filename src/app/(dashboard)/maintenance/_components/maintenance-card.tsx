@@ -32,7 +32,7 @@ export function MaintenanceCard({ record, onClick, onEdit }: MaintenanceCardProp
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <Truck className="h-4 w-4 text-muted-foreground shrink-0" />
-            <h3 className="truncate text-sm font-semibold text-gray-900">{truckUnit}</h3>
+            <h3 className="truncate text-sm font-semibold text-foreground">{truckUnit}</h3>
           </div>
           <div className="mt-1.5 flex items-center gap-2">
             <Badge variant="outline" className={cn('gap-1.5', statusColors)}>
@@ -64,19 +64,19 @@ export function MaintenanceCard({ record, onClick, onEdit }: MaintenanceCardProp
 
       <div className="mt-2 space-y-1.5">
         {record.scheduled_date && (
-          <div className="flex items-center gap-2 text-xs text-gray-500">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Calendar className="h-3 w-3" />
             <span>{new Date(record.scheduled_date).toLocaleDateString()}</span>
           </div>
         )}
         {record.vendor && (
-          <div className="flex items-center gap-2 text-xs text-gray-500">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Building2 className="h-3 w-3" />
             <span className="truncate">{record.vendor}</span>
           </div>
         )}
         {cost > 0 && (
-          <div className="flex items-center gap-2 text-xs text-gray-500">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <DollarSign className="h-3 w-3" />
             <span>${cost.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
           </div>
@@ -84,8 +84,8 @@ export function MaintenanceCard({ record, onClick, onEdit }: MaintenanceCardProp
       </div>
 
       {record.description && (
-        <div className="mt-2 border-t border-gray-100 pt-1.5">
-          <p className="text-xs text-gray-500 line-clamp-2">{record.description}</p>
+        <div className="mt-2 border-t border-border pt-1.5">
+          <p className="text-xs text-muted-foreground line-clamp-2">{record.description}</p>
         </div>
       )}
     </EntityCard>

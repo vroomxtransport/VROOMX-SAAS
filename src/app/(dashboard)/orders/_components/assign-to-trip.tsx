@@ -147,30 +147,30 @@ export function AssignToTrip({
 
   if (isAssigning) {
     return (
-      <div className="rounded-lg border bg-white p-6">
+      <div className="rounded-lg border bg-surface p-6">
         <div className="mb-4 flex items-center gap-2">
-          <Truck className="h-5 w-5 text-gray-400" />
-          <h2 className="text-lg font-semibold text-gray-900">Trip Assignment</h2>
+          <Truck className="h-5 w-5 text-muted-foreground/60" />
+          <h2 className="text-lg font-semibold text-foreground">Trip Assignment</h2>
         </div>
         <div className="flex items-center gap-2">
-          <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
-          <span className="text-sm text-gray-500">Updating trip assignment...</span>
+          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground/60" />
+          <span className="text-sm text-muted-foreground">Updating trip assignment...</span>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="rounded-lg border bg-white p-6">
+    <div className="rounded-lg border bg-surface p-6">
       <div className="mb-4 flex items-center gap-2">
-        <Truck className="h-5 w-5 text-gray-400" />
-        <h2 className="text-lg font-semibold text-gray-900">Trip Assignment</h2>
+        <Truck className="h-5 w-5 text-muted-foreground/60" />
+        <h2 className="text-lg font-semibold text-foreground">Trip Assignment</h2>
       </div>
 
       {currentTripId ? (
         /* Assigned state */
         <div className="space-y-3">
-          <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3">
+          <div className="flex items-center justify-between rounded-lg bg-muted/50 p-3">
             <div className="flex flex-col gap-1">
               <Link
                 href={`/trips/${currentTripId}`}
@@ -180,7 +180,7 @@ export function AssignToTrip({
                 <ExternalLink className="h-3 w-3" />
               </Link>
               {currentTripStatus && (
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-muted-foreground">
                   {TRIP_STATUS_LABELS[currentTripStatus]}
                 </span>
               )}
@@ -210,7 +210,7 @@ export function AssignToTrip({
               <Button
                 variant="outline"
                 size="sm"
-                className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                className="text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-700"
                 onClick={() => setRemoveDialogOpen(true)}
               >
                 <X className="mr-1.5 h-3.5 w-3.5" />
@@ -222,7 +222,7 @@ export function AssignToTrip({
       ) : (
         /* Unassigned state */
         <div className="space-y-3">
-          <p className="text-sm text-gray-500">Not assigned to a trip.</p>
+          <p className="text-sm text-muted-foreground">Not assigned to a trip.</p>
           <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm">
@@ -295,7 +295,7 @@ function TripSearchList({
             <Skeleton className="h-10 w-full" />
           </div>
         ) : trips.length === 0 ? (
-          <div className="px-4 py-6 text-center text-sm text-gray-500">
+          <div className="px-4 py-6 text-center text-sm text-muted-foreground">
             {search ? 'No matching trips found.' : 'No assignable trips.'}
           </div>
         ) : (
@@ -303,18 +303,18 @@ function TripSearchList({
             <button
               key={trip.id}
               type="button"
-              className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-gray-50"
+              className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-muted/50"
               onClick={() => onSelect(trip.id)}
             >
               <div className="flex-1 min-w-0">
-                <p className="truncate text-sm font-medium text-gray-900">
+                <p className="truncate text-sm font-medium text-foreground">
                   {trip.trip_number ?? 'No #'}
                 </p>
-                <p className="truncate text-xs text-gray-500">
+                <p className="truncate text-xs text-muted-foreground">
                   {buildTripLabel(trip)}
                 </p>
               </div>
-              <span className="shrink-0 text-xs text-gray-400">
+              <span className="shrink-0 text-xs text-muted-foreground/60">
                 {trip.order_count} order{trip.order_count !== 1 ? 's' : ''}
               </span>
             </button>

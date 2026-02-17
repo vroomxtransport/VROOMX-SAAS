@@ -26,19 +26,19 @@ export default function TripDetailPage({
         </div>
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="rounded-lg border bg-white p-4">
+            <div key={i} className="rounded-lg border bg-surface p-4">
               <Skeleton className="mb-2 h-4 w-1/2" />
               <Skeleton className="h-6 w-3/4" />
             </div>
           ))}
         </div>
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="rounded-lg border bg-white p-6 lg:col-span-2">
+          <div className="rounded-lg border bg-surface p-6 lg:col-span-2">
             <Skeleton className="mb-4 h-6 w-1/3" />
             <Skeleton className="h-4 w-full" />
             <Skeleton className="mt-2 h-4 w-2/3" />
           </div>
-          <div className="rounded-lg border bg-white p-6">
+          <div className="rounded-lg border bg-surface p-6">
             <Skeleton className="mb-4 h-6 w-1/3" />
             <Skeleton className="h-4 w-full" />
             <Skeleton className="mt-2 h-4 w-2/3" />
@@ -59,7 +59,7 @@ export default function TripDetailPage({
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Dispatch
         </Button>
-        <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
+        <div className="rounded-md bg-red-50 dark:bg-red-950/30 p-4 text-sm text-red-700 dark:text-red-400">
           Failed to load trip: {error?.message ?? 'Unknown error'}
         </div>
       </div>
@@ -77,7 +77,7 @@ export default function TripDetailPage({
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Dispatch
         </Button>
-        <div className="rounded-md bg-yellow-50 p-4 text-sm text-yellow-700">
+        <div className="rounded-md bg-yellow-50 dark:bg-yellow-950/30 p-4 text-sm text-yellow-700 dark:text-yellow-400">
           Trip not found.
         </div>
       </div>

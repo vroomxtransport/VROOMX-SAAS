@@ -395,14 +395,14 @@ export function CSVImportDialog({ open, onOpenChange }: CSVImportDialogProps) {
         <div className="flex items-center gap-1 text-xs">
           {steps.map((s, i) => (
             <div key={s} className="flex items-center gap-1">
-              {i > 0 && <span className="text-gray-300 mx-0.5">/</span>}
+              {i > 0 && <span className="text-muted-foreground/60 mx-0.5">/</span>}
               <span
                 className={
                   s === step
                     ? 'font-semibold text-blue-600'
                     : i < stepIndex
                       ? 'text-green-600'
-                      : 'text-gray-400'
+                      : 'text-muted-foreground/60'
                 }
               >
                 {stepLabels[s]}
@@ -416,12 +416,12 @@ export function CSVImportDialog({ open, onOpenChange }: CSVImportDialogProps) {
           {/* ============ STEP 1: Upload ============ */}
           {step === 'upload' && (
             <div className="flex flex-col items-center justify-center gap-4 py-8">
-              <div className="rounded-full bg-blue-50 p-4">
+              <div className="rounded-full bg-blue-50 dark:bg-blue-950/30 p-4">
                 <Upload className="h-8 w-8 text-blue-600" />
               </div>
               <div className="text-center">
-                <p className="font-medium text-gray-900">Select a CSV file</p>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="font-medium text-foreground">Select a CSV file</p>
+                <p className="text-sm text-muted-foreground mt-1">
                   Headers should match order fields (VIN, Make, Model, Pickup City, etc.)
                 </p>
               </div>
@@ -451,7 +451,7 @@ export function CSVImportDialog({ open, onOpenChange }: CSVImportDialogProps) {
           {step === 'map' && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   Map your CSV columns to order fields. Required fields are marked with{' '}
                   <span className="text-red-500">*</span>
                 </p>
@@ -496,13 +496,13 @@ export function CSVImportDialog({ open, onOpenChange }: CSVImportDialogProps) {
                                   <SelectItem key={field.key} value={field.key}>
                                     {field.required ? `${field.label} *` : field.label}
                                     {' '}
-                                    <span className="text-gray-400 text-[10px]">({field.group})</span>
+                                    <span className="text-muted-foreground/60 text-[10px]">({field.group})</span>
                                   </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
                           </TableCell>
-                          <TableCell className="text-xs text-gray-500 truncate max-w-[120px]">
+                          <TableCell className="text-xs text-muted-foreground truncate max-w-[120px]">
                             {sampleValue}
                           </TableCell>
                         </TableRow>
@@ -521,7 +521,7 @@ export function CSVImportDialog({ open, onOpenChange }: CSVImportDialogProps) {
                 <Badge variant="secondary" className="text-xs">
                   {csvData.length} total rows
                 </Badge>
-                <Badge variant="secondary" className="text-xs bg-green-50 text-green-700">
+                <Badge variant="secondary" className="text-xs bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400">
                   {validRowCount} valid
                 </Badge>
                 {invalidRowCount > 0 && (
@@ -554,9 +554,9 @@ export function CSVImportDialog({ open, onOpenChange }: CSVImportDialogProps) {
                       return (
                         <TableRow
                           key={idx}
-                          className={hasErrors ? 'bg-red-50' : ''}
+                          className={hasErrors ? 'bg-red-50 dark:bg-red-950/30' : ''}
                         >
-                          <TableCell className="text-xs text-gray-400">
+                          <TableCell className="text-xs text-muted-foreground/60">
                             {idx + 1}
                           </TableCell>
                           {Object.entries(columnMapping).map(([, field]) => {
@@ -590,7 +590,7 @@ export function CSVImportDialog({ open, onOpenChange }: CSVImportDialogProps) {
                 </Table>
 
                 {mappedRows.length > 10 && (
-                  <p className="text-xs text-gray-400 text-center py-2">
+                  <p className="text-xs text-muted-foreground/60 text-center py-2">
                     Showing first 10 of {mappedRows.length} rows
                   </p>
                 )}
@@ -610,20 +610,20 @@ export function CSVImportDialog({ open, onOpenChange }: CSVImportDialogProps) {
               {importing ? (
                 <>
                   <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Importing {mappedRows.length} orders...
                   </p>
                 </>
               ) : importResult ? (
                 <>
-                  <div className="rounded-full bg-green-50 p-4">
+                  <div className="rounded-full bg-green-50 dark:bg-green-950/30 p-4">
                     <CheckCircle2 className="h-8 w-8 text-green-600" />
                   </div>
                   <div className="text-center space-y-1">
-                    <p className="font-semibold text-gray-900">
+                    <p className="font-semibold text-foreground">
                       Import Complete
                     </p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       {importResult.created} order{importResult.created !== 1 ? 's' : ''} created successfully
                     </p>
                     {importResult.errors.length > 0 && (
@@ -654,7 +654,7 @@ export function CSVImportDialog({ open, onOpenChange }: CSVImportDialogProps) {
                             {importResult.errors.map((err, i) => (
                               <div
                                 key={i}
-                                className="text-xs text-red-700 bg-red-50 rounded px-2 py-1"
+                                className="text-xs text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950/30 rounded px-2 py-1"
                               >
                                 <span className="font-medium">Row {err.row}:</span>{' '}
                                 {err.message}

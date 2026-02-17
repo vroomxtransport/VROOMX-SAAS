@@ -141,14 +141,14 @@ export function TruckForm({ truck, onSuccess, onDirtyChange }: TruckFormProps) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {serverError && (
-          <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
+          <div className="rounded-md bg-red-50 dark:bg-red-950/30 p-3 text-sm text-red-700 dark:text-red-400">
             {serverError}
           </div>
         )}
 
         {/* Identity */}
         <div>
-          <h4 className="mb-3 text-sm font-medium text-gray-900">Identity</h4>
+          <h4 className="mb-3 text-sm font-medium text-foreground">Identity</h4>
           <FormField
             control={form.control}
             name="unitNumber"
@@ -185,7 +185,7 @@ export function TruckForm({ truck, onSuccess, onDirtyChange }: TruckFormProps) {
 
         {/* Vehicle Info */}
         <div>
-          <h4 className="mb-3 text-sm font-medium text-gray-900">Vehicle Info</h4>
+          <h4 className="mb-3 text-sm font-medium text-foreground">Vehicle Info</h4>
           <div className="grid grid-cols-3 gap-3">
             <FormField
               control={form.control}
@@ -239,7 +239,7 @@ export function TruckForm({ truck, onSuccess, onDirtyChange }: TruckFormProps) {
 
         {/* Classification */}
         <div>
-          <h4 className="mb-3 text-sm font-medium text-gray-900">Classification</h4>
+          <h4 className="mb-3 text-sm font-medium text-foreground">Classification</h4>
           <div className="grid grid-cols-2 gap-3">
             <FormField
               control={form.control}

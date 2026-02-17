@@ -80,7 +80,7 @@ function BillingToggle({ isYearly, onToggle }: { isYearly: boolean; onToggle: (v
           className={cn(
             'relative z-10 rounded-md px-4 py-1.5 text-sm font-medium transition-all',
             !isYearly
-              ? 'bg-white text-foreground shadow-sm dark:bg-surface-raised'
+              ? 'bg-surface text-foreground shadow-sm dark:bg-surface-raised'
               : 'text-muted-foreground hover:text-foreground'
           )}
         >
@@ -91,7 +91,7 @@ function BillingToggle({ isYearly, onToggle }: { isYearly: boolean; onToggle: (v
           className={cn(
             'relative z-10 rounded-md px-4 py-1.5 text-sm font-medium transition-all',
             isYearly
-              ? 'bg-white text-foreground shadow-sm dark:bg-surface-raised'
+              ? 'bg-surface text-foreground shadow-sm dark:bg-surface-raised'
               : 'text-muted-foreground hover:text-foreground'
           )}
         >

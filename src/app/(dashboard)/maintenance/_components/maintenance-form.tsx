@@ -134,14 +134,14 @@ export function MaintenanceForm({ record, onSuccess, onCancel }: MaintenanceForm
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {serverError && (
-          <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
+          <div className="rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-400">
             {serverError}
           </div>
         )}
 
         {/* Truck & Type */}
         <div>
-          <h4 className="mb-3 text-sm font-medium text-gray-900">Details</h4>
+          <h4 className="mb-3 text-sm font-medium text-foreground">Details</h4>
           <div className="grid grid-cols-2 gap-3">
             <FormField
               control={form.control}
@@ -227,7 +227,7 @@ export function MaintenanceForm({ record, onSuccess, onCancel }: MaintenanceForm
 
         {/* Description & Vendor */}
         <div>
-          <h4 className="mb-3 text-sm font-medium text-gray-900">Service Info</h4>
+          <h4 className="mb-3 text-sm font-medium text-foreground">Service Info</h4>
           <FormField
             control={form.control}
             name="description"
@@ -287,7 +287,7 @@ export function MaintenanceForm({ record, onSuccess, onCancel }: MaintenanceForm
 
         {/* Schedule & Odometer */}
         <div>
-          <h4 className="mb-3 text-sm font-medium text-gray-900">Schedule & Mileage</h4>
+          <h4 className="mb-3 text-sm font-medium text-foreground">Schedule & Mileage</h4>
           <div className="grid grid-cols-2 gap-3">
             <FormField
               control={form.control}

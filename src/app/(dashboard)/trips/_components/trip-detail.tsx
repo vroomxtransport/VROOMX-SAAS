@@ -47,7 +47,7 @@ export function TripDetail({ trip }: TripDetailProps) {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <h1 className="text-xl font-bold text-gray-900">
+          <h1 className="text-xl font-bold text-foreground">
             {trip.trip_number ?? 'Draft Trip'}
           </h1>
           <StatusBadge status={trip.status} type="trip" />
@@ -60,12 +60,12 @@ export function TripDetail({ trip }: TripDetailProps) {
       </div>
 
       {/* Trip Info Bar */}
-      <div className="grid grid-cols-2 gap-4 rounded-lg border bg-white p-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 rounded-lg border bg-surface p-4 lg:grid-cols-4">
         {/* Truck */}
         <div className="flex items-start gap-3">
-          <Truck className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
+          <Truck className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/60" />
           <div>
-            <p className="text-xs font-medium uppercase text-gray-500">Truck</p>
+            <p className="text-xs font-medium uppercase text-muted-foreground">Truck</p>
             {trip.truck ? (
               <Link
                 href={`/trucks/${trip.truck.id}`}
@@ -74,19 +74,19 @@ export function TripDetail({ trip }: TripDetailProps) {
                 #{trip.truck.unit_number}
               </Link>
             ) : (
-              <p className="text-sm text-gray-500">Unassigned</p>
+              <p className="text-sm text-muted-foreground">Unassigned</p>
             )}
             {truckType && (
-              <p className="text-xs text-gray-500">{TRUCK_TYPE_LABELS[truckType]}</p>
+              <p className="text-xs text-muted-foreground">{TRUCK_TYPE_LABELS[truckType]}</p>
             )}
           </div>
         </div>
 
         {/* Driver */}
         <div className="flex items-start gap-3">
-          <User className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
+          <User className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/60" />
           <div>
-            <p className="text-xs font-medium uppercase text-gray-500">Driver</p>
+            <p className="text-xs font-medium uppercase text-muted-foreground">Driver</p>
             {trip.driver ? (
               <Link
                 href={`/drivers/${trip.driver.id}`}
@@ -95,10 +95,10 @@ export function TripDetail({ trip }: TripDetailProps) {
                 {trip.driver.first_name} {trip.driver.last_name}
               </Link>
             ) : (
-              <p className="text-sm text-gray-500">Unassigned</p>
+              <p className="text-sm text-muted-foreground">Unassigned</p>
             )}
             {driverType && (
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 {DRIVER_TYPE_LABELS[driverType]}
                 {payType && ` - ${DRIVER_PAY_TYPE_LABELS[payType]}`}
               </p>
@@ -108,10 +108,10 @@ export function TripDetail({ trip }: TripDetailProps) {
 
         {/* Date Range */}
         <div className="flex items-start gap-3">
-          <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
+          <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/60" />
           <div>
-            <p className="text-xs font-medium uppercase text-gray-500">Date Range</p>
-            <p className="text-sm font-medium text-gray-900">
+            <p className="text-xs font-medium uppercase text-muted-foreground">Date Range</p>
+            <p className="text-sm font-medium text-foreground">
               {formatDate(trip.start_date)} - {formatDate(trip.end_date)}
             </p>
           </div>
@@ -119,10 +119,10 @@ export function TripDetail({ trip }: TripDetailProps) {
 
         {/* Capacity */}
         <div className="flex items-start gap-3">
-          <Package className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
+          <Package className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/60" />
           <div>
-            <p className="text-xs font-medium uppercase text-gray-500">Capacity</p>
-            <p className="text-sm font-medium text-gray-900">
+            <p className="text-xs font-medium uppercase text-muted-foreground">Capacity</p>
+            <p className="text-sm font-medium text-foreground">
               {trip.order_count}{capacity !== null ? ` / ${capacity}` : ''} orders
             </p>
             {capacity !== null && trip.order_count > capacity && (
@@ -134,9 +134,9 @@ export function TripDetail({ trip }: TripDetailProps) {
 
       {/* Route Summary */}
       {(trip.origin_summary || trip.destination_summary) && (
-        <div className="rounded-lg border bg-white px-4 py-3">
-          <p className="text-sm text-gray-600">
-            <span className="font-medium text-gray-900">Route:</span>{' '}
+        <div className="rounded-lg border bg-surface px-4 py-3">
+          <p className="text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">Route:</span>{' '}
             {trip.origin_summary ?? '?'} → {trip.destination_summary ?? '?'}
           </p>
         </div>
@@ -160,12 +160,12 @@ export function TripDetail({ trip }: TripDetailProps) {
 
       {/* Notes */}
       {trip.notes && (
-        <div className="rounded-lg border bg-white p-6">
+        <div className="rounded-lg border bg-surface p-6">
           <div className="mb-4 flex items-center gap-2">
-            <FileText className="h-5 w-5 text-gray-400" />
-            <h2 className="text-lg font-semibold text-gray-900">Notes</h2>
+            <FileText className="h-5 w-5 text-muted-foreground/60" />
+            <h2 className="text-lg font-semibold text-foreground">Notes</h2>
           </div>
-          <p className="whitespace-pre-wrap text-sm text-gray-700">{trip.notes}</p>
+          <p className="whitespace-pre-wrap text-sm text-foreground/80">{trip.notes}</p>
         </div>
       )}
     </div>

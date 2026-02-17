@@ -5,6 +5,7 @@ import { Menu, PanelLeftClose, PanelLeftOpen, Bell } from 'lucide-react'
 import { Breadcrumbs } from './breadcrumbs'
 import { CommandSearch } from './command-search'
 import { UserMenu } from './user-menu'
+import { ThemeToggle } from '@/components/shared/theme-toggle'
 import type { TenantRole, SubscriptionStatus } from '@/types'
 
 interface HeaderProps {
@@ -73,6 +74,9 @@ export function Header({
           <Bell className="h-4 w-4" />
           <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-brand" />
         </button>
+
+        {/* Theme toggle */}
+        <ThemeToggle />
 
         {/* Divider */}
         <div className="h-4 w-px bg-border mx-1" />

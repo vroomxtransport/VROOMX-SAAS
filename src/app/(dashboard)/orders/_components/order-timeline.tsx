@@ -69,8 +69,8 @@ export function OrderTimeline({
                       isCompleted || isCurrent
                         ? 'bg-blue-500'
                         : isCancelled
-                          ? 'bg-gray-200'
-                          : 'bg-gray-200'
+                          ? 'bg-muted'
+                          : 'bg-muted'
                     )}
                   />
                 )}
@@ -85,15 +85,15 @@ export function OrderTimeline({
                     isCurrent &&
                       'border-blue-500 bg-blue-50 text-blue-600 ring-4 ring-blue-100',
                     isFuture &&
-                      'border-gray-300 bg-white text-gray-400',
+                      'border-border bg-surface text-muted-foreground/60',
                     isCancelled &&
-                      'border-gray-300 bg-white text-gray-400'
+                      'border-border bg-surface text-muted-foreground/60'
                   )}
                 >
                   {isCompleted ? (
                     <Check className="h-4 w-4" />
                   ) : isCancelled ? (
-                    <X className="h-4 w-4 text-gray-400" />
+                    <X className="h-4 w-4 text-muted-foreground/60" />
                   ) : (
                     <span className="text-xs font-semibold">{index + 1}</span>
                   )}
@@ -104,7 +104,7 @@ export function OrderTimeline({
                   <div
                     className={cn(
                       'h-0.5 flex-1',
-                      isCompleted ? 'bg-blue-500' : 'bg-gray-200'
+                      isCompleted ? 'bg-blue-500' : 'bg-muted'
                     )}
                   />
                 )}
@@ -117,8 +117,8 @@ export function OrderTimeline({
                   'mt-2 text-center text-xs font-medium',
                   isCompleted && 'text-blue-600',
                   isCurrent && 'text-blue-700 font-semibold',
-                  isFuture && 'text-gray-400',
-                  isCancelled && 'text-gray-400'
+                  isFuture && 'text-muted-foreground/60',
+                  isCancelled && 'text-muted-foreground/60'
                 )}
               >
                 {ORDER_STATUS_LABELS[status]}
@@ -126,7 +126,7 @@ export function OrderTimeline({
 
               {/* Date */}
               {dateLabel && (
-                <span className="mt-0.5 text-center text-[10px] text-gray-500">
+                <span className="mt-0.5 text-center text-[10px] text-muted-foreground">
                   {dateLabel}
                 </span>
               )}
@@ -137,9 +137,9 @@ export function OrderTimeline({
 
       {/* Cancelled overlay indicator */}
       {isCancelled && (
-        <div className="mt-3 flex items-center justify-center gap-2 rounded-md bg-red-50 px-3 py-2">
+        <div className="mt-3 flex items-center justify-center gap-2 rounded-md bg-red-50 dark:bg-red-950/30 px-3 py-2">
           <X className="h-4 w-4 text-red-500" />
-          <span className="text-sm font-medium text-red-700">Order Cancelled</span>
+          <span className="text-sm font-medium text-red-700 dark:text-red-400">Order Cancelled</span>
         </div>
       )}
     </div>

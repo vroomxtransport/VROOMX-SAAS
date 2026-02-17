@@ -60,8 +60,8 @@ export function TruckRow({ truck, onClick, onEdit }: TruckRowProps) {
       className="flex w-full items-center gap-3 rounded-lg border border-border-subtle bg-surface px-3 py-2.5 text-left shadow-sm transition-colors card-hover hover:border-brand/30 focus-visible:ring-2 focus-visible:ring-brand/30 focus-visible:outline-none"
     >
       <div className="flex items-center gap-2 min-w-0 shrink-0 w-[100px]">
-        <TruckIcon className="h-4 w-4 shrink-0 text-gray-400" />
-        <span className="text-sm font-semibold text-gray-900 truncate">
+        <TruckIcon className="h-4 w-4 shrink-0 text-muted-foreground/60" />
+        <span className="text-sm font-semibold text-foreground truncate">
           {truck.unit_number}
         </span>
       </div>
@@ -81,12 +81,12 @@ export function TruckRow({ truck, onClick, onEdit }: TruckRowProps) {
         )}
       </div>
 
-      <div className="hidden md:block text-xs text-gray-500 min-w-0 flex-1 truncate">
+      <div className="hidden md:block text-xs text-muted-foreground min-w-0 flex-1 truncate">
         {vehicleLine}
       </div>
 
       {truncatedVin && (
-        <div className="hidden lg:block font-mono text-xs text-gray-400 shrink-0 w-[140px]">
+        <div className="hidden lg:block font-mono text-xs text-muted-foreground/60 shrink-0 w-[140px]">
           VIN: {truncatedVin}
         </div>
       )}

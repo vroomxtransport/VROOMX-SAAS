@@ -94,8 +94,8 @@ export function BatchActions({ selectedOrderIds, onClear }: BatchActionsProps) {
   }, [selectedOrderIds, paymentDate, onClear, router])
 
   return (
-    <div className="flex items-center gap-3 rounded-lg border bg-blue-50 border-blue-200 px-4 py-2.5">
-      <span className="text-sm font-medium text-blue-800">
+    <div className="flex items-center gap-3 rounded-lg border bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800 px-4 py-2.5">
+      <span className="text-sm font-medium text-blue-800 dark:text-blue-400">
         {selectedOrderIds.length} order
         {selectedOrderIds.length !== 1 ? 's' : ''} selected
       </span>
@@ -107,7 +107,7 @@ export function BatchActions({ selectedOrderIds, onClear }: BatchActionsProps) {
           variant="outline"
           onClick={handleBatchSendInvoices}
           disabled={sendingInvoices || markingPaid}
-          className="bg-white"
+          className="bg-surface"
         >
           {sendingInvoices ? (
             <>
@@ -129,7 +129,7 @@ export function BatchActions({ selectedOrderIds, onClear }: BatchActionsProps) {
               size="sm"
               variant="outline"
               disabled={sendingInvoices || markingPaid}
-              className="bg-white"
+              className="bg-surface"
             >
               {markingPaid ? (
                 <>
@@ -158,7 +158,7 @@ export function BatchActions({ selectedOrderIds, onClear }: BatchActionsProps) {
                   className="mt-1"
                 />
               </div>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 This will record full payment for{' '}
                 {selectedOrderIds.length} order
                 {selectedOrderIds.length !== 1 ? 's' : ''}.
@@ -188,7 +188,7 @@ export function BatchActions({ selectedOrderIds, onClear }: BatchActionsProps) {
           variant="ghost"
           onClick={onClear}
           disabled={sendingInvoices || markingPaid}
-          className="text-gray-500"
+          className="text-muted-foreground"
         >
           <X className="h-3.5 w-3.5" />
         </Button>

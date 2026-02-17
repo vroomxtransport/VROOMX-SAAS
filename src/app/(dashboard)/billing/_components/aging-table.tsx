@@ -23,11 +23,11 @@ function formatCurrency(value: number): string {
 }
 
 const BUCKET_STYLES = {
-  current: 'text-green-700 bg-green-50',
-  '1_30': 'text-yellow-700 bg-yellow-50',
-  '31_60': 'text-orange-700 bg-orange-50',
-  '61_90': 'text-red-700 bg-red-50',
-  '90_plus': 'text-red-900 bg-red-100',
+  current: 'text-green-700 bg-green-50 dark:bg-green-950/30 dark:text-green-400',
+  '1_30': 'text-yellow-700 bg-yellow-50 dark:bg-yellow-950/30 dark:text-yellow-400',
+  '31_60': 'text-orange-700 bg-orange-50 dark:bg-orange-950/30 dark:text-orange-400',
+  '61_90': 'text-red-700 bg-red-50 dark:bg-red-950/30 dark:text-red-400',
+  '90_plus': 'text-red-900 bg-red-100 dark:bg-red-950/30 dark:text-red-400',
 } as const
 
 interface AgingTableProps {
@@ -37,12 +37,12 @@ interface AgingTableProps {
 export function AgingTable({ aging }: AgingTableProps) {
   if (aging.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-lg border bg-white py-8 text-center">
-        <Clock className="mb-3 h-10 w-10 text-gray-300" />
-        <p className="text-sm font-medium text-gray-500">
+      <div className="flex flex-col items-center justify-center rounded-lg border bg-surface py-8 text-center">
+        <Clock className="mb-3 h-10 w-10 text-muted-foreground/60" />
+        <p className="text-sm font-medium text-muted-foreground">
           No aging data
         </p>
-        <p className="mt-1 text-xs text-gray-400">
+        <p className="mt-1 text-xs text-muted-foreground/60">
           No invoiced orders found
         </p>
       </div>
@@ -64,10 +64,10 @@ export function AgingTable({ aging }: AgingTableProps) {
 
   return (
     <div>
-      <h2 className="mb-4 text-lg font-semibold text-gray-900">
+      <h2 className="mb-4 text-lg font-semibold text-foreground">
         Aging Analysis
       </h2>
-      <div className="rounded-lg border bg-white">
+      <div className="rounded-lg border bg-surface">
         <Table>
           <TableHeader>
             <TableRow>
@@ -98,7 +98,7 @@ export function AgingTable({ aging }: AgingTableProps) {
             ))}
 
             {/* Totals Row */}
-            <TableRow className="border-t-2 bg-gray-50 font-semibold">
+            <TableRow className="border-t-2 bg-muted/50 font-semibold">
               <TableCell>Total</TableCell>
               <AgingCell value={totals.current} bucket="current" bold />
               <AgingCell value={totals['1_30']} bucket="1_30" bold />
@@ -128,7 +128,7 @@ interface AgingCellProps {
 
 function AgingCell({ value, bucket, bold }: AgingCellProps) {
   if (value === 0) {
-    return <TableCell className="text-right text-gray-400">-</TableCell>
+    return <TableCell className="text-right text-muted-foreground/60">-</TableCell>
   }
 
   return (

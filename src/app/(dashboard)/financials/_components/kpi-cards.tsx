@@ -26,19 +26,19 @@ interface KPICardDef {
 }
 
 const ACCENT_STYLES = {
-  blue: 'border-blue-200/50 bg-blue-500/5',
-  emerald: 'border-emerald-200/50 bg-emerald-500/5',
-  amber: 'border-amber-200/50 bg-amber-500/5',
-  violet: 'border-violet-200/50 bg-violet-500/5',
-  rose: 'border-rose-200/50 bg-rose-500/5',
+  blue: 'border-blue-200/50 bg-blue-500/5 dark:border-blue-800/50 dark:bg-blue-500/10',
+  emerald: 'border-emerald-200/50 bg-emerald-500/5 dark:border-emerald-800/50 dark:bg-emerald-500/10',
+  amber: 'border-amber-200/50 bg-amber-500/5 dark:border-amber-800/50 dark:bg-amber-500/10',
+  violet: 'border-violet-200/50 bg-violet-500/5 dark:border-violet-800/50 dark:bg-violet-500/10',
+  rose: 'border-rose-200/50 bg-rose-500/5 dark:border-rose-800/50 dark:bg-rose-500/10',
 }
 
 const ICON_STYLES = {
-  blue: 'text-blue-600 bg-blue-100',
-  emerald: 'text-emerald-600 bg-emerald-100',
-  amber: 'text-amber-600 bg-amber-100',
-  violet: 'text-violet-600 bg-violet-100',
-  rose: 'text-rose-600 bg-rose-100',
+  blue: 'text-blue-600 bg-blue-100 dark:bg-blue-900/50 dark:text-blue-400',
+  emerald: 'text-emerald-600 bg-emerald-100 dark:bg-emerald-900/50 dark:text-emerald-400',
+  amber: 'text-amber-600 bg-amber-100 dark:bg-amber-900/50 dark:text-amber-400',
+  violet: 'text-violet-600 bg-violet-100 dark:bg-violet-900/50 dark:text-violet-400',
+  rose: 'text-rose-600 bg-rose-100 dark:bg-rose-900/50 dark:text-rose-400',
 }
 
 function fmt$(val: number): string {

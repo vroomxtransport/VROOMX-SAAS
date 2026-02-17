@@ -51,7 +51,7 @@ export function VehicleStep() {
               {/* Decode status indicator */}
               <div className="absolute right-3 top-1/2 -translate-y-1/2">
                 {vin.length === 17 && isDecoding && (
-                  <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground/60" />
                 )}
                 {vin.length === 17 && vinData && vinData.errorCode === '0' && (
                   <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -63,7 +63,7 @@ export function VehicleStep() {
             </div>
             <FormMessage />
             {vin.length > 0 && vin.length < 17 && (
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 {vin.length}/17 characters
               </p>
             )}

@@ -84,8 +84,8 @@ export default function DriverDetailPage({ params }: DriverDetailPageProps) {
   if (!driver) {
     return (
       <div className="py-16 text-center">
-        <h2 className="text-lg font-semibold text-gray-900">Driver not found</h2>
-        <p className="mt-1 text-sm text-gray-500">
+        <h2 className="text-lg font-semibold text-foreground">Driver not found</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
           The driver you are looking for does not exist or has been removed.
         </p>
         <Button variant="outline" className="mt-4" onClick={() => router.push('/drivers')}>
@@ -116,7 +116,7 @@ export default function DriverDetailPage({ params }: DriverDetailPageProps) {
 
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">{fullName}</h1>
+            <h1 className="text-xl font-bold text-foreground">{fullName}</h1>
             <div className="mt-2 flex items-center gap-2">
               <StatusBadge status={driver.driver_status} type="driver" />
               <Badge variant="outline">
@@ -127,7 +127,7 @@ export default function DriverDetailPage({ params }: DriverDetailPageProps) {
 
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2 rounded-md border px-3 py-1.5">
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-muted-foreground">
                 {driver.driver_status === 'active' ? 'Active' : 'Inactive'}
               </span>
               <Switch
@@ -142,7 +142,7 @@ export default function DriverDetailPage({ params }: DriverDetailPageProps) {
             </Button>
             <Button
               variant="outline"
-              className="text-red-600 hover:bg-red-50 hover:text-red-700"
+              className="text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-700"
               onClick={() => setDeleteDialogOpen(true)}
             >
               <Trash2 className="mr-2 h-4 w-4" />
@@ -154,33 +154,33 @@ export default function DriverDetailPage({ params }: DriverDetailPageProps) {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Contact Info */}
-        <div className="rounded-lg border bg-white p-5">
-          <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-900">
+        <div className="rounded-lg border bg-surface p-5">
+          <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
             <Phone className="h-4 w-4" />
             Contact Info
           </h3>
           <dl className="space-y-3">
             <div>
-              <dt className="text-xs font-medium text-gray-500">Email</dt>
-              <dd className="text-sm text-gray-900">
+              <dt className="text-xs font-medium text-muted-foreground">Email</dt>
+              <dd className="text-sm text-foreground">
                 {driver.email ? (
                   <a href={`mailto:${driver.email}`} className="text-blue-600 hover:underline">
                     {driver.email}
                   </a>
                 ) : (
-                  <span className="text-gray-400">Not provided</span>
+                  <span className="text-muted-foreground/60">Not provided</span>
                 )}
               </dd>
             </div>
             <div>
-              <dt className="text-xs font-medium text-gray-500">Phone</dt>
-              <dd className="text-sm text-gray-900">
+              <dt className="text-xs font-medium text-muted-foreground">Phone</dt>
+              <dd className="text-sm text-foreground">
                 {driver.phone ? (
                   <a href={`tel:${driver.phone}`} className="text-blue-600 hover:underline">
                     {driver.phone}
                   </a>
                 ) : (
-                  <span className="text-gray-400">Not provided</span>
+                  <span className="text-muted-foreground/60">Not provided</span>
                 )}
               </dd>
             </div>
@@ -188,61 +188,61 @@ export default function DriverDetailPage({ params }: DriverDetailPageProps) {
         </div>
 
         {/* Address */}
-        <div className="rounded-lg border bg-white p-5">
-          <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-900">
+        <div className="rounded-lg border bg-surface p-5">
+          <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
             <MapPin className="h-4 w-4" />
             Address
           </h3>
           {hasAddress ? (
-            <div className="text-sm text-gray-900">
+            <div className="text-sm text-foreground">
               {driver.address && <p>{driver.address}</p>}
               <p>
                 {[driver.city, driver.state, driver.zip].filter(Boolean).join(', ')}
               </p>
             </div>
           ) : (
-            <p className="text-sm text-gray-400">No address provided</p>
+            <p className="text-sm text-muted-foreground/60">No address provided</p>
           )}
         </div>
 
         {/* Driver Details */}
-        <div className="rounded-lg border bg-white p-5">
-          <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-900">
+        <div className="rounded-lg border bg-surface p-5">
+          <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
             <CreditCard className="h-4 w-4" />
             Driver Details
           </h3>
           <dl className="space-y-3">
             <div>
-              <dt className="text-xs font-medium text-gray-500">Driver Type</dt>
-              <dd className="text-sm text-gray-900">
+              <dt className="text-xs font-medium text-muted-foreground">Driver Type</dt>
+              <dd className="text-sm text-foreground">
                 {DRIVER_TYPE_LABELS[driver.driver_type as DriverType]}
               </dd>
             </div>
             <div>
-              <dt className="text-xs font-medium text-gray-500">License Number</dt>
-              <dd className="text-sm text-gray-900">
-                {driver.license_number || <span className="text-gray-400">Not provided</span>}
+              <dt className="text-xs font-medium text-muted-foreground">License Number</dt>
+              <dd className="text-sm text-foreground">
+                {driver.license_number || <span className="text-muted-foreground/60">Not provided</span>}
               </dd>
             </div>
           </dl>
         </div>
 
         {/* Pay Configuration */}
-        <div className="rounded-lg border bg-white p-5">
-          <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-900">
+        <div className="rounded-lg border bg-surface p-5">
+          <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
             <DollarSign className="h-4 w-4" />
             Pay Configuration
           </h3>
           <dl className="space-y-3">
             <div>
-              <dt className="text-xs font-medium text-gray-500">Pay Type</dt>
-              <dd className="text-sm text-gray-900">
+              <dt className="text-xs font-medium text-muted-foreground">Pay Type</dt>
+              <dd className="text-sm text-foreground">
                 {DRIVER_PAY_TYPE_LABELS[driver.pay_type as DriverPayType]}
               </dd>
             </div>
             <div>
-              <dt className="text-xs font-medium text-gray-500">Pay Rate</dt>
-              <dd className="text-sm font-medium text-gray-900">
+              <dt className="text-xs font-medium text-muted-foreground">Pay Rate</dt>
+              <dd className="text-sm font-medium text-foreground">
                 {formatPayDisplay(driver.pay_type as DriverPayType, payRate)}
               </dd>
             </div>
@@ -250,12 +250,12 @@ export default function DriverDetailPage({ params }: DriverDetailPageProps) {
         </div>
 
         {/* Assigned Orders (Placeholder) */}
-        <div className="rounded-lg border bg-white p-5">
-          <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-900">
+        <div className="rounded-lg border bg-surface p-5">
+          <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
             <Truck className="h-4 w-4" />
             Assigned Orders
           </h3>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-muted-foreground/60">
             Order assignment will be available when the dispatch workflow is built.
           </p>
         </div>
@@ -271,9 +271,9 @@ export default function DriverDetailPage({ params }: DriverDetailPageProps) {
 
       {/* Notes */}
       {driver.notes && (
-        <div className="mt-6 rounded-lg border bg-white p-5">
-          <h3 className="mb-2 text-sm font-semibold text-gray-900">Notes</h3>
-          <p className="whitespace-pre-wrap text-sm text-gray-600">{driver.notes}</p>
+        <div className="mt-6 rounded-lg border bg-surface p-5">
+          <h3 className="mb-2 text-sm font-semibold text-foreground">Notes</h3>
+          <p className="whitespace-pre-wrap text-sm text-muted-foreground">{driver.notes}</p>
         </div>
       )}
 

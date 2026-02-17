@@ -52,12 +52,12 @@ export function OrderCard({ order, onClick, onEdit }: OrderCardProps) {
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-gray-500">
+            <span className="text-xs font-medium text-muted-foreground">
               {order.order_number ?? 'Draft'}
             </span>
             <StatusBadge status={order.status} type="order" />
           </div>
-          <h3 className="mt-1 truncate text-sm font-semibold text-gray-900">
+          <h3 className="mt-1 truncate text-sm font-semibold text-foreground">
             {formatVehicle(order)}
           </h3>
         </div>
@@ -74,25 +74,25 @@ export function OrderCard({ order, onClick, onEdit }: OrderCardProps) {
       </div>
 
       {route && (
-        <div className="mt-2 flex items-center gap-1.5 text-xs text-gray-600">
+        <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
           <span className="truncate">{route.from}</span>
-          <ArrowRight className="h-3 w-3 flex-shrink-0 text-gray-400" />
+          <ArrowRight className="h-3 w-3 flex-shrink-0 text-muted-foreground/60" />
           <span className="truncate">{route.to}</span>
         </div>
       )}
 
       {order.broker && (
-        <p className="mt-1.5 text-xs text-gray-500">
+        <p className="mt-1.5 text-xs text-muted-foreground">
           Broker: {order.broker.name}
         </p>
       )}
 
-      <div className="mt-2 flex items-center justify-between border-t border-gray-100 pt-1.5">
-        <span className="text-sm font-semibold text-gray-900">
+      <div className="mt-2 flex items-center justify-between border-t border-border pt-1.5">
+        <span className="text-sm font-semibold text-foreground">
           {revenue > 0 ? formatCurrency(revenue) : '--'}
         </span>
         {driverName && (
-          <span className="text-xs text-gray-500">{driverName}</span>
+          <span className="text-xs text-muted-foreground">{driverName}</span>
         )}
       </div>
     </EntityCard>

@@ -217,10 +217,10 @@ export function OrderAttachments({ orderId, tenantId }: OrderAttachmentsProps) {
 
   if (isLoading) {
     return (
-      <div className="rounded-lg border bg-white p-6">
+      <div className="rounded-lg border bg-surface p-6">
         <div className="mb-4 flex items-center gap-2">
-          <Paperclip className="h-5 w-5 text-gray-400" />
-          <h2 className="text-lg font-semibold text-gray-900">Attachments</h2>
+          <Paperclip className="h-5 w-5 text-muted-foreground/60" />
+          <h2 className="text-lg font-semibold text-foreground">Attachments</h2>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
           <Skeleton className="h-32 w-full rounded-lg" />
@@ -232,13 +232,13 @@ export function OrderAttachments({ orderId, tenantId }: OrderAttachmentsProps) {
   }
 
   return (
-    <div className="rounded-lg border bg-white p-6">
+    <div className="rounded-lg border bg-surface p-6">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Paperclip className="h-5 w-5 text-gray-400" />
-          <h2 className="text-lg font-semibold text-gray-900">Attachments</h2>
+          <Paperclip className="h-5 w-5 text-muted-foreground/60" />
+          <h2 className="text-lg font-semibold text-foreground">Attachments</h2>
           {attachments && attachments.length > 0 && (
-            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+            <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
               {attachments.length}
             </span>
           )}
@@ -251,7 +251,7 @@ export function OrderAttachments({ orderId, tenantId }: OrderAttachmentsProps) {
 
       {/* Attachments grid */}
       {!attachments || attachments.length === 0 ? (
-        <p className="py-8 text-center text-sm text-gray-400">
+        <p className="py-8 text-center text-sm text-muted-foreground/60">
           No attachments yet. Upload rate confirmations, photos, or documents.
         </p>
       ) : (
@@ -263,7 +263,7 @@ export function OrderAttachments({ orderId, tenantId }: OrderAttachmentsProps) {
             return (
               <div
                 key={attachment.id}
-                className="group relative flex flex-col overflow-hidden rounded-lg border bg-gray-50"
+                className="group relative flex flex-col overflow-hidden rounded-lg border bg-muted/50"
               >
                 {/* Preview area */}
                 <div className="flex h-28 items-center justify-center">
@@ -275,19 +275,19 @@ export function OrderAttachments({ orderId, tenantId }: OrderAttachmentsProps) {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <FileText className="h-10 w-10 text-gray-300" />
+                    <FileText className="h-10 w-10 text-muted-foreground/60" />
                   )}
                 </div>
 
                 {/* Info */}
                 <div className="border-t p-2">
                   <p
-                    className="truncate text-xs font-medium text-gray-700"
+                    className="truncate text-xs font-medium text-foreground/80"
                     title={attachment.file_name}
                   >
                     {attachment.file_name}
                   </p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-muted-foreground/60">
                     {formatFileSize(attachment.file_size)}
                   </p>
                 </div>
@@ -348,24 +348,24 @@ export function OrderAttachments({ orderId, tenantId }: OrderAttachmentsProps) {
                 }
                 className="mt-1"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Supported: images, PDFs, documents, spreadsheets
               </p>
             </div>
 
             {selectedFile && (
-              <div className="rounded-md bg-gray-50 p-3">
+              <div className="rounded-md bg-muted/50 p-3">
                 <div className="flex items-center gap-2">
                   {isImageFile(selectedFile.name) ? (
                     <ImageIcon className="h-4 w-4 text-blue-500" />
                   ) : (
-                    <FileText className="h-4 w-4 text-gray-500" />
+                    <FileText className="h-4 w-4 text-muted-foreground" />
                   )}
-                  <span className="text-sm font-medium text-gray-900">
+                  <span className="text-sm font-medium text-foreground">
                     {selectedFile.name}
                   </span>
                 </div>
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-muted-foreground">
                   {formatFileSize(selectedFile.size)}
                 </p>
               </div>

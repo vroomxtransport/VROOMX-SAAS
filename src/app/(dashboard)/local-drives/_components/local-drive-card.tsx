@@ -3,7 +3,7 @@
 import { EntityCard } from '@/components/shared/entity-card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Pencil, MapPin, Calendar, DollarSign, User, Truck } from 'lucide-react'
+import { Pencil, MapPin, Calendar, DollarSign, User, Truck, Car } from 'lucide-react'
 import { LOCAL_DRIVE_STATUS_LABELS, LOCAL_DRIVE_STATUS_COLORS } from '@/types'
 import type { LocalDrive } from '@/types/database'
 import type { LocalDriveStatus } from '@/types'
@@ -41,7 +41,7 @@ function formatRevenue(revenue: string): string {
 
 export function LocalDriveCard({ localDrive, onClick, onEdit }: LocalDriveCardProps) {
   const status = localDrive.status as LocalDriveStatus
-  const colorClasses = LOCAL_DRIVE_STATUS_COLORS[status] ?? 'bg-gray-50 text-gray-700 border-gray-200'
+  const colorClasses = LOCAL_DRIVE_STATUS_COLORS[status] ?? 'bg-muted/50 text-foreground/80 border-border'
   const statusLabel = LOCAL_DRIVE_STATUS_LABELS[status] ?? localDrive.status
 
   const driverName = localDrive.driver
@@ -53,7 +53,7 @@ export function LocalDriveCard({ localDrive, onClick, onEdit }: LocalDriveCardPr
     <EntityCard onClick={onClick}>
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
             <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
             <span className="truncate">{formatRoute(localDrive)}</span>
           </div>
@@ -76,26 +76,35 @@ export function LocalDriveCard({ localDrive, onClick, onEdit }: LocalDriveCardPr
       </div>
 
       <div className="mt-2 space-y-1">
+        {localDrive.order && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Car className="h-3 w-3" />
+            <span className="truncate">
+              {localDrive.order.order_number ? `#${localDrive.order.order_number} · ` : ''}
+              {[localDrive.order.vehicle_make, localDrive.order.vehicle_model].filter(Boolean).join(' ') || 'Vehicle'}
+            </span>
+          </div>
+        )}
         {driverName && (
-          <div className="flex items-center gap-2 text-xs text-gray-500">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <User className="h-3 w-3" />
             <span>{driverName}</span>
           </div>
         )}
         {truckUnit && (
-          <div className="flex items-center gap-2 text-xs text-gray-500">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Truck className="h-3 w-3" />
             <span>Unit #{truckUnit}</span>
           </div>
         )}
-        <div className="flex items-center gap-2 text-xs text-gray-500">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Calendar className="h-3 w-3" />
           <span>{formatDate(localDrive.scheduled_date)}</span>
         </div>
       </div>
 
-      <div className="mt-2 border-t border-gray-100 pt-1.5">
-        <div className="flex items-center gap-1 text-xs font-medium text-gray-600">
+      <div className="mt-2 border-t border-border pt-1.5">
+        <div className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
           <DollarSign className="h-3 w-3" />
           <span>{formatRevenue(localDrive.revenue)}</span>
         </div>

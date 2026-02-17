@@ -110,9 +110,9 @@ export function AssignOrderDialog({
 
         {/* Capacity Warning */}
         {isOverCapacity && (
-          <div className="flex items-center gap-2 rounded-md bg-amber-50 px-3 py-2">
+          <div className="flex items-center gap-2 rounded-md bg-amber-50 dark:bg-amber-950/30 px-3 py-2">
             <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
-            <p className="text-sm font-medium text-amber-700">
+            <p className="text-sm font-medium text-amber-700 dark:text-amber-400">
               Trip is at or over capacity ({currentOrderCount}/{capacity}). You can still assign orders.
             </p>
           </div>
@@ -120,7 +120,7 @@ export function AssignOrderDialog({
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
           <Input
             placeholder="Search by order number, VIN, or make..."
             value={search}
@@ -133,10 +133,10 @@ export function AssignOrderDialog({
         <div className="max-h-[400px] overflow-y-auto divide-y rounded-md border">
           {isPending ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground/60" />
             </div>
           ) : orders.length === 0 ? (
-            <div className="px-4 py-8 text-center text-sm text-gray-500">
+            <div className="px-4 py-8 text-center text-sm text-muted-foreground">
               {debouncedSearch
                 ? `No unassigned orders matching "${debouncedSearch}".`
                 : 'No unassigned orders found.'}
@@ -160,28 +160,28 @@ export function AssignOrderDialog({
               return (
                 <div
                   key={order.id}
-                  className="flex items-center justify-between px-4 py-3 hover:bg-gray-50"
+                  className="flex items-center justify-between px-4 py-3 hover:bg-muted/50"
                 >
                   <div className="flex flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-4">
                     {/* Order number + vehicle */}
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-900">
+                        <span className="text-sm font-medium text-foreground">
                           {order.order_number ?? 'Draft'}
                         </span>
                         <StatusBadge status={order.status} type="order" />
                       </div>
-                      <p className="text-xs text-gray-500">{vehicleInfo}</p>
+                      <p className="text-xs text-muted-foreground">{vehicleInfo}</p>
                     </div>
 
                     {/* Route */}
                     <div className="shrink-0">
-                      <p className="text-xs font-medium text-gray-900">{route}</p>
+                      <p className="text-xs font-medium text-foreground">{route}</p>
                     </div>
 
                     {/* Revenue */}
                     <div className="shrink-0">
-                      <p className="text-sm font-medium text-gray-900">
+                      <p className="text-sm font-medium text-foreground">
                         {formatCurrency(order.revenue)}
                       </p>
                     </div>

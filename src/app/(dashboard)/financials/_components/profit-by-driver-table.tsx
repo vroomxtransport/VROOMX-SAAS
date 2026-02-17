@@ -53,8 +53,8 @@ export function ProfitByDriverTable({ data }: ProfitByDriverTableProps) {
                   <span className={cn(
                     'inline-flex rounded-md px-1.5 py-0.5 text-[11px] font-medium',
                     driver.driverType === 'company'
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'bg-purple-50 text-purple-700'
+                      ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400'
+                      : 'bg-purple-50 text-purple-700 dark:bg-purple-950/30 dark:text-purple-400'
                   )}>
                     {DRIVER_TYPE_LABELS[driver.driverType as DriverType] ?? driver.driverType}
                   </span>

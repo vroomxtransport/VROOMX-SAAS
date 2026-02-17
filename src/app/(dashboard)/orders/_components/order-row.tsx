@@ -53,7 +53,7 @@ export function OrderRow({ order, onClick, onEdit }: OrderRowProps) {
     >
       {/* Order number */}
       <div className="flex items-center gap-2 shrink-0 w-[90px]">
-        <span className="text-sm font-semibold text-gray-900 truncate">
+        <span className="text-sm font-semibold text-foreground truncate">
           {order.order_number ?? 'Draft'}
         </span>
       </div>
@@ -64,28 +64,28 @@ export function OrderRow({ order, onClick, onEdit }: OrderRowProps) {
       </div>
 
       {/* Vehicle */}
-      <div className="min-w-0 flex-1 truncate text-sm text-gray-700">
+      <div className="min-w-0 flex-1 truncate text-sm text-foreground/80">
         {formatVehicle(order)}
       </div>
 
       {/* Route */}
       {(pickupCity || deliveryCity) && (
-        <div className="hidden md:flex items-center gap-1.5 text-xs text-gray-500 shrink-0 max-w-[240px]">
+        <div className="hidden md:flex items-center gap-1.5 text-xs text-muted-foreground shrink-0 max-w-[240px]">
           <span className="truncate">{pickupCity || 'TBD'}</span>
-          <ArrowRight className="h-3 w-3 shrink-0 text-gray-400" />
+          <ArrowRight className="h-3 w-3 shrink-0 text-muted-foreground/60" />
           <span className="truncate">{deliveryCity || 'TBD'}</span>
         </div>
       )}
 
       {/* Driver */}
       {driverName && (
-        <div className="hidden lg:block text-xs text-gray-500 shrink-0 w-[120px] truncate">
+        <div className="hidden lg:block text-xs text-muted-foreground shrink-0 w-[120px] truncate">
           {driverName}
         </div>
       )}
 
       {/* Revenue */}
-      <div className="text-sm font-semibold text-gray-900 tabular-nums shrink-0 w-[70px] text-right">
+      <div className="text-sm font-semibold text-foreground tabular-nums shrink-0 w-[70px] text-right">
         {revenue > 0 ? formatCurrency(revenue) : '--'}
       </div>
 

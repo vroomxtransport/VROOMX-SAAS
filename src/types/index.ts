@@ -174,24 +174,24 @@ export const PAYMENT_TERMS_LABELS: Record<PaymentTerms, string> = {
 // ============================================================================
 
 export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
-  new: 'bg-blue-50 text-blue-700 border-blue-200',
-  assigned: 'bg-amber-50 text-amber-700 border-amber-200',
-  picked_up: 'bg-purple-50 text-purple-700 border-purple-200',
-  delivered: 'bg-green-50 text-green-700 border-green-200',
-  invoiced: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-  paid: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  cancelled: 'bg-red-50 text-red-700 border-red-200',
+  new: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800',
+  assigned: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800',
+  picked_up: 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/30 dark:text-purple-400 dark:border-purple-800',
+  delivered: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950/30 dark:text-green-400 dark:border-green-800',
+  invoiced: 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/30 dark:text-indigo-400 dark:border-indigo-800',
+  paid: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800',
+  cancelled: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-800',
 }
 
 export const DRIVER_STATUS_COLORS: Record<DriverStatus, string> = {
-  active: 'bg-green-50 text-green-700 border-green-200',
-  inactive: 'bg-gray-50 text-gray-700 border-gray-200',
+  active: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950/30 dark:text-green-400 dark:border-green-800',
+  inactive: 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800/30 dark:text-gray-400 dark:border-gray-700',
 }
 
 export const TRUCK_STATUS_COLORS: Record<TruckStatus, string> = {
-  active: 'bg-green-50 text-green-700 border-green-200',
-  inactive: 'bg-gray-50 text-gray-700 border-gray-200',
-  maintenance: 'bg-amber-50 text-amber-700 border-amber-200',
+  active: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950/30 dark:text-green-400 dark:border-green-800',
+  inactive: 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800/30 dark:text-gray-400 dark:border-gray-700',
+  maintenance: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800',
 }
 
 // ============================================================================
@@ -222,10 +222,10 @@ export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
 
 // Colors (trip status)
 export const TRIP_STATUS_COLORS: Record<TripStatus, string> = {
-  planned: 'bg-blue-50 text-blue-700 border-blue-200',
-  in_progress: 'bg-amber-50 text-amber-700 border-amber-200',
-  at_terminal: 'bg-purple-50 text-purple-700 border-purple-200',
-  completed: 'bg-green-50 text-green-700 border-green-200',
+  planned: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800',
+  in_progress: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800',
+  at_terminal: 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/30 dark:text-purple-400 dark:border-purple-800',
+  completed: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950/30 dark:text-green-400 dark:border-green-800',
 }
 
 // Truck capacity lookup (derived from truck_type)
@@ -264,9 +264,9 @@ export const TRAILER_STATUS_LABELS: Record<TrailerStatus, string> = {
 }
 
 export const TRAILER_STATUS_COLORS: Record<TrailerStatus, string> = {
-  active: 'bg-green-50 text-green-700 border-green-200',
-  inactive: 'bg-gray-50 text-gray-700 border-gray-200',
-  maintenance: 'bg-amber-50 text-amber-700 border-amber-200',
+  active: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950/30 dark:text-green-400 dark:border-green-800',
+  inactive: 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800/30 dark:text-gray-400 dark:border-gray-700',
+  maintenance: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800',
 }
 
 export const DRIVER_DOCUMENT_TYPE_LABELS: Record<DriverDocumentType, string> = {
@@ -301,10 +301,10 @@ export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
 }
 
 export const PAYMENT_STATUS_COLORS: Record<PaymentStatus, string> = {
-  unpaid: 'bg-gray-50 text-gray-700 border-gray-200',
-  invoiced: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-  partially_paid: 'bg-amber-50 text-amber-700 border-amber-200',
-  paid: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  unpaid: 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800/30 dark:text-gray-400 dark:border-gray-700',
+  invoiced: 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/30 dark:text-indigo-400 dark:border-indigo-800',
+  partially_paid: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800',
+  paid: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800',
 }
 
 // ============================================================================
@@ -332,16 +332,16 @@ export const TASK_PRIORITY_LABELS: Record<TaskPriority, string> = {
 }
 
 export const TASK_STATUS_COLORS: Record<TaskStatus, string> = {
-  pending: 'bg-gray-50 text-gray-700 border-gray-200',
-  in_progress: 'bg-blue-50 text-blue-700 border-blue-200',
-  completed: 'bg-green-50 text-green-700 border-green-200',
+  pending: 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800/30 dark:text-gray-400 dark:border-gray-700',
+  in_progress: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800',
+  completed: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950/30 dark:text-green-400 dark:border-green-800',
 }
 
 export const TASK_PRIORITY_COLORS: Record<TaskPriority, string> = {
-  low: 'bg-gray-50 text-gray-700 border-gray-200',
-  medium: 'bg-blue-50 text-blue-700 border-blue-200',
-  high: 'bg-amber-50 text-amber-700 border-amber-200',
-  urgent: 'bg-red-50 text-red-700 border-red-200',
+  low: 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800/30 dark:text-gray-400 dark:border-gray-700',
+  medium: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800',
+  high: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800',
+  urgent: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-800',
 }
 
 // Local Drive types
@@ -357,10 +357,10 @@ export const LOCAL_DRIVE_STATUS_LABELS: Record<LocalDriveStatus, string> = {
 }
 
 export const LOCAL_DRIVE_STATUS_COLORS: Record<LocalDriveStatus, string> = {
-  pending: 'bg-gray-50 text-gray-700 border-gray-200',
-  in_progress: 'bg-blue-50 text-blue-700 border-blue-200',
-  completed: 'bg-green-50 text-green-700 border-green-200',
-  cancelled: 'bg-red-50 text-red-700 border-red-200',
+  pending: 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800/30 dark:text-gray-400 dark:border-gray-700',
+  in_progress: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800',
+  completed: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950/30 dark:text-green-400 dark:border-green-800',
+  cancelled: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-800',
 }
 
 // Maintenance types
@@ -386,9 +386,9 @@ export const MAINTENANCE_STATUS_LABELS: Record<MaintenanceStatus, string> = {
 }
 
 export const MAINTENANCE_STATUS_COLORS: Record<MaintenanceStatus, string> = {
-  scheduled: 'bg-blue-50 text-blue-700 border-blue-200',
-  in_progress: 'bg-amber-50 text-amber-700 border-amber-200',
-  completed: 'bg-green-50 text-green-700 border-green-200',
+  scheduled: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800',
+  in_progress: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800',
+  completed: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950/30 dark:text-green-400 dark:border-green-800',
 }
 
 // Compliance types
@@ -419,7 +419,7 @@ export const COMPLIANCE_DOC_STATUS_LABELS: Record<ComplianceDocStatus, string> =
 }
 
 export const COMPLIANCE_DOC_STATUS_COLORS: Record<ComplianceDocStatus, string> = {
-  valid: 'bg-green-50 text-green-700 border-green-200',
-  expiring_soon: 'bg-amber-50 text-amber-700 border-amber-200',
-  expired: 'bg-red-50 text-red-700 border-red-200',
+  valid: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950/30 dark:text-green-400 dark:border-green-800',
+  expiring_soon: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800',
+  expired: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-800',
 }

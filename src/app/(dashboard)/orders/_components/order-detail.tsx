@@ -111,9 +111,9 @@ export function OrderDetail({ order }: OrderDetailProps) {
 
       {/* Cancelled Reason */}
       {status === 'cancelled' && order.cancelled_reason && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4">
-          <h3 className="text-sm font-semibold text-red-800">Cancellation Reason</h3>
-          <p className="mt-1 text-sm text-red-700">{order.cancelled_reason}</p>
+        <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 p-4">
+          <h3 className="text-sm font-semibold text-red-800 dark:text-red-400">Cancellation Reason</h3>
+          <p className="mt-1 text-sm text-red-700 dark:text-red-400">{order.cancelled_reason}</p>
         </div>
       )}
 

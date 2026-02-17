@@ -127,8 +127,8 @@ function SearchableSelect({
                   key={option.value}
                   type="button"
                   className={cn(
-                    'flex w-full items-center gap-2 px-4 py-2 text-left text-sm transition-colors hover:bg-gray-100',
-                    value === option.value && 'bg-gray-50'
+                    'flex w-full items-center gap-2 px-4 py-2 text-left text-sm transition-colors hover:bg-muted',
+                    value === option.value && 'bg-muted/50'
                   )}
                   onClick={() => {
                     onChange(option.value)
@@ -263,7 +263,7 @@ export function NewTripDialog({ open, onOpenChange }: NewTripDialogProps) {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {serverError && (
-            <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
+            <div className="rounded-md bg-red-50 dark:bg-red-950/30 p-3 text-sm text-red-700 dark:text-red-400">
               {serverError}
             </div>
           )}
@@ -322,7 +322,7 @@ export function NewTripDialog({ open, onOpenChange }: NewTripDialogProps) {
           <div className="space-y-2">
             <Label htmlFor="carrier_pay">Carrier Pay (optional)</Label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
                 $
               </span>
               <Input

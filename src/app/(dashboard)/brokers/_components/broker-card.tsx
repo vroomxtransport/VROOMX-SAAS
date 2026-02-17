@@ -18,25 +18,25 @@ export function BrokerCard({ broker, onClick, onEdit }: BrokerCardProps) {
     <EntityCard onClick={onClick}>
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-base font-semibold text-gray-900">
+          <h3 className="truncate text-base font-semibold text-foreground">
             {broker.name}
           </h3>
 
           <div className="mt-1.5 space-y-1.5">
             {broker.email && (
-              <div className="flex items-center gap-2 text-sm text-gray-500">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Mail className="h-3.5 w-3.5 shrink-0" />
                 <span className="truncate">{broker.email}</span>
               </div>
             )}
             {broker.phone && (
-              <div className="flex items-center gap-2 text-sm text-gray-500">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Phone className="h-3.5 w-3.5 shrink-0" />
                 <span>{broker.phone}</span>
               </div>
             )}
             {broker.factoring_company && (
-              <div className="flex items-center gap-2 text-sm text-gray-500">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Building2 className="h-3.5 w-3.5 shrink-0" />
                 <span className="truncate">{broker.factoring_company}</span>
               </div>
@@ -55,7 +55,7 @@ export function BrokerCard({ broker, onClick, onEdit }: BrokerCardProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 shrink-0 text-gray-400 hover:text-gray-600"
+          className="h-8 w-8 shrink-0 text-muted-foreground/60 hover:text-muted-foreground"
           onClick={(e) => {
             e.stopPropagation()
             onEdit(e)

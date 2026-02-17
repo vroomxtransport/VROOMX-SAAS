@@ -126,9 +126,9 @@ export function TrailerSection({ truckId, currentTrailerId }: TrailerSectionProp
     [trailer.year, trailer.make, trailer.model].filter(Boolean).join(' ')
 
   return (
-    <div className="rounded-lg border bg-white p-5">
+    <div className="rounded-lg border bg-surface p-5">
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
           <Truck className="h-4 w-4" />
           Trailer
         </h3>
@@ -164,20 +164,20 @@ export function TrailerSection({ truckId, currentTrailerId }: TrailerSectionProp
       </div>
 
       {currentTrailer ? (
-        <div className="rounded-md border bg-gray-50 p-4">
+        <div className="rounded-md border bg-muted/50 p-4">
           <div className="flex items-start justify-between">
             <div>
-              <p className="font-medium text-gray-900">
+              <p className="font-medium text-foreground">
                 {currentTrailer.trailer_number}
               </p>
               <div className="mt-1 flex items-center gap-2">
                 <StatusBadge status={currentTrailer.status} type="truck" />
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-muted-foreground">
                   {TRAILER_TYPE_LABELS[currentTrailer.trailer_type as TrailerType]}
                 </span>
               </div>
               {vehicleLine(currentTrailer) && (
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-muted-foreground">
                   {vehicleLine(currentTrailer)}
                 </p>
               )}
@@ -208,7 +208,7 @@ export function TrailerSection({ truckId, currentTrailerId }: TrailerSectionProp
           </div>
         </div>
       ) : (
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-muted-foreground/60">
           No trailer assigned. Assign an existing trailer or create a new one.
         </p>
       )}
@@ -223,7 +223,7 @@ export function TrailerSection({ truckId, currentTrailerId }: TrailerSectionProp
             </DialogDescription>
           </DialogHeader>
           {availableTrailers.length === 0 ? (
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               No available trailers. Create a new trailer first.
             </p>
           ) : (
@@ -385,7 +385,7 @@ function TrailerFormDialog({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {serverError && (
-              <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
+              <div className="rounded-md bg-red-50 dark:bg-red-950/30 p-3 text-sm text-red-700 dark:text-red-400">
                 {serverError}
               </div>
             )}

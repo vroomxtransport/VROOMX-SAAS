@@ -198,9 +198,9 @@ export function OrderTimelineEnhanced({
 
       {/* Cancelled overlay */}
       {isCancelled && (
-        <div className="mt-4 flex items-center justify-center gap-2 rounded-lg bg-red-50 px-3 py-2">
+        <div className="mt-4 flex items-center justify-center gap-2 rounded-lg bg-red-50 dark:bg-red-950/30 px-3 py-2">
           <X className="h-4 w-4 text-red-500" />
-          <span className="text-sm font-medium text-red-700">Order Cancelled</span>
+          <span className="text-sm font-medium text-red-700 dark:text-red-400">Order Cancelled</span>
         </div>
       )}
     </div>

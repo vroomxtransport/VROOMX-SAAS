@@ -32,7 +32,7 @@ function formatDriverName(driver: TripWithRelations['driver']): string {
 function getCapacityColor(orderCount: number, maxCapacity: number): string {
   if (orderCount > maxCapacity) return 'text-red-600 font-semibold'
   if (orderCount === maxCapacity) return 'text-amber-600 font-semibold'
-  return 'text-gray-700'
+  return 'text-foreground/80'
 }
 
 function formatRouteSummary(
@@ -57,7 +57,7 @@ export function TripRow({ trip }: TripRowProps) {
   const truckType = trip.truck?.truck_type
   const maxCapacity = truckType ? TRUCK_CAPACITY[truckType] : 0
   const orderCount = trip.order_count ?? 0
-  const capacityColor = maxCapacity > 0 ? getCapacityColor(orderCount, maxCapacity) : 'text-gray-500'
+  const capacityColor = maxCapacity > 0 ? getCapacityColor(orderCount, maxCapacity) : 'text-muted-foreground'
   const capacityText = maxCapacity > 0 ? `${orderCount}/${maxCapacity}` : `${orderCount}`
   const dateRange = formatDateRange(trip.start_date, trip.end_date)
   const route = formatRouteSummary(trip.origin_summary, trip.destination_summary)
@@ -65,23 +65,23 @@ export function TripRow({ trip }: TripRowProps) {
   return (
     <Link
       href={`/trips/${trip.id}`}
-      className="group flex items-center gap-4 rounded-lg border border-gray-200 bg-white px-3 py-2.5 transition-colors hover:bg-gray-50"
+      className="group flex items-center gap-4 rounded-lg border border-border bg-surface px-3 py-2.5 transition-colors hover:bg-muted/50"
     >
       {/* Trip # */}
       <div className="w-28 shrink-0">
-        <span className="text-sm font-medium text-gray-900">
+        <span className="text-sm font-medium text-foreground">
           {trip.trip_number ?? 'N/A'}
         </span>
       </div>
 
       {/* Truck */}
       <div className="w-20 shrink-0">
-        <span className="text-sm text-gray-700">{truckUnit}</span>
+        <span className="text-sm text-foreground/80">{truckUnit}</span>
       </div>
 
       {/* Driver */}
       <div className="w-24 shrink-0">
-        <span className="text-sm text-gray-700">{driverName}</span>
+        <span className="text-sm text-foreground/80">{driverName}</span>
       </div>
 
       {/* Capacity */}
@@ -94,7 +94,7 @@ export function TripRow({ trip }: TripRowProps) {
         <span
           className={cn(
             'truncate text-sm',
-            route.muted ? 'text-gray-400 italic' : 'text-gray-700'
+            route.muted ? 'text-muted-foreground/60 italic' : 'text-foreground/80'
           )}
         >
           {route.text}
@@ -108,7 +108,7 @@ export function TripRow({ trip }: TripRowProps) {
 
       {/* Dates */}
       <div className="w-32 shrink-0 text-right">
-        <span className="text-sm text-gray-500">{dateRange}</span>
+        <span className="text-sm text-muted-foreground">{dateRange}</span>
       </div>
     </Link>
   )

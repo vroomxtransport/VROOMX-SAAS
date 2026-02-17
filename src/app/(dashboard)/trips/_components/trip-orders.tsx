@@ -107,16 +107,16 @@ export function TripOrders({ tripId, truckType }: TripOrdersProps) {
   const isOverCapacity = capacity !== null && orders.length > capacity
 
   return (
-    <div className="rounded-lg border bg-white">
+    <div className="rounded-lg border bg-surface">
       {/* Header */}
       <div className="flex items-center justify-between border-b px-4 py-3">
         <div className="flex items-center gap-2">
-          <Package className="h-5 w-5 text-gray-400" />
-          <h2 className="text-lg font-semibold text-gray-900">
+          <Package className="h-5 w-5 text-muted-foreground/60" />
+          <h2 className="text-lg font-semibold text-foreground">
             Orders ({orders.length})
           </h2>
           {capacity !== null && (
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-muted-foreground">
               / {capacity} capacity
             </span>
           )}
@@ -132,9 +132,9 @@ export function TripOrders({ tripId, truckType }: TripOrdersProps) {
 
       {/* Capacity Warning */}
       {isOverCapacity && (
-        <div className="flex items-center gap-2 border-b bg-amber-50 px-4 py-2.5">
+        <div className="flex items-center gap-2 border-b bg-amber-50 dark:bg-amber-950/30 px-4 py-2.5">
           <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
-          <p className="text-sm font-medium text-amber-700">
+          <p className="text-sm font-medium text-amber-700 dark:text-amber-400">
             Capacity exceeded: {orders.length} orders on a {truckType ? TRUCK_CAPACITY[truckType] : '?'}-car hauler
           </p>
         </div>
@@ -144,10 +144,10 @@ export function TripOrders({ tripId, truckType }: TripOrdersProps) {
       <div className="divide-y">
         {isPending ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground/60" />
           </div>
         ) : orders.length === 0 ? (
-          <div className="px-4 py-8 text-center text-sm text-gray-500">
+          <div className="px-4 py-8 text-center text-sm text-muted-foreground">
             No orders assigned. Click &quot;Add Order&quot; to assign orders to this trip.
           </div>
         ) : (
@@ -167,7 +167,7 @@ export function TripOrders({ tripId, truckType }: TripOrdersProps) {
             return (
               <div
                 key={order.id}
-                className="flex items-center justify-between px-4 py-3 hover:bg-gray-50"
+                className="flex items-center justify-between px-4 py-3 hover:bg-muted/50"
               >
                 <div className="flex flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-4">
                   {/* Order number + vehicle */}
@@ -181,25 +181,25 @@ export function TripOrders({ tripId, truckType }: TripOrdersProps) {
                       </Link>
                       <StatusBadge status={order.status} type="order" />
                     </div>
-                    <p className="text-xs text-gray-500">{vehicleInfo}</p>
+                    <p className="text-xs text-muted-foreground">{vehicleInfo}</p>
                   </div>
 
                   {/* Route */}
                   <div className="shrink-0">
-                    <p className="text-xs font-medium text-gray-900">{route}</p>
+                    <p className="text-xs font-medium text-foreground">{route}</p>
                   </div>
 
                   {/* Revenue + Broker Fee */}
                   <div className="flex shrink-0 gap-3">
                     <div>
-                      <p className="text-xs text-gray-500">Revenue</p>
-                      <p className="text-sm font-medium text-gray-900">
+                      <p className="text-xs text-muted-foreground">Revenue</p>
+                      <p className="text-sm font-medium text-foreground">
                         {formatCurrency(order.revenue)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">Broker Fee</p>
-                      <p className="text-sm font-medium text-gray-900">
+                      <p className="text-xs text-muted-foreground">Broker Fee</p>
+                      <p className="text-sm font-medium text-foreground">
                         {formatCurrency(order.broker_fee)}
                       </p>
                     </div>
@@ -210,7 +210,7 @@ export function TripOrders({ tripId, truckType }: TripOrdersProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="ml-2 h-8 w-8 shrink-0 p-0 text-gray-400 hover:text-red-600"
+                  className="ml-2 h-8 w-8 shrink-0 p-0 text-muted-foreground/60 hover:text-red-600"
                   onClick={() => setUnassignOrderId(order.id)}
                 >
                   <X className="h-4 w-4" />

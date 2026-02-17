@@ -100,9 +100,9 @@ export function TruckDocuments({ truckId, tenantId }: TruckDocumentsProps) {
   }
 
   return (
-    <div className="rounded-lg border bg-white p-5">
+    <div className="rounded-lg border bg-surface p-5">
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
           <FileText className="h-4 w-4" />
           Documents
         </h3>
@@ -121,12 +121,12 @@ export function TruckDocuments({ truckId, tenantId }: TruckDocumentsProps) {
           {[1, 2].map((i) => (
             <div
               key={i}
-              className="h-12 animate-pulse rounded-md bg-gray-100"
+              className="h-12 animate-pulse rounded-md bg-muted"
             />
           ))}
         </div>
       ) : documents.length === 0 ? (
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-muted-foreground/60">
           No documents uploaded. Upload registration, insurance, or inspection
           certificates.
         </p>
@@ -142,12 +142,12 @@ export function TruckDocuments({ truckId, tenantId }: TruckDocumentsProps) {
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <FileText className="h-3.5 w-3.5 flex-shrink-0 text-gray-400" />
-                    <span className="truncate text-sm font-medium text-gray-900">
+                    <FileText className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground/60" />
+                    <span className="truncate text-sm font-medium text-foreground">
                       {doc.file_name}
                     </span>
                   </div>
-                  <div className="mt-0.5 flex items-center gap-3 text-xs text-gray-500">
+                  <div className="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground">
                     <span>
                       {
                         TRUCK_DOCUMENT_TYPE_LABELS[
@@ -351,7 +351,7 @@ function UploadDocumentDialog({
 
         <div className="space-y-4">
           {error && (
-            <div className="flex items-center gap-2 rounded-md bg-red-50 p-3 text-sm text-red-700">
+            <div className="flex items-center gap-2 rounded-md bg-red-50 dark:bg-red-950/30 p-3 text-sm text-red-700 dark:text-red-400">
               <AlertCircle className="h-4 w-4 flex-shrink-0" />
               {error}
             </div>
@@ -394,7 +394,7 @@ function UploadDocumentDialog({
                 accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
               />
               {selectedFile && (
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-muted-foreground">
                   {selectedFile.name} (
                   {(selectedFile.size / (1024 * 1024)).toFixed(1)} MB)
                 </p>

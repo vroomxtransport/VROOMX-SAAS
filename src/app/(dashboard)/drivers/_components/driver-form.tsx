@@ -166,14 +166,14 @@ export function DriverForm({ driver, onSuccess, onCancel }: DriverFormProps) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {serverError && (
-          <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
+          <div className="rounded-md bg-red-50 dark:bg-red-950/30 p-3 text-sm text-red-700 dark:text-red-400">
             {serverError}
           </div>
         )}
 
         {/* Personal Info */}
         <div>
-          <h4 className="mb-3 text-sm font-medium text-gray-900">Personal Info</h4>
+          <h4 className="mb-3 text-sm font-medium text-foreground">Personal Info</h4>
           <div className="grid grid-cols-2 gap-3">
             <FormField
               control={form.control}
@@ -234,7 +234,7 @@ export function DriverForm({ driver, onSuccess, onCancel }: DriverFormProps) {
 
         {/* Address */}
         <div>
-          <h4 className="mb-3 text-sm font-medium text-gray-900">Address</h4>
+          <h4 className="mb-3 text-sm font-medium text-foreground">Address</h4>
           <FormField
             control={form.control}
             name="address"
@@ -293,7 +293,7 @@ export function DriverForm({ driver, onSuccess, onCancel }: DriverFormProps) {
 
         {/* Driver Details */}
         <div>
-          <h4 className="mb-3 text-sm font-medium text-gray-900">Driver Details</h4>
+          <h4 className="mb-3 text-sm font-medium text-foreground">Driver Details</h4>
           <FormField
             control={form.control}
             name="licenseNumber"
@@ -355,7 +355,7 @@ export function DriverForm({ driver, onSuccess, onCancel }: DriverFormProps) {
 
         {/* Pay Configuration */}
         <div>
-          <h4 className="mb-3 text-sm font-medium text-gray-900">Pay Configuration</h4>
+          <h4 className="mb-3 text-sm font-medium text-foreground">Pay Configuration</h4>
           <div className="grid grid-cols-2 gap-3">
             <FormField
               control={form.control}
@@ -426,7 +426,7 @@ export function DriverForm({ driver, onSuccess, onCancel }: DriverFormProps) {
 
         {/* App Invitation */}
         <div className="rounded-lg border border-border-subtle bg-surface p-4">
-          <h4 className="mb-2 text-sm font-medium text-gray-900 flex items-center gap-2">
+          <h4 className="mb-2 text-sm font-medium text-foreground flex items-center gap-2">
             <Smartphone className="h-4 w-4 text-muted-foreground" />
             Driver App Invitation
           </h4>

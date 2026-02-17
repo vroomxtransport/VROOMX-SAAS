@@ -74,8 +74,8 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
 
   if (isLoading) {
     return (
-      <div className="rounded-lg border bg-white p-5">
-        <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-900">
+      <div className="rounded-lg border bg-surface p-5">
+        <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
           <DollarSign className="h-4 w-4" />
           Earnings
         </h3>
@@ -88,27 +88,27 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
   }
 
   return (
-    <div className="rounded-lg border bg-white p-5">
-      <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-900">
+    <div className="rounded-lg border bg-surface p-5">
+      <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
         <DollarSign className="h-4 w-4" />
         Earnings
       </h3>
 
       {/* Summary cards */}
       <div className="mb-4 grid grid-cols-3 gap-3">
-        <div className="rounded-md bg-green-50 p-3 text-center">
+        <div className="rounded-md bg-green-50 dark:bg-green-950/30 p-3 text-center">
           <p className="text-xs font-medium text-green-600">Total Earnings</p>
-          <p className="mt-1 text-lg font-bold text-green-800">
+          <p className="mt-1 text-lg font-bold text-green-800 dark:text-green-400">
             {formatCurrency(totalEarnings)}
           </p>
         </div>
-        <div className="rounded-md bg-blue-50 p-3 text-center">
+        <div className="rounded-md bg-blue-50 dark:bg-blue-950/30 p-3 text-center">
           <p className="text-xs font-medium text-blue-600">Completed Trips</p>
-          <p className="mt-1 text-lg font-bold text-blue-800">{totalTrips}</p>
+          <p className="mt-1 text-lg font-bold text-blue-800 dark:text-blue-400">{totalTrips}</p>
         </div>
-        <div className="rounded-md bg-purple-50 p-3 text-center">
+        <div className="rounded-md bg-purple-50 dark:bg-purple-950/30 p-3 text-center">
           <p className="text-xs font-medium text-purple-600">Avg Per Trip</p>
-          <p className="mt-1 text-lg font-bold text-purple-800">
+          <p className="mt-1 text-lg font-bold text-purple-800 dark:text-purple-400">
             {formatCurrency(avgPerTrip)}
           </p>
         </div>
@@ -116,7 +116,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
 
       {/* Earnings table */}
       {trips.length === 0 ? (
-        <p className="py-8 text-center text-sm text-gray-400">
+        <p className="py-8 text-center text-sm text-muted-foreground/60">
           No completed trips yet
         </p>
       ) : (
@@ -138,7 +138,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
                   <TableCell className="font-medium">
                     {trip.trip_number ?? '--'}
                   </TableCell>
-                  <TableCell className="text-sm text-gray-600">
+                  <TableCell className="text-sm text-muted-foreground">
                     {formatDate(trip.start_date)} - {formatDate(trip.end_date)}
                   </TableCell>
                   <TableCell className="text-right text-sm">
@@ -169,7 +169,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="mt-3 flex items-center justify-between">
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 Page {page + 1} of {totalPages} ({total} trips)
               </p>
               <div className="flex items-center gap-1">

@@ -69,8 +69,8 @@ export default function TruckDetailPage({ params }: TruckDetailPageProps) {
   if (!truck) {
     return (
       <div className="py-16 text-center">
-        <h2 className="text-lg font-semibold text-gray-900">Truck not found</h2>
-        <p className="mt-1 text-sm text-gray-500">
+        <h2 className="text-lg font-semibold text-foreground">Truck not found</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
           The truck you are looking for does not exist or has been removed.
         </p>
         <Button variant="outline" className="mt-4" onClick={() => router.push('/trucks')}>
@@ -101,7 +101,7 @@ export default function TruckDetailPage({ params }: TruckDetailPageProps) {
 
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">{truck.unit_number}</h1>
+            <h1 className="text-xl font-bold text-foreground">{truck.unit_number}</h1>
             <div className="mt-2 flex items-center gap-2">
               <StatusBadge status={truck.truck_status} type="truck" />
               <Badge variant="outline">
@@ -110,7 +110,7 @@ export default function TruckDetailPage({ params }: TruckDetailPageProps) {
               {truck.ownership === 'owner_operator' && (
                 <Badge
                   variant="outline"
-                  className="bg-purple-50 text-purple-700 border-purple-200"
+                  className="bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/30 dark:text-purple-400 dark:border-purple-800"
                 >
                   Owner-Operator
                 </Badge>
@@ -120,7 +120,7 @@ export default function TruckDetailPage({ params }: TruckDetailPageProps) {
 
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2 rounded-md border px-3 py-1.5">
-              <span className="text-sm text-gray-600">Status:</span>
+              <span className="text-sm text-muted-foreground">Status:</span>
               <Select
                 value={truck.truck_status}
                 onValueChange={handleStatusChange}
@@ -141,7 +141,7 @@ export default function TruckDetailPage({ params }: TruckDetailPageProps) {
             </Button>
             <Button
               variant="outline"
-              className="text-red-600 hover:bg-red-50 hover:text-red-700"
+              className="text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-700"
               onClick={() => setDeleteDialogOpen(true)}
             >
               <Trash2 className="mr-2 h-4 w-4" />
@@ -153,53 +153,53 @@ export default function TruckDetailPage({ params }: TruckDetailPageProps) {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Vehicle Info */}
-        <div className="rounded-lg border bg-white p-5">
-          <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-900">
+        <div className="rounded-lg border bg-surface p-5">
+          <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
             <Truck className="h-4 w-4" />
             Vehicle Info
           </h3>
           <dl className="space-y-3">
             <div>
-              <dt className="text-xs font-medium text-gray-500">Unit Number</dt>
-              <dd className="text-sm text-gray-900">{truck.unit_number}</dd>
+              <dt className="text-xs font-medium text-muted-foreground">Unit Number</dt>
+              <dd className="text-sm text-foreground">{truck.unit_number}</dd>
             </div>
             <div>
-              <dt className="text-xs font-medium text-gray-500">VIN</dt>
-              <dd className="font-mono text-sm text-gray-900">
-                {truck.vin || <span className="text-gray-400">Not provided</span>}
+              <dt className="text-xs font-medium text-muted-foreground">VIN</dt>
+              <dd className="font-mono text-sm text-foreground">
+                {truck.vin || <span className="text-muted-foreground/60">Not provided</span>}
               </dd>
             </div>
             {vehicleLine && (
               <div>
-                <dt className="text-xs font-medium text-gray-500">Year / Make / Model</dt>
-                <dd className="text-sm text-gray-900">{vehicleLine}</dd>
+                <dt className="text-xs font-medium text-muted-foreground">Year / Make / Model</dt>
+                <dd className="text-sm text-foreground">{vehicleLine}</dd>
               </div>
             )}
           </dl>
         </div>
 
         {/* Classification */}
-        <div className="rounded-lg border bg-white p-5">
-          <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-900">
+        <div className="rounded-lg border bg-surface p-5">
+          <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
             <Hash className="h-4 w-4" />
             Classification
           </h3>
           <dl className="space-y-3">
             <div>
-              <dt className="text-xs font-medium text-gray-500">Truck Type</dt>
-              <dd className="text-sm text-gray-900">
+              <dt className="text-xs font-medium text-muted-foreground">Truck Type</dt>
+              <dd className="text-sm text-foreground">
                 {TRUCK_TYPE_LABELS[truck.truck_type as TruckType]}
               </dd>
             </div>
             <div>
-              <dt className="text-xs font-medium text-gray-500">Status</dt>
-              <dd className="text-sm text-gray-900">
+              <dt className="text-xs font-medium text-muted-foreground">Status</dt>
+              <dd className="text-sm text-foreground">
                 <StatusBadge status={truck.truck_status} type="truck" />
               </dd>
             </div>
             <div>
-              <dt className="text-xs font-medium text-gray-500">Ownership</dt>
-              <dd className="text-sm text-gray-900">
+              <dt className="text-xs font-medium text-muted-foreground">Ownership</dt>
+              <dd className="text-sm text-foreground">
                 {truck.ownership === 'owner_operator' ? 'Owner-Operator' : 'Company'}
               </dd>
             </div>
@@ -207,23 +207,23 @@ export default function TruckDetailPage({ params }: TruckDetailPageProps) {
         </div>
 
         {/* Assigned Trips (Placeholder) */}
-        <div className="rounded-lg border bg-white p-5">
-          <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-900">
+        <div className="rounded-lg border bg-surface p-5">
+          <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
             <FileText className="h-4 w-4" />
             Assigned Trips
           </h3>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-muted-foreground/60">
             Trip assignment will be available when the dispatch workflow is built.
           </p>
         </div>
 
         {/* Maintenance Log (Placeholder) */}
-        <div className="rounded-lg border bg-white p-5">
-          <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-900">
+        <div className="rounded-lg border bg-surface p-5">
+          <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
             <FileText className="h-4 w-4" />
             Maintenance Log
           </h3>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-muted-foreground/60">
             Maintenance tracking will be available in a future update.
           </p>
         </div>
@@ -241,9 +241,9 @@ export default function TruckDetailPage({ params }: TruckDetailPageProps) {
 
       {/* Notes */}
       {truck.notes && (
-        <div className="mt-6 rounded-lg border bg-white p-5">
-          <h3 className="mb-2 text-sm font-semibold text-gray-900">Notes</h3>
-          <p className="whitespace-pre-wrap text-sm text-gray-600">{truck.notes}</p>
+        <div className="mt-6 rounded-lg border bg-surface p-5">
+          <h3 className="mb-2 text-sm font-semibold text-foreground">Notes</h3>
+          <p className="whitespace-pre-wrap text-sm text-muted-foreground">{truck.notes}</p>
         </div>
       )}
 

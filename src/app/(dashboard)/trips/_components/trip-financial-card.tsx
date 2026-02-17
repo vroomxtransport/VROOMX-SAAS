@@ -50,26 +50,26 @@ interface StatCardProps {
 function StatCard({ label, value, subtitle, icon, accent, large, editAction }: StatCardProps) {
   return (
     <div className={cn(
-      'rounded-lg border bg-white p-4',
-      large && 'ring-1 ring-gray-200'
+      'rounded-lg border bg-surface p-4',
+      large && 'ring-1 ring-border'
     )}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className={cn('rounded-md p-1.5', accent)}>
             {icon}
           </div>
-          <span className="text-xs font-medium uppercase text-gray-500">{label}</span>
+          <span className="text-xs font-medium uppercase text-muted-foreground">{label}</span>
         </div>
         {editAction}
       </div>
       <p className={cn(
-        'mt-2 font-semibold text-gray-900',
+        'mt-2 font-semibold text-foreground',
         large ? 'text-xl' : 'text-lg'
       )}>
         {value}
       </p>
       {subtitle && (
-        <p className="mt-0.5 text-xs text-gray-500">{subtitle}</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p>
       )}
     </div>
   )
@@ -170,7 +170,7 @@ export function TripFinancialCard({ trip }: TripFinancialCardProps) {
         onClick={handleCancelEdit}
         disabled={isSaving}
       >
-        <X className="h-3.5 w-3.5 text-gray-400" />
+        <X className="h-3.5 w-3.5 text-muted-foreground/60" />
       </Button>
     </div>
   ) : (
@@ -180,7 +180,7 @@ export function TripFinancialCard({ trip }: TripFinancialCardProps) {
       className="h-7 w-7 p-0"
       onClick={handleStartEdit}
     >
-      <Pencil className="h-3.5 w-3.5 text-gray-400" />
+      <Pencil className="h-3.5 w-3.5 text-muted-foreground/60" />
     </Button>
   )
 
@@ -192,15 +192,15 @@ export function TripFinancialCard({ trip }: TripFinancialCardProps) {
         value={formatCurrency(revenue)}
         subtitle={`${trip.order_count} order${trip.order_count !== 1 ? 's' : ''}`}
         icon={<DollarSign className="h-4 w-4 text-green-600" />}
-        accent="bg-green-50"
+        accent="bg-green-50 dark:bg-green-950/30"
       />
 
       {/* 2. Carrier Pay */}
       <StatCard
         label="Carrier Pay"
         value={isEditingCarrierPay ? '' : formatCurrency(carrierPay)}
-        icon={<Building2 className="h-4 w-4 text-gray-600" />}
-        accent="bg-gray-100"
+        icon={<Building2 className="h-4 w-4 text-muted-foreground" />}
+        accent="bg-muted"
         editAction={carrierPayEditAction}
       />
 
@@ -210,7 +210,7 @@ export function TripFinancialCard({ trip }: TripFinancialCardProps) {
         value={formatCurrency(brokerFees)}
         subtitle="Per-order sum"
         icon={<TrendingUp className="h-4 w-4 text-amber-600" />}
-        accent="bg-amber-50"
+        accent="bg-amber-50 dark:bg-amber-950/30"
       />
 
       {/* 4. Driver Pay */}
@@ -219,7 +219,7 @@ export function TripFinancialCard({ trip }: TripFinancialCardProps) {
         value={formatCurrency(driverPay)}
         subtitle={driverPaySubtitle}
         icon={<User className="h-4 w-4 text-blue-600" />}
-        accent="bg-blue-50"
+        accent="bg-blue-50 dark:bg-blue-950/30"
       />
 
       {/* 5. Expenses */}
@@ -227,15 +227,15 @@ export function TripFinancialCard({ trip }: TripFinancialCardProps) {
         label="Expenses"
         value={formatCurrency(expenses)}
         icon={<Receipt className="h-4 w-4 text-red-600" />}
-        accent="bg-red-50"
+        accent="bg-red-50 dark:bg-red-950/30"
       />
 
       {/* 6. Net Profit */}
       <div className={cn(
         'rounded-lg border p-4 ring-1',
         netProfit >= 0
-          ? 'border-green-200 bg-green-50/50 ring-green-200'
-          : 'border-red-200 bg-red-50/50 ring-red-200'
+          ? 'border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/30 ring-green-200 dark:ring-green-800'
+          : 'border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/30 ring-red-200 dark:ring-red-800'
       )}>
         <div className="flex items-center gap-2">
           <div className={cn(
@@ -247,7 +247,7 @@ export function TripFinancialCard({ trip }: TripFinancialCardProps) {
               netProfit >= 0 ? 'text-green-600' : 'text-red-600'
             )} />
           </div>
-          <span className="text-xs font-medium uppercase text-gray-500">Net Profit</span>
+          <span className="text-xs font-medium uppercase text-muted-foreground">Net Profit</span>
         </div>
         <p className={cn(
           'mt-2 text-xl font-bold',

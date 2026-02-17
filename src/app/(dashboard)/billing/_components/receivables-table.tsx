@@ -116,12 +116,12 @@ export function ReceivablesTable({ receivables }: ReceivablesTableProps) {
 
   if (receivables.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-lg border bg-white py-8 text-center">
-        <Package className="mb-3 h-10 w-10 text-gray-300" />
-        <p className="text-sm font-medium text-gray-500">
+      <div className="flex flex-col items-center justify-center rounded-lg border bg-surface py-8 text-center">
+        <Package className="mb-3 h-10 w-10 text-muted-foreground/60" />
+        <p className="text-sm font-medium text-muted-foreground">
           No outstanding receivables
         </p>
-        <p className="mt-1 text-xs text-gray-400">
+        <p className="mt-1 text-xs text-muted-foreground/60">
           All invoiced orders have been paid
         </p>
       </div>
@@ -138,7 +138,7 @@ export function ReceivablesTable({ receivables }: ReceivablesTableProps) {
         />
       )}
 
-      <div className="rounded-lg border bg-white">
+      <div className="rounded-lg border bg-surface">
         <Table>
           <TableHeader>
             <TableRow>
@@ -218,7 +218,7 @@ function BrokerRow({
   return (
     <>
       {/* Broker summary row */}
-      <TableRow className="hover:bg-gray-50">
+      <TableRow className="hover:bg-muted/50">
         <TableCell>
           <Checkbox
             checked={indeterminate ? 'indeterminate' : allSelected}
@@ -229,13 +229,13 @@ function BrokerRow({
         <TableCell>
           <button
             onClick={onToggleExpand}
-            className="rounded p-0.5 hover:bg-gray-200"
+            className="rounded p-0.5 hover:bg-muted"
             aria-label={isExpanded ? 'Collapse' : 'Expand'}
           >
             {isExpanded ? (
-              <ChevronDown className="h-4 w-4 text-gray-500" />
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
             ) : (
-              <ChevronRight className="h-4 w-4 text-gray-500" />
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
             )}
           </button>
         </TableCell>
@@ -251,16 +251,16 @@ function BrokerRow({
           {formatCurrency(broker.totalOwed)}
         </TableCell>
         <TableCell className="text-center">{broker.invoiceCount}</TableCell>
-        <TableCell className="text-sm text-gray-600">
+        <TableCell className="text-sm text-muted-foreground">
           {formatDate(broker.oldestUnpaid)}
         </TableCell>
-        <TableCell className="text-right text-sm text-gray-600">
+        <TableCell className="text-right text-sm text-muted-foreground">
           {formatCurrency(broker.paidThisMonth)}
         </TableCell>
         <TableCell
           className={cn(
             'text-right font-medium',
-            broker.overdueAmount > 0 ? 'text-red-600' : 'text-gray-600'
+            broker.overdueAmount > 0 ? 'text-red-600' : 'text-muted-foreground'
           )}
         >
           {formatCurrency(broker.overdueAmount)}
@@ -270,7 +270,7 @@ function BrokerRow({
       {/* Expanded order rows */}
       {isExpanded &&
         broker.orders.map((order) => (
-          <TableRow key={order.id} className="bg-gray-50/60">
+          <TableRow key={order.id} className="bg-muted/30">
             <TableCell>
               <Checkbox
                 checked={selectedOrderIds.has(order.id)}
@@ -279,7 +279,7 @@ function BrokerRow({
               />
             </TableCell>
             <TableCell />
-            <TableCell className="pl-12 text-sm text-gray-600">
+            <TableCell className="pl-12 text-sm text-muted-foreground">
               {order.orderNumber ?? order.id.slice(0, 8)}
             </TableCell>
             <TableCell className="text-right text-sm">
@@ -288,7 +288,7 @@ function BrokerRow({
             <TableCell className="text-center text-sm">
               {formatCurrency(order.amountPaid)} paid
             </TableCell>
-            <TableCell className="text-sm text-gray-600">
+            <TableCell className="text-sm text-muted-foreground">
               {formatDate(order.invoiceDate)}
             </TableCell>
             <TableCell className="text-right text-sm">

@@ -34,7 +34,7 @@ const STATUS_DISPLAY: Record<ComplianceDocStatus | 'no_expiry', { label: string;
   valid: { label: COMPLIANCE_DOC_STATUS_LABELS.valid, colors: COMPLIANCE_DOC_STATUS_COLORS.valid },
   expiring_soon: { label: COMPLIANCE_DOC_STATUS_LABELS.expiring_soon, colors: COMPLIANCE_DOC_STATUS_COLORS.expiring_soon },
   expired: { label: COMPLIANCE_DOC_STATUS_LABELS.expired, colors: COMPLIANCE_DOC_STATUS_COLORS.expired },
-  no_expiry: { label: 'No Expiry', colors: 'bg-gray-50 text-gray-700 border-gray-200' },
+  no_expiry: { label: 'No Expiry', colors: 'bg-muted/50 text-foreground/80 border-border' },
 }
 
 export function DocumentCard({ doc, onEdit, onDelete }: DocumentCardProps) {

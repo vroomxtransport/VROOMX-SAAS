@@ -23,7 +23,7 @@ export function OrderInspections({ orderId: _orderId }: OrderInspectionsProps) {
             <div>
               <p className="text-sm font-medium text-foreground">Pickup Inspection</p>
               <div className="mt-1 flex items-center gap-2">
-                <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                <span className="inline-flex items-center rounded-full border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
                   Pending
                 </span>
               </div>
@@ -38,7 +38,7 @@ export function OrderInspections({ orderId: _orderId }: OrderInspectionsProps) {
             <div>
               <p className="text-sm font-medium text-foreground">Delivery Inspection</p>
               <div className="mt-1 flex items-center gap-2">
-                <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                <span className="inline-flex items-center rounded-full border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
                   Pending
                 </span>
               </div>

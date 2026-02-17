@@ -12,13 +12,13 @@ export function getTierDisplayName(plan: string): string {
 
 export function getStatusBadgeColor(status: string): string {
   const colors: Record<string, string> = {
-    trialing: 'bg-blue-100 text-blue-700',
-    active: 'bg-green-100 text-green-700',
-    past_due: 'bg-amber-100 text-amber-700',
-    canceled: 'bg-red-100 text-red-700',
-    unpaid: 'bg-red-100 text-red-700',
+    trialing: 'bg-blue-100 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400',
+    active: 'bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-400',
+    past_due: 'bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400',
+    canceled: 'bg-red-100 text-red-700 dark:bg-red-950/30 dark:text-red-400',
+    unpaid: 'bg-red-100 text-red-700 dark:bg-red-950/30 dark:text-red-400',
   }
-  return colors[status] || 'bg-gray-100 text-gray-700'
+  return colors[status] || 'bg-gray-100 text-gray-700 dark:bg-gray-800/30 dark:text-gray-400'
 }
 
 const ROLE_LEVEL: Record<string, number> = {

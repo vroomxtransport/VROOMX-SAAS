@@ -87,7 +87,7 @@ const STATUS_CONFIG: Record<StatusBadgeType, StatusConfig> = {
   },
 }
 
-const FALLBACK_COLORS = 'bg-gray-50 text-gray-700 border-gray-200'
+const FALLBACK_COLORS = 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800/30 dark:text-gray-400 dark:border-gray-700'
 const FALLBACK_DOT = 'bg-gray-400'
 
 export function StatusBadge({ status, type, className, pulsing }: StatusBadgeProps) {

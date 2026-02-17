@@ -52,8 +52,8 @@ export function TruckCard({ truck, onClick, onEdit }: TruckCardProps) {
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <TruckIcon className="h-4 w-4 shrink-0 text-gray-400" />
-            <h3 className="truncate text-sm font-semibold text-gray-900">
+            <TruckIcon className="h-4 w-4 shrink-0 text-muted-foreground/60" />
+            <h3 className="truncate text-sm font-semibold text-foreground">
               {truck.unit_number}
             </h3>
           </div>
@@ -105,10 +105,10 @@ export function TruckCard({ truck, onClick, onEdit }: TruckCardProps) {
 
       <div className="mt-2 space-y-1">
         {vehicleLine && (
-          <p className="text-xs text-gray-500">{vehicleLine}</p>
+          <p className="text-xs text-muted-foreground">{vehicleLine}</p>
         )}
         {truncatedVin && (
-          <p className="font-mono text-xs text-gray-400">
+          <p className="font-mono text-xs text-muted-foreground/60">
             VIN: {truncatedVin}
           </p>
         )}

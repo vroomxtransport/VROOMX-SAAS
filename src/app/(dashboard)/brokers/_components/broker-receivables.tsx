@@ -77,10 +77,10 @@ export function BrokerReceivables({ brokerId }: BrokerReceivablesProps) {
 
   if (isPending) {
     return (
-      <div className="rounded-lg border bg-white p-6">
+      <div className="rounded-lg border bg-surface p-6">
         <div className="mb-4 flex items-center gap-2">
-          <DollarSign className="h-5 w-5 text-gray-400" />
-          <h2 className="text-lg font-semibold text-gray-900">Receivables</h2>
+          <DollarSign className="h-5 w-5 text-muted-foreground/60" />
+          <h2 className="text-lg font-semibold text-foreground">Receivables</h2>
         </div>
         <div className="space-y-3">
           <Skeleton className="h-4 w-1/2" />
@@ -92,10 +92,10 @@ export function BrokerReceivables({ brokerId }: BrokerReceivablesProps) {
 
   if (isError) {
     return (
-      <div className="rounded-lg border bg-white p-6">
+      <div className="rounded-lg border bg-surface p-6">
         <div className="mb-4 flex items-center gap-2">
-          <DollarSign className="h-5 w-5 text-gray-400" />
-          <h2 className="text-lg font-semibold text-gray-900">Receivables</h2>
+          <DollarSign className="h-5 w-5 text-muted-foreground/60" />
+          <h2 className="text-lg font-semibold text-foreground">Receivables</h2>
         </div>
         <p className="text-sm text-red-600">Failed to load receivables.</p>
       </div>
@@ -107,25 +107,25 @@ export function BrokerReceivables({ brokerId }: BrokerReceivablesProps) {
   }, 0)
 
   return (
-    <div className="rounded-lg border bg-white p-6">
+    <div className="rounded-lg border bg-surface p-6">
       <div className="mb-4 flex items-center gap-2">
-        <DollarSign className="h-5 w-5 text-gray-400" />
-        <h2 className="text-lg font-semibold text-gray-900">Receivables</h2>
+        <DollarSign className="h-5 w-5 text-muted-foreground/60" />
+        <h2 className="text-lg font-semibold text-foreground">Receivables</h2>
       </div>
 
       {!orders || orders.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-8 text-center">
-          <Package className="mb-2 h-8 w-8 text-gray-300" />
-          <p className="text-sm text-gray-500">
+          <Package className="mb-2 h-8 w-8 text-muted-foreground/60" />
+          <p className="text-sm text-muted-foreground">
             No outstanding receivables for this broker.
           </p>
         </div>
       ) : (
         <>
-          <p className="mb-4 text-sm text-gray-600">
+          <p className="mb-4 text-sm text-muted-foreground">
             {orders.length} outstanding order{orders.length !== 1 ? 's' : ''}{' '}
             totaling{' '}
-            <span className="font-semibold text-gray-900">
+            <span className="font-semibold text-foreground">
               {formatCurrency(totalOwed)}
             </span>
           </p>
@@ -181,7 +181,7 @@ export function BrokerReceivables({ brokerId }: BrokerReceivablesProps) {
                         ] ?? order.payment_status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-sm text-gray-600">
+                    <TableCell className="text-sm text-muted-foreground">
                       {formatDate(order.invoice_date)}
                     </TableCell>
                   </TableRow>

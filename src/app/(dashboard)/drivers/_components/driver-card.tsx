@@ -38,7 +38,7 @@ export function DriverCard({ driver, onClick, onEdit, onStatusToggle }: DriverCa
     <EntityCard onClick={onClick}>
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-sm font-semibold text-gray-900">{fullName}</h3>
+          <h3 className="truncate text-sm font-semibold text-foreground">{fullName}</h3>
           <div className="mt-1 flex items-center gap-2">
             <StatusBadge status={driver.driver_status} type="driver" />
             <Badge variant="outline" className="text-xs">
@@ -66,21 +66,21 @@ export function DriverCard({ driver, onClick, onEdit, onStatusToggle }: DriverCa
 
       <div className="mt-2 space-y-1">
         {driver.phone && (
-          <div className="flex items-center gap-2 text-xs text-gray-500">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Phone className="h-3 w-3" />
             <span>{driver.phone}</span>
           </div>
         )}
         {driver.email && (
-          <div className="flex items-center gap-2 text-xs text-gray-500">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Mail className="h-3 w-3" />
             <span className="truncate">{driver.email}</span>
           </div>
         )}
       </div>
 
-      <div className="mt-2 border-t border-gray-100 pt-1.5">
-        <p className="text-xs font-medium text-gray-600">
+      <div className="mt-2 border-t border-border pt-1.5">
+        <p className="text-xs font-medium text-muted-foreground">
           Pay: {formatPayInfo(driver.pay_type as DriverPayType, payRate)}
         </p>
       </div>

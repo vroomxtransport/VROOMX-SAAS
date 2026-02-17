@@ -111,7 +111,7 @@ export function InvoiceButton({
 
       {/* Invoice info line */}
       {invoiceDate && (
-        <div className="flex items-center gap-1 text-xs text-gray-500">
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
           <FileText className="h-3 w-3" />
           <span>
             INV-{orderId.slice(0, 8)} -- Invoiced on {formatDate(invoiceDate)}

@@ -48,7 +48,7 @@ export function PricingStep() {
               </FormLabel>
               <FormControl>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
                   <Input
                     type="number"
                     step="0.01"
@@ -77,7 +77,7 @@ export function PricingStep() {
               </FormLabel>
               <FormControl>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
                   <Input
                     type="number"
                     step="0.01"
@@ -103,7 +103,7 @@ export function PricingStep() {
               <FormLabel>Broker Fee</FormLabel>
               <FormControl>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
                   <Input
                     type="number"
                     step="0.01"
@@ -143,7 +143,7 @@ export function PricingStep() {
                   value={field.value as number ?? ''}
                   onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">mi</span>
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">mi</span>
               </div>
             </FormControl>
             <FormMessage />
@@ -152,9 +152,9 @@ export function PricingStep() {
       />
 
       {/* Margin summary */}
-      <div className="rounded-md bg-gray-50 p-3">
+      <div className="rounded-md bg-muted/50 p-3">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-gray-600">Margin</span>
+          <span className="text-sm font-medium text-muted-foreground">Margin</span>
           <span
             className={`text-sm font-semibold ${
               margin >= 0 ? 'text-green-700' : 'text-red-700'

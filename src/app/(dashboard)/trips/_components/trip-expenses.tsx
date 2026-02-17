@@ -177,12 +177,12 @@ export function TripExpenses({ tripId }: TripExpensesProps) {
   }, [deleteExpenseId, tripId, invalidate])
 
   return (
-    <div className="rounded-lg border bg-white">
+    <div className="rounded-lg border bg-surface">
       {/* Header */}
       <div className="flex items-center justify-between border-b px-4 py-3">
         <div className="flex items-center gap-2">
-          <Receipt className="h-5 w-5 text-gray-400" />
-          <h2 className="text-lg font-semibold text-gray-900">Expenses</h2>
+          <Receipt className="h-5 w-5 text-muted-foreground/60" />
+          <h2 className="text-lg font-semibold text-foreground">Expenses</h2>
         </div>
         {!showForm && (
           <Button size="sm" variant="outline" onClick={handleOpenAdd}>
@@ -194,11 +194,11 @@ export function TripExpenses({ tripId }: TripExpensesProps) {
 
       {/* Inline Form */}
       {showForm && (
-        <div className="border-b bg-gray-50 p-4">
+        <div className="border-b bg-muted/50 p-4">
           <div className="space-y-3">
             {/* Category */}
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-700">
+              <label className="mb-1 block text-xs font-medium text-foreground/80">
                 Category
               </label>
               <Select
@@ -207,7 +207,7 @@ export function TripExpenses({ tripId }: TripExpensesProps) {
                   setForm((f) => ({ ...f, category: value as ExpenseCategory }))
                 }
               >
-                <SelectTrigger className="bg-white">
+                <SelectTrigger className="bg-background">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -223,21 +223,21 @@ export function TripExpenses({ tripId }: TripExpensesProps) {
             {/* Custom Label (shown only for misc) */}
             {form.category === 'misc' && (
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-700">
+                <label className="mb-1 block text-xs font-medium text-foreground/80">
                   Custom Label
                 </label>
                 <Input
                   placeholder="e.g., Parking, Car wash..."
                   value={form.custom_label}
                   onChange={(e) => setForm((f) => ({ ...f, custom_label: e.target.value }))}
-                  className="bg-white"
+                  className="bg-background"
                 />
               </div>
             )}
 
             {/* Amount */}
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-700">
+              <label className="mb-1 block text-xs font-medium text-foreground/80">
                 Amount
               </label>
               <Input
@@ -247,33 +247,33 @@ export function TripExpenses({ tripId }: TripExpensesProps) {
                 placeholder="0.00"
                 value={form.amount}
                 onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
-                className="bg-white"
+                className="bg-background"
               />
             </div>
 
             {/* Date */}
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-700">
+              <label className="mb-1 block text-xs font-medium text-foreground/80">
                 Date (optional)
               </label>
               <Input
                 type="date"
                 value={form.expense_date}
                 onChange={(e) => setForm((f) => ({ ...f, expense_date: e.target.value }))}
-                className="bg-white"
+                className="bg-background"
               />
             </div>
 
             {/* Notes */}
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-700">
+              <label className="mb-1 block text-xs font-medium text-foreground/80">
                 Notes (optional)
               </label>
               <Input
                 placeholder="Additional details..."
                 value={form.notes}
                 onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-                className="bg-white"
+                className="bg-background"
               />
             </div>
 
@@ -310,10 +310,10 @@ export function TripExpenses({ tripId }: TripExpensesProps) {
       <div className="divide-y">
         {isPending ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground/60" />
           </div>
         ) : expenses.length === 0 ? (
-          <div className="px-4 py-8 text-center text-sm text-gray-500">
+          <div className="px-4 py-8 text-center text-sm text-muted-foreground">
             No expenses recorded for this trip.
           </div>
         ) : (
@@ -330,27 +330,27 @@ export function TripExpenses({ tripId }: TripExpensesProps) {
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-900">
+                    <span className="text-sm font-medium text-foreground">
                       {label}
                     </span>
                     {expense.expense_date && (
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-muted-foreground/60">
                         {formatDate(expense.expense_date)}
                       </span>
                     )}
                   </div>
                   {expense.notes && (
-                    <p className="text-xs text-gray-500">{expense.notes}</p>
+                    <p className="text-xs text-muted-foreground">{expense.notes}</p>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-900">
+                  <span className="text-sm font-medium text-foreground">
                     {formatCurrency(expense.amount)}
                   </span>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 w-7 p-0 text-gray-400 hover:text-blue-600"
+                    className="h-7 w-7 p-0 text-muted-foreground/60 hover:text-blue-600"
                     onClick={() => handleOpenEdit(expense)}
                   >
                     <Pencil className="h-3.5 w-3.5" />
@@ -358,7 +358,7 @@ export function TripExpenses({ tripId }: TripExpensesProps) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 w-7 p-0 text-gray-400 hover:text-red-600"
+                    className="h-7 w-7 p-0 text-muted-foreground/60 hover:text-red-600"
                     onClick={() => setDeleteExpenseId(expense.id)}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -372,9 +372,9 @@ export function TripExpenses({ tripId }: TripExpensesProps) {
 
       {/* Total Row */}
       {expenses.length > 0 && (
-        <div className="flex items-center justify-between border-t bg-gray-50 px-4 py-2.5">
-          <span className="text-sm font-semibold text-gray-900">Total</span>
-          <span className="text-sm font-semibold text-gray-900">
+        <div className="flex items-center justify-between border-t bg-muted/50 px-4 py-2.5">
+          <span className="text-sm font-semibold text-foreground">Total</span>
+          <span className="text-sm font-semibold text-foreground">
             {formatCurrency(totalExpenses)}
           </span>
         </div>

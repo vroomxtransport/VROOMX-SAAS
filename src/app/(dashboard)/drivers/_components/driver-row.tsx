@@ -47,7 +47,7 @@ export function DriverRow({ driver, onClick, onEdit, onStatusToggle }: DriverRow
       className="flex w-full items-center gap-3 rounded-lg border border-border-subtle bg-surface px-3 py-2.5 text-left shadow-sm transition-colors card-hover hover:border-brand/30 focus-visible:ring-2 focus-visible:ring-brand/30 focus-visible:outline-none"
     >
       <div className="min-w-0 flex-1">
-        <span className="text-sm font-semibold text-gray-900">{fullName}</span>
+        <span className="text-sm font-semibold text-foreground">{fullName}</span>
       </div>
 
       <div className="flex items-center gap-1.5 shrink-0">
@@ -57,7 +57,7 @@ export function DriverRow({ driver, onClick, onEdit, onStatusToggle }: DriverRow
         </Badge>
       </div>
 
-      <div className="hidden md:flex items-center gap-3 text-xs text-gray-500 shrink-0 w-[200px]">
+      <div className="hidden md:flex items-center gap-3 text-xs text-muted-foreground shrink-0 w-[200px]">
         {driver.phone && (
           <span className="flex items-center gap-1">
             <Phone className="h-3 w-3" />
@@ -72,7 +72,7 @@ export function DriverRow({ driver, onClick, onEdit, onStatusToggle }: DriverRow
         )}
       </div>
 
-      <div className="hidden lg:block text-xs font-medium text-gray-600 shrink-0 w-[160px]">
+      <div className="hidden lg:block text-xs font-medium text-muted-foreground shrink-0 w-[160px]">
         {formatPayInfo(driver.pay_type as DriverPayType, payRate)}
       </div>
 

@@ -2,7 +2,7 @@
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Pencil, MapPin, Calendar, DollarSign } from 'lucide-react'
+import { Pencil, MapPin, Calendar, DollarSign, Car } from 'lucide-react'
 import { LOCAL_DRIVE_STATUS_LABELS, LOCAL_DRIVE_STATUS_COLORS } from '@/types'
 import type { LocalDrive } from '@/types/database'
 import type { LocalDriveStatus } from '@/types'
@@ -40,7 +40,7 @@ function formatRevenue(revenue: string): string {
 
 export function LocalDriveRow({ localDrive, onClick, onEdit }: LocalDriveRowProps) {
   const status = localDrive.status as LocalDriveStatus
-  const colorClasses = LOCAL_DRIVE_STATUS_COLORS[status] ?? 'bg-gray-50 text-gray-700 border-gray-200'
+  const colorClasses = LOCAL_DRIVE_STATUS_COLORS[status] ?? 'bg-muted/50 text-foreground/80 border-border'
   const statusLabel = LOCAL_DRIVE_STATUS_LABELS[status] ?? localDrive.status
 
   const driverName = localDrive.driver
@@ -63,7 +63,7 @@ export function LocalDriveRow({ localDrive, onClick, onEdit }: LocalDriveRowProp
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <span className="truncate text-sm font-semibold text-gray-900">
+          <span className="truncate text-sm font-semibold text-foreground">
             {formatRoute(localDrive)}
           </span>
         </div>
@@ -75,18 +75,28 @@ export function LocalDriveRow({ localDrive, onClick, onEdit }: LocalDriveRowProp
         </Badge>
       </div>
 
+      {localDrive.order && (
+        <div className="hidden md:flex items-center gap-1 text-xs text-muted-foreground shrink-0 w-[160px] truncate">
+          <Car className="h-3 w-3 shrink-0" />
+          <span className="truncate">
+            {localDrive.order.order_number ? `#${localDrive.order.order_number} · ` : ''}
+            {[localDrive.order.vehicle_make, localDrive.order.vehicle_model].filter(Boolean).join(' ') || 'Vehicle'}
+          </span>
+        </div>
+      )}
+
       {driverName && (
-        <div className="hidden md:block text-xs text-gray-500 shrink-0 w-[140px] truncate">
+        <div className="hidden md:block text-xs text-muted-foreground shrink-0 w-[140px] truncate">
           {driverName}
         </div>
       )}
 
-      <div className="hidden lg:flex items-center gap-1 text-xs text-gray-500 shrink-0 w-[120px]">
+      <div className="hidden lg:flex items-center gap-1 text-xs text-muted-foreground shrink-0 w-[120px]">
         <Calendar className="h-3 w-3" />
         {formatDate(localDrive.scheduled_date)}
       </div>
 
-      <div className="hidden lg:flex items-center gap-1 text-xs font-medium text-gray-600 shrink-0 w-[80px]">
+      <div className="hidden lg:flex items-center gap-1 text-xs font-medium text-muted-foreground shrink-0 w-[80px]">
         <DollarSign className="h-3 w-3" />
         {formatRevenue(localDrive.revenue)}
       </div>

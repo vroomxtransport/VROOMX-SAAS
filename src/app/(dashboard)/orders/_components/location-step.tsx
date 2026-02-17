@@ -30,7 +30,7 @@ function LocationSection({
 
   return (
     <div className="space-y-3">
-      <h4 className="text-sm font-semibold text-gray-900">{label}</h4>
+      <h4 className="text-sm font-semibold text-foreground">{label}</h4>
 
       <FormField
         control={form.control}
@@ -141,7 +141,7 @@ export function LocationStep() {
   return (
     <div className="space-y-6">
       <LocationSection prefix="pickup" label="Pickup Location" />
-      <div className="border-t border-gray-200" />
+      <div className="border-t border-border" />
       <LocationSection prefix="delivery" label="Delivery Location" />
     </div>
   )

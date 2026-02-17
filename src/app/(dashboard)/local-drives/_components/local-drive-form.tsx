@@ -148,7 +148,7 @@ export function LocalDriveForm({ localDrive, onSuccess, onCancel }: LocalDriveFo
 
         {/* Assignment */}
         <div>
-          <h4 className="mb-3 text-sm font-medium text-gray-900">Assignment</h4>
+          <h4 className="mb-3 text-sm font-medium text-foreground">Assignment</h4>
           <div className="grid grid-cols-2 gap-3">
             <FormField
               control={form.control}
@@ -205,7 +205,7 @@ export function LocalDriveForm({ localDrive, onSuccess, onCancel }: LocalDriveFo
 
         {/* Pickup */}
         <div>
-          <h4 className="mb-3 text-sm font-medium text-gray-900">Pickup</h4>
+          <h4 className="mb-3 text-sm font-medium text-foreground">Pickup</h4>
           <FormField
             control={form.control}
             name="pickupLocation"
@@ -251,7 +251,7 @@ export function LocalDriveForm({ localDrive, onSuccess, onCancel }: LocalDriveFo
 
         {/* Delivery */}
         <div>
-          <h4 className="mb-3 text-sm font-medium text-gray-900">Delivery</h4>
+          <h4 className="mb-3 text-sm font-medium text-foreground">Delivery</h4>
           <FormField
             control={form.control}
             name="deliveryLocation"
@@ -297,7 +297,7 @@ export function LocalDriveForm({ localDrive, onSuccess, onCancel }: LocalDriveFo
 
         {/* Schedule & Revenue */}
         <div>
-          <h4 className="mb-3 text-sm font-medium text-gray-900">Schedule & Revenue</h4>
+          <h4 className="mb-3 text-sm font-medium text-foreground">Schedule & Revenue</h4>
           <div className="grid grid-cols-2 gap-3">
             <FormField
               control={form.control}

@@ -172,7 +172,7 @@ function SignupForm() {
           <CardDescription>Create an account to accept your team invitation</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="mb-4 rounded-md bg-blue-50 p-3 text-sm text-blue-700">
+          <div className="mb-4 rounded-md bg-blue-50 p-3 text-sm text-blue-700 dark:bg-blue-950/30 dark:text-blue-400">
             Create an account to accept your team invitation.
           </div>
           {state?.error && (

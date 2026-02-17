@@ -81,7 +81,7 @@ export function TripFilters({
       />
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
-          <label htmlFor="start-date" className="text-sm text-gray-500 whitespace-nowrap">
+          <label htmlFor="start-date" className="text-sm text-muted-foreground whitespace-nowrap">
             From
           </label>
           <input
@@ -89,11 +89,11 @@ export function TripFilters({
             type="date"
             value={startDate}
             onChange={(e) => onStartDateChange(e.target.value || '')}
-            className="h-9 rounded-md border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="h-9 rounded-md border border-border bg-surface px-3 text-sm text-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>
         <div className="flex items-center gap-2">
-          <label htmlFor="end-date" className="text-sm text-gray-500 whitespace-nowrap">
+          <label htmlFor="end-date" className="text-sm text-muted-foreground whitespace-nowrap">
             To
           </label>
           <input
@@ -101,7 +101,7 @@ export function TripFilters({
             type="date"
             value={endDate}
             onChange={(e) => onEndDateChange(e.target.value || '')}
-            className="h-9 rounded-md border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="h-9 rounded-md border border-border bg-surface px-3 text-sm text-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>
       </div>

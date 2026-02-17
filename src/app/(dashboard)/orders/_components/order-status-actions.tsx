@@ -163,7 +163,7 @@ export function OrderStatusActions({ orderId, currentStatus }: OrderStatusAction
         <Button
           variant="outline"
           size="sm"
-          className="text-red-600 hover:bg-red-50 hover:text-red-700"
+          className="text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-700"
           onClick={() => setCancelOpen(true)}
           disabled={isLoading}
         >

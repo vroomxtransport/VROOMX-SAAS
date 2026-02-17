@@ -123,13 +123,13 @@ export function PaymentRecorder({
               {PAYMENT_STATUS_LABELS[paymentStatus]}
             </span>
           </div>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             Paid: {formatCurrency(amountPaid)} / {formatCurrency(carrierPay)}
           </p>
         </div>
 
         {/* Progress bar */}
-        <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
+        <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
           <div
             className={cn(
               'h-full rounded-full transition-all duration-300',
@@ -140,7 +140,7 @@ export function PaymentRecorder({
         </div>
 
         {remaining > 0 && (
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted-foreground">
             Remaining: {formatCurrency(remaining)}
           </p>
         )}
@@ -148,35 +148,35 @@ export function PaymentRecorder({
 
       {/* Payment History */}
       <div>
-        <h3 className="mb-2 text-sm font-medium text-gray-900">
+        <h3 className="mb-2 text-sm font-medium text-foreground">
           Payment History
         </h3>
         {paymentsLoading ? (
-          <div className="flex items-center gap-2 py-3 text-sm text-gray-500">
+          <div className="flex items-center gap-2 py-3 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
             Loading payments...
           </div>
         ) : !payments || payments.length === 0 ? (
-          <p className="py-3 text-sm text-gray-500">No payments recorded</p>
+          <p className="py-3 text-sm text-muted-foreground">No payments recorded</p>
         ) : (
           <div className="max-h-48 space-y-2 overflow-y-auto">
             {payments.map((payment) => (
               <div
                 key={payment.id}
-                className="flex items-center justify-between rounded-md bg-gray-50 px-3 py-2"
+                className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2"
               >
                 <div className="flex items-center gap-3">
                   <DollarSign className="h-4 w-4 text-green-600" />
                   <div>
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-sm font-medium text-foreground">
                       {formatCurrency(parseFloat(payment.amount))}
                     </p>
                     {payment.notes && (
-                      <p className="text-xs text-gray-500">{payment.notes}</p>
+                      <p className="text-xs text-muted-foreground">{payment.notes}</p>
                     )}
                   </div>
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   {formatDate(payment.payment_date)}
                 </p>
               </div>
@@ -187,8 +187,8 @@ export function PaymentRecorder({
 
       {/* Record Payment Form */}
       {paymentStatus !== 'paid' && (
-        <div className="border-t border-gray-100 pt-4">
-          <h3 className="mb-3 text-sm font-medium text-gray-900">
+        <div className="border-t border-border pt-4">
+          <h3 className="mb-3 text-sm font-medium text-foreground">
             Record Payment
           </h3>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">

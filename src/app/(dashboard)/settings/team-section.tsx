@@ -137,17 +137,17 @@ export function TeamSection({
             {teamMembers.map((member) => (
               <div key={member.id} className="flex items-center justify-between py-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-sm font-medium text-gray-600">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-sm font-medium text-muted-foreground">
                     {(member.name || member.email)[0]?.toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-sm font-medium text-foreground">
                       {member.name || member.email}
                       {member.userId === currentUserId && (
-                        <span className="ml-2 text-xs text-gray-500">(you)</span>
+                        <span className="ml-2 text-xs text-muted-foreground">(you)</span>
                       )}
                     </p>
-                    <p className="text-xs text-gray-500">{member.email}</p>
+                    <p className="text-xs text-muted-foreground">{member.email}</p>
                   </div>
                 </div>
                 <Badge variant="secondary" className="capitalize">
@@ -175,10 +175,10 @@ export function TeamSection({
                 return (
                   <div key={invite.id} className="flex items-center justify-between py-3">
                     <div className="flex items-center gap-3">
-                      <Clock className="h-4 w-4 text-gray-400" />
+                      <Clock className="h-4 w-4 text-muted-foreground/60" />
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{invite.email}</p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-sm font-medium text-foreground">{invite.email}</p>
+                        <p className="text-xs text-muted-foreground">
                           {isExpired ? 'Expired' : `Expires ${new Date(invite.expires_at).toLocaleDateString()}`}
                           {' \u00b7 '}
                           <span className="capitalize">{invite.role}</span>

@@ -26,7 +26,7 @@ function LoginForm() {
       </CardHeader>
       <CardContent>
         {inviteToken && (
-          <div className="mb-4 rounded-md bg-blue-50 p-3 text-sm text-blue-700">
+          <div className="mb-4 rounded-md bg-blue-50 p-3 text-sm text-blue-700 dark:bg-blue-950/30 dark:text-blue-400">
             Sign in to accept your team invitation.
           </div>
         )}

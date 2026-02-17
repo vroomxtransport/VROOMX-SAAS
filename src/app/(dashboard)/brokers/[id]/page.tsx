@@ -54,7 +54,7 @@ export default function BrokerDetailPage({
           <Skeleton className="h-8 w-8" />
           <Skeleton className="h-8 w-48" />
         </div>
-        <div className="rounded-lg border bg-white p-6">
+        <div className="rounded-lg border bg-surface p-6">
           <div className="space-y-4">
             <Skeleton className="h-6 w-1/3" />
             <Skeleton className="h-4 w-1/2" />
@@ -77,7 +77,7 @@ export default function BrokerDetailPage({
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Brokers
         </Button>
-        <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
+        <div className="rounded-md bg-red-50 dark:bg-red-950/30 p-4 text-sm text-red-700 dark:text-red-400">
           Failed to load broker: {error?.message ?? 'Unknown error'}
         </div>
       </div>
@@ -95,7 +95,7 @@ export default function BrokerDetailPage({
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Brokers
         </Button>
-        <div className="rounded-md bg-yellow-50 p-4 text-sm text-yellow-700">
+        <div className="rounded-md bg-yellow-50 dark:bg-yellow-950/30 p-4 text-sm text-yellow-700 dark:text-yellow-400">
           Broker not found.
         </div>
       </div>
@@ -119,7 +119,7 @@ export default function BrokerDetailPage({
             <span className="sr-only">Back to Brokers</span>
           </Button>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">{broker.name}</h1>
+            <h1 className="text-xl font-bold text-foreground">{broker.name}</h1>
             {broker.payment_terms && (
               <Badge variant="outline" className="mt-1">
                 {PAYMENT_TERMS_LABELS[broker.payment_terms]}
@@ -134,7 +134,7 @@ export default function BrokerDetailPage({
           </Button>
           <Button
             variant="outline"
-            className="text-red-600 hover:bg-red-50 hover:text-red-700"
+            className="text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-700"
             onClick={() => setDeleteDialogOpen(true)}
           >
             <Trash2 className="mr-2 h-4 w-4" />
@@ -146,16 +146,16 @@ export default function BrokerDetailPage({
       {/* Content grid */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Contact Information */}
-        <div className="rounded-lg border bg-white p-6">
-          <h2 className="mb-4 text-lg font-semibold text-gray-900">
+        <div className="rounded-lg border bg-surface p-6">
+          <h2 className="mb-4 text-lg font-semibold text-foreground">
             Contact Information
           </h2>
           <div className="space-y-4">
             {broker.email && (
               <div className="flex items-center gap-3">
-                <Mail className="h-4 w-4 shrink-0 text-gray-400" />
+                <Mail className="h-4 w-4 shrink-0 text-muted-foreground/60" />
                 <div>
-                  <p className="text-xs font-medium uppercase text-gray-500">Email</p>
+                  <p className="text-xs font-medium uppercase text-muted-foreground">Email</p>
                   <a
                     href={`mailto:${broker.email}`}
                     className="text-sm text-blue-600 hover:underline"
@@ -167,9 +167,9 @@ export default function BrokerDetailPage({
             )}
             {broker.phone && (
               <div className="flex items-center gap-3">
-                <Phone className="h-4 w-4 shrink-0 text-gray-400" />
+                <Phone className="h-4 w-4 shrink-0 text-muted-foreground/60" />
                 <div>
-                  <p className="text-xs font-medium uppercase text-gray-500">Phone</p>
+                  <p className="text-xs font-medium uppercase text-muted-foreground">Phone</p>
                   <a
                     href={`tel:${broker.phone}`}
                     className="text-sm text-blue-600 hover:underline"
@@ -181,32 +181,32 @@ export default function BrokerDetailPage({
             )}
             {fullAddress && (
               <div className="flex items-center gap-3">
-                <MapPin className="h-4 w-4 shrink-0 text-gray-400" />
+                <MapPin className="h-4 w-4 shrink-0 text-muted-foreground/60" />
                 <div>
-                  <p className="text-xs font-medium uppercase text-gray-500">Address</p>
-                  <p className="text-sm text-gray-900">{fullAddress}</p>
+                  <p className="text-xs font-medium uppercase text-muted-foreground">Address</p>
+                  <p className="text-sm text-foreground">{fullAddress}</p>
                 </div>
               </div>
             )}
             {!broker.email && !broker.phone && !fullAddress && (
-              <p className="text-sm text-gray-500">No contact information provided.</p>
+              <p className="text-sm text-muted-foreground">No contact information provided.</p>
             )}
           </div>
         </div>
 
         {/* Payment & Billing */}
-        <div className="rounded-lg border bg-white p-6">
-          <h2 className="mb-4 text-lg font-semibold text-gray-900">
+        <div className="rounded-lg border bg-surface p-6">
+          <h2 className="mb-4 text-lg font-semibold text-foreground">
             Payment & Billing
           </h2>
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <FileText className="h-4 w-4 shrink-0 text-gray-400" />
+              <FileText className="h-4 w-4 shrink-0 text-muted-foreground/60" />
               <div>
-                <p className="text-xs font-medium uppercase text-gray-500">
+                <p className="text-xs font-medium uppercase text-muted-foreground">
                   Payment Terms
                 </p>
-                <p className="text-sm text-gray-900">
+                <p className="text-sm text-foreground">
                   {broker.payment_terms
                     ? PAYMENT_TERMS_LABELS[broker.payment_terms]
                     : 'Not specified'}
@@ -214,12 +214,12 @@ export default function BrokerDetailPage({
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Building2 className="h-4 w-4 shrink-0 text-gray-400" />
+              <Building2 className="h-4 w-4 shrink-0 text-muted-foreground/60" />
               <div>
-                <p className="text-xs font-medium uppercase text-gray-500">
+                <p className="text-xs font-medium uppercase text-muted-foreground">
                   Factoring Company
                 </p>
-                <p className="text-sm text-gray-900">
+                <p className="text-sm text-foreground">
                   {broker.factoring_company || 'None'}
                 </p>
               </div>
@@ -229,9 +229,9 @@ export default function BrokerDetailPage({
 
         {/* Notes */}
         {broker.notes && (
-          <div className="rounded-lg border bg-white p-6">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900">Notes</h2>
-            <p className="whitespace-pre-wrap text-sm text-gray-700">
+          <div className="rounded-lg border bg-surface p-6">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">Notes</h2>
+            <p className="whitespace-pre-wrap text-sm text-foreground/80">
               {broker.notes}
             </p>
           </div>

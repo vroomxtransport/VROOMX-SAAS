@@ -56,12 +56,12 @@ function getExpiryStatus(expiresAt: string | null): {
   const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
 
   if (diffDays < 0) {
-    return { label: 'Expired', className: 'bg-red-50 text-red-700 border-red-200' }
+    return { label: 'Expired', className: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-800' }
   }
   if (diffDays <= 30) {
     return {
       label: 'Expiring Soon',
-      className: 'bg-amber-50 text-amber-700 border-amber-200',
+      className: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800',
     }
   }
   return null
@@ -189,8 +189,8 @@ export function DriverDocuments({ driverId, tenantId }: DriverDocumentsProps) {
 
   if (isLoading) {
     return (
-      <div className="rounded-lg border bg-white p-5">
-        <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-900">
+      <div className="rounded-lg border bg-surface p-5">
+        <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
           <FileText className="h-4 w-4" />
           Documents
         </h3>
@@ -203,9 +203,9 @@ export function DriverDocuments({ driverId, tenantId }: DriverDocumentsProps) {
   }
 
   return (
-    <div className="rounded-lg border bg-white p-5">
+    <div className="rounded-lg border bg-surface p-5">
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
           <FileText className="h-4 w-4" />
           Documents
         </h3>
@@ -217,7 +217,7 @@ export function DriverDocuments({ driverId, tenantId }: DriverDocumentsProps) {
 
       {/* Document list */}
       {!documents || documents.length === 0 ? (
-        <p className="py-8 text-center text-sm text-gray-400">
+        <p className="py-8 text-center text-sm text-muted-foreground/60">
           No documents uploaded yet
         </p>
       ) : (
@@ -230,9 +230,9 @@ export function DriverDocuments({ driverId, tenantId }: DriverDocumentsProps) {
                 className="flex items-center justify-between rounded-md border p-3"
               >
                 <div className="flex items-center gap-3">
-                  <FileText className="h-5 w-5 shrink-0 text-gray-400" />
+                  <FileText className="h-5 w-5 shrink-0 text-muted-foreground/60" />
                   <div>
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-sm font-medium text-foreground">
                       {doc.file_name}
                     </p>
                     <div className="mt-0.5 flex items-center gap-2">
@@ -241,11 +241,11 @@ export function DriverDocuments({ driverId, tenantId }: DriverDocumentsProps) {
                           doc.document_type as DriverDocumentType
                         ] ?? doc.document_type}
                       </Badge>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-muted-foreground">
                         {formatFileSize(doc.file_size)}
                       </span>
                       {doc.expires_at && (
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-muted-foreground">
                           Exp: {formatDate(doc.expires_at)}
                         </span>
                       )}

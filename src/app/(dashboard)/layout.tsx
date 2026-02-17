@@ -12,12 +12,26 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const supabase = await createClient()
+  let supabase
+  try {
+    supabase = await createClient()
+  } catch (e) {
+    console.error('[DASHBOARD_LAYOUT] Failed to create Supabase client:', e)
+    redirect('/login')
+  }
 
   // Check authentication
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-  if (authError || !user) {
+  let user
+  try {
+    const { data, error: authError } = await supabase.auth.getUser()
+    if (authError || !data.user) {
+      console.error('[DASHBOARD_LAYOUT] Auth failed:', authError?.message)
+      redirect('/login')
+    }
+    user = data.user
+  } catch (e) {
+    if (e && typeof e === 'object' && 'digest' in e) throw e
+    console.error('[DASHBOARD_LAYOUT] Auth exception:', e)
     redirect('/login')
   }
 
@@ -30,13 +44,22 @@ export default async function DashboardLayout({
   }
 
   // Fetch tenant details
-  const { data: tenant, error: tenantError } = await supabase
-    .from('tenants')
-    .select('name, plan, subscription_status, grace_period_ends_at, is_suspended')
-    .eq('id', tenantId)
-    .single()
+  let tenant
+  try {
+    const { data, error: tenantError } = await supabase
+      .from('tenants')
+      .select('name, plan, subscription_status, grace_period_ends_at, is_suspended')
+      .eq('id', tenantId)
+      .single()
 
-  if (tenantError || !tenant) {
+    if (tenantError || !data) {
+      console.error('[DASHBOARD_LAYOUT] Tenant fetch failed:', tenantError?.message)
+      redirect('/login')
+    }
+    tenant = data
+  } catch (e) {
+    if (e && typeof e === 'object' && 'digest' in e) throw e
+    console.error('[DASHBOARD_LAYOUT] Tenant fetch exception:', e)
     redirect('/login')
   }
 
@@ -59,12 +82,12 @@ export default async function DashboardLayout({
         <main className="flex-1 overflow-y-auto">
           {/* Suspension overlay */}
           {tenant.is_suspended && (
-            <div className="mx-4 mb-4 mt-4 rounded-xl border border-red-200 bg-red-50 p-4 lg:mx-8">
+            <div className="mx-4 mb-4 mt-4 rounded-xl border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/30 p-4 lg:mx-8">
               <div className="flex items-center gap-3">
                 <AlertTriangle className="h-5 w-5 text-red-600 shrink-0" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-red-900">Account Suspended</p>
-                  <p className="text-sm text-red-700">
+                  <p className="text-sm font-medium text-red-900 dark:text-red-400">Account Suspended</p>
+                  <p className="text-sm text-red-700 dark:text-red-400">
                     Your account has been suspended due to a failed payment. Please update your payment method to restore access.
                     You can view existing data but cannot create new resources.
                   </p>
@@ -80,12 +103,12 @@ export default async function DashboardLayout({
 
           {/* Grace period warning */}
           {!tenant.is_suspended && tenant.grace_period_ends_at && (
-            <div className="mx-4 mb-4 mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 lg:mx-8">
+            <div className="mx-4 mb-4 mt-4 rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30 p-4 lg:mx-8">
               <div className="flex items-center gap-3">
                 <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-amber-900">Payment Issue</p>
-                  <p className="text-sm text-amber-700">
+                  <p className="text-sm font-medium text-amber-900 dark:text-amber-400">Payment Issue</p>
+                  <p className="text-sm text-amber-700 dark:text-amber-400">
                     Your recent payment failed. Please update your payment method by{' '}
                     {new Date(tenant.grace_period_ends_at).toLocaleDateString()} to avoid service interruption.
                   </p>
