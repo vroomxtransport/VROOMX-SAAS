@@ -295,11 +295,11 @@ export function OrderForm({ order, onSuccess, onCancel, onStepChange, onDirtyCha
             </Button>
 
             {currentStep < STEPS.length - 1 ? (
-              <Button type="button" onClick={handleNext}>
+              <Button key="next" type="button" onClick={handleNext}>
                 Next
               </Button>
             ) : (
-              <Button type="submit" disabled={isSubmitting}>
+              <Button key="submit" type="submit" disabled={isSubmitting}>
                 {isSubmitting
                   ? isEditMode
                     ? 'Saving...'
