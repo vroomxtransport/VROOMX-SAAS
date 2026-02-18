@@ -52,14 +52,13 @@ export async function factorOrder(orderId: string) {
   const factoringFee = Math.round(carrierPay * (feeRate / 100) * 100) / 100
   const netAmount = Math.round((carrierPay - factoringFee) * 100) / 100
 
-  // Update order status and record payment
+  // Update order status — no payment recorded yet (factoring company pays later)
   const now = new Date().toISOString()
 
   const { error: updateError } = await supabase
     .from('orders')
     .update({
       payment_status: 'factored',
-      amount_paid: String(netAmount),
       invoice_date: now,
     })
     .eq('id', orderId)
@@ -67,21 +66,6 @@ export async function factorOrder(orderId: string) {
 
   if (updateError) {
     return { error: safeError(updateError, 'factorOrder:update') }
-  }
-
-  // Insert payment record
-  const { error: paymentError } = await supabase
-    .from('payments')
-    .insert({
-      tenant_id: tenantId,
-      order_id: orderId,
-      amount: String(netAmount),
-      payment_date: now.split('T')[0],
-      notes: `Factored at ${feeRate}% — Fee: $${factoringFee.toFixed(2)}`,
-    })
-
-  if (paymentError) {
-    return { error: safeError(paymentError, 'factorOrder:payment') }
   }
 
   revalidatePath('/billing')

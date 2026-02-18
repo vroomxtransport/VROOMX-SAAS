@@ -258,6 +258,55 @@ export async function fetchCollectionRate(
 }
 
 // ============================================================================
+// Orders by Payment Status — for clickable status cards
+// ============================================================================
+
+export interface StatusOrder {
+  id: string
+  orderNumber: string | null
+  vehicleName: string
+  brokerName: string | null
+  carrierPay: number
+  amountPaid: number
+  updatedAt: string
+}
+
+export async function fetchOrdersByPaymentStatus(
+  supabase: SupabaseClient,
+  status: string
+): Promise<StatusOrder[]> {
+  const { data: orders, error } = await supabase
+    .from('orders')
+    .select(
+      'id, order_number, vehicle_year, vehicle_make, vehicle_model, carrier_pay, amount_paid, updated_at, broker:brokers(name)'
+    )
+    .eq('payment_status', status)
+    .order('updated_at', { ascending: false })
+    .limit(50)
+
+  if (error) throw error
+
+  return (orders ?? []).map((o) => {
+    const brokerRaw = o.broker as unknown as { name: string } | { name: string }[] | null
+    const broker = Array.isArray(brokerRaw) ? brokerRaw[0] ?? null : brokerRaw
+
+    const vehicleName = [o.vehicle_year, o.vehicle_make, o.vehicle_model]
+      .filter(Boolean)
+      .join(' ') || 'Unknown Vehicle'
+
+    return {
+      id: o.id,
+      orderNumber: o.order_number,
+      vehicleName,
+      brokerName: broker?.name ?? null,
+      carrierPay: parseFloat(o.carrier_pay ?? '0'),
+      amountPaid: parseFloat(o.amount_paid ?? '0'),
+      updatedAt: o.updated_at,
+    }
+  })
+}
+
+// ============================================================================
 // Ready to Invoice — Delivered orders not yet invoiced
 // ============================================================================
 
