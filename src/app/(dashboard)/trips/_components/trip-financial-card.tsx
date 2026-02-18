@@ -8,19 +8,18 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
   DollarSign,
-  TrendingUp,
   Building2,
-  User,
-  Receipt,
   Calculator,
   Pencil,
   Check,
   X,
   Loader2,
+  Truck,
 } from 'lucide-react'
 import { DRIVER_PAY_TYPE_LABELS } from '@/types'
 import type { TripWithRelations } from '@/lib/queries/trips'
 import type { DriverPayType } from '@/types'
+import type { LucideIcon } from 'lucide-react'
 
 function formatCurrency(value: string | number): string {
   const num = typeof value === 'string' ? parseFloat(value) : value
@@ -33,46 +32,109 @@ function formatCurrency(value: string | number): string {
   }).format(num)
 }
 
-interface TripFinancialCardProps {
-  trip: TripWithRelations
+// --- Accent style maps (reused from kpi-cards pattern) ---
+
+type Accent = 'emerald' | 'muted' | 'violet' | 'rose'
+
+const ACCENT_STYLES: Record<Accent, string> = {
+  emerald: 'border-emerald-200/50 bg-emerald-500/5 dark:border-emerald-800/50 dark:bg-emerald-500/10',
+  muted: 'border-border bg-muted/40 dark:bg-muted/20',
+  violet: 'border-violet-200/50 bg-violet-500/5 dark:border-violet-800/50 dark:bg-violet-500/10',
+  rose: 'border-rose-200/50 bg-rose-500/5 dark:border-rose-800/50 dark:bg-rose-500/10',
 }
 
-interface StatCardProps {
+const ICON_STYLES: Record<Accent, string> = {
+  emerald: 'text-emerald-600 bg-emerald-100 dark:bg-emerald-900/50 dark:text-emerald-400',
+  muted: 'text-muted-foreground bg-muted dark:bg-muted/60',
+  violet: 'text-violet-600 bg-violet-100 dark:bg-violet-900/50 dark:text-violet-400',
+  rose: 'text-rose-600 bg-rose-100 dark:bg-rose-900/50 dark:text-rose-400',
+}
+
+// --- Sub-components ---
+
+function HeroCard({ label, value, subtitle, icon: Icon, accent, editAction }: {
   label: string
   value: string
   subtitle?: string
-  icon: React.ReactNode
-  accent: string
-  large?: boolean
+  icon: LucideIcon
+  accent: Accent
   editAction?: React.ReactNode
-}
-
-function StatCard({ label, value, subtitle, icon, accent, large, editAction }: StatCardProps) {
+}) {
   return (
-    <div className={cn(
-      'rounded-lg border bg-surface p-4',
-      large && 'ring-1 ring-border'
-    )}>
+    <div className={cn('rounded-xl border p-4', ACCENT_STYLES[accent])}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className={cn('rounded-md p-1.5', accent)}>
-            {icon}
+          <div className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-lg', ICON_STYLES[accent])}>
+            <Icon className="h-4 w-4" />
           </div>
           <span className="text-xs font-medium uppercase text-muted-foreground">{label}</span>
         </div>
         {editAction}
       </div>
-      <p className={cn(
-        'mt-2 font-semibold text-foreground',
-        large ? 'text-xl' : 'text-lg'
-      )}>
-        {value}
-      </p>
+      <p className="mt-2 text-2xl font-bold tabular-nums text-foreground">{value}</p>
       {subtitle && (
         <p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p>
       )}
     </div>
   )
+}
+
+function WaterfallLine({ label, value, valueStr, bold, indent, highlight, bottomLine }: {
+  label: string
+  value?: number
+  valueStr?: string
+  bold?: boolean
+  indent?: boolean
+  highlight?: boolean
+  bottomLine?: 'positive' | 'negative'
+}) {
+  const displayValue = valueStr ?? (value !== undefined ? formatCurrency(value) : '')
+
+  return (
+    <div className={cn(
+      'flex items-center justify-between px-4 py-2',
+      highlight && 'bg-muted/30 dark:bg-muted/10',
+      bottomLine === 'positive' && 'bg-green-50/50 dark:bg-green-950/20',
+      bottomLine === 'negative' && 'bg-red-50/50 dark:bg-red-950/20',
+    )}>
+      <span className={cn(
+        indent && 'pl-4',
+        bold ? 'font-semibold text-foreground' : 'text-muted-foreground',
+        bottomLine && 'font-bold text-foreground',
+      )}>
+        {label}
+      </span>
+      <span className={cn(
+        'tabular-nums',
+        bold ? 'font-semibold text-foreground' : 'text-muted-foreground',
+        bottomLine === 'positive' && 'font-bold text-green-700 dark:text-green-400',
+        bottomLine === 'negative' && 'font-bold text-red-700 dark:text-red-400',
+        !bottomLine && value !== undefined && value < 0 && 'text-red-600 dark:text-red-400',
+      )}>
+        {displayValue}
+      </span>
+    </div>
+  )
+}
+
+function MetricPill({ label, value, description }: {
+  label: string
+  value: string
+  description: string
+}) {
+  return (
+    <div className="rounded-lg bg-muted/40 dark:bg-muted/20 px-3 py-2.5">
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className="mt-0.5 text-sm font-bold tabular-nums text-foreground">{value}</p>
+      <p className="text-[10px] text-muted-foreground/70">{description}</p>
+    </div>
+  )
+}
+
+// --- Main component ---
+
+interface TripFinancialCardProps {
+  trip: TripWithRelations
 }
 
 export function TripFinancialCard({ trip }: TripFinancialCardProps) {
@@ -84,28 +146,19 @@ export function TripFinancialCard({ trip }: TripFinancialCardProps) {
   const revenue = parseFloat(trip.total_revenue || '0')
   const carrierPay = parseFloat(trip.carrier_pay || '0')
   const brokerFees = parseFloat(trip.total_broker_fees || '0')
+  const localFees = parseFloat(trip.total_local_fees || '0')
   const driverPay = parseFloat(trip.driver_pay || '0')
   const expenses = parseFloat(trip.total_expenses || '0')
   const netProfit = parseFloat(trip.net_profit || '0')
 
+  // Derived P&L metrics (computed client-side from existing denormalized fields)
+  const cleanGross = revenue - brokerFees - localFees
+  const truckGross = cleanGross - driverPay
+  const truckGrossMargin = revenue > 0 ? (truckGross / revenue) * 100 : 0
+  const appc = trip.order_count > 0 ? revenue / trip.order_count : null
+
   const payType = trip.driver?.pay_type as DriverPayType | undefined
   const payRate = trip.driver?.pay_rate
-
-  // Build driver pay subtitle showing the pay model
-  let driverPaySubtitle = ''
-  if (payType && payRate !== undefined && payRate !== null) {
-    if (payType === 'per_car') {
-      driverPaySubtitle = `$${payRate}/car`
-    } else if (payType === 'percentage_of_carrier_pay') {
-      driverPaySubtitle = `${payRate}% of carrier pay`
-    } else if (payType === 'dispatch_fee_percent') {
-      driverPaySubtitle = `${payRate}% dispatch fee`
-    } else if (payType === 'per_mile') {
-      driverPaySubtitle = `$${payRate}/mile`
-    } else {
-      driverPaySubtitle = DRIVER_PAY_TYPE_LABELS[payType]
-    }
-  }
 
   const handleStartEdit = useCallback(() => {
     setCarrierPayValue(String(carrierPay))
@@ -184,77 +237,91 @@ export function TripFinancialCard({ trip }: TripFinancialCardProps) {
     </Button>
   )
 
+  // Driver pay model label for metrics section
+  let driverPayModelLabel = 'N/A'
+  if (payType && payRate !== undefined && payRate !== null) {
+    if (payType === 'per_car') driverPayModelLabel = `$${payRate}/car`
+    else if (payType === 'percentage_of_carrier_pay') driverPayModelLabel = `${payRate}% of carrier pay`
+    else if (payType === 'dispatch_fee_percent') driverPayModelLabel = `${payRate}% dispatch fee`
+    else if (payType === 'per_mile') driverPayModelLabel = `$${payRate}/mile`
+    else driverPayModelLabel = DRIVER_PAY_TYPE_LABELS[payType]
+  }
+
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-      {/* 1. Revenue */}
-      <StatCard
-        label="Revenue"
-        value={formatCurrency(revenue)}
-        subtitle={`${trip.order_count} order${trip.order_count !== 1 ? 's' : ''}`}
-        icon={<DollarSign className="h-4 w-4 text-green-600" />}
-        accent="bg-green-50 dark:bg-green-950/30"
-      />
+    <div className="rounded-xl border bg-card overflow-hidden">
+      {/* Section 1: Hero KPIs */}
+      <div className="grid grid-cols-2 gap-3 p-4 lg:grid-cols-4">
+        <HeroCard
+          label="Revenue"
+          value={formatCurrency(revenue)}
+          subtitle={`${trip.order_count} order${trip.order_count !== 1 ? 's' : ''}`}
+          icon={DollarSign}
+          accent="emerald"
+        />
+        <HeroCard
+          label="Carrier Pay"
+          value={isEditingCarrierPay ? '' : formatCurrency(carrierPay)}
+          icon={Building2}
+          accent="muted"
+          editAction={carrierPayEditAction}
+        />
+        <HeroCard
+          label="Truck Gross"
+          value={formatCurrency(truckGross)}
+          subtitle={`${truckGrossMargin.toFixed(1)}% margin`}
+          icon={Truck}
+          accent="violet"
+        />
+        <HeroCard
+          label="Net Profit"
+          value={formatCurrency(netProfit)}
+          icon={Calculator}
+          accent={netProfit >= 0 ? 'emerald' : 'rose'}
+        />
+      </div>
 
-      {/* 2. Carrier Pay */}
-      <StatCard
-        label="Carrier Pay"
-        value={isEditingCarrierPay ? '' : formatCurrency(carrierPay)}
-        icon={<Building2 className="h-4 w-4 text-muted-foreground" />}
-        accent="bg-muted"
-        editAction={carrierPayEditAction}
-      />
-
-      {/* 3. Broker Fees */}
-      <StatCard
-        label="Broker Fees"
-        value={formatCurrency(brokerFees)}
-        subtitle="Per-order sum"
-        icon={<TrendingUp className="h-4 w-4 text-amber-600" />}
-        accent="bg-amber-50 dark:bg-amber-950/30"
-      />
-
-      {/* 4. Driver Pay */}
-      <StatCard
-        label="Driver Pay"
-        value={formatCurrency(driverPay)}
-        subtitle={driverPaySubtitle}
-        icon={<User className="h-4 w-4 text-blue-600" />}
-        accent="bg-blue-50 dark:bg-blue-950/30"
-      />
-
-      {/* 5. Expenses */}
-      <StatCard
-        label="Expenses"
-        value={formatCurrency(expenses)}
-        icon={<Receipt className="h-4 w-4 text-red-600" />}
-        accent="bg-red-50 dark:bg-red-950/30"
-      />
-
-      {/* 6. Net Profit */}
-      <div className={cn(
-        'rounded-lg border p-4 ring-1',
-        netProfit >= 0
-          ? 'border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/30 ring-green-200 dark:ring-green-800'
-          : 'border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/30 ring-red-200 dark:ring-red-800'
-      )}>
-        <div className="flex items-center gap-2">
-          <div className={cn(
-            'rounded-md p-1.5',
-            netProfit >= 0 ? 'bg-green-100' : 'bg-red-100'
-          )}>
-            <Calculator className={cn(
-              'h-4 w-4',
-              netProfit >= 0 ? 'text-green-600' : 'text-red-600'
-            )} />
-          </div>
-          <span className="text-xs font-medium uppercase text-muted-foreground">Net Profit</span>
+      {/* Section 2: P&L Waterfall */}
+      <div className="border-t">
+        <div className="px-4 py-2 bg-muted/30 dark:bg-muted/10">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">P&L Breakdown</span>
         </div>
-        <p className={cn(
-          'mt-2 text-xl font-bold',
-          netProfit >= 0 ? 'text-green-700' : 'text-red-700'
-        )}>
-          {formatCurrency(netProfit)}
-        </p>
+        <div className="divide-y divide-border/50 text-sm">
+          <WaterfallLine label="Revenue" value={revenue} bold />
+          <WaterfallLine label="− Broker Fees" value={-brokerFees} indent />
+          <WaterfallLine label="− Local Fees" value={-localFees} indent />
+          <WaterfallLine label="= Clean Gross" value={cleanGross} bold highlight />
+          <WaterfallLine
+            label="− Driver Pay"
+            value={-driverPay}
+            indent
+          />
+          <WaterfallLine label="= Truck Gross" value={truckGross} bold highlight />
+          <WaterfallLine label="− Expenses" value={-expenses} indent />
+          <WaterfallLine
+            label="= Net Profit"
+            value={netProfit}
+            bottomLine={netProfit >= 0 ? 'positive' : 'negative'}
+          />
+        </div>
+      </div>
+
+      {/* Section 3: Per-Unit Metrics */}
+      <div className="border-t grid grid-cols-3 gap-2 p-4">
+        <MetricPill
+          label="APPC"
+          value={appc !== null ? formatCurrency(appc) : 'N/A'}
+          description="Avg pay per car"
+        />
+        <MetricPill
+          label="Truck Gross Margin"
+          value={`${truckGrossMargin.toFixed(1)}%`}
+          description="Gross after driver pay"
+        />
+        <MetricPill
+          label="Driver Pay Model"
+          value={driverPayModelLabel}
+          description={payType ? DRIVER_PAY_TYPE_LABELS[payType] : 'No driver assigned'}
+        />
       </div>
     </div>
   )
