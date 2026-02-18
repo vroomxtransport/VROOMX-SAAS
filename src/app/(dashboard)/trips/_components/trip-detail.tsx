@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { TripFinancialCard } from './trip-financial-card'
 import { TripStatusActions } from './trip-status-actions'
+import { TripRouteSection } from './trip-route-section'
 import { TripOrders } from './trip-orders'
 import { TripExpenses } from './trip-expenses'
 import {
@@ -145,18 +146,18 @@ export function TripDetail({ trip }: TripDetailProps) {
       {/* Financial Summary Card */}
       <TripFinancialCard trip={trip} />
 
-      {/* Two-column layout: Orders (wider) + Expenses (narrower) */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <TripOrders
-            tripId={trip.id}
-            truckType={truckType}
-          />
-        </div>
-        <div>
-          <TripExpenses tripId={trip.id} />
-        </div>
-      </div>
+      {/* Route Map + Sequencing */}
+      <TripRouteSection
+        tripId={trip.id}
+        routeSequence={trip.route_sequence}
+      />
+
+      {/* Orders + Expenses stacked */}
+      <TripOrders
+        tripId={trip.id}
+        truckType={truckType}
+      />
+      <TripExpenses tripId={trip.id} />
 
       {/* Notes */}
       {trip.notes && (

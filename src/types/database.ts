@@ -94,6 +94,11 @@ export interface Truck {
   updated_at: string
 }
 
+export interface RouteStop {
+  orderId: string
+  stopType: 'pickup' | 'delivery'
+}
+
 export interface Order {
   id: string
   tenant_id: string
@@ -126,9 +131,15 @@ export interface Order {
   actual_pickup_date: string | null
   actual_delivery_date: string | null
   distance_miles: string | null
+  pickup_latitude: number | null
+  pickup_longitude: number | null
+  delivery_latitude: number | null
+  delivery_longitude: number | null
   revenue: string
   carrier_pay: string
   broker_fee: string
+  local_fee: string
+  driver_pay_rate_override: string | null
   payment_type: 'COD' | 'COP' | 'CHECK' | 'BILL' | 'SPLIT' | null
   payment_status: 'unpaid' | 'invoiced' | 'partially_paid' | 'paid'
   invoice_date: string | null
@@ -150,12 +161,14 @@ export interface Trip {
   carrier_pay: string
   total_revenue: string
   total_broker_fees: string
+  total_local_fees: string
   driver_pay: string
   total_expenses: string
   net_profit: string
   order_count: number
   origin_summary: string | null
   destination_summary: string | null
+  route_sequence: RouteStop[] | null
   notes: string | null
   created_at: string
   updated_at: string
@@ -354,6 +367,22 @@ export interface ComplianceDocument {
   notes: string | null
   created_at: string
   updated_at: string
+}
+
+export interface BusinessExpense {
+  id: string
+  tenant_id: string
+  name: string
+  category: 'insurance' | 'tolls_fixed' | 'dispatch' | 'parking' | 'rent' | 'telematics' | 'registration' | 'salary' | 'truck_lease' | 'office_supplies' | 'software' | 'professional_services' | 'other'
+  recurrence: 'monthly' | 'quarterly' | 'annual' | 'one_time'
+  amount: string
+  truck_id: string | null
+  effective_from: string
+  effective_to: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+  truck?: Truck
 }
 
 export interface DriverLocation {

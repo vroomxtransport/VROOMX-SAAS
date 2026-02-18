@@ -237,9 +237,16 @@ export const orders = pgTable('orders', {
   revenue: numeric('revenue', { precision: 12, scale: 2 }).default('0'),
   carrierPay: numeric('carrier_pay', { precision: 12, scale: 2 }).default('0'),
   brokerFee: numeric('broker_fee', { precision: 12, scale: 2 }).default('0'),
+  localFee: numeric('local_fee', { precision: 12, scale: 2 }).default('0'),
+  driverPayRateOverride: numeric('driver_pay_rate_override', { precision: 5, scale: 2 }),
   paymentType: paymentTypeEnum('payment_type').default('COP'),
   // Distance
   distanceMiles: numeric('distance_miles', { precision: 10, scale: 1 }),
+  // Geocoding coordinates
+  pickupLatitude: doublePrecision('pickup_latitude'),
+  pickupLongitude: doublePrecision('pickup_longitude'),
+  deliveryLatitude: doublePrecision('delivery_latitude'),
+  deliveryLongitude: doublePrecision('delivery_longitude'),
   // Trip assignment
   tripId: uuid('trip_id'),
   // Billing (Phase 4)
@@ -294,6 +301,7 @@ export const trips = pgTable('trips', {
   // Denormalized financial summary (computed by app code)
   totalRevenue: numeric('total_revenue', { precision: 12, scale: 2 }).default('0'),
   totalBrokerFees: numeric('total_broker_fees', { precision: 12, scale: 2 }).default('0'),
+  totalLocalFees: numeric('total_local_fees', { precision: 12, scale: 2 }).default('0'),
   driverPay: numeric('driver_pay', { precision: 12, scale: 2 }).default('0'),
   totalExpenses: numeric('total_expenses', { precision: 12, scale: 2 }).default('0'),
   netProfit: numeric('net_profit', { precision: 12, scale: 2 }).default('0'),
@@ -301,6 +309,8 @@ export const trips = pgTable('trips', {
   // Denormalized route summary (computed by app code from assigned orders)
   originSummary: text('origin_summary'),
   destinationSummary: text('destination_summary'),
+  // Route sequencing (ordered list of stops for route planning)
+  routeSequence: jsonb('route_sequence'),
   // Metadata
   notes: text('notes'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -469,6 +479,48 @@ export const truckDocuments = pgTable('truck_documents', {
 }, (table) => [
   index('idx_truck_documents_tenant_id').on(table.tenantId),
   index('idx_truck_documents_tenant_truck').on(table.tenantId, table.truckId),
+])
+
+// ============================================================================
+// Business Expenses Enums
+// ============================================================================
+
+export const businessExpenseRecurrenceEnum = pgEnum('business_expense_recurrence', [
+  'monthly', 'quarterly', 'annual', 'one_time',
+])
+
+export const businessExpenseCategoryEnum = pgEnum('business_expense_category', [
+  'insurance', 'tolls_fixed', 'dispatch', 'parking', 'rent', 'telematics',
+  'registration', 'salary', 'truck_lease', 'office_supplies', 'software',
+  'professional_services', 'other',
+])
+
+// ============================================================================
+// Business Expenses Tables
+// ============================================================================
+
+/**
+ * Business Expenses Table
+ * Fixed (recurring) and variable (one-time) business-level expenses.
+ * Used for P&L calculation — separate from trip-level expenses.
+ */
+export const businessExpenses = pgTable('business_expenses', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  category: businessExpenseCategoryEnum('category').notNull(),
+  recurrence: businessExpenseRecurrenceEnum('recurrence').notNull(),
+  amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
+  truckId: uuid('truck_id').references(() => trucks.id),
+  effectiveFrom: date('effective_from').notNull(),
+  effectiveTo: date('effective_to'),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_business_expenses_tenant_id').on(table.tenantId),
+  index('idx_business_expenses_tenant_category').on(table.tenantId, table.category),
+  index('idx_business_expenses_tenant_recurrence').on(table.tenantId, table.recurrence),
 ])
 
 // ============================================================================
@@ -735,3 +787,7 @@ export type DrizzleComplianceDocument = typeof complianceDocuments.$inferSelect
 export type NewComplianceDocument = typeof complianceDocuments.$inferInsert
 export type DrizzleDriverLocation = typeof driverLocations.$inferSelect
 export type NewDriverLocation = typeof driverLocations.$inferInsert
+
+// Business Expenses
+export type DrizzleBusinessExpense = typeof businessExpenses.$inferSelect
+export type NewBusinessExpense = typeof businessExpenses.$inferInsert

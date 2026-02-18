@@ -4,7 +4,9 @@ import { authorize, safeError } from '@/lib/authz'
 import { tripSchema } from '@/lib/validations/trip'
 import { revalidatePath } from 'next/cache'
 import { calculateTripFinancials } from '@/lib/financial/trip-calculations'
+import { z } from 'zod'
 import type { TripStatus } from '@/types'
+import type { RouteStop } from '@/types/database'
 
 // Trip status → Order status auto-sync mapping
 const TRIP_TO_ORDER_STATUS: Partial<Record<TripStatus, string>> = {
@@ -257,6 +259,30 @@ export async function assignOrderToTrip(orderId: string, tripId: string) {
   // Recalculate new trip financials
   await recalculateTripFinancials(tripId)
 
+  // Append new order stops to route_sequence
+  const { data: tripData } = await supabase
+    .from('trips')
+    .select('route_sequence')
+    .eq('id', tripId)
+    .eq('tenant_id', tenantId)
+    .single()
+
+  const existingSequence: RouteStop[] = Array.isArray(tripData?.route_sequence)
+    ? (tripData.route_sequence as RouteStop[])
+    : []
+
+  const newSequence: RouteStop[] = [
+    ...existingSequence,
+    { orderId, stopType: 'pickup' },
+    { orderId, stopType: 'delivery' },
+  ]
+
+  await supabase
+    .from('trips')
+    .update({ route_sequence: newSequence })
+    .eq('id', tripId)
+    .eq('tenant_id', tenantId)
+
   revalidatePath('/dispatch')
   revalidatePath(`/trips/${tripId}`)
   if (oldTripId && oldTripId !== tripId) {
@@ -304,6 +330,25 @@ export async function unassignOrderFromTrip(orderId: string) {
   // Recalculate old trip financials
   await recalculateTripFinancials(oldTripId)
 
+  // Remove unassigned order's stops from route_sequence
+  const { data: tripData } = await supabase
+    .from('trips')
+    .select('route_sequence')
+    .eq('id', oldTripId)
+    .eq('tenant_id', tenantId)
+    .single()
+
+  if (tripData?.route_sequence && Array.isArray(tripData.route_sequence)) {
+    const filtered = (tripData.route_sequence as RouteStop[]).filter(
+      (stop) => stop.orderId !== orderId
+    )
+    await supabase
+      .from('trips')
+      .update({ route_sequence: filtered.length > 0 ? filtered : null })
+      .eq('id', oldTripId)
+      .eq('tenant_id', tenantId)
+  }
+
   revalidatePath('/dispatch')
   revalidatePath(`/trips/${oldTripId}`)
   revalidatePath(`/orders/${orderId}`)
@@ -331,7 +376,7 @@ export async function recalculateTripFinancials(tripId: string) {
   // Fetch trip's orders for revenue and route summary
   const { data: orders, error: ordersError } = await supabase
     .from('orders')
-    .select('revenue, broker_fee, pickup_state, delivery_state, created_at')
+    .select('revenue, broker_fee, local_fee, distance_miles, driver_pay_rate_override, pickup_state, delivery_state, created_at')
     .eq('trip_id', tripId)
     .eq('tenant_id', tenantId)
     .order('created_at', { ascending: true })
@@ -355,14 +400,20 @@ export async function recalculateTripFinancials(tripId: string) {
   const rawOrders = (orders ?? []).map((o) => ({
     revenue: parseFloat(o.revenue || '0'),
     brokerFee: parseFloat(o.broker_fee || '0'),
+    localFee: parseFloat(o.local_fee || '0'),
+    distanceMiles: o.distance_miles ? parseFloat(o.distance_miles) : null,
+    driverPayRateOverride: o.driver_pay_rate_override ? parseFloat(o.driver_pay_rate_override) : null,
     pickup_state: o.pickup_state as string | null,
     delivery_state: o.delivery_state as string | null,
   }))
 
-  // OrderFinancials for calculateTripFinancials (only revenue + brokerFee)
+  // OrderFinancials for calculateTripFinancials
   const orderFinancials = rawOrders.map((o) => ({
     revenue: o.revenue,
     brokerFee: o.brokerFee,
+    localFee: o.localFee,
+    distanceMiles: o.distanceMiles,
+    driverPayRateOverride: o.driverPayRateOverride,
   }))
 
   const parsedExpenses = (expenses ?? []).map((e) => ({
@@ -424,6 +475,7 @@ export async function recalculateTripFinancials(tripId: string) {
     .update({
       total_revenue: String(financials.revenue),
       total_broker_fees: String(financials.brokerFees),
+      total_local_fees: String(financials.localFees),
       driver_pay: String(financials.driverPay),
       total_expenses: String(financials.expenses),
       net_profit: String(financials.netProfit),
@@ -438,5 +490,90 @@ export async function recalculateTripFinancials(tripId: string) {
     return { error: safeError(updateError, 'recalculateTripFinancials.update') }
   }
 
+  return { success: true }
+}
+
+// ============================================================================
+// Route Sequencing
+// ============================================================================
+
+const routeSequenceSchema = z.object({
+  tripId: z.string().uuid(),
+  sequence: z.array(z.object({
+    orderId: z.string().uuid(),
+    stopType: z.enum(['pickup', 'delivery']),
+  })),
+})
+
+export async function updateRouteSequence(data: unknown) {
+  const parsed = routeSequenceSchema.safeParse(data)
+  if (!parsed.success) {
+    return { error: 'Invalid route sequence data' }
+  }
+
+  const auth = await authorize('trips.update')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
+
+  const { tripId, sequence } = parsed.data
+
+  // Verify trip belongs to tenant
+  const { data: trip, error: tripError } = await supabase
+    .from('trips')
+    .select('id')
+    .eq('id', tripId)
+    .eq('tenant_id', tenantId)
+    .single()
+
+  if (tripError || !trip) {
+    return { error: 'Trip not found' }
+  }
+
+  // Verify all referenced orders belong to this trip + tenant
+  const orderIds = [...new Set(sequence.map((s) => s.orderId))]
+  if (orderIds.length > 0) {
+    const { data: tripOrders, error: ordersError } = await supabase
+      .from('orders')
+      .select('id')
+      .eq('trip_id', tripId)
+      .eq('tenant_id', tenantId)
+      .in('id', orderIds)
+
+    if (ordersError) {
+      return { error: safeError(ordersError, 'updateRouteSequence.verifyOrders') }
+    }
+
+    const validOrderIds = new Set((tripOrders ?? []).map((o) => o.id))
+    const invalidIds = orderIds.filter((id) => !validOrderIds.has(id))
+    if (invalidIds.length > 0) {
+      return { error: 'Some orders do not belong to this trip' }
+    }
+  }
+
+  // Validate each order has exactly 1 pickup and 1 delivery
+  const stopCounts = new Map<string, { pickup: number; delivery: number }>()
+  for (const stop of sequence) {
+    const counts = stopCounts.get(stop.orderId) ?? { pickup: 0, delivery: 0 }
+    counts[stop.stopType]++
+    stopCounts.set(stop.orderId, counts)
+  }
+  for (const [, counts] of stopCounts) {
+    if (counts.pickup !== 1 || counts.delivery !== 1) {
+      return { error: 'Each order must have exactly 1 pickup and 1 delivery stop' }
+    }
+  }
+
+  // Save sequence
+  const { error: updateError } = await supabase
+    .from('trips')
+    .update({ route_sequence: sequence })
+    .eq('id', tripId)
+    .eq('tenant_id', tenantId)
+
+  if (updateError) {
+    return { error: safeError(updateError, 'updateRouteSequence') }
+  }
+
+  revalidatePath(`/trips/${tripId}`)
   return { success: true }
 }

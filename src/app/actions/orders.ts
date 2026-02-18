@@ -2,6 +2,7 @@
 
 import { authorize, safeError } from '@/lib/authz'
 import { createOrderSchema } from '@/lib/validations/order'
+import { geocodeAndSaveOrder } from '@/lib/geocoding-helpers'
 import { revalidatePath } from 'next/cache'
 import type { OrderStatus } from '@/types'
 
@@ -54,6 +55,8 @@ export async function createOrder(data: unknown) {
       revenue: String(v.revenue),
       carrier_pay: String(v.carrierPay),
       broker_fee: String(v.brokerFee),
+      local_fee: String(v.localFee),
+      driver_pay_rate_override: v.driverPayRateOverride ? String(v.driverPayRateOverride) : null,
       payment_type: v.paymentType,
       broker_id: v.brokerId || null,
       driver_id: v.driverId || null,
@@ -65,6 +68,18 @@ export async function createOrder(data: unknown) {
   if (error) {
     return { error: safeError(error, 'createOrder') }
   }
+
+  // Fire-and-forget geocoding — coordinates appear via realtime invalidation
+  geocodeAndSaveOrder(supabase, order.id, tenantId, {
+    pickupLocation: v.pickupLocation,
+    pickupCity: v.pickupCity,
+    pickupState: v.pickupState,
+    pickupZip: v.pickupZip,
+    deliveryLocation: v.deliveryLocation,
+    deliveryCity: v.deliveryCity,
+    deliveryState: v.deliveryState,
+    deliveryZip: v.deliveryZip,
+  }).catch((err) => console.error('[geocoding] createOrder fire-and-forget failed:', err))
 
   revalidatePath('/orders')
   return { success: true, data: order }
@@ -107,10 +122,25 @@ export async function updateOrder(id: string, data: unknown) {
   if (v.revenue !== undefined) updateData.revenue = String(v.revenue)
   if (v.carrierPay !== undefined) updateData.carrier_pay = String(v.carrierPay)
   if (v.brokerFee !== undefined) updateData.broker_fee = String(v.brokerFee)
+  if (v.localFee !== undefined) updateData.local_fee = String(v.localFee)
+  if (v.driverPayRateOverride !== undefined) updateData.driver_pay_rate_override = v.driverPayRateOverride ? String(v.driverPayRateOverride) : null
   if (v.paymentType !== undefined) updateData.payment_type = v.paymentType
   if (v.brokerId !== undefined) updateData.broker_id = v.brokerId || null
   if (v.driverId !== undefined) updateData.driver_id = v.driverId || null
   if (v.distanceMiles !== undefined) updateData.distance_miles = v.distanceMiles ? String(v.distanceMiles) : null
+
+  // If address fields changed, clear stale coordinates for re-geocoding
+  const pickupAddressChanged = v.pickupLocation !== undefined || v.pickupCity !== undefined || v.pickupState !== undefined || v.pickupZip !== undefined
+  const deliveryAddressChanged = v.deliveryLocation !== undefined || v.deliveryCity !== undefined || v.deliveryState !== undefined || v.deliveryZip !== undefined
+
+  if (pickupAddressChanged) {
+    updateData.pickup_latitude = null
+    updateData.pickup_longitude = null
+  }
+  if (deliveryAddressChanged) {
+    updateData.delivery_latitude = null
+    updateData.delivery_longitude = null
+  }
 
   const { data: order, error } = await supabase
     .from('orders')
@@ -122,6 +152,20 @@ export async function updateOrder(id: string, data: unknown) {
 
   if (error) {
     return { error: safeError(error, 'updateOrder') }
+  }
+
+  // Re-geocode if address fields changed
+  if (pickupAddressChanged || deliveryAddressChanged) {
+    geocodeAndSaveOrder(supabase, id, tenantId, {
+      pickupLocation: order.pickup_location,
+      pickupCity: order.pickup_city,
+      pickupState: order.pickup_state,
+      pickupZip: order.pickup_zip,
+      deliveryLocation: order.delivery_location,
+      deliveryCity: order.delivery_city,
+      deliveryState: order.delivery_state,
+      deliveryZip: order.delivery_zip,
+    }).catch((err) => console.error('[geocoding] updateOrder fire-and-forget failed:', err))
   }
 
   revalidatePath('/orders')
