@@ -1,9 +1,11 @@
 'use server'
 
 import { authorize, safeError } from '@/lib/authz'
-import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { factoringFeeRateSchema } from '@/lib/validations/tenant-settings'
 import { revalidatePath } from 'next/cache'
+import { db } from '@/db'
+import { tenants } from '@/db/schema'
+import { eq } from 'drizzle-orm'
 
 export async function updateFactoringFeeRate(data: unknown) {
   const parsed = factoringFeeRateSchema.safeParse(data)
@@ -15,21 +17,16 @@ export async function updateFactoringFeeRate(data: unknown) {
   if (!auth.ok) return { error: auth.error }
   const { tenantId } = auth.ctx
 
-  // Use service-role client — RLS on tenants table doesn't allow user-level updates
-  const admin = createServiceRoleClient()
+  try {
+    await db
+      .update(tenants)
+      .set({ factoringFeeRate: String(parsed.data.factoringFeeRate) })
+      .where(eq(tenants.id, tenantId))
 
-  const { error } = await admin
-    .from('tenants')
-    .update({
-      factoring_fee_rate: String(parsed.data.factoringFeeRate),
-    })
-    .eq('id', tenantId)
-
-  if (error) {
-    return { error: safeError(error, 'updateFactoringFeeRate') }
+    revalidatePath('/settings')
+    revalidatePath('/billing')
+    return { success: true }
+  } catch (err) {
+    return { error: safeError(err as { message: string }, 'updateFactoringFeeRate') }
   }
-
-  revalidatePath('/settings')
-  revalidatePath('/billing')
-  return { success: true }
 }
