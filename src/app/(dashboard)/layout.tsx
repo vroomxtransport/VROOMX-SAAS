@@ -70,6 +70,7 @@ export default async function DashboardLayout({
       <Sidebar userRole={userRole} tenantName={tenant.name} />
 
       <SidebarLayoutWrapper>
+        <QueryProvider>
         <Header
           userName={userName}
           userEmail={user.email!}
@@ -124,11 +125,10 @@ export default async function DashboardLayout({
           )}
 
           <div className="p-3 lg:px-6 lg:py-4">
-            <QueryProvider>
               {children}
-            </QueryProvider>
           </div>
         </main>
+        </QueryProvider>
       </SidebarLayoutWrapper>
     </div>
   )
