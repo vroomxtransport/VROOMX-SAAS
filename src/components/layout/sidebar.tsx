@@ -63,7 +63,7 @@ const NAV_CATEGORIES: NavCategory[] = [
     label: 'Operations',
     items: [
       { name: 'Orders', href: '/orders', icon: PackageSearch },
-      { name: 'Dispatch', href: '/dispatch', icon: Route },
+      { name: 'Trips', href: '/dispatch', icon: Route },
     ],
   },
   {
@@ -94,6 +94,7 @@ const NAV_CATEGORIES: NavCategory[] = [
     label: 'Finance',
     items: [
       { name: 'Financials', href: '/financials', icon: DollarSign, minRole: 'admin' },
+      { name: 'Business Expenses', href: '/business-expenses', icon: Receipt, minRole: 'admin' },
       { name: 'Billing', href: '/billing', icon: Receipt, minRole: 'admin' },
       { name: 'Brokers', href: '/brokers', icon: Landmark, minRole: 'dispatcher' },
     ],

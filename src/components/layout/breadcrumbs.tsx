@@ -7,7 +7,7 @@ import { ChevronRight, LayoutDashboard } from 'lucide-react'
 const ROUTE_LABELS: Record<string, string> = {
   dashboard: 'Dashboard',
   orders: 'Orders',
-  dispatch: 'Dispatch',
+  dispatch: 'Trips',
   trucks: 'Fleet',
   drivers: 'Drivers',
   brokers: 'Brokers',

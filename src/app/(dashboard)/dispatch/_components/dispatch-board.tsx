@@ -273,7 +273,7 @@ export function DispatchBoard() {
     <div className="space-y-4">
       {/* Header */}
       <PageHeader
-        title="Dispatch Board"
+        title="Trips"
         subtitle={data ? `Showing ${data.trips.length} of ${data.total} trips` : 'Manage trips and dispatching.'}
       >
         <HelpTooltip
