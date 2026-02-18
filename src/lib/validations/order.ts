@@ -39,6 +39,8 @@ export const orderPricingSchema = z.object({
   revenue: z.coerce.number().min(0, 'Revenue must be 0 or more').max(10_000_000),
   carrierPay: z.coerce.number().min(0, 'Carrier pay must be 0 or more').max(10_000_000),
   brokerFee: z.coerce.number().min(0, 'Broker fee must be 0 or more').max(10_000_000).default(0),
+  localFee: z.coerce.number().min(0, 'Local fee must be 0 or more').max(10_000_000).default(0),
+  driverPayRateOverride: z.coerce.number().min(0, 'Rate must be 0 or more').max(100, 'Rate cannot exceed 100%').optional(),
   distanceMiles: z.coerce.number().min(0, 'Distance must be 0 or more').max(1_000_000).optional(),
   paymentType: z.enum(['COD', 'COP', 'CHECK', 'BILL', 'SPLIT']).default('COP'),
   brokerId: z.string().max(36).uuid('Invalid broker ID').optional().or(z.literal('')),

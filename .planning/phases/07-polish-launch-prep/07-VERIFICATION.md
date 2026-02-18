@@ -127,7 +127,7 @@ The following items require human testing to fully verify production readiness:
 
 #### 2. Core Web Vitals Measurement
 
-**Test:** Deploy to Vercel staging, measure with Lighthouse/PageSpeed Insights
+**Test:** Deploy to Netlify staging, measure with Lighthouse/PageSpeed Insights
 **Expected:** LCP < 2.5s, INP < 200ms, CLS < 0.1
 **Why human:** Requires live deployment and real-world measurement tools
 
@@ -202,7 +202,7 @@ From ROADMAP.md Phase 7 Success Criteria:
 | Core Web Vitals: LCP < 2.5s, INP < 200ms, CLS < 0.1 | ? HUMAN NEEDED | Targets documented in LAUNCH-CHECKLIST.md, measurement needed |
 | No console errors on any page | ? HUMAN NEEDED | Error boundaries in place, manual smoke test needed |
 | Cross-tenant isolation verified with automated tests | ? HUMAN NEEDED | RLS on all 21 tables, isolation test needed |
-| Production deployment on Vercel + Supabase Pro | ? HUMAN NEEDED | Ready to deploy, LAUNCH-CHECKLIST.md has deployment steps |
+| Production deployment on Netlify + Supabase Pro | ? HUMAN NEEDED | Ready to deploy, LAUNCH-CHECKLIST.md has deployment steps |
 | At least 1 carrier can complete a full dispatch workflow | ? HUMAN NEEDED | All features implemented, end-to-end user test needed |
 
 **Automated Verification:** 4/7 criteria verified structurally
@@ -242,7 +242,7 @@ All 10 Phase 7 requirements are implemented with substantive code and proper wir
 2. Run security audit: `npm run audit:security`
 3. Run performance audit: `npm run audit:perf`
 4. Execute human verification tests (12 items listed above)
-5. Deploy to Vercel staging
+5. Deploy to Netlify staging
 6. Measure Core Web Vitals
 7. Complete LAUNCH-CHECKLIST.md items
 

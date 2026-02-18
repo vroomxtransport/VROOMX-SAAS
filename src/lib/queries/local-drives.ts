@@ -22,8 +22,8 @@ export async function fetchLocalDrives(
 
   let query = supabase
     .from('local_drives')
-    .select('*, driver:drivers(id, first_name, last_name), truck:trucks(id, unit_number)', { count: 'exact' })
-    .order('scheduled_date', { ascending: false, nullsFirst: false })
+    .select('*, driver:drivers(id, first_name, last_name), truck:trucks(id, unit_number), order:orders(id, order_number, vehicle_make, vehicle_model, vehicle_vin)', { count: 'exact' })
+    .order('created_at', { ascending: false })
     .range(page * pageSize, (page + 1) * pageSize - 1)
 
   if (status) {
@@ -53,7 +53,7 @@ export async function fetchLocalDrive(
 ): Promise<LocalDrive> {
   const { data, error } = await supabase
     .from('local_drives')
-    .select('*, driver:drivers(id, first_name, last_name), truck:trucks(id, unit_number)')
+    .select('*, driver:drivers(id, first_name, last_name), truck:trucks(id, unit_number), order:orders(id, order_number, vehicle_make, vehicle_model, vehicle_vin)')
     .eq('id', id)
     .single()
 

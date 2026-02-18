@@ -68,7 +68,9 @@ export function OrderDetail({ order }: OrderDetailProps) {
   const revenue = parseFloat(order.revenue)
   const carrierPay = parseFloat(order.carrier_pay)
   const brokerFee = parseFloat(order.broker_fee)
-  const margin = revenue - carrierPay - brokerFee
+  const localFee = parseFloat(order.local_fee || '0')
+  const driverPayRateOverride = order.driver_pay_rate_override ? parseFloat(order.driver_pay_rate_override) : null
+  const margin = revenue - carrierPay - brokerFee - localFee
   const marginPercent = revenue > 0 ? (margin / revenue) * 100 : 0
 
   const vehicleInfo = [
@@ -224,6 +226,18 @@ export function OrderDetail({ order }: OrderDetailProps) {
                 <span className="text-sm text-muted-foreground">Broker Fee</span>
                 <span className="text-sm font-medium tabular-nums text-foreground">{formatCurrency(brokerFee)}</span>
               </div>
+              {localFee > 0 && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Local Fee</span>
+                  <span className="text-sm font-medium tabular-nums text-foreground">{formatCurrency(localFee)}</span>
+                </div>
+              )}
+              {driverPayRateOverride !== null && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Driver % Override</span>
+                  <span className="text-sm font-medium tabular-nums text-foreground">{driverPayRateOverride}%</span>
+                </div>
+              )}
               {order.payment_type && (
                 <div className="border-t border-border-subtle pt-3">
                   <div className="flex items-center justify-between">

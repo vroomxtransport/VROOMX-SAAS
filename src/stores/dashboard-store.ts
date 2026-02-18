@@ -1,28 +1,53 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import type { Layout, LayoutItem } from 'react-grid-layout'
 
-export type WidgetId = 'statCards' | 'loadsPipeline' | 'revenueChart' | 'fleetPulse' | 'upcomingPickups' | 'activityFeed'
+export type WidgetId =
+  | 'statCards'
+  | 'loadsPipeline'
+  | 'revenueChart'
+  | 'fleetPulse'
+  | 'upcomingPickups'
+  | 'activityFeed'
+  | 'openInvoices'
+  | 'topDrivers'
+  | 'quickLinks'
+
+export interface WidgetGridPos {
+  x: number
+  y: number
+  w: number
+  h: number
+  minW?: number
+  minH?: number
+}
 
 export interface WidgetLayout {
   id: WidgetId
-  order: number
   visible: boolean
+  grid: WidgetGridPos
 }
 
 const DEFAULT_LAYOUT: WidgetLayout[] = [
-  { id: 'statCards', order: 0, visible: true },
-  { id: 'loadsPipeline', order: 1, visible: true },
-  { id: 'fleetPulse', order: 2, visible: true },
-  { id: 'revenueChart', order: 3, visible: true },
-  { id: 'upcomingPickups', order: 4, visible: true },
-  { id: 'activityFeed', order: 5, visible: true },
+  { id: 'statCards', visible: true, grid: { x: 0, y: 0, w: 12, h: 1, minW: 6, minH: 1 } },
+  { id: 'loadsPipeline', visible: true, grid: { x: 0, y: 1, w: 8, h: 3, minW: 4, minH: 2 } },
+  { id: 'fleetPulse', visible: true, grid: { x: 8, y: 1, w: 4, h: 3, minW: 3, minH: 2 } },
+  { id: 'revenueChart', visible: true, grid: { x: 0, y: 4, w: 8, h: 3, minW: 4, minH: 2 } },
+  { id: 'upcomingPickups', visible: true, grid: { x: 8, y: 4, w: 4, h: 3, minW: 3, minH: 2 } },
+  { id: 'activityFeed', visible: true, grid: { x: 0, y: 7, w: 12, h: 3, minW: 4, minH: 2 } },
+  { id: 'openInvoices', visible: false, grid: { x: 0, y: 10, w: 6, h: 3, minW: 3, minH: 2 } },
+  { id: 'topDrivers', visible: false, grid: { x: 6, y: 10, w: 6, h: 3, minW: 3, minH: 2 } },
+  { id: 'quickLinks', visible: false, grid: { x: 0, y: 13, w: 4, h: 3, minW: 3, minH: 2 } },
 ]
+
+// Span-to-grid migration defaults (maps old discrete spans to grid width)
+const SPAN_TO_W: Record<number, number> = { 4: 4, 6: 6, 8: 8, 12: 12 }
 
 interface DashboardStore {
   widgetLayout: WidgetLayout[]
   editMode: boolean
   toggleWidget: (id: WidgetId) => void
-  reorderWidgets: (newLayout: WidgetLayout[]) => void
+  setGridLayout: (layout: Layout) => void
   setEditMode: (enabled: boolean) => void
   resetDefaults: () => void
 }
@@ -30,7 +55,7 @@ interface DashboardStore {
 export const useDashboardStore = create<DashboardStore>()(
   persist(
     (set) => ({
-      widgetLayout: DEFAULT_LAYOUT.map((w) => ({ ...w })),
+      widgetLayout: DEFAULT_LAYOUT.map((w) => ({ ...w, grid: { ...w.grid } })),
       editMode: false,
       toggleWidget: (id) =>
         set((state) => ({
@@ -38,29 +63,97 @@ export const useDashboardStore = create<DashboardStore>()(
             w.id === id ? { ...w, visible: !w.visible } : w
           ),
         })),
-      reorderWidgets: (newLayout) => set({ widgetLayout: newLayout }),
+      setGridLayout: (layout: Layout) =>
+        set((state) => ({
+          widgetLayout: state.widgetLayout.map((w) => {
+            const rgl = layout.find((l: LayoutItem) => l.i === w.id)
+            if (!rgl) return w
+            return {
+              ...w,
+              grid: {
+                ...w.grid,
+                x: rgl.x,
+                y: rgl.y,
+                w: rgl.w,
+                h: rgl.h,
+              },
+            }
+          }),
+        })),
       setEditMode: (enabled) => set({ editMode: enabled }),
       resetDefaults: () =>
         set({
-          widgetLayout: DEFAULT_LAYOUT.map((w) => ({ ...w })),
+          widgetLayout: DEFAULT_LAYOUT.map((w) => ({ ...w, grid: { ...w.grid } })),
           editMode: false,
         }),
     }),
     {
       name: 'vroomx-dashboard',
-      version: 2,
+      version: 4,
       partialize: (state) => ({ widgetLayout: state.widgetLayout }),
       migrate: (persisted, version) => {
         if (version === 0 || version === 1) {
-          // Migrate from old { visibleWidgets: Record<WidgetId, boolean> } format
-          const old = persisted as { visibleWidgets?: Record<WidgetId, boolean> }
-          if (old.visibleWidgets) {
-            const widgetLayout = DEFAULT_LAYOUT.map((w) => ({
-              ...w,
-              visible: old.visibleWidgets![w.id] ?? w.visible,
-            }))
-            return { widgetLayout }
+          // Very old format — use defaults
+          return { widgetLayout: DEFAULT_LAYOUT.map((w) => ({ ...w, grid: { ...w.grid } })) }
+        }
+        if (version === 2) {
+          // v2: { id, order, visible } — no span, no grid
+          const old = persisted as { widgetLayout: Array<{ id: string; order: number; visible: boolean }> }
+          const existingIds = new Set(old.widgetLayout.map((w) => w.id))
+          const migrated: WidgetLayout[] = old.widgetLayout.map((w) => {
+            const def = DEFAULT_LAYOUT.find((d) => d.id === w.id)
+            return {
+              id: w.id as WidgetId,
+              visible: w.visible,
+              grid: def ? { ...def.grid } : { x: 0, y: 99, w: 12, h: 3, minW: 3, minH: 2 },
+            }
+          })
+          for (const def of DEFAULT_LAYOUT) {
+            if (!existingIds.has(def.id)) {
+              migrated.push({ ...def, grid: { ...def.grid } })
+            }
           }
+          return { widgetLayout: migrated }
+        }
+        if (version === 3) {
+          // v3: { id, order, visible, span } — convert span to grid
+          const old = persisted as {
+            widgetLayout: Array<{ id: string; order: number; visible: boolean; span: number }>
+          }
+          const existingIds = new Set(old.widgetLayout.map((w) => w.id))
+          // Sort by order to assign y positions
+          const sorted = [...old.widgetLayout].sort((a, b) => a.order - b.order)
+          let currentY = 0
+          let currentX = 0
+          const migrated: WidgetLayout[] = sorted.map((w) => {
+            const gridW = SPAN_TO_W[w.span] ?? 12
+            // If it doesn't fit on current row, move to next
+            if (currentX + gridW > 12) {
+              currentY += 3
+              currentX = 0
+            }
+            const def = DEFAULT_LAYOUT.find((d) => d.id === w.id)
+            const pos: WidgetGridPos = {
+              x: currentX,
+              y: currentY,
+              w: gridW,
+              h: def?.grid.h ?? 3,
+              minW: def?.grid.minW ?? 3,
+              minH: def?.grid.minH ?? 2,
+            }
+            currentX += gridW
+            if (currentX >= 12) {
+              currentY += 3
+              currentX = 0
+            }
+            return { id: w.id as WidgetId, visible: w.visible, grid: pos }
+          })
+          for (const def of DEFAULT_LAYOUT) {
+            if (!existingIds.has(def.id)) {
+              migrated.push({ ...def, grid: { ...def.grid } })
+            }
+          }
+          return { widgetLayout: migrated }
         }
         return persisted as { widgetLayout: WidgetLayout[] }
       },
@@ -68,10 +161,8 @@ export const useDashboardStore = create<DashboardStore>()(
   )
 )
 
-/** Returns visible widgets sorted by order, excluding statCards (which are always fixed at top). */
-export function useOrderedVisibleWidgets() {
+/** Returns visible widgets (excluding statCards, which renders above the grid). */
+export function useVisibleWidgets() {
   const widgetLayout = useDashboardStore((s) => s.widgetLayout)
-  return widgetLayout
-    .filter((w) => w.id !== 'statCards' && w.visible)
-    .sort((a, b) => a.order - b.order)
+  return widgetLayout.filter((w) => w.id !== 'statCards' && w.visible)
 }

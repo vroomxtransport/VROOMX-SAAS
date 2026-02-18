@@ -1,9 +1,12 @@
 'use client'
 
+import { useState } from 'react'
 import { EntityCard } from '@/components/shared/entity-card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Pencil, Trash2, Calendar } from 'lucide-react'
+import { Pencil, Trash2, Calendar, Download, FileText } from 'lucide-react'
+import { getSignedUrl } from '@/lib/storage'
+import { createClient } from '@/lib/supabase/client'
 import {
   COMPLIANCE_DOC_TYPE_LABELS,
   COMPLIANCE_ENTITY_TYPE_LABELS,
@@ -12,6 +15,8 @@ import {
 } from '@/types'
 import type { ComplianceDocType, ComplianceEntityType, ComplianceDocStatus } from '@/types'
 import type { ComplianceDocument } from '@/types/database'
+
+const BUCKET = 'documents'
 
 interface DocumentCardProps {
   doc: ComplianceDocument
@@ -37,15 +42,42 @@ const STATUS_DISPLAY: Record<ComplianceDocStatus | 'no_expiry', { label: string;
   no_expiry: { label: 'No Expiry', colors: 'bg-muted/50 text-foreground/80 border-border' },
 }
 
+function formatFileSize(bytes: number | null): string {
+  if (!bytes) return ''
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
 export function DocumentCard({ doc, onEdit, onDelete }: DocumentCardProps) {
   const status = getDocStatus(doc.expires_at)
   const display = STATUS_DISPLAY[status]
+  const [downloading, setDownloading] = useState(false)
+
+  const handleDownload = async () => {
+    if (!doc.storage_path) return
+    setDownloading(true)
+    const supabase = createClient()
+    const { url, error } = await getSignedUrl(supabase, BUCKET, doc.storage_path)
+    setDownloading(false)
+    if (error || !url) return
+    window.open(url, '_blank')
+  }
 
   return (
     <EntityCard>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <h3 className="truncate text-sm font-medium text-foreground">{doc.name}</h3>
+          {doc.file_name && (
+            <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+              <FileText className="h-3 w-3 shrink-0" />
+              <span className="truncate">{doc.file_name}</span>
+              {doc.file_size ? (
+                <span className="shrink-0">({formatFileSize(doc.file_size)})</span>
+              ) : null}
+            </div>
+          )}
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <Badge variant="outline" className="text-xs">
               {COMPLIANCE_DOC_TYPE_LABELS[doc.document_type as ComplianceDocType] ?? doc.document_type}
@@ -56,6 +88,18 @@ export function DocumentCard({ doc, onEdit, onDelete }: DocumentCardProps) {
           </div>
         </div>
         <div className="flex items-center gap-1 shrink-0">
+          {doc.storage_path && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={handleDownload}
+              disabled={downloading}
+              title="Download file"
+            >
+              <Download className="h-3.5 w-3.5" />
+            </Button>
+          )}
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={onEdit}>
             <Pencil className="h-3.5 w-3.5" />
           </Button>

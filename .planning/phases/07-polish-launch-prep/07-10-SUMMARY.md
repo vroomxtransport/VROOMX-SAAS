@@ -67,7 +67,7 @@ completed: 2026-02-12
 - Security audit script validates RLS coverage, auth verification in all server actions, webhook signature verification, no exposed keys, and safe client/server env var separation
 - Performance audit script checks font optimization, viewport metadata, tree-shakeable imports, image optimization, and Tailwind CSS setup
 - Root layout optimized with font display swap, viewport export with theme colors, and robots metadata for SEO
-- Comprehensive launch checklist covering Supabase, Vercel, Stripe, Resend, Sentry, PostHog setup plus deployment workflow
+- Comprehensive launch checklist covering Supabase, Netlify, Stripe, Resend, Sentry, PostHog setup plus deployment workflow
 
 ## Task Commits
 
@@ -82,7 +82,7 @@ Each task was committed atomically:
 - `scripts/perf-audit.ts` - 7 performance checks: font optimization, viewport metadata, barrel imports, image optimization, source complexity, Core Web Vitals targets, Tailwind CSS
 - `src/app/layout.tsx` - Added display: swap to font loading, viewport export with theme colors (blue/violet), robots metadata for SEO
 - `package.json` - Added audit:security and audit:perf npm scripts
-- `LAUNCH-CHECKLIST.md` - 265 lines, 8 sections: environment setup (Supabase/Vercel/Stripe/Resend/Sentry/PostHog), env vars, database, security, performance, testing, deployment, monitoring
+- `LAUNCH-CHECKLIST.md` - 265 lines, 8 sections: environment setup (Supabase/Netlify/Stripe/Resend/Sentry/PostHog), env vars, database, security, performance, testing, deployment, monitoring
 
 ## Decisions Made
 
@@ -103,7 +103,7 @@ None
 
 ## User Setup Required
 
-None - no external service configuration required. Launch checklist provides manual setup steps for production deployment (Supabase Pro, Vercel custom domain, Stripe live mode, etc.).
+None - no external service configuration required. Launch checklist provides manual setup steps for production deployment (Supabase Pro, Netlify custom domain, Stripe live mode, etc.).
 
 ## Next Phase Readiness
 
@@ -120,7 +120,7 @@ None - no external service configuration required. Launch checklist provides man
 - Security and performance audit scripts
 - Launch checklist
 
-**Ready for production deployment.** Run `npm run audit:security` (19/19 checks pass), `npm run audit:perf` (6/7 checks pass with 1 accepted warning), and follow LAUNCH-CHECKLIST.md for deployment to Vercel with live Stripe/Supabase/Resend/Sentry/PostHog configuration.
+**Ready for production deployment.** Run `npm run audit:security` (19/19 checks pass), `npm run audit:perf` (6/7 checks pass with 1 accepted warning), and follow LAUNCH-CHECKLIST.md for deployment to Netlify with live Stripe/Supabase/Resend/Sentry/PostHog configuration.
 
 **Security audit results:**
 - All 19 action files verified for auth checks

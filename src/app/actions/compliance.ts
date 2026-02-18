@@ -2,6 +2,7 @@
 
 import { authorize, safeError } from '@/lib/authz'
 import { complianceDocSchema } from '@/lib/validations/compliance'
+import { deleteFile } from '@/lib/storage'
 import { revalidatePath } from 'next/cache'
 
 export async function createComplianceDoc(data: unknown) {
@@ -12,7 +13,7 @@ export async function createComplianceDoc(data: unknown) {
 
   const auth = await authorize('compliance.create', { rateLimit: { key: 'createComplianceDoc', limit: 30, windowMs: 60_000 } })
   if (!auth.ok) return { error: auth.error }
-  const { supabase, tenantId } = auth.ctx
+  const { supabase, tenantId, user } = auth.ctx
 
   const { data: doc, error } = await supabase
     .from('compliance_documents')
@@ -24,6 +25,10 @@ export async function createComplianceDoc(data: unknown) {
       name: parsed.data.name,
       expires_at: parsed.data.expiresAt || null,
       notes: parsed.data.notes || null,
+      file_name: parsed.data.fileName || null,
+      storage_path: parsed.data.storagePath || null,
+      file_size: parsed.data.fileSize || null,
+      uploaded_by: user.id,
     })
     .select()
     .single()
@@ -55,6 +60,9 @@ export async function updateComplianceDoc(id: string, data: unknown) {
       name: parsed.data.name,
       expires_at: parsed.data.expiresAt || null,
       notes: parsed.data.notes || null,
+      file_name: parsed.data.fileName || null,
+      storage_path: parsed.data.storagePath || null,
+      file_size: parsed.data.fileSize || null,
     })
     .eq('id', id)
     .eq('tenant_id', tenantId)
@@ -74,6 +82,28 @@ export async function deleteComplianceDoc(id: string) {
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId } = auth.ctx
 
+  // Fetch the doc to get storage_path before deleting
+  const { data: doc, error: fetchError } = await supabase
+    .from('compliance_documents')
+    .select('storage_path')
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
+    .single()
+
+  if (fetchError || !doc) {
+    return { error: safeError(fetchError, 'deleteComplianceDoc') }
+  }
+
+  // Delete file from Supabase Storage if it exists
+  const storagePath = doc.storage_path as string
+  if (storagePath) {
+    const { error: storageError } = await deleteFile(supabase, 'documents', storagePath)
+    if (storageError) {
+      console.error('Failed to delete compliance file from storage:', storageError)
+    }
+  }
+
+  // Delete the database record
   const { error } = await supabase
     .from('compliance_documents')
     .delete()

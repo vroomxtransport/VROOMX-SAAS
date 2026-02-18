@@ -1,8 +1,0 @@
-VroomXDriver/
-.next/
-node_modules/
-playwright-report/
-assets/
-supabase/.temp/
-.planning/
-.claude/

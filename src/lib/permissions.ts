@@ -25,6 +25,7 @@ export const PERMISSION_CATEGORIES = {
   chat: ['chat.view', 'chat.create'],
   documents: ['documents.view', 'documents.create', 'documents.update', 'documents.delete'],
   trip_expenses: ['trip_expenses.view', 'trip_expenses.create', 'trip_expenses.update', 'trip_expenses.delete'],
+  business_expenses: ['business_expenses.view', 'business_expenses.create', 'business_expenses.update', 'business_expenses.delete'],
   settings: ['settings.view', 'settings.manage'],
 } as const
 
@@ -50,6 +51,7 @@ export const CATEGORY_LABELS: Record<string, string> = {
   chat: 'Chat',
   documents: 'Documents',
   trip_expenses: 'Trip Expenses',
+  business_expenses: 'Business Expenses',
   settings: 'Settings',
 }
 
@@ -62,6 +64,7 @@ export const BUILT_IN_ROLES: Record<string, string[]> = {
     'orders.*', 'trips.*', 'drivers.*', 'trucks.*', 'trailers.*',
     'brokers.*', 'local_drives.*', 'fuel.*', 'maintenance.*',
     'tasks.*', 'chat.*', 'documents.*', 'trip_expenses.*',
+    'business_expenses.*',
   ],
   billing: [
     'orders.view', 'orders.update',

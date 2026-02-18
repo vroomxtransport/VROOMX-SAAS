@@ -31,12 +31,17 @@ export function PricingStep() {
   const revenue = form.watch('revenue') ?? 0
   const carrierPay = form.watch('carrierPay') ?? 0
   const brokerFee = form.watch('brokerFee') ?? 0
-  const margin = Number(revenue) - Number(carrierPay) - Number(brokerFee)
+  const localFee = form.watch('localFee') ?? 0
+  const driverId = form.watch('driverId')
+  const margin = Number(revenue) - Number(carrierPay) - Number(brokerFee) - Number(localFee)
+
+  // Find selected driver for showing default pay rate
+  const selectedDriver = driversData?.drivers.find((d) => d.id === driverId)
 
   return (
     <div className="space-y-4">
       {/* Financial fields */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <FormField
           control={form.control}
           name="revenue"
@@ -120,6 +125,35 @@ export function PricingStep() {
             </FormItem>
           )}
         />
+
+        <FormField
+          control={form.control}
+          name="localFee"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-1">
+                Local Fee
+                <HelpTooltip content="Fee for local delivery at destination (e.g., terminal to dealer)." side="top" />
+              </FormLabel>
+              <FormControl>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="0.00"
+                    className="pl-7"
+                    {...field}
+                    value={field.value as number ?? 0}
+                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
+                  />
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </div>
 
       {/* Distance */}
@@ -130,7 +164,7 @@ export function PricingStep() {
           <FormItem>
             <FormLabel className="flex items-center gap-1">
               Distance (miles)
-              <HelpTooltip content="Total route distance in miles. Used for per-mile financial KPIs." side="top" />
+              <HelpTooltip content="Total route distance in miles. Used for per-mile driver pay and financial KPIs." side="top" />
             </FormLabel>
             <FormControl>
               <div className="relative">
@@ -150,6 +184,38 @@ export function PricingStep() {
           </FormItem>
         )}
       />
+
+      {/* Driver Pay Rate Override — only shown when a driver is selected */}
+      {selectedDriver && (
+        <FormField
+          control={form.control}
+          name="driverPayRateOverride"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-1">
+                Driver % Override
+                <HelpTooltip content="Override the driver's default pay rate for this order. Leave blank to use the driver's configured rate." side="top" />
+              </FormLabel>
+              <FormControl>
+                <div className="relative">
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    placeholder={`${selectedDriver.pay_rate}% (default)`}
+                    {...field}
+                    value={field.value as number ?? ''}
+                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
 
       {/* Margin summary */}
       <div className="rounded-md bg-muted/50 p-3">

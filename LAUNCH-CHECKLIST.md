@@ -16,14 +16,12 @@ Last updated: 2026-02-12
 - [ ] Set storage bucket policies (authenticated uploads, public reads where needed)
 - [ ] Enable database backups on schedule
 
-### Vercel
-- [ ] Connect GitHub repository to Vercel project
+### Netlify
+- [ ] Connect GitHub repository to Netlify site
 - [ ] Set production branch to `main`
 - [ ] Configure custom domain and verify DNS
 - [ ] Set all environment variables (see Environment Variables section below)
-- [ ] Enable Speed Insights
-- [ ] Enable Web Analytics
-- [ ] Configure Edge Config for feature flags (optional)
+- [ ] Verify Next.js adapter is auto-detected in build logs
 
 ### Stripe
 - [ ] Switch from test mode to live mode
@@ -192,16 +190,16 @@ Verification:
 - [ ] Ensure `main` branch builds successfully
 - [ ] Tag release: `git tag v1.0.0`
 
-### Vercel Deployment
+### Netlify Deployment
 - [ ] Push to `main` (triggers automatic deployment)
 - [ ] Verify deployment completes without errors
-- [ ] Check deployment logs for any warnings
+- [ ] Check deploy logs for any warnings
 - [ ] Verify production URL is accessible
 
 ### DNS & SSL
-- [ ] Point domain A/CNAME records to Vercel
+- [ ] Point domain A/CNAME records to Netlify
 - [ ] Verify SSL certificate is issued and valid
-- [ ] Test HTTPS redirect (http:// > https://)
+- [ ] Test HTTPS redirect (http:// → https://)
 - [ ] Verify `www` subdomain redirects to apex (or vice versa)
 
 ### Post-Deploy Verification
@@ -220,7 +218,7 @@ Verification:
 - [ ] Check PostHog for page view events flowing
 - [ ] Verify Stripe webhooks are processing (Dashboard > Webhooks > Events)
 - [ ] Monitor Supabase database connections (Dashboard > Database)
-- [ ] Check Vercel function execution times (Dashboard > Analytics)
+- [ ] Check Netlify function execution times (Functions > Logs)
 
 ### First Week
 - [ ] Review PostHog funnels: signup completion rate
@@ -231,7 +229,7 @@ Verification:
 - [ ] Gather initial user feedback
 
 ### Ongoing
-- [ ] Set up uptime monitoring (e.g., Vercel Speed Insights, BetterStack)
+- [ ] Set up uptime monitoring (e.g., Netlify Analytics, BetterStack)
 - [ ] Configure PagerDuty/Opsgenie alerts for critical errors
 - [ ] Schedule weekly review of Sentry errors
 - [ ] Monitor Core Web Vitals in Google Search Console

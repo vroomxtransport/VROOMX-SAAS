@@ -320,8 +320,8 @@ Phase 7 complete: 10/10 plans done. All polish and launch prep complete: DB foun
 - Phase 7 complete: All 10 plans done
 
 **Next:** Production deployment following LAUNCH-CHECKLIST.md
-- Environment setup: Supabase Pro, Vercel custom domain, Stripe live mode
+- Environment setup: Supabase Pro, Netlify custom domain, Stripe live mode
 - Database: Run migrations, verify RLS
 - Security: All audit checks passing
-- Deployment: Vercel production build
+- Deployment: Netlify production build
 - Monitoring: Sentry, PostHog, uptime checks

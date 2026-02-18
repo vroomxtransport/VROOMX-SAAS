@@ -13,6 +13,9 @@ const WIDGET_LABELS: { id: WidgetId; label: string }[] = [
   { id: 'fleetPulse', label: 'Fleet Pulse' },
   { id: 'upcomingPickups', label: 'Upcoming Pickups' },
   { id: 'activityFeed', label: 'Activity Feed' },
+  { id: 'openInvoices', label: 'Open Invoices' },
+  { id: 'topDrivers', label: 'Top Drivers' },
+  { id: 'quickLinks', label: 'Quick Links' },
 ]
 
 export function CustomizeDashboard() {
@@ -35,7 +38,7 @@ export function CustomizeDashboard() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <GripVertical className="h-4 w-4 text-brand" />
-                <span className="text-sm font-medium">Reorder Widgets</span>
+                <span className="text-sm font-medium">Edit Layout</span>
               </div>
               <Switch
                 size="sm"
@@ -45,7 +48,7 @@ export function CustomizeDashboard() {
             </div>
             {editMode && (
               <p className="mt-2 text-xs text-muted-foreground">
-                Drag widgets to reorder them on the dashboard.
+                Drag to reorder, resize from bottom-right corner.
               </p>
             )}
           </div>

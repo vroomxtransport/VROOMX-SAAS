@@ -38,7 +38,7 @@ Plans:
 - Protected dashboard layout with sidebar navigation
 - Role-based access (owner, admin, dispatcher, viewer)
 - Sentry + PostHog integration
-- CI/CD via Vercel (auto-deploy on push)
+- CI/CD via Netlify (auto-deploy on push)
 
 **Research Flags:** RLS `(SELECT ...)` wrapper pattern critical (see PITFALLS.md CRIT-3). Avoid auth.users triggers (see PITFALLS.md Anti-Pattern 4).
 
@@ -208,7 +208,7 @@ Plans:
 - Dunning flow (failed payment -> 14-day grace period -> account suspension)
 - Settings page with billing, usage, and team management sections
 
-**Research Flags:** Stripe webhook idempotency is critical (see PITFALLS.md CRIT-4). Use Vercel API routes for webhooks, not Edge Functions (see PITFALLS.md MOD-2).
+**Research Flags:** Stripe webhook idempotency is critical (see PITFALLS.md CRIT-4). Use Next.js API routes for webhooks, not Edge Functions (see PITFALLS.md MOD-2).
 
 **Success Criteria:**
 - [x] Team member can be invited and join with correct role
@@ -321,7 +321,7 @@ Plans:
 - [x] Core Web Vitals: LCP < 2.5s, INP < 200ms, CLS < 0.1 (targets documented, audit scripts ready)
 - [ ] No console errors on any page — human verification needed
 - [ ] Cross-tenant isolation verified with automated tests — human verification needed
-- [x] Production deployment on Vercel + Supabase Pro (launch checklist ready)
+- [x] Production deployment on Netlify + Supabase Pro (launch checklist ready)
 - [ ] At least 1 carrier can complete a full dispatch workflow
 
 ---

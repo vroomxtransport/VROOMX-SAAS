@@ -5,6 +5,7 @@
 export interface KPIInput {
   totalRevenue: number
   totalBrokerFees: number
+  totalLocalFees: number
   totalDriverPay: number
   totalTripExpenses: number
   totalCarrierPay: number
@@ -12,6 +13,9 @@ export interface KPIInput {
   orderCount: number
   truckCount: number
   completedTripCount: number
+  // P&L extensions (optional for backward compat)
+  totalFixedExpenses?: number
+  carsHauled?: number
 }
 
 export interface KPIOutput {
@@ -36,6 +40,13 @@ export interface KPIOutput {
   // Computed
   netProfit: number
   totalExpenses: number
+
+  // P&L extensions
+  cleanGross: number
+  truckGross: number
+  truckGrossMargin: number
+  breakEvenRevenue: number | null
+  fixedCostPerTruck: number | null
 }
 
 export interface ExpenseBreakdownItem {
@@ -53,6 +64,7 @@ export function calculateKPIs(input: KPIInput): KPIOutput {
   const {
     totalRevenue,
     totalBrokerFees,
+    totalLocalFees,
     totalDriverPay,
     totalTripExpenses,
     totalCarrierPay,
@@ -61,7 +73,7 @@ export function calculateKPIs(input: KPIInput): KPIOutput {
     truckCount,
   } = input
 
-  const totalExpenses = totalBrokerFees + totalDriverPay + totalTripExpenses + totalCarrierPay
+  const totalExpenses = totalBrokerFees + totalLocalFees + totalDriverPay + totalTripExpenses + totalCarrierPay
   const netProfit = totalRevenue - totalExpenses
 
   // Per-Mile (null when no miles data)
@@ -75,7 +87,7 @@ export function calculateKPIs(input: KPIInput): KPIOutput {
 
   // Margin Metrics
   const grossMargin = totalRevenue > 0
-    ? ((totalRevenue - totalBrokerFees - totalDriverPay) / totalRevenue) * 100
+    ? ((totalRevenue - totalBrokerFees - totalLocalFees - totalDriverPay) / totalRevenue) * 100
     : 0
   const netMargin = totalRevenue > 0
     ? (netProfit / totalRevenue) * 100
@@ -90,6 +102,20 @@ export function calculateKPIs(input: KPIInput): KPIOutput {
   const profitPerTruck = hasTrucks ? netProfit / truckCount : null
   const milesPerTruck = hasTrucks && hasMiles ? totalMiles / truckCount : null
 
+  // P&L extensions
+  const totalFixedExpenses = input.totalFixedExpenses ?? 0
+  const cleanGross = totalRevenue - totalBrokerFees - totalLocalFees
+  const truckGross = cleanGross - totalDriverPay
+  const truckGrossMargin = totalRevenue > 0 ? (truckGross / totalRevenue) * 100 : 0
+
+  // Break-even: fixed costs / gross profit margin ratio
+  const grossProfitMarginRatio = totalRevenue > 0 ? truckGross / totalRevenue : 0
+  const breakEvenRevenue = grossProfitMarginRatio > 0
+    ? totalFixedExpenses / grossProfitMarginRatio
+    : null
+
+  const fixedCostPerTruck = hasTrucks ? totalFixedExpenses / truckCount : null
+
   return {
     rpm,
     cpm,
@@ -103,6 +129,11 @@ export function calculateKPIs(input: KPIInput): KPIOutput {
     milesPerTruck,
     netProfit,
     totalExpenses,
+    cleanGross,
+    truckGross,
+    truckGrossMargin,
+    breakEvenRevenue,
+    fixedCostPerTruck,
   }
 }
 

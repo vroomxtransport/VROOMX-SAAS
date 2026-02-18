@@ -115,7 +115,7 @@ Scaffolded the VroomX SaaS project with Next.js 16, installed all Phase 1 depend
 - Initialized shadcn/ui with New York style, neutral base color
 - Added 5 shadcn components: button, input, label, card, separator
 - Configured PostHog reverse proxy rewrites in next.config.ts
-- Updated .gitignore for .env.local, .vercel, .sentry
+- Updated .gitignore for .env.local, .netlify, .sentry
 - Updated tsconfig.json paths to use src/ directory (@/* -> ./src/*)
 
 **Files created:**

@@ -9,6 +9,8 @@ import {
   Gauge,
   Route,
   Package,
+  BarChart3,
+  Truck,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -62,13 +64,20 @@ export function KPICards({ kpis, revenue }: KPICardsProps) {
     { label: 'Revenue', value: fmt$(revenue), icon: DollarSign, accent: 'blue' },
     { label: 'Net Profit', value: fmt$(kpis.netProfit), icon: kpis.netProfit >= 0 ? TrendingUp : TrendingDown, accent: kpis.netProfit >= 0 ? 'emerald' : 'rose' },
     { label: 'Operating Ratio', value: fmtPct(kpis.operatingRatio), icon: Gauge, accent: kpis.operatingRatio <= 95 ? 'emerald' : kpis.operatingRatio <= 100 ? 'amber' : 'rose' },
-    { label: 'APPO', value: fmt$(kpis.appo), icon: Package, accent: 'violet', description: 'Avg Pay Per Order' },
+    { label: 'Gross Margin', value: fmtPct(kpis.grossMargin), icon: TrendingUp, accent: kpis.grossMargin >= 30 ? 'emerald' : kpis.grossMargin >= 15 ? 'amber' : 'rose' },
   ]
 
   const row2: KPICardDef[] = [
+    { label: 'Clean Gross', value: fmt$(kpis.cleanGross), icon: BarChart3, accent: 'blue', description: 'Revenue - Fees' },
+    { label: 'Truck Gross', value: fmt$(kpis.truckGross), icon: Truck, accent: 'violet', description: 'Clean Gross - Driver Pay' },
+    { label: 'Truck Gross Margin', value: fmtPct(kpis.truckGrossMargin), icon: Gauge, accent: kpis.truckGrossMargin >= 30 ? 'emerald' : kpis.truckGrossMargin >= 15 ? 'amber' : 'rose' },
+  ]
+
+  const row3: KPICardDef[] = [
     { label: 'RPM', value: fmtPerMile(kpis.rpm), icon: Route, accent: 'blue', description: 'Revenue Per Mile' },
     { label: 'CPM', value: fmtPerMile(kpis.cpm), icon: TrendingDown, accent: 'amber', description: 'Cost Per Mile' },
     { label: 'PPM', value: fmtPerMile(kpis.ppm), icon: TrendingUp, accent: kpis.ppm !== null && kpis.ppm >= 0 ? 'emerald' : 'rose', description: 'Profit Per Mile' },
+    { label: 'APPO', value: fmt$(kpis.appo), icon: Package, accent: 'violet', description: 'Avg Pay Per Order' },
   ]
 
   return (
@@ -80,6 +89,11 @@ export function KPICards({ kpis, revenue }: KPICardsProps) {
       </div>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         {row2.map((card) => (
+          <KPICard key={card.label} {...card} />
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {row3.map((card) => (
           <KPICard key={card.label} {...card} />
         ))}
       </div>

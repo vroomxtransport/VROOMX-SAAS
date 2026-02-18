@@ -22,7 +22,7 @@ async function safeQuery<T>(name: string, fn: () => Promise<T>, fallback: T): Pr
 }
 
 const emptyAggregates: KPIAggregates = {
-  totalRevenue: 0, totalBrokerFees: 0, totalDriverPay: 0,
+  totalRevenue: 0, totalBrokerFees: 0, totalLocalFees: 0, totalDriverPay: 0,
   totalTripExpenses: 0, totalCarrierPay: 0, totalMiles: 0,
   orderCount: 0, truckCount: 0, completedTripCount: 0,
   expensesByCategory: { fuel: 0, tolls: 0, repairs: 0, lodging: 0, misc: 0 },

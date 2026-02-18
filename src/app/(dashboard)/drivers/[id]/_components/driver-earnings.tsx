@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { fetchTrips } from '@/lib/queries/trips'
@@ -46,6 +47,7 @@ const PAGE_SIZE = 20
 
 export function DriverEarnings({ driverId }: DriverEarningsProps) {
   const supabase = createClient()
+  const router = useRouter()
   const [page, setPage] = useState(0)
 
   const { data, isLoading } = useQuery({
@@ -134,8 +136,12 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
             </TableHeader>
             <TableBody>
               {trips.map((trip) => (
-                <TableRow key={trip.id}>
-                  <TableCell className="font-medium">
+                <TableRow
+                  key={trip.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => router.push(`/trips/${trip.id}`)}
+                >
+                  <TableCell className="font-medium text-blue-600">
                     {trip.trip_number ?? '--'}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">

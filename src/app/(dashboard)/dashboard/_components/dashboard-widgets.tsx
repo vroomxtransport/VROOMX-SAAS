@@ -1,24 +1,18 @@
 'use client'
 
 import {
-  DndContext,
-  DragOverlay,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-  type DragStartEvent,
-} from '@dnd-kit/core'
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-  arrayMove,
-} from '@dnd-kit/sortable'
-import { useDashboardStore, useOrderedVisibleWidgets, type WidgetId } from '@/stores/dashboard-store'
-import { DraggableWidget, computeDynamicSpans } from './draggable-widget'
-import { type ReactNode, useState, useCallback, useMemo } from 'react'
+  ResponsiveGridLayout,
+  useContainerWidth,
+  type LayoutItem,
+  type Layout,
+  type ResponsiveLayouts,
+} from 'react-grid-layout'
+import 'react-grid-layout/css/styles.css'
+import 'react-resizable/css/styles.css'
+import { useDashboardStore, useVisibleWidgets, type WidgetId } from '@/stores/dashboard-store'
+import { type ReactNode, useCallback, useMemo } from 'react'
+import { GripVertical } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface DashboardWidgetsProps {
   statCards: ReactNode
@@ -27,12 +21,9 @@ interface DashboardWidgetsProps {
   fleetPulse: ReactNode
   upcomingPickups: ReactNode
   activityFeed: ReactNode
-}
-
-const SPAN_CLASSES: Record<number, string> = {
-  4: 'lg:col-span-4',
-  8: 'lg:col-span-8',
-  12: 'lg:col-span-12',
+  openInvoices: ReactNode
+  topDrivers: ReactNode
+  quickLinks: ReactNode
 }
 
 const widgetContent: Record<Exclude<WidgetId, 'statCards'>, keyof DashboardWidgetsProps> = {
@@ -41,114 +32,96 @@ const widgetContent: Record<Exclude<WidgetId, 'statCards'>, keyof DashboardWidge
   fleetPulse: 'fleetPulse',
   upcomingPickups: 'upcomingPickups',
   activityFeed: 'activityFeed',
+  openInvoices: 'openInvoices',
+  topDrivers: 'topDrivers',
+  quickLinks: 'quickLinks',
 }
 
 export function DashboardWidgets(props: DashboardWidgetsProps) {
-  const { widgetLayout, editMode, reorderWidgets } = useDashboardStore()
-  const orderedWidgets = useOrderedVisibleWidgets()
-  const [activeId, setActiveId] = useState<string | null>(null)
+  const { widgetLayout, editMode, setGridLayout } = useDashboardStore()
+  const visibleWidgets = useVisibleWidgets()
+  const { width, containerRef, mounted } = useContainerWidth({ initialWidth: 1280 })
 
   const statCardsVisible = widgetLayout.find((w) => w.id === 'statCards')?.visible ?? true
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor)
+  const lgLayouts = useMemo(
+    (): readonly LayoutItem[] =>
+      visibleWidgets.map((w) => ({
+        i: w.id,
+        x: w.grid.x,
+        y: w.grid.y,
+        w: w.grid.w,
+        h: w.grid.h,
+        minW: w.grid.minW,
+        minH: w.grid.minH,
+        static: !editMode,
+      })),
+    [visibleWidgets, editMode]
   )
 
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    setActiveId(String(event.active.id))
-  }, [])
+  // On mobile, stack everything single-column
+  const smLayouts = useMemo(
+    (): readonly LayoutItem[] =>
+      visibleWidgets.map((w, i) => ({
+        i: w.id,
+        x: 0,
+        y: i * 3,
+        w: 1,
+        h: w.grid.h,
+        minH: w.grid.minH,
+        static: true,
+      })),
+    [visibleWidgets]
+  )
 
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    setActiveId(null)
-    const { active, over } = event
-    if (!over || active.id === over.id) return
-
-    const oldIndex = orderedWidgets.findIndex((w) => w.id === active.id)
-    const newIndex = orderedWidgets.findIndex((w) => w.id === over.id)
-    if (oldIndex === -1 || newIndex === -1) return
-
-    const reordered = arrayMove(orderedWidgets, oldIndex, newIndex)
-    // Rebuild full layout preserving statCards and hidden widgets
-    const newLayout = widgetLayout.map((w) => {
-      if (w.id === 'statCards') return w
-      const idx = reordered.findIndex((r) => r.id === w.id)
-      if (idx !== -1) return { ...w, order: idx + 1 }
-      return w
-    })
-    reorderWidgets(newLayout)
-  }, [orderedWidgets, widgetLayout, reorderWidgets])
-
-  const handleMoveUp = useCallback((widgetId: Exclude<WidgetId, 'statCards'>) => {
-    const idx = orderedWidgets.findIndex((w) => w.id === widgetId)
-    if (idx <= 0) return
-    const reordered = arrayMove(orderedWidgets, idx, idx - 1)
-    const newLayout = widgetLayout.map((w) => {
-      if (w.id === 'statCards') return w
-      const i = reordered.findIndex((r) => r.id === w.id)
-      if (i !== -1) return { ...w, order: i + 1 }
-      return w
-    })
-    reorderWidgets(newLayout)
-  }, [orderedWidgets, widgetLayout, reorderWidgets])
-
-  const handleMoveDown = useCallback((widgetId: Exclude<WidgetId, 'statCards'>) => {
-    const idx = orderedWidgets.findIndex((w) => w.id === widgetId)
-    if (idx === -1 || idx >= orderedWidgets.length - 1) return
-    const reordered = arrayMove(orderedWidgets, idx, idx + 1)
-    const newLayout = widgetLayout.map((w) => {
-      if (w.id === 'statCards') return w
-      const i = reordered.findIndex((r) => r.id === w.id)
-      if (i !== -1) return { ...w, order: i + 1 }
-      return w
-    })
-    reorderWidgets(newLayout)
-  }, [orderedWidgets, widgetLayout, reorderWidgets])
-
-  const orderedWidgetIds = orderedWidgets.map((w) => w.id)
-  const dynamicSpans = useMemo(
-    () => computeDynamicSpans(orderedWidgetIds),
-    [orderedWidgetIds.join(',')]
+  const handleLayoutChange = useCallback(
+    (layout: Layout, _layouts: ResponsiveLayouts) => {
+      if (!editMode) return
+      setGridLayout(layout)
+    },
+    [editMode, setGridLayout]
   )
 
   return (
     <>
       {statCardsVisible && props.statCards}
 
-      {orderedWidgets.length > 0 && (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext items={orderedWidgetIds} strategy={verticalListSortingStrategy}>
-            <section className="grid gap-3 grid-cols-12 items-start">
-              {orderedWidgets.map((widget, index) => (
-                <DraggableWidget
-                  key={widget.id}
-                  id={widget.id as Exclude<WidgetId, 'statCards'>}
-                  editMode={editMode}
-                  spanClass={SPAN_CLASSES[dynamicSpans[widget.id] ?? 12] ?? 'lg:col-span-12'}
-                  onMoveUp={() => handleMoveUp(widget.id as Exclude<WidgetId, 'statCards'>)}
-                  onMoveDown={() => handleMoveDown(widget.id as Exclude<WidgetId, 'statCards'>)}
-                  isFirst={index === 0}
-                  isLast={index === orderedWidgets.length - 1}
-                >
+      <div ref={containerRef}>
+        {mounted && visibleWidgets.length > 0 && (
+          <ResponsiveGridLayout
+            width={width}
+            layouts={{ lg: lgLayouts, sm: smLayouts }}
+            breakpoints={{ lg: 1024, sm: 0 }}
+            cols={{ lg: 12, sm: 1 }}
+            rowHeight={120}
+            margin={[12, 12] as const}
+            containerPadding={[0, 0] as const}
+            autoSize
+            dragConfig={{ enabled: editMode, handle: '.widget-drag-handle' }}
+            resizeConfig={{ enabled: editMode, handles: ['se'] }}
+            onLayoutChange={handleLayoutChange}
+          >
+            {visibleWidgets.map((widget) => (
+              <div
+                key={widget.id}
+                className={cn(
+                  'relative group/widget h-full w-full',
+                  editMode && 'ring-2 ring-brand/20 rounded-xl'
+                )}
+              >
+                {editMode && (
+                  <div className="widget-drag-handle absolute top-2 left-2 z-10 flex items-center justify-center h-7 w-7 rounded-md bg-surface/90 border border-border-subtle shadow-sm cursor-grab active:cursor-grabbing opacity-0 group-hover/widget:opacity-100 transition-opacity">
+                    <GripVertical className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="h-full w-full overflow-auto">
                   {props[widgetContent[widget.id as Exclude<WidgetId, 'statCards'>]]}
-                </DraggableWidget>
-              ))}
-            </section>
-          </SortableContext>
-          <DragOverlay>
-            {activeId && (
-              <div className="rounded-xl bg-surface/80 border border-brand/30 shadow-lg backdrop-blur-sm p-8 text-center text-sm text-muted-foreground">
-                Moving widget...
+                </div>
               </div>
-            )}
-          </DragOverlay>
-        </DndContext>
-      )}
+            ))}
+          </ResponsiveGridLayout>
+        )}
+      </div>
     </>
   )
 }

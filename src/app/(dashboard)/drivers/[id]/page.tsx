@@ -7,6 +7,7 @@ import { deleteDriver, updateDriverStatus } from '@/app/actions/drivers'
 import { DriverDrawer } from '../_components/driver-drawer'
 import { DriverEarnings } from './_components/driver-earnings'
 import { DriverDocuments } from './_components/driver-documents'
+import { DriverComplianceDocs } from './_components/driver-compliance-docs'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { Badge } from '@/components/ui/badge'
@@ -262,6 +263,9 @@ export default function DriverDetailPage({ params }: DriverDetailPageProps) {
 
         {/* Documents */}
         <DriverDocuments driverId={id} tenantId={driver.tenant_id} />
+
+        {/* Compliance Documents */}
+        <DriverComplianceDocs driverId={id} />
       </div>
 
       {/* Earnings -- full width below the grid */}
