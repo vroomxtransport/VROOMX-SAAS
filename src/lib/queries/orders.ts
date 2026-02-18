@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Order, Broker, Driver, Trip } from '@/types/database'
+import type { Order, Broker, Driver, Trip, OrderActivityLog } from '@/types/database'
 import { sanitizeSearch } from '@/lib/sanitize-search'
 
 export interface OrderFilters {
@@ -86,4 +86,20 @@ export async function fetchOrder(
   if (error) throw error
 
   return data as OrderWithRelations
+}
+
+export async function fetchOrderActivityLog(
+  supabase: SupabaseClient,
+  orderId: string
+): Promise<OrderActivityLog[]> {
+  const { data, error } = await supabase
+    .from('order_activity_logs')
+    .select('*')
+    .eq('order_id', orderId)
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  if (error) throw error
+
+  return (data ?? []) as OrderActivityLog[]
 }

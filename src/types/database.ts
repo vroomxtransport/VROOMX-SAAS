@@ -398,6 +398,18 @@ export interface DriverLocation {
   driver?: Driver
 }
 
+export interface OrderActivityLog {
+  id: string
+  tenant_id: string
+  order_id: string
+  action: string
+  description: string
+  actor_id: string | null
+  actor_email: string | null
+  metadata: Record<string, unknown> | null
+  created_at: string
+}
+
 export interface WebNotification {
   id: string
   tenant_id: string

@@ -326,6 +326,17 @@ export const BUSINESS_EXPENSE_RECURRENCE_LABELS: Record<BusinessExpenseRecurrenc
 }
 
 // ============================================================================
+// Order Activity Log Types
+// ============================================================================
+
+export type OrderActivityAction =
+  | 'order_created' | 'order_updated' | 'order_deleted'
+  | 'status_changed' | 'status_rolled_back'
+  | 'assigned_to_trip' | 'unassigned_from_trip'
+  | 'payment_recorded' | 'batch_marked_paid'
+  | 'invoice_sent' | 'order_factored'
+
+// ============================================================================
 // Phase 4: Billing & Invoicing Types
 // ============================================================================
 

@@ -3,6 +3,7 @@
 import { authorize, safeError } from '@/lib/authz'
 import { createOrderSchema } from '@/lib/validations/order'
 import { geocodeAndSaveOrder } from '@/lib/geocoding-helpers'
+import { logOrderActivity } from '@/lib/activity-log'
 import { revalidatePath } from 'next/cache'
 import type { OrderStatus } from '@/types'
 
@@ -80,6 +81,16 @@ export async function createOrder(data: unknown) {
     deliveryState: v.deliveryState,
     deliveryZip: v.deliveryZip,
   }).catch((err) => console.error('[geocoding] createOrder fire-and-forget failed:', err))
+
+  // Fire-and-forget activity log
+  logOrderActivity(supabase, {
+    tenantId,
+    orderId: order.id,
+    action: 'order_created',
+    description: 'Order created',
+    actorId: auth.ctx.user.id,
+    actorEmail: auth.ctx.user.email,
+  }).catch(() => {})
 
   revalidatePath('/orders')
   return { success: true, data: order }
@@ -168,6 +179,18 @@ export async function updateOrder(id: string, data: unknown) {
     }).catch((err) => console.error('[geocoding] updateOrder fire-and-forget failed:', err))
   }
 
+  // Fire-and-forget activity log
+  const changedFields = Object.keys(updateData)
+  logOrderActivity(supabase, {
+    tenantId,
+    orderId: id,
+    action: 'order_updated',
+    description: 'Order details updated',
+    actorId: auth.ctx.user.id,
+    actorEmail: auth.ctx.user.email,
+    metadata: { changedFields },
+  }).catch(() => {})
+
   revalidatePath('/orders')
   return { success: true, data: order }
 }
@@ -176,6 +199,16 @@ export async function deleteOrder(id: string) {
   const auth = await authorize('orders.delete')
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId } = auth.ctx
+
+  // Log activity BEFORE delete (the order row will be cascade-deleted)
+  logOrderActivity(supabase, {
+    tenantId,
+    orderId: id,
+    action: 'order_deleted',
+    description: 'Order deleted',
+    actorId: auth.ctx.user.id,
+    actorEmail: auth.ctx.user.email,
+  }).catch(() => {})
 
   const { error } = await supabase
     .from('orders')
@@ -208,6 +241,16 @@ export async function updateOrderStatus(
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId } = auth.ctx
 
+  // Fetch current status for activity log
+  const { data: current } = await supabase
+    .from('orders')
+    .select('status')
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
+    .single()
+
+  const oldStatus = current?.status ?? 'unknown'
+
   // Build update payload
   const updateData: Record<string, unknown> = {
     status: newStatus,
@@ -236,6 +279,17 @@ export async function updateOrderStatus(
   if (error) {
     return { error: safeError(error, 'updateOrderStatus') }
   }
+
+  // Fire-and-forget activity log
+  logOrderActivity(supabase, {
+    tenantId,
+    orderId: id,
+    action: 'status_changed',
+    description: `Status changed from ${oldStatus} to ${newStatus}`,
+    actorId: auth.ctx.user.id,
+    actorEmail: auth.ctx.user.email,
+    metadata: { oldStatus, newStatus },
+  }).catch(() => {})
 
   revalidatePath(`/orders/${id}`)
   revalidatePath('/orders')
@@ -452,6 +506,17 @@ export async function rollbackOrderStatus(id: string) {
   if (error) {
     return { error: safeError(error, 'rollbackOrderStatus') }
   }
+
+  // Fire-and-forget activity log
+  logOrderActivity(supabase, {
+    tenantId,
+    orderId: id,
+    action: 'status_rolled_back',
+    description: `Status rolled back from ${currentStatus} to ${previousStatus}`,
+    actorId: auth.ctx.user.id,
+    actorEmail: auth.ctx.user.email,
+    metadata: { oldStatus: currentStatus, newStatus: previousStatus },
+  }).catch(() => {})
 
   revalidatePath(`/orders/${id}`)
   revalidatePath('/orders')

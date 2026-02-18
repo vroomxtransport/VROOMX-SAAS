@@ -16,6 +16,7 @@ import { AssignToTrip } from './assign-to-trip'
 import { PaymentRecorder } from './payment-recorder'
 import { InvoiceButton } from './invoice-button'
 import { OrderAttachments } from './order-attachments'
+import { OrderActivityLog } from './order-activity-log'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import {
   Car,
@@ -336,6 +337,9 @@ export function OrderDetail({ order }: OrderDetailProps) {
 
       {/* Attachments */}
       <OrderAttachments orderId={order.id} tenantId={order.tenant_id} />
+
+      {/* Activity Log */}
+      <OrderActivityLog orderId={order.id} />
 
       {/* Metadata footer */}
       <div className="rounded-xl border border-border-subtle bg-surface p-4">

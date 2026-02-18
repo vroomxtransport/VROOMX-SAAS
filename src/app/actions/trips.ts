@@ -2,6 +2,7 @@
 
 import { authorize, safeError } from '@/lib/authz'
 import { tripSchema } from '@/lib/validations/trip'
+import { logOrderActivity } from '@/lib/activity-log'
 import { revalidatePath } from 'next/cache'
 import { calculateTripFinancials } from '@/lib/financial/trip-calculations'
 import { z } from 'zod'
@@ -283,6 +284,24 @@ export async function assignOrderToTrip(orderId: string, tripId: string) {
     .eq('id', tripId)
     .eq('tenant_id', tenantId)
 
+  // Fire-and-forget activity log
+  const { data: tripInfo } = await supabase
+    .from('trips')
+    .select('trip_number')
+    .eq('id', tripId)
+    .eq('tenant_id', tenantId)
+    .single()
+
+  logOrderActivity(supabase, {
+    tenantId,
+    orderId,
+    action: 'assigned_to_trip',
+    description: `Assigned to trip ${tripInfo?.trip_number ?? tripId}`,
+    actorId: auth.ctx.user.id,
+    actorEmail: auth.ctx.user.email,
+    metadata: { tripId, tripNumber: tripInfo?.trip_number },
+  }).catch(() => {})
+
   revalidatePath('/dispatch')
   revalidatePath(`/trips/${tripId}`)
   if (oldTripId && oldTripId !== tripId) {
@@ -329,6 +348,25 @@ export async function unassignOrderFromTrip(orderId: string) {
 
   // Recalculate old trip financials
   await recalculateTripFinancials(oldTripId)
+
+  // Get trip info for activity log
+  const { data: tripInfo } = await supabase
+    .from('trips')
+    .select('trip_number')
+    .eq('id', oldTripId)
+    .eq('tenant_id', tenantId)
+    .single()
+
+  // Fire-and-forget activity log
+  logOrderActivity(supabase, {
+    tenantId,
+    orderId,
+    action: 'unassigned_from_trip',
+    description: `Unassigned from trip ${tripInfo?.trip_number ?? oldTripId}`,
+    actorId: auth.ctx.user.id,
+    actorEmail: auth.ctx.user.email,
+    metadata: { tripId: oldTripId, tripNumber: tripInfo?.trip_number },
+  }).catch(() => {})
 
   // Remove unassigned order's stops from route_sequence
   const { data: tripData } = await supabase

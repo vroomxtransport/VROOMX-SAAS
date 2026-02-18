@@ -2,6 +2,7 @@
 
 import { authorize, safeError } from '@/lib/authz'
 import { recordPaymentSchema } from '@/lib/validations/payment'
+import { logOrderActivity } from '@/lib/activity-log'
 import { revalidatePath } from 'next/cache'
 
 export async function recordPayment(orderId: string, data: unknown) {
@@ -79,6 +80,17 @@ export async function recordPayment(orderId: string, data: unknown) {
     return { error: safeError(updateError, 'recordPayment') }
   }
 
+  // Fire-and-forget activity log
+  logOrderActivity(supabase, {
+    tenantId,
+    orderId,
+    action: 'payment_recorded',
+    description: `Payment of $${parsed.data.amount.toFixed(2)} recorded`,
+    actorId: auth.ctx.user.id,
+    actorEmail: auth.ctx.user.email,
+    metadata: { amount: parsed.data.amount, paymentDate: parsed.data.paymentDate, newPaymentStatus },
+  }).catch(() => {})
+
   revalidatePath(`/orders/${orderId}`)
   revalidatePath('/billing')
   return { success: true, data: payment }
@@ -150,6 +162,21 @@ export async function batchMarkPaid(orderIds: string[], paymentDate: string) {
       return orderId
     })
   )
+
+  // Fire-and-forget activity logs for each processed order
+  for (const [i, result] of results.entries()) {
+    if (result.status === 'fulfilled') {
+      logOrderActivity(supabase, {
+        tenantId,
+        orderId: orderIds[i],
+        action: 'batch_marked_paid',
+        description: 'Marked as paid (batch)',
+        actorId: auth.ctx.user.id,
+        actorEmail: auth.ctx.user.email,
+        metadata: { paymentDate },
+      }).catch(() => {})
+    }
+  }
 
   revalidatePath('/billing')
   revalidatePath('/orders')

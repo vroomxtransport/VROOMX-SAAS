@@ -743,6 +743,29 @@ export const webNotifications = pgTable('web_notifications', {
 ])
 
 // ============================================================================
+// Order Activity Logs
+// ============================================================================
+
+/**
+ * Order Activity Logs Table
+ * Audit trail for all order-related actions (status changes, assignments, payments, etc.).
+ */
+export const orderActivityLogs = pgTable('order_activity_logs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  orderId: uuid('order_id').notNull().references(() => orders.id, { onDelete: 'cascade' }),
+  action: text('action').notNull(),
+  description: text('description').notNull(),
+  actorId: uuid('actor_id'),
+  actorEmail: text('actor_email'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_order_activity_logs_tenant_order').on(table.tenantId, table.orderId),
+  index('idx_order_activity_logs_created').on(table.orderId, table.createdAt),
+])
+
+// ============================================================================
 // Type Exports
 // ============================================================================
 
@@ -815,3 +838,7 @@ export type NewBusinessExpense = typeof businessExpenses.$inferInsert
 // Web Notifications
 export type DrizzleWebNotification = typeof webNotifications.$inferSelect
 export type NewWebNotification = typeof webNotifications.$inferInsert
+
+// Order Activity Logs
+export type DrizzleOrderActivityLog = typeof orderActivityLogs.$inferSelect
+export type NewOrderActivityLog = typeof orderActivityLogs.$inferInsert

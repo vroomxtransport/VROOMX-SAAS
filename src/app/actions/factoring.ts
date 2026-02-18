@@ -1,6 +1,7 @@
 'use server'
 
 import { authorize, safeError } from '@/lib/authz'
+import { logOrderActivity } from '@/lib/activity-log'
 import { revalidatePath } from 'next/cache'
 
 export async function factorOrder(orderId: string) {
@@ -67,6 +68,17 @@ export async function factorOrder(orderId: string) {
   if (updateError) {
     return { error: safeError(updateError, 'factorOrder:update') }
   }
+
+  // Fire-and-forget activity log
+  logOrderActivity(supabase, {
+    tenantId,
+    orderId,
+    action: 'order_factored',
+    description: `Order factored at ${feeRate}% — Fee: $${factoringFee.toFixed(2)}`,
+    actorId: auth.ctx.user.id,
+    actorEmail: auth.ctx.user.email,
+    metadata: { feeRate, factoringFee, netAmount },
+  }).catch(() => {})
 
   revalidatePath('/billing')
   revalidatePath(`/orders/${orderId}`)

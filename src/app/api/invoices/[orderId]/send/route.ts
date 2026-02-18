@@ -1,6 +1,7 @@
 import { renderToBuffer } from '@react-pdf/renderer'
 import { createClient } from '@/lib/supabase/server'
 import { getResend } from '@/lib/resend/client'
+import { logOrderActivity } from '@/lib/activity-log'
 import { InvoiceDocument } from '@/lib/pdf/invoice-template'
 import { InvoiceEmail } from '@/components/email/invoice-email'
 
@@ -133,6 +134,16 @@ export async function POST(
         // but log the status update failure
       }
     }
+
+    // Fire-and-forget activity log
+    logOrderActivity(supabase, {
+      tenantId,
+      orderId,
+      action: 'invoice_sent',
+      description: `Invoice sent to ${order.broker.email}`,
+      actorId: user.id,
+      actorEmail: user.email,
+    }).catch(() => {})
 
     return Response.json({ success: true, emailId: data?.id })
   } catch (err) {
