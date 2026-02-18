@@ -39,6 +39,14 @@ async function safeQuery<T>(name: string, fn: () => Promise<T>, fallback: T): Pr
 export default async function BillingPage() {
   const supabase = await createClient()
 
+  // Fetch tenant factoring fee rate
+  const { data: { user } } = await supabase.auth.getUser()
+  const tenantId = user?.app_metadata?.tenant_id
+  const { data: tenantData } = tenantId
+    ? await supabase.from('tenants').select('factoring_fee_rate').eq('id', tenantId).single()
+    : { data: null }
+  const factoringFeeRate = parseFloat(tenantData?.factoring_fee_rate ?? '0')
+
   const [
     receivables,
     aging,
@@ -79,7 +87,7 @@ export default async function BillingPage() {
 
       {/* Row 2: Ready to Invoice */}
       <Suspense fallback={null}>
-        <ReadyToInvoice />
+        <ReadyToInvoice factoringFeeRate={factoringFeeRate} />
       </Suspense>
 
       {/* Row 3: Payment Overview */}

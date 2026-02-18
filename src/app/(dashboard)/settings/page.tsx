@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { redirect } from 'next/navigation'
 import { SubscriptionSection } from './subscription-section'
+import { CompanySection } from './company-section'
 import { TeamSection } from './team-section'
 import { RolesSection } from './roles-section'
 import { SeedSection } from './seed-section'
@@ -28,7 +29,7 @@ export default async function SettingsPage() {
   const [tenantResult, trucksResult, membershipsResult, pendingInvitesResult, customRolesResult] = await Promise.all([
     supabase
       .from('tenants')
-      .select('name, plan, subscription_status, stripe_customer_id, grace_period_ends_at, trial_ends_at')
+      .select('name, plan, subscription_status, stripe_customer_id, grace_period_ends_at, trial_ends_at, factoring_fee_rate')
       .eq('id', tenantId)
       .single(),
     supabase
@@ -98,6 +99,11 @@ export default async function SettingsPage() {
         truckCount={truckCount}
         userCount={membershipsCount}
       />
+
+      {/* Company settings for admins */}
+      {(userRole === 'owner' || userRole === 'admin') && (
+        <CompanySection factoringFeeRate={tenant.factoring_fee_rate ?? '0'} />
+      )}
 
       {/* Team management for admins */}
       {(userRole === 'owner' || userRole === 'admin') && (

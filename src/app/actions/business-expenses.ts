@@ -36,7 +36,7 @@ export async function createBusinessExpense(data: unknown) {
     return { error: safeError(error, 'createBusinessExpense') }
   }
 
-  revalidatePath('/business-expenses')
+  revalidatePath('/financials/expenses')
   revalidatePath('/financials')
   return { success: true, data: expense }
 }
@@ -75,7 +75,7 @@ export async function updateBusinessExpense(id: string, data: unknown) {
     return { error: safeError(error, 'updateBusinessExpense') }
   }
 
-  revalidatePath('/business-expenses')
+  revalidatePath('/financials/expenses')
   revalidatePath('/financials')
   return { success: true, data: expense }
 }
@@ -95,7 +95,7 @@ export async function deleteBusinessExpense(id: string) {
     return { error: safeError(error, 'deleteBusinessExpense') }
   }
 
-  revalidatePath('/business-expenses')
+  revalidatePath('/financials/expenses')
   revalidatePath('/financials')
   return { success: true }
 }

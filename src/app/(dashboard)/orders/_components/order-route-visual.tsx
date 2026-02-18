@@ -1,6 +1,6 @@
 'use client'
 
-import { MapPin } from 'lucide-react'
+import { ExternalLink, MapPin } from 'lucide-react'
 import type { OrderWithRelations } from '@/lib/queries/orders'
 
 interface OrderRouteVisualProps {
@@ -10,6 +10,13 @@ interface OrderRouteVisualProps {
 function buildAddress(location: string | null, city: string | null, state: string | null, zip: string | null): string {
   const parts = [location, city, state, zip].filter(Boolean)
   return parts.length > 0 ? parts.join(', ') : 'Not specified'
+}
+
+function buildMapUrl(lat: number | null, lng: number | null, address: string): string {
+  if (lat && lng) {
+    return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
+  }
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
 }
 
 function formatDate(dateStr: string | null | undefined): string {
@@ -34,6 +41,8 @@ export function OrderRouteVisual({ order }: OrderRouteVisualProps) {
     order.delivery_state,
     order.delivery_zip
   )
+  const pickupMapUrl = buildMapUrl(order.pickup_latitude, order.pickup_longitude, pickupAddress)
+  const deliveryMapUrl = buildMapUrl(order.delivery_latitude, order.delivery_longitude, deliveryAddress)
 
   return (
     <div className="rounded-xl border border-border-subtle bg-surface p-6">
@@ -54,6 +63,18 @@ export function OrderRouteVisual({ order }: OrderRouteVisualProps) {
           <div className="flex-1 pb-2">
             <p className="text-xs font-semibold uppercase text-muted-foreground">Pickup</p>
             <p className="text-sm font-medium text-foreground">{pickupAddress}</p>
+            {pickupAddress !== 'Not specified' && (
+              <a
+                href={pickupMapUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-brand hover:text-brand/80 transition-colors mt-0.5"
+                title="Open in Maps"
+              >
+                <ExternalLink className="h-3 w-3" />
+                <span>Open in Maps</span>
+              </a>
+            )}
             {order.pickup_contact_name && (
               <p className="mt-1 text-xs text-muted-foreground">
                 {order.pickup_contact_name}
@@ -81,6 +102,18 @@ export function OrderRouteVisual({ order }: OrderRouteVisualProps) {
           <div className="flex-1">
             <p className="text-xs font-semibold uppercase text-muted-foreground">Delivery</p>
             <p className="text-sm font-medium text-foreground">{deliveryAddress}</p>
+            {deliveryAddress !== 'Not specified' && (
+              <a
+                href={deliveryMapUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-brand hover:text-brand/80 transition-colors mt-0.5"
+                title="Open in Maps"
+              >
+                <ExternalLink className="h-3 w-3" />
+                <span>Open in Maps</span>
+              </a>
+            )}
             {order.delivery_contact_name && (
               <p className="mt-1 text-xs text-muted-foreground">
                 {order.delivery_contact_name}

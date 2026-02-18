@@ -279,8 +279,10 @@ function BrokerRow({
               />
             </TableCell>
             <TableCell />
-            <TableCell className="pl-12 text-sm text-muted-foreground">
-              {order.orderNumber ?? order.id.slice(0, 8)}
+            <TableCell className="pl-12 text-sm">
+              <Link href={`/orders/${order.id}`} className="text-blue-600 hover:underline">
+                {order.orderNumber ?? order.id.slice(0, 8)}
+              </Link>
             </TableCell>
             <TableCell className="text-right text-sm">
               {formatCurrency(order.carrierPay)}

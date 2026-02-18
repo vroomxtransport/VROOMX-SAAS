@@ -6,9 +6,11 @@ import { createClient } from '@/lib/supabase/client'
 import { fetchReadyToInvoice, type ReadyToInvoiceOrder } from '@/lib/queries/receivables'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Send, Loader2, CheckCircle2, FileText } from 'lucide-react'
+import { Send, Loader2, CheckCircle2, FileText, Percent } from 'lucide-react'
+import Link from 'next/link'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { factorOrder } from '@/app/actions/factoring'
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-US', {
@@ -26,13 +28,19 @@ function formatDate(dateStr: string): string {
   })
 }
 
-export function ReadyToInvoice() {
+interface ReadyToInvoiceProps {
+  factoringFeeRate?: number
+}
+
+export function ReadyToInvoice({ factoringFeeRate = 0 }: ReadyToInvoiceProps) {
   const supabase = createClient()
   const queryClient = useQueryClient()
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [sendingId, setSendingId] = useState<string | null>(null)
+  const [factoringId, setFactoringId] = useState<string | null>(null)
   const [batchSending, setBatchSending] = useState(false)
   const [batchProgress, setBatchProgress] = useState({ sent: 0, total: 0 })
+  const showFactoring = factoringFeeRate > 0
 
   const { data: orders, isLoading } = useQuery({
     queryKey: ['ready-to-invoice'],
@@ -130,6 +138,24 @@ export function ReadyToInvoice() {
     queryClient.invalidateQueries({ queryKey: ['orders'] })
   }, [selectedIds, queryClient])
 
+  const handleFactor = useCallback(async (orderId: string) => {
+    setFactoringId(orderId)
+    try {
+      const result = await factorOrder(orderId)
+      if ('error' in result && result.error) {
+        toast.error(typeof result.error === 'string' ? result.error : 'Failed to factor order')
+      } else if ('data' in result && result.data) {
+        toast.success(`Factored at ${result.data.feeRate}% — Net: ${formatCurrency(result.data.netAmount)}`)
+        queryClient.invalidateQueries({ queryKey: ['ready-to-invoice'] })
+        queryClient.invalidateQueries({ queryKey: ['orders'] })
+      }
+    } catch {
+      toast.error('Failed to factor order')
+    } finally {
+      setFactoringId(null)
+    }
+  }, [queryClient])
+
   if (isLoading) return null
 
   const count = orders?.length ?? 0
@@ -183,7 +209,7 @@ export function ReadyToInvoice() {
           <div className="min-w-0 flex-1 hidden md:block">Route</div>
           <div className="w-24 shrink-0 text-right">Amount</div>
           <div className="w-20 shrink-0 text-right hidden sm:block">Delivered</div>
-          <div className="w-28 shrink-0 text-right">Action</div>
+          <div className={cn('shrink-0 text-right', showFactoring ? 'w-44' : 'w-28')}>Action</div>
         </div>
 
         {/* Order rows */}
@@ -206,8 +232,10 @@ export function ReadyToInvoice() {
                   onCheckedChange={() => toggleSelect(order.id)}
                 />
               </div>
-              <div className="w-20 shrink-0 text-sm font-medium text-foreground">
-                {order.orderNumber ?? 'N/A'}
+              <div className="w-20 shrink-0 text-sm font-medium">
+                <Link href={`/orders/${order.id}`} className="text-blue-600 hover:underline">
+                  {order.orderNumber ?? 'N/A'}
+                </Link>
               </div>
               <div className="w-36 shrink-0 text-sm text-muted-foreground truncate" title={order.vehicleName}>
                 {order.vehicleName}
@@ -224,7 +252,22 @@ export function ReadyToInvoice() {
               <div className="w-20 shrink-0 text-xs text-muted-foreground text-right hidden sm:block">
                 {formatDate(order.updatedAt)}
               </div>
-              <div className="w-28 shrink-0 flex justify-end">
+              <div className={cn('shrink-0 flex justify-end gap-1.5', showFactoring ? 'w-44' : 'w-28')}>
+                {showFactoring && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleFactor(order.id)}
+                    disabled={factoringId === order.id || batchSending}
+                  >
+                    {factoringId === order.id ? (
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Percent className="mr-1.5 h-3.5 w-3.5" />
+                    )}
+                    Factor
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant="outline"

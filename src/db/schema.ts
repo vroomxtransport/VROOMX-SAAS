@@ -27,7 +27,7 @@ export const driverPayTypeEnum = pgEnum('driver_pay_type', [
 export const paymentTermsEnum = pgEnum('payment_terms', ['NET15', 'NET30', 'NET45', 'NET60'])
 
 export const paymentStatusEnum = pgEnum('payment_status', [
-  'unpaid', 'invoiced', 'partially_paid', 'paid',
+  'unpaid', 'invoiced', 'partially_paid', 'paid', 'factored',
 ])
 
 // ============================================================================
@@ -59,6 +59,8 @@ export const tenants = pgTable('tenants', {
   // Phase 5 - Dunning and onboarding
   gracePeriodEndsAt: timestamp('grace_period_ends_at', { withTimezone: true }),
   isSuspended: boolean('is_suspended').notNull().default(false),
+  // Factoring
+  factoringFeeRate: numeric('factoring_fee_rate', { precision: 5, scale: 2 }).default('0'),
   onboardingCompletedAt: timestamp('onboarding_completed_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

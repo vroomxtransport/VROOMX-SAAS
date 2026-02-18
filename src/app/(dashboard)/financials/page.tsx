@@ -8,7 +8,6 @@ import {
   fetchTopBrokersByRevenue,
 } from '@/lib/queries/financials'
 import type { KPIAggregates, ProfitByTruck, ProfitByDriver, MonthlyKPITrend, MonthlyRevenue, TopBroker } from '@/lib/queries/financials'
-import { PageHeader } from '@/components/shared/page-header'
 import { FinancialsDashboard } from './_components/financials-dashboard'
 
 // Safe wrapper that logs and returns a fallback on error
@@ -48,17 +47,13 @@ export default async function FinancialsPage() {
   ])
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Financials" subtitle="Revenue, expenses, KPIs, and profitability analysis" />
-
-      <FinancialsDashboard
-        initialAggregates={aggregates}
-        initialProfitByTruck={profitByTruck}
-        initialProfitByDriver={profitByDriver}
-        kpiTrend={kpiTrend}
-        revenueByMonth={revenueByMonth}
-        topBrokers={topBrokers}
-      />
-    </div>
+    <FinancialsDashboard
+      initialAggregates={aggregates}
+      initialProfitByTruck={profitByTruck}
+      initialProfitByDriver={profitByDriver}
+      kpiTrend={kpiTrend}
+      revenueByMonth={revenueByMonth}
+      topBrokers={topBrokers}
+    />
   )
 }

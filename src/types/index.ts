@@ -329,10 +329,10 @@ export const BUSINESS_EXPENSE_RECURRENCE_LABELS: Record<BusinessExpenseRecurrenc
 // Phase 4: Billing & Invoicing Types
 // ============================================================================
 
-export type PaymentStatus = 'unpaid' | 'invoiced' | 'partially_paid' | 'paid'
+export type PaymentStatus = 'unpaid' | 'invoiced' | 'partially_paid' | 'paid' | 'factored'
 
 export const PAYMENT_STATUSES: readonly PaymentStatus[] = [
-  'unpaid', 'invoiced', 'partially_paid', 'paid',
+  'unpaid', 'invoiced', 'partially_paid', 'paid', 'factored',
 ] as const
 
 export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
@@ -340,6 +340,7 @@ export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
   invoiced: 'Invoiced',
   partially_paid: 'Partially Paid',
   paid: 'Paid',
+  factored: 'Factored',
 }
 
 export const PAYMENT_STATUS_COLORS: Record<PaymentStatus, string> = {
@@ -347,6 +348,7 @@ export const PAYMENT_STATUS_COLORS: Record<PaymentStatus, string> = {
   invoiced: 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/30 dark:text-indigo-400 dark:border-indigo-800',
   partially_paid: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800',
   paid: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800',
+  factored: 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/30 dark:text-purple-400 dark:border-purple-800',
 }
 
 // ============================================================================

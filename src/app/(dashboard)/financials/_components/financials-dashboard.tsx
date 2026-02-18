@@ -14,9 +14,6 @@ import { TopBrokersTable } from './top-brokers-table'
 import { createClient } from '@/lib/supabase/client'
 import { fetchKPIAggregates, fetchProfitByTruck, fetchProfitByDriver } from '@/lib/queries/financials'
 import { useQuery } from '@tanstack/react-query'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { FileText } from 'lucide-react'
 
 interface FinancialsDashboardProps {
   initialAggregates: KPIAggregates
@@ -76,14 +73,8 @@ export function FinancialsDashboard({
 
   return (
     <div className="space-y-6">
-      {/* Period Selector + P&L Report Link */}
-      <div className="flex items-center justify-between">
-        <Link href="/financials/reports">
-          <Button variant="outline" size="sm">
-            <FileText className="mr-1.5 h-4 w-4" />
-            Full P&L Report
-          </Button>
-        </Link>
+      {/* Period Selector */}
+      <div className="flex items-center justify-end">
         <PeriodSelector value={period} onChange={setPeriod} />
       </div>
 

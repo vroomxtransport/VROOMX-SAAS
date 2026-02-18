@@ -16,6 +16,7 @@ export interface Tenant {
   phone: string | null
   grace_period_ends_at: string | null
   is_suspended: boolean
+  factoring_fee_rate: string
   onboarding_completed_at: string | null
   created_at: string
   updated_at: string
