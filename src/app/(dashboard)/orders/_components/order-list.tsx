@@ -13,8 +13,9 @@ import { Pagination } from '@/components/shared/pagination'
 import { EmptyState } from '@/components/shared/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
-import { Plus, PackageOpen, Upload } from 'lucide-react'
+import { Plus, PackageOpen, Upload, FileUp } from 'lucide-react'
 import { CSVImportDialog } from './csv-import-dialog'
+import { PDFImportDialog } from './pdf-import-dialog'
 import { PageHeader } from '@/components/shared/page-header'
 import type { OrderWithRelations } from '@/lib/queries/orders'
 
@@ -29,6 +30,7 @@ export function OrderList() {
 
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [csvImportOpen, setCsvImportOpen] = useState(false)
+  const [pdfImportOpen, setPdfImportOpen] = useState(false)
   const [editingOrder, setEditingOrder] = useState<OrderWithRelations | undefined>(undefined)
 
   // Parse URL search params for filters
@@ -99,6 +101,10 @@ export function OrderList() {
       {/* Header */}
       <PageHeader title="Orders" subtitle="Manage vehicle transport orders and track their status.">
         <ViewToggle viewMode={viewMode} onViewChange={(mode) => setView('orders', mode)} />
+        <Button variant="outline" onClick={() => setPdfImportOpen(true)}>
+          <FileUp className="mr-2 h-4 w-4" />
+          Import PDF
+        </Button>
         <Button variant="outline" onClick={() => setCsvImportOpen(true)}>
           <Upload className="mr-2 h-4 w-4" />
           Import CSV
@@ -198,6 +204,12 @@ export function OrderList() {
       <CSVImportDialog
         open={csvImportOpen}
         onOpenChange={setCsvImportOpen}
+      />
+
+      {/* PDF Import Dialog */}
+      <PDFImportDialog
+        open={pdfImportOpen}
+        onOpenChange={setPdfImportOpen}
       />
     </div>
   )

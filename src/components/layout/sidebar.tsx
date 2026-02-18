@@ -149,7 +149,7 @@ export function Sidebar({ userRole, tenantName }: SidebarProps) {
         {/* Logo area */}
         <div className="flex h-12 items-center justify-between border-b border-[var(--sidebar-border-color)] px-4">
           <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#fb7232] to-[#f59e0b] shadow-[var(--brand-glow)]">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#fb7232] to-[#f59e0b]">
               <Truck className="h-4.5 w-4.5 text-white" />
             </div>
             <span
@@ -232,14 +232,14 @@ export function Sidebar({ userRole, tenantName }: SidebarProps) {
                       className={cn(
                         'group flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-all duration-150 relative',
                         isActive
-                          ? 'bg-[var(--sidebar-active)] text-[var(--sidebar-text-active)] shadow-[inset_0_0_0_1px_rgba(251,114,50,0.15),var(--brand-glow)]'
+                          ? 'bg-[var(--sidebar-active)] text-[var(--sidebar-text-active)] shadow-[inset_0_0_0_1px_rgba(251,114,50,0.15)]'
                           : 'text-[var(--sidebar-text)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-text-active)]',
                         isCollapsed && 'lg:justify-center lg:px-0 lg:py-2.5'
                       )}
                     >
                       {/* Active indicator pill */}
                       {isActive && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-[var(--brand)] shadow-[0_0_8px_var(--sidebar-active-glow)]" />
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-[var(--brand)]" />
                       )}
                       <Icon
                         className={cn(

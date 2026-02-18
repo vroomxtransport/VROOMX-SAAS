@@ -124,8 +124,8 @@
   /* Brand gradients & glows */
   --brand-gradient: linear-gradient(135deg, #fb7232, #f59e0b);
   --brand-gradient-vivid: linear-gradient(135deg, #ea5e1a, #fb7232, #f59e0b);
-  --brand-glow: 0 0 20px rgba(251, 114, 50, 0.2);
-  --brand-glow-lg: 0 0 40px rgba(251, 114, 50, 0.15), 0 0 80px rgba(251, 114, 50, 0.08);
+  --brand-glow: none;
+  --brand-glow-lg: none;
 
   /* Sidebar depth */
   --sidebar-bg: #1a1a19;
@@ -133,7 +133,7 @@
   --sidebar-border-color: #2e2e2d;
   --sidebar-hover: #2a2a29;
   --sidebar-active: #333332;
-  --sidebar-active-glow: rgba(251, 114, 50, 0.12);
+  --sidebar-active-glow: transparent;
   --sidebar-text: #a3a3a0;
   --sidebar-text-active: #f5f5f4;
   --sidebar-category: #6b6b68;
@@ -204,8 +204,8 @@
   /* Brand gradients & glows (dark) */
   --brand-gradient: linear-gradient(135deg, #fb7232, #f59e0b);
   --brand-gradient-vivid: linear-gradient(135deg, #ea5e1a, #fb7232, #fbbf24);
-  --brand-glow: 0 0 24px rgba(251, 114, 50, 0.25);
-  --brand-glow-lg: 0 0 48px rgba(251, 114, 50, 0.2), 0 0 96px rgba(251, 114, 50, 0.1);
+  --brand-glow: none;
+  --brand-glow-lg: none;
 
   /* Sidebar depth (dark) */
   --sidebar-bg: #0a0a0a;
@@ -213,7 +213,7 @@
   --sidebar-border-color: #1f1f1f;
   --sidebar-hover: #1a1a1a;
   --sidebar-active: #222222;
-  --sidebar-active-glow: rgba(251, 114, 50, 0.15);
+  --sidebar-active-glow: transparent;
   --sidebar-text: #737373;
   --sidebar-text-active: #f5f5f5;
   --sidebar-category: #525252;
@@ -292,11 +292,6 @@
   0% { opacity: 0; }
   50% { opacity: 0.4; }
   100% { opacity: 0; }
-}
-
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(251, 114, 50, 0.15); }
-  50% { box-shadow: 0 0 40px rgba(251, 114, 50, 0.3), 0 0 80px rgba(251, 114, 50, 0.15); }
 }
 
 @keyframes shimmer {
@@ -400,10 +395,6 @@
     box-shadow: 0 4px 20px rgba(251, 114, 50, 0.18), 0 8px 32px rgba(251, 114, 50, 0.1);
   }
 
-  .animate-pulse-glow {
-    animation: pulse-glow 3s ease-in-out infinite;
-  }
-
   .animate-pulse-ring {
     animation: pulse-ring 2s ease-out infinite;
   }
@@ -423,4 +414,30 @@
     pointer-events: none;
     animation: border-rotate 4s linear infinite;
   }
+}
+
+/* react-grid-layout overrides */
+.react-grid-placeholder {
+  background: var(--brand) !important;
+  opacity: 0.15 !important;
+  border-radius: 0.75rem !important;
+}
+
+.react-resizable-handle {
+  background: none !important;
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.react-resizable-handle::after {
+  content: '' !important;
+  position: absolute !important;
+  right: 4px !important;
+  bottom: 4px !important;
+  width: 8px !important;
+  height: 8px !important;
+  border-right: 2px solid var(--muted-foreground) !important;
+  border-bottom: 2px solid var(--muted-foreground) !important;
+  border-radius: 0 0 2px 0 !important;
+  opacity: 0.5 !important;
 }

@@ -77,6 +77,7 @@ export default async function DashboardLayout({
           userRole={userRole}
           plan={tenant.plan}
           subscriptionStatus={tenant.subscription_status as SubscriptionStatus}
+          userId={user.id}
         />
 
         <main className="flex-1 overflow-y-auto">

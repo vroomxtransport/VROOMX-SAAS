@@ -1,11 +1,12 @@
 'use client'
 
 import { useSidebarStore } from '@/stores/sidebar-store'
-import { Menu, PanelLeftClose, PanelLeftOpen, Bell } from 'lucide-react'
+import { Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { Breadcrumbs } from './breadcrumbs'
 import { CommandSearch } from './command-search'
 import { UserMenu } from './user-menu'
 import { ThemeToggle } from '@/components/shared/theme-toggle'
+import { NotificationDropdown } from './notification-dropdown'
 import type { TenantRole, SubscriptionStatus } from '@/types'
 
 interface HeaderProps {
@@ -15,6 +16,7 @@ interface HeaderProps {
   userRole: TenantRole
   plan: string
   subscriptionStatus: SubscriptionStatus
+  userId: string
 }
 
 export function Header({
@@ -24,6 +26,7 @@ export function Header({
   userRole,
   plan,
   subscriptionStatus,
+  userId,
 }: HeaderProps) {
   const { toggle, isCollapsed, toggleCollapse } = useSidebarStore()
 
@@ -66,14 +69,8 @@ export function Header({
 
       {/* Right: actions */}
       <div className="flex items-center gap-1">
-        {/* Notifications bell */}
-        <button
-          className="relative rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-          aria-label="Notifications"
-        >
-          <Bell className="h-4 w-4" />
-          <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-brand" />
-        </button>
+        {/* Notifications */}
+        <NotificationDropdown userId={userId} />
 
         {/* Theme toggle */}
         <ThemeToggle />

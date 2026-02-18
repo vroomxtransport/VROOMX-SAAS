@@ -66,7 +66,7 @@ export interface Driver {
   state: string | null
   zip: string | null
   license_number: string | null
-  driver_type: 'company' | 'owner_operator'
+  driver_type: 'company' | 'owner_operator' | 'local_driver'
   driver_status: 'active' | 'inactive'
   pay_type: 'percentage_of_carrier_pay' | 'dispatch_fee_percent' | 'per_mile' | 'per_car'
   pay_rate: string
@@ -395,4 +395,16 @@ export interface DriverLocation {
   heading: number | null
   updated_at: string
   driver?: Driver
+}
+
+export interface WebNotification {
+  id: string
+  tenant_id: string
+  user_id: string
+  type: string
+  title: string
+  body: string
+  link: string | null
+  read_at: string | null
+  created_at: string
 }

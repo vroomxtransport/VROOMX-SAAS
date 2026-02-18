@@ -61,7 +61,7 @@ export type OrderStatus = 'new' | 'assigned' | 'picked_up' | 'delivered' | 'invo
 
 export type PaymentType = 'COD' | 'COP' | 'CHECK' | 'BILL' | 'SPLIT'
 
-export type DriverType = 'company' | 'owner_operator'
+export type DriverType = 'company' | 'owner_operator' | 'local_driver'
 
 export type DriverStatus = 'active' | 'inactive'
 
@@ -86,7 +86,7 @@ export const PAYMENT_TYPES: readonly PaymentType[] = [
 ] as const
 
 export const DRIVER_TYPES: readonly DriverType[] = [
-  'company', 'owner_operator',
+  'company', 'owner_operator', 'local_driver',
 ] as const
 
 export const DRIVER_STATUSES: readonly DriverStatus[] = [
@@ -134,6 +134,7 @@ export const PAYMENT_TYPE_LABELS: Record<PaymentType, string> = {
 export const DRIVER_TYPE_LABELS: Record<DriverType, string> = {
   company: 'Company',
   owner_operator: 'Owner Operator',
+  local_driver: 'Local Driver',
 }
 
 export const DRIVER_STATUS_LABELS: Record<DriverStatus, string> = {
@@ -281,6 +282,47 @@ export const TRUCK_DOCUMENT_TYPE_LABELS: Record<TruckDocumentType, string> = {
   insurance: 'Insurance',
   inspection_cert: 'Inspection Certificate',
   other: 'Other',
+}
+
+// ============================================================================
+// Business Expenses Types
+// ============================================================================
+
+export type BusinessExpenseCategory = 'insurance' | 'tolls_fixed' | 'dispatch' | 'parking' | 'rent' | 'telematics' | 'registration' | 'salary' | 'truck_lease' | 'office_supplies' | 'software' | 'professional_services' | 'other'
+
+export type BusinessExpenseRecurrence = 'monthly' | 'quarterly' | 'annual' | 'one_time'
+
+export const BUSINESS_EXPENSE_CATEGORIES: readonly BusinessExpenseCategory[] = [
+  'insurance', 'tolls_fixed', 'dispatch', 'parking', 'rent', 'telematics',
+  'registration', 'salary', 'truck_lease', 'office_supplies', 'software',
+  'professional_services', 'other',
+] as const
+
+export const BUSINESS_EXPENSE_RECURRENCES: readonly BusinessExpenseRecurrence[] = [
+  'monthly', 'quarterly', 'annual', 'one_time',
+] as const
+
+export const BUSINESS_EXPENSE_CATEGORY_LABELS: Record<BusinessExpenseCategory, string> = {
+  insurance: 'Insurance',
+  tolls_fixed: 'Tolls (Fixed)',
+  dispatch: 'Dispatch Service',
+  parking: 'Parking',
+  rent: 'Rent',
+  telematics: 'Telematics (Samsara)',
+  registration: 'Registration',
+  salary: 'Salary',
+  truck_lease: 'Truck Lease',
+  office_supplies: 'Office Supplies',
+  software: 'Software',
+  professional_services: 'Professional Services',
+  other: 'Other',
+}
+
+export const BUSINESS_EXPENSE_RECURRENCE_LABELS: Record<BusinessExpenseRecurrence, string> = {
+  monthly: 'Monthly',
+  quarterly: 'Quarterly',
+  annual: 'Annual',
+  one_time: 'One-Time',
 }
 
 // ============================================================================

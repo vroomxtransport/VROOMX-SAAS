@@ -12,7 +12,7 @@ export const paymentTypeEnum = pgEnum('payment_type', [
   'COD', 'COP', 'CHECK', 'BILL', 'SPLIT',
 ])
 
-export const driverTypeEnum = pgEnum('driver_type', ['company', 'owner_operator'])
+export const driverTypeEnum = pgEnum('driver_type', ['company', 'owner_operator', 'local_driver'])
 
 export const driverStatusEnum = pgEnum('driver_status', ['active', 'inactive'])
 
@@ -722,6 +722,24 @@ export const driverLocations = pgTable('driver_locations', {
   index('idx_driver_locations_driver').on(table.tenantId, table.driverId),
 ])
 
+/**
+ * Web Notifications Table
+ * Notifications for web dashboard users.
+ */
+export const webNotifications = pgTable('web_notifications', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull(),
+  type: text('type').notNull(),
+  title: text('title').notNull(),
+  body: text('body').notNull(),
+  link: text('link'),
+  readAt: timestamp('read_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_web_notifications_user').on(table.tenantId, table.userId),
+])
+
 // ============================================================================
 // Type Exports
 // ============================================================================
@@ -791,3 +809,7 @@ export type NewDriverLocation = typeof driverLocations.$inferInsert
 // Business Expenses
 export type DrizzleBusinessExpense = typeof businessExpenses.$inferSelect
 export type NewBusinessExpense = typeof businessExpenses.$inferInsert
+
+// Web Notifications
+export type DrizzleWebNotification = typeof webNotifications.$inferSelect
+export type NewWebNotification = typeof webNotifications.$inferInsert

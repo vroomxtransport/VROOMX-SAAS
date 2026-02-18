@@ -45,6 +45,8 @@ function getPayRateLabel(payType: DriverPayType): string {
       return 'Fee %'
     case 'per_mile':
       return 'Rate per mile $'
+    case 'per_car':
+      return 'Rate per car $'
     default:
       return 'Pay Rate'
   }
@@ -70,7 +72,7 @@ export function DriverForm({ driver, onSuccess, onCancel }: DriverFormProps) {
         state: driver.state ?? '',
         zip: driver.zip ?? '',
         licenseNumber: driver.license_number ?? '',
-        driverType: driver.driver_type as 'company' | 'owner_operator',
+        driverType: driver.driver_type as 'company' | 'owner_operator' | 'local_driver',
         driverStatus: driver.driver_status as 'active' | 'inactive',
         payType: driver.pay_type as DriverPayType,
         payRate: parseFloat(driver.pay_rate),
@@ -107,7 +109,15 @@ export function DriverForm({ driver, onSuccess, onCancel }: DriverFormProps) {
   })
 
   const watchedPayType = (form.watch('payType') ?? 'percentage_of_carrier_pay') as DriverPayType
+  const watchedDriverType = form.watch('driverType')
   const watchedEmail = form.watch('email')
+
+  // Auto-default pay type for local drivers
+  useEffect(() => {
+    if (watchedDriverType === 'local_driver') {
+      form.setValue('payType', 'per_car')
+    }
+  }, [watchedDriverType, form])
 
   // Auto-save draft for create mode
   const formValues = form.watch()
@@ -323,6 +333,7 @@ export function DriverForm({ driver, onSuccess, onCancel }: DriverFormProps) {
                     <SelectContent>
                       <SelectItem value="company">Company</SelectItem>
                       <SelectItem value="owner_operator">Owner Operator</SelectItem>
+                      <SelectItem value="local_driver">Local Driver</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -373,6 +384,7 @@ export function DriverForm({ driver, onSuccess, onCancel }: DriverFormProps) {
                       <SelectItem value="percentage_of_carrier_pay">% of Carrier Pay</SelectItem>
                       <SelectItem value="dispatch_fee_percent">Dispatch Fee %</SelectItem>
                       <SelectItem value="per_mile">Per Mile</SelectItem>
+                      <SelectItem value="per_car">Per Car</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

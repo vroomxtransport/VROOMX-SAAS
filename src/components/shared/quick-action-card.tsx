@@ -33,10 +33,10 @@ export function QuickActionCard({ href, icon: Icon, label, description, disabled
       href={href}
       className={cn(
         'group flex items-center gap-3 rounded-xl border border-border-subtle bg-surface p-3',
-        'transition-all duration-200 hover:border-brand/40 hover:shadow-[0_2px_12px_rgba(251,114,50,0.08)]'
+        'transition-all duration-200 hover:border-brand/40'
       )}
     >
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted transition-all duration-200 group-hover:bg-brand/10 group-hover:shadow-[0_0_12px_rgba(251,114,50,0.12)]">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted transition-all duration-200 group-hover:bg-brand/10">
         <Icon className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-brand" />
       </div>
       <div className="min-w-0">

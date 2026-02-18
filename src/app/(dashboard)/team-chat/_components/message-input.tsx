@@ -1,10 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { sendMessage } from '@/app/actions/chat'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Send } from 'lucide-react'
+import type { ChatMessage } from '@/types/database'
 
 interface MessageInputProps {
   channelId: string
@@ -13,6 +15,7 @@ interface MessageInputProps {
 export function MessageInput({ channelId }: MessageInputProps) {
   const [content, setContent] = useState('')
   const [sending, setSending] = useState(false)
+  const queryClient = useQueryClient()
 
   async function handleSend() {
     const trimmed = content.trim()
@@ -20,7 +23,14 @@ export function MessageInput({ channelId }: MessageInputProps) {
 
     setSending(true)
     setContent('')
-    await sendMessage(channelId, { content: trimmed })
+    const result = await sendMessage(channelId, { content: trimmed })
+
+    if (result && 'data' in result && result.data) {
+      queryClient.setQueryData<ChatMessage[]>(
+        ['chat-messages', channelId],
+        (old) => old ? [...old, result.data as ChatMessage] : [result.data as ChatMessage]
+      )
+    }
     setSending(false)
   }
 

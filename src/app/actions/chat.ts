@@ -12,16 +12,17 @@ export async function sendMessage(channelId: string, data: unknown) {
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId, user } = auth.ctx
 
-  const { error } = await supabase.from('chat_messages').insert({
+  const { data: message, error } = await supabase.from('chat_messages').insert({
     tenant_id: tenantId,
     channel_id: channelId,
     user_id: user.id,
     user_name: user.email?.split('@')[0] || 'Unknown',
     content: parsed.data.content,
-  })
+  }).select().single()
 
   if (error) return { error: safeError(error, 'sendMessage') }
-  return { success: true }
+  revalidatePath('/team-chat')
+  return { success: true, data: message }
 }
 
 export async function createChannel(data: unknown) {

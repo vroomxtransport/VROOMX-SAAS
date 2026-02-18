@@ -14,6 +14,9 @@ import { UpcomingPickups } from './_components/upcoming-pickups'
 import { ActivityFeed } from './_components/activity-feed'
 import { CustomizeDashboard } from './_components/customize-dashboard'
 import { DashboardWidgets } from './_components/dashboard-widgets'
+import { OpenInvoices } from './_components/open-invoices'
+import { TopDrivers } from './_components/top-drivers'
+import { QuickLinks } from './_components/quick-links'
 
 // Sample data for pipeline recent orders
 const SAMPLE_RECENT_ORDERS = [
@@ -49,7 +52,14 @@ export default async function DashboardPage({
   const params = await searchParams
   const showSetupBanner = params.setup === 'complete'
 
-  const supabase = await createClient()
+  let supabase
+  try {
+    supabase = await createClient()
+  } catch (e) {
+    console.error('[DASHBOARD_PAGE] Failed to create Supabase client:', e)
+    redirect('/login')
+  }
+
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
@@ -74,13 +84,19 @@ export default async function DashboardPage({
   }
 
   // Fetch entity counts for onboarding detection and stat cards
-  const [trucksResult, driversResult, ordersResult, activeOrdersResult, inTransitResult] = await Promise.all([
-    supabase.from('trucks').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
-    supabase.from('drivers').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
-    supabase.from('orders').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
-    supabase.from('orders').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['new', 'assigned', 'picked_up']),
-    supabase.from('orders').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'picked_up'),
-  ])
+  let trucksResult, driversResult, ordersResult, activeOrdersResult, inTransitResult
+  try {
+    [trucksResult, driversResult, ordersResult, activeOrdersResult, inTransitResult] = await Promise.all([
+      supabase.from('trucks').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+      supabase.from('drivers').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+      supabase.from('orders').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+      supabase.from('orders').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['new', 'assigned', 'picked_up']),
+      supabase.from('orders').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'picked_up'),
+    ])
+  } catch (e) {
+    console.error('[DASHBOARD_PAGE] Entity count queries failed:', e)
+    trucksResult = driversResult = ordersResult = activeOrdersResult = inTransitResult = { count: 0, data: null, error: null }
+  }
 
   const truckCount = trucksResult.count ?? 0
   const driverCount = driversResult.count ?? 0
@@ -264,7 +280,7 @@ export default async function DashboardPage({
           <CardHeader className="flex flex-row items-start justify-between">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--brand)] to-[#f59e0b] shadow-[var(--brand-glow)]">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--brand)] to-[#f59e0b]">
                   <Package className="h-4.5 w-4.5 text-white" />
                 </div>
                 <CardTitle>Get Started with VroomX</CardTitle>
@@ -344,6 +360,9 @@ export default async function DashboardPage({
         }
         upcomingPickups={<UpcomingPickups pickups={getSamplePickups()} />}
         activityFeed={<ActivityFeed />}
+        openInvoices={<OpenInvoices />}
+        topDrivers={<TopDrivers />}
+        quickLinks={<QuickLinks />}
       />
     </div>
   )

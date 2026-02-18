@@ -68,7 +68,11 @@ export function useMessages(channelId: string | null) {
           const newMessage = payload.new as ChatMessage
           queryClient.setQueryData<ChatMessage[]>(
             ['chat-messages', channelId],
-            (old) => (old ? [...old, newMessage] : [newMessage])
+            (old) => {
+              if (!old) return [newMessage]
+              if (old.some((m) => m.id === newMessage.id)) return old
+              return [...old, newMessage]
+            }
           )
         }
       )

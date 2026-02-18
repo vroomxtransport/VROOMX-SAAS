@@ -7,7 +7,7 @@ function DashboardMockup() {
     <div className="flex h-[340px] gap-2 bg-[#0d0d0c] p-3">
       {/* Mini sidebar */}
       <div className="flex w-14 flex-col items-center gap-3 rounded-lg bg-[#1a1a19] py-3 border border-white/5">
-        <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-brand to-amber-500" style={{ boxShadow: 'var(--brand-glow)' }} />
+        <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-brand to-amber-500" />
         <div className="mt-3 h-1 w-7 rounded-full bg-white/25" />
         <div className="h-1 w-7 rounded-full bg-white/12" />
         <div className="h-1 w-7 rounded-full bg-white/12" />
@@ -146,7 +146,7 @@ export function HeroSection() {
             <div className="relative">
               {/* Glow behind mockup */}
               <div className="absolute -inset-8 rounded-3xl bg-brand/[0.08] blur-3xl" />
-              <BrowserFrame className="relative" style={{ boxShadow: 'var(--brand-glow-lg), 0 20px 60px rgba(0,0,0,0.4)' }}>
+              <BrowserFrame className="relative" style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.4)' }}>
                 <DashboardMockup />
               </BrowserFrame>
             </div>
