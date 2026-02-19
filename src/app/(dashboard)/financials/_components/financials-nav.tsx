@@ -3,10 +3,11 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { BarChart3, Receipt, FileText } from 'lucide-react'
+import { BarChart3, Receipt, FileText, TrendingUp } from 'lucide-react'
 
 const TABS = [
   { label: 'Dashboard', href: '/financials', icon: BarChart3 },
+  { label: 'Trip Analytics', href: '/financials/trip-analytics', icon: TrendingUp },
   { label: 'Business Expenses', href: '/financials/expenses', icon: Receipt },
   { label: 'P&L Report', href: '/financials/reports', icon: FileText },
 ] as const

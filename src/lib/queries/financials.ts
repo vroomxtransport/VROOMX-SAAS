@@ -844,3 +844,86 @@ export async function fetchMonthlyPnLTrend(
     },
   }))
 }
+
+// ============================================================================
+// Trip Analytics
+// ============================================================================
+
+export interface TripAnalyticsRow {
+  tripId: string
+  tripNumber: string | null
+  driverName: string
+  truckUnit: string
+  status: string
+  startDate: string
+  revenue: number
+  totalCosts: number
+  netProfit: number
+  totalMiles: number
+  rpm: number | null
+  cpm: number | null
+  ppm: number | null
+  appc: number | null
+  orderCount: number
+}
+
+/**
+ * Fetch per-trip analytics with KPIs for a given period.
+ * Uses denormalized trip financials + total_miles.
+ */
+export async function fetchTripAnalytics(
+  supabase: SupabaseClient,
+  period: FinancialPeriod
+): Promise<TripAnalyticsRow[]> {
+  const startDate = format(getPeriodStart(period), 'yyyy-MM-dd')
+
+  const { data: trips, error } = await supabase
+    .from('trips')
+    .select('id, trip_number, status, start_date, total_revenue, total_broker_fees, total_local_fees, driver_pay, total_expenses, net_profit, carrier_pay, order_count, total_miles, driver:drivers(first_name, last_name), truck:trucks(unit_number)')
+    .gte('start_date', startDate)
+    .order('start_date', { ascending: false })
+
+  if (error) throw error
+
+  return (trips ?? []).map((t) => {
+    const driverRaw = t.driver as unknown as { first_name: string; last_name: string } | { first_name: string; last_name: string }[] | null
+    const driver = Array.isArray(driverRaw) ? driverRaw[0] ?? null : driverRaw
+    const truckRaw = t.truck as unknown as { unit_number: string } | { unit_number: string }[] | null
+    const truck = Array.isArray(truckRaw) ? truckRaw[0] ?? null : truckRaw
+
+    const revenue = parseFloat(t.total_revenue ?? '0')
+    const brokerFees = parseFloat(t.total_broker_fees ?? '0')
+    const localFees = parseFloat(t.total_local_fees ?? '0')
+    const driverPay = parseFloat(t.driver_pay ?? '0')
+    const expenses = parseFloat(t.total_expenses ?? '0')
+    const carrierPay = parseFloat(t.carrier_pay ?? '0')
+    const netProfit = parseFloat(t.net_profit ?? '0')
+    const totalMiles = parseFloat(t.total_miles ?? '0')
+    const orderCount = t.order_count ?? 0
+    const totalCosts = brokerFees + localFees + driverPay + expenses + carrierPay
+
+    const hasMiles = totalMiles > 0
+    const rpm = hasMiles ? Math.round((revenue / totalMiles) * 100) / 100 : null
+    const cpm = hasMiles ? Math.round((totalCosts / totalMiles) * 100) / 100 : null
+    const ppm = hasMiles ? Math.round((netProfit / totalMiles) * 100) / 100 : null
+    const appc = orderCount > 0 ? Math.round((revenue / orderCount) * 100) / 100 : null
+
+    return {
+      tripId: t.id,
+      tripNumber: t.trip_number,
+      driverName: driver ? `${driver.first_name} ${driver.last_name}` : 'Unassigned',
+      truckUnit: truck ? `#${truck.unit_number}` : '--',
+      status: t.status,
+      startDate: t.start_date,
+      revenue: Math.round(revenue * 100) / 100,
+      totalCosts: Math.round(totalCosts * 100) / 100,
+      netProfit: Math.round(netProfit * 100) / 100,
+      totalMiles: Math.round(totalMiles * 10) / 10,
+      rpm,
+      cpm,
+      ppm,
+      appc,
+      orderCount,
+    }
+  })
+}

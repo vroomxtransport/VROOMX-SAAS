@@ -167,6 +167,7 @@ export interface Trip {
   total_expenses: string
   net_profit: string
   order_count: number
+  total_miles: string
   origin_summary: string | null
   destination_summary: string | null
   route_sequence: RouteStop[] | null

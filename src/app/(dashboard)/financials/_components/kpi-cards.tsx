@@ -11,7 +11,14 @@ import {
   Package,
   BarChart3,
   Truck,
+  Info,
 } from 'lucide-react'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import type { LucideIcon } from 'lucide-react'
 
 interface KPICardsProps {
@@ -82,6 +89,21 @@ export function KPICards({ kpis, revenue }: KPICardsProps) {
 
   return (
     <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-foreground">Trip Performance</h3>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>
+              <Info className="h-3.5 w-3.5 text-muted-foreground/60" />
+            </TooltipTrigger>
+            <TooltipContent side="right" className="max-w-xs">
+              <p className="text-xs">
+                Based on trip revenue and direct trip expenses only — excludes business overhead (insurance, rent, leases, etc.).
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {row1.map((card) => (
           <KPICard key={card.label} {...card} />

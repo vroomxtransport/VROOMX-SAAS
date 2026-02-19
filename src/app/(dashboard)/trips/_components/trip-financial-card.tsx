@@ -150,12 +150,18 @@ export function TripFinancialCard({ trip }: TripFinancialCardProps) {
   const driverPay = parseFloat(trip.driver_pay || '0')
   const expenses = parseFloat(trip.total_expenses || '0')
   const netProfit = parseFloat(trip.net_profit || '0')
+  const totalMiles = parseFloat(trip.total_miles || '0')
 
   // Derived P&L metrics (computed client-side from existing denormalized fields)
   const cleanGross = revenue - brokerFees - localFees
   const truckGross = cleanGross - driverPay
   const truckGrossMargin = revenue > 0 ? (truckGross / revenue) * 100 : 0
   const appc = trip.order_count > 0 ? revenue / trip.order_count : null
+  const totalCosts = brokerFees + localFees + driverPay + expenses + carrierPay
+  const hasMiles = totalMiles > 0
+  const rpm = hasMiles ? revenue / totalMiles : null
+  const cpm = hasMiles ? totalCosts / totalMiles : null
+  const ppm = hasMiles ? netProfit / totalMiles : null
 
   const payType = trip.driver?.pay_type as DriverPayType | undefined
   const payRate = trip.driver?.pay_rate
@@ -306,7 +312,22 @@ export function TripFinancialCard({ trip }: TripFinancialCardProps) {
       </div>
 
       {/* Section 3: Per-Unit Metrics */}
-      <div className="border-t grid grid-cols-3 gap-2 p-4">
+      <div className="border-t grid grid-cols-3 gap-2 p-4 lg:grid-cols-6">
+        <MetricPill
+          label="RPM"
+          value={rpm !== null ? `$${rpm.toFixed(2)}/mi` : 'N/A'}
+          description="Revenue per mile"
+        />
+        <MetricPill
+          label="CPM"
+          value={cpm !== null ? `$${cpm.toFixed(2)}/mi` : 'N/A'}
+          description="Cost per mile"
+        />
+        <MetricPill
+          label="PPM"
+          value={ppm !== null ? `$${ppm.toFixed(2)}/mi` : 'N/A'}
+          description="Profit per mile"
+        />
         <MetricPill
           label="APPC"
           value={appc !== null ? formatCurrency(appc) : 'N/A'}

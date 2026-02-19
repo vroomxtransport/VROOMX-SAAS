@@ -308,6 +308,7 @@ export const trips = pgTable('trips', {
   totalExpenses: numeric('total_expenses', { precision: 12, scale: 2 }).default('0'),
   netProfit: numeric('net_profit', { precision: 12, scale: 2 }).default('0'),
   orderCount: integer('order_count').default(0),
+  totalMiles: numeric('total_miles', { precision: 12, scale: 1 }).default('0'),
   // Denormalized route summary (computed by app code from assigned orders)
   originSummary: text('origin_summary'),
   destinationSummary: text('destination_summary'),

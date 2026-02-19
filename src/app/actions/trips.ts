@@ -518,6 +518,7 @@ export async function recalculateTripFinancials(tripId: string) {
       total_expenses: String(financials.expenses),
       net_profit: String(financials.netProfit),
       order_count: rawOrders.length,
+      total_miles: String(financials.totalMiles),
       origin_summary: originSummary,
       destination_summary: destinationSummary,
     })

@@ -2,8 +2,11 @@
 
 import { useState } from 'react'
 import type { FinancialPeriod, KPIAggregates, ProfitByTruck, ProfitByDriver, MonthlyKPITrend, MonthlyRevenue, TopBroker } from '@/lib/queries/financials'
+import type { PnLInput } from '@/lib/financial/pnl-calculations'
 import { calculateKPIs, calculateExpenseBreakdown } from '@/lib/financial/kpi-calculations'
+import { calculatePnL, calculateUnitMetrics } from '@/lib/financial/pnl-calculations'
 import { PeriodSelector } from './period-selector'
+import { BusinessKPICards } from './business-kpi-cards'
 import { KPICards } from './kpi-cards'
 import { RevenueExpensesChart } from './revenue-expenses-chart'
 import { ExpenseBreakdownChart } from './expense-breakdown-chart'
@@ -12,11 +15,12 @@ import { ProfitByTruckTable } from './profit-by-truck-table'
 import { ProfitByDriverTable } from './profit-by-driver-table'
 import { TopBrokersTable } from './top-brokers-table'
 import { createClient } from '@/lib/supabase/client'
-import { fetchKPIAggregates, fetchProfitByTruck, fetchProfitByDriver } from '@/lib/queries/financials'
+import { fetchKPIAggregates, fetchProfitByTruck, fetchProfitByDriver, fetchPnLData } from '@/lib/queries/financials'
 import { useQuery } from '@tanstack/react-query'
 
 interface FinancialsDashboardProps {
   initialAggregates: KPIAggregates
+  initialPnLData: PnLInput
   initialProfitByTruck: ProfitByTruck[]
   initialProfitByDriver: ProfitByDriver[]
   kpiTrend: MonthlyKPITrend[]
@@ -26,6 +30,7 @@ interface FinancialsDashboardProps {
 
 export function FinancialsDashboard({
   initialAggregates,
+  initialPnLData,
   initialProfitByTruck,
   initialProfitByDriver,
   kpiTrend,
@@ -43,6 +48,14 @@ export function FinancialsDashboard({
     staleTime: 60_000,
   })
 
+  // Fetch PnL data for selected period (includes business expenses)
+  const { data: pnlData } = useQuery({
+    queryKey: ['financials', 'pnl', period],
+    queryFn: () => fetchPnLData(supabase, period),
+    initialData: period === 'mtd' ? initialPnLData : undefined,
+    staleTime: 60_000,
+  })
+
   const { data: profitByTruck } = useQuery({
     queryKey: ['financials', 'profit-by-truck', period],
     queryFn: () => fetchProfitByTruck(supabase, period),
@@ -57,7 +70,7 @@ export function FinancialsDashboard({
     staleTime: 60_000,
   })
 
-  // Compute KPIs from aggregates
+  // Compute trip-level KPIs (without business expenses)
   const agg = aggregates ?? initialAggregates
   const kpis = calculateKPIs(agg)
   const expenseBreakdown = calculateExpenseBreakdown({
@@ -71,6 +84,11 @@ export function FinancialsDashboard({
     misc: agg.expensesByCategory.misc,
   })
 
+  // Compute business-level KPIs (with overhead)
+  const pnlInput = pnlData ?? initialPnLData
+  const pnl = calculatePnL(pnlInput)
+  const unitMetrics = calculateUnitMetrics(pnlInput, pnl)
+
   return (
     <div className="space-y-6">
       {/* Period Selector */}
@@ -78,7 +96,13 @@ export function FinancialsDashboard({
         <PeriodSelector value={period} onChange={setPeriod} />
       </div>
 
-      {/* Row 1: KPI Cards */}
+      {/* Section 1: Business KPIs (includes overhead) */}
+      <BusinessKPICards pnl={pnl} unitMetrics={unitMetrics} />
+
+      {/* Divider */}
+      <div className="border-t border-border/50" />
+
+      {/* Section 2: Trip Performance KPIs (direct costs only) */}
       <KPICards
         kpis={kpis}
         revenue={agg.totalRevenue}

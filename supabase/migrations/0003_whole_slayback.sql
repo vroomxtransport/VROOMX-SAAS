@@ -1,0 +1,1 @@
+ALTER TABLE "trips" ADD COLUMN "total_miles" numeric(12, 1) DEFAULT '0';
