@@ -31,7 +31,7 @@ const securityHeaders = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://us.i.posthog.com https://js.stripe.com",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https://*.supabase.co https://randomuser.me",
+      "img-src 'self' data: blob: https://*.supabase.co https://randomuser.me https://cdn1.iconfinder.com",
       "font-src 'self'",
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://us.i.posthog.com https://api.stripe.com",
       "frame-src https://js.stripe.com https://hooks.stripe.com",
@@ -41,6 +41,12 @@ const securityHeaders = [
 ]
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: 'cdn1.iconfinder.com' },
+      { protocol: 'https', hostname: '*.supabase.co' },
+    ],
+  },
   async headers() {
     return [
       {
