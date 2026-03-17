@@ -2,7 +2,6 @@
 
 import { useRef } from "react"
 import { TimelineContent } from "@/components/ui/timeline-animation"
-import { VerticalCutReveal } from "@/components/ui/vertical-cut-reveal"
 import {
   Accordion,
   AccordionContent,
@@ -12,44 +11,52 @@ import {
 
 const faqs = [
   {
+    question: "How is VroomX TMS different from other auto-transport platforms?",
+    answer: "Most platforms are load boards with an invoice button. They help you find loads and send a bill. That's it. VroomX TMS is a full carrier operating system: dispatch, trip planning, 4 driver pay models with per-order overrides, automated invoicing, factoring integration, compliance tracking, break-even analysis, and per-truck profitability. Those platforms don't show you Clean Gross. They don't calculate your real driver cost per load. They don't tell you which trucks are losing money. VroomX does all of that starting at $9.99/month.",
+  },
+  {
+    question: "Is VroomX TMS overkill for a small carrier?",
+    answer: "No. Our Owner-Operator plan starts at $9.99/month for a single truck. You get the same Clean Gross visibility as a 50-truck fleet, just at a price that makes sense for your size. Most of our customers started with one truck.",
+  },
+  {
+    question: "Why is VroomX so much cheaper?",
+    answer: "Enterprise platforms were built for mega-fleets with 500+ trucks and charge accordingly, often 30% per seat. VroomX was built for owner-operators and small-to-mid carriers (1 to 50 trucks). We don't have a 40-person sales team or 6-month implementation cycles. You sign up, import your data, and start dispatching in minutes. Lower overhead means lower prices without cutting features.",
+  },
+  {
+    question: "I'm already using another dispatch tool. Is switching worth it?",
+    answer: "If your current tool can't tell you the net profit on the load you delivered yesterday, then yes. Most carriers complete their full migration in under an hour using CSV import. Your dispatcher will be faster on VroomX by day two. The financial visibility alone, seeing which loads, drivers, and trucks actually make money, typically pays for the switch in the first week.",
+  },
+  {
     question: "How long is the free trial?",
-    answer:
-      "Every plan includes a full 14-day free trial with access to all features. No credit card required to start — just sign up and begin dispatching.",
-  },
-  {
-    question: "Can I switch plans later?",
-    answer:
-      "Absolutely. You can upgrade or downgrade your plan at any time from the billing settings. When upgrading, the new features are available immediately. When downgrading, changes take effect at the start of your next billing cycle.",
-  },
-  {
-    question: "How does multi-tenant security work?",
-    answer:
-      "Every carrier gets a completely isolated tenant. PostgreSQL Row-Level Security policies ensure that your data — orders, drivers, trucks, financials — is invisible to other tenants. There is no shared data layer between carriers.",
-  },
-  {
-    question: "Do my drivers need special hardware?",
-    answer:
-      "No. The VroomX Driver app runs on any modern iPhone. Drivers can do inspections, capture photos, sign BOLs, and update order status from the same phone they already carry.",
-  },
-  {
-    question: "What driver pay models do you support?",
-    answer:
-      "VroomX supports three pay models out of the box: percentage of carrier pay (for company drivers), dispatch fee percentage (for owner-operators), and flat per-car rates. Pay is auto-calculated when you build trips.",
-  },
-  {
-    question: "Can I import existing orders and contacts?",
-    answer:
-      "Yes. VroomX supports CSV import for orders, brokers, drivers, and trucks. Our intake wizard also supports individual order creation with VIN decoding and multi-vehicle loads.",
-  },
-  {
-    question: "Is there an API for integrations?",
-    answer:
-      "Enterprise plans include API access for custom integrations with load boards, accounting software, and third-party logistics platforms. Contact our team to discuss your integration requirements.",
+    answer: "14 days, full access, no credit card. Just sign up and start dispatching. If it's not for you, walk away. No awkward sales calls.",
   },
   {
     question: "What happens when my trial ends?",
-    answer:
-      "At the end of your 14-day trial, you'll be prompted to choose a plan. Your data is preserved for 30 days after trial expiry, so you won't lose any work if you need a few extra days to decide.",
+    answer: "You pick a plan. Your data is preserved for 30 days after trial expiry, so you won't lose any work if you need extra time to decide. No surprise charges.",
+  },
+  {
+    question: "Can I migrate from another TMS or spreadsheets?",
+    answer: "Yes. VroomX TMS supports CSV import for orders, brokers, drivers, and trucks. Our intake wizard also supports individual order creation with VIN decoding and multi-vehicle loads. Most carriers complete their full migration in under an hour. Pro plan customers can request custom data imports from our team.",
+  },
+  {
+    question: "How does Clean Gross work?",
+    answer: "Clean Gross is calculated per order as revenue minus broker fees minus local fees. This gives you the true carrier earnings before driver pay and overhead. VroomX TMS calculates this automatically for every order and aggregates it at the trip level.",
+  },
+  {
+    question: "What driver pay models do you support?",
+    answer: "VroomX TMS supports four settlement models: percentage of carrier pay (company drivers), dispatch fee percentage (owner-operators), flat per-car rates, and per-mile rates. Settlements are auto-calculated when you build trips, and you can override rates on any individual load.",
+  },
+  {
+    question: "Do you support factoring companies?",
+    answer: "Yes. Mark any invoice for factoring with one click. VroomX TMS auto-calculates the factoring fee and shows the impact on your Clean Gross and net profit instantly, so you always know the real cost of getting paid early.",
+  },
+  {
+    question: "Do my drivers need special hardware?",
+    answer: "No. The VroomX TMS Driver app runs on any modern iPhone. Drivers can do inspections, capture photos, sign BOLs, and update order status from the phone they already carry.",
+  },
+  {
+    question: "Can I switch plans later?",
+    answer: "Yes. Upgrade or downgrade anytime from billing settings. Upgrades are instant. Downgrades take effect at your next billing cycle.",
   },
 ]
 
@@ -69,7 +76,7 @@ export function FAQSection() {
   return (
     <section
       ref={sectionRef}
-      className="border-t border-border-subtle bg-muted/30 py-24 sm:py-32"
+      className="bg-background py-20 sm:py-28 lg:py-32"
     >
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
@@ -80,7 +87,7 @@ export function FAQSection() {
             timelineRef={sectionRef}
             customVariants={revealVariants}
           >
-            <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-brand">
+            <p className="section-kicker mb-3">
               FAQ
             </p>
           </TimelineContent>
@@ -90,21 +97,8 @@ export function FAQSection() {
             timelineRef={sectionRef}
             customVariants={revealVariants}
           >
-            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
-              <VerticalCutReveal
-                splitBy="words"
-                staggerDuration={0.15}
-                staggerFrom="first"
-                reverse={true}
-                containerClassName="justify-center"
-                transition={{
-                  type: "spring",
-                  stiffness: 250,
-                  damping: 40,
-                }}
-              >
-                Frequently asked questions
-              </VerticalCutReveal>
+            <h2 className="text-3xl font-bold tracking-[-0.015em] sm:text-4xl lg:text-[2.75rem]">
+              Frequently asked questions
             </h2>
           </TimelineContent>
           <TimelineContent
@@ -114,7 +108,7 @@ export function FAQSection() {
             customVariants={revealVariants}
           >
             <p className="mt-4 text-lg text-muted-foreground">
-              Everything you need to know about VroomX before getting started.
+              Common questions from carriers evaluating VroomX TMS.
             </p>
           </TimelineContent>
         </div>

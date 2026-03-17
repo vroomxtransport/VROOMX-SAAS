@@ -5,9 +5,9 @@ import Image from "next/image"
 import {
   Package,
   Navigation,
-  Smartphone,
   CreditCard,
   Truck,
+  Fuel,
   Lock,
 } from "lucide-react"
 
@@ -69,20 +69,6 @@ function SmartDispatchVisual() {
       height={907}
       className="h-full w-full rounded-xl object-cover object-top"
     />
-  )
-}
-
-function DriverAppVisual() {
-  return (
-    <div className="flex h-full items-center justify-center rounded-xl p-4">
-      <Image
-        src="/images/driver-app-inspection.png"
-        alt="VroomX Driver App - Vehicle Inspection"
-        width={140}
-        height={280}
-        className="h-full w-auto object-contain"
-      />
-    </div>
   )
 }
 
@@ -173,55 +159,55 @@ function SecurityVisual() {
 const vroomxFeatures: FeatureItem[] = [
   {
     id: 1,
-    title: "Load Management",
+    title: "Order Management",
     description:
-      "Create and track vehicle transport orders with VIN decoding, multi-step intake wizards, and real-time status updates from new to delivered.",
+      "Book loads with VIN decoding, track every status change, and see the financial breakdown before the truck rolls. Not just a list of loads. A full order lifecycle.",
     visual: <LoadManagementVisual />,
   },
   {
     id: 2,
     title: "Smart Dispatch",
     description:
-      "Build optimized trips, assign orders and drivers, visualize routes on a Kanban board, and auto-calculate driver pay across three pay models.",
+      "Build trips, assign drivers on a Kanban board, and watch settlements calculate automatically across four pay models. Other tools stop at dispatch. VroomX calculates what that trip actually costs you.",
     visual: <SmartDispatchVisual />,
   },
   {
     id: 3,
-    title: "Driver Mobile App",
+    title: "Billing & Invoicing",
     description:
-      "Native iOS app with offline-capable inspections, photo and video capture, digital BOL generation, and real-time order status updates.",
-    visual: <DriverAppVisual />,
-  },
-  {
-    id: 4,
-    title: "Automated Billing",
-    description:
-      "Generate branded PDF invoices, send via email, record payments, and track receivables with aging analysis and collection metrics.",
+      "Generate invoices with BOL attachments, email them in 60 seconds, track aging receivables, and factor with one click. No bolt-on billing module. It's built into the workflow.",
     visual: <BillingVisual />,
   },
   {
-    id: 5,
-    title: "Fleet Operations",
+    id: 4,
+    title: "Fleet & Compliance",
     description:
-      "Manage trucks, trailers, and drivers in one place. Track documents with expiry alerts, upload CDLs and medical cards, monitor fleet health.",
+      "CDLs, medical cards, insurance, registrations. All tracked with automatic expiration alerts. Most dispatch tools skip compliance entirely. VroomX makes sure DOT surprises don't happen.",
+    visual: <FleetVisual />,
+  },
+  {
+    id: 5,
+    title: "Fuel & Expense Tracking",
+    description:
+      "Fuel, maintenance, insurance, tolls, leases. Log every cost and watch it flow into your break-even analysis automatically. No more guessing whether a truck is earning or bleeding.",
     visual: <FleetVisual />,
   },
   {
     id: 6,
-    title: "Enterprise Security",
+    title: "Your Data, Locked Down",
     description:
-      "Row-level security isolates every carrier. Role-based access, team invitations, and SOC-2 aligned infrastructure you can trust.",
+      "Role-based access, team invitations, and bank-grade tenant isolation. Your dispatchers see what you allow. Your competitors see nothing. No shared databases, no data leaks.",
     visual: <SecurityVisual />,
   },
 ]
 
-const featureIcons = [Package, Navigation, Smartphone, CreditCard, Truck, Lock]
+const featureIcons = [Package, Navigation, CreditCard, Truck, Fuel, Lock]
 const featureGradients = [
   "from-blue-500 to-blue-600",
   "from-violet-500 to-purple-600",
-  "from-cyan-500 to-blue-500",
   "from-emerald-500 to-green-600",
   "from-amber-500 to-orange-500",
+  "from-sky-500 to-cyan-600",
   "from-rose-500 to-pink-600",
 ]
 
@@ -233,18 +219,18 @@ function Feature197({ features = vroomxFeatures }: { features?: FeatureItem[] })
   const activeFeature = features.find((f) => f.id === activeTabId) ?? features[0]
 
   return (
-    <section className="relative border-t border-border-subtle bg-muted/30 py-24 sm:py-32">
+    <section className="relative bg-surface-raised py-20 sm:py-28 lg:py-32">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section header */}
         <div className="mx-auto mb-16 max-w-2xl text-center">
-          <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-brand">
+          <p className="section-kicker mb-3">
             Platform
           </p>
-          <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
+          <h2 className="text-3xl font-bold tracking-[-0.015em] sm:text-4xl lg:text-[2.75rem]">
             Everything you need to run your fleet
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            From load intake to final payment — one platform, zero spreadsheets.
+            Other tools handle pieces. VroomX handles the whole operation.
           </p>
         </div>
 

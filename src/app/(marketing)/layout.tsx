@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { MarketingHeader } from '@/components/marketing/marketing-header'
 import { Footerdemo } from '@/components/ui/footer-section'
+import { ForceLightMode } from '@/components/marketing/force-light-mode'
 
 export const metadata: Metadata = {
   title: {
@@ -30,14 +31,13 @@ export default function MarketingLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex min-h-screen flex-col">
-      <MarketingHeader />
-
-      {/* Main content */}
-      <main className="flex-1">{children}</main>
-
-      {/* Footer */}
-      <Footerdemo />
+    <div className="force-light">
+      <ForceLightMode />
+      <div className="flex min-h-screen flex-col">
+        <MarketingHeader />
+        <main className="flex-1">{children}</main>
+        <Footerdemo />
+      </div>
     </div>
   )
 }

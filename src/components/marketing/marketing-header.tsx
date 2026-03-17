@@ -3,13 +3,14 @@
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Sheet, SheetContent, SheetFooter } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetFooter, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { MenuToggle } from '@/components/ui/menu-toggle'
 import { cn } from '@/lib/utils'
 
 const links = [
   { label: 'Features', href: '#features' },
+  { label: 'Product', href: '#product' },
   { label: 'Pricing', href: '#pricing' },
   { label: 'FAQ', href: '#faq' },
 ]
@@ -35,14 +36,13 @@ export function MarketingHeader() {
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <nav className="flex h-16 items-center justify-between">
-          {/* Logo — invert white logo to dark */}
           <Link href="/" className="flex items-center">
             <Image
               src="/images/logo-white.png"
               alt="VroomX TMS"
-              width={144}
-              height={48}
-              className="h-10 w-auto brightness-0 dark:brightness-100"
+              width={200}
+              height={56}
+              className="h-[132px] w-auto brightness-0"
             />
           </Link>
 
@@ -56,7 +56,7 @@ export function MarketingHeader() {
                   variant: 'ghost',
                   size: 'sm',
                   className:
-                    'text-foreground/70 hover:text-foreground hover:bg-foreground/5',
+                    'text-black hover:text-black/80 hover:bg-black/5',
                 })}
               >
                 {link.label}
@@ -67,7 +67,7 @@ export function MarketingHeader() {
                 variant="ghost"
                 size="sm"
                 asChild
-                className="text-foreground/80 hover:text-foreground"
+                className="text-black hover:text-black/80"
               >
                 <Link href="/login">Log in</Link>
               </Button>
@@ -76,7 +76,7 @@ export function MarketingHeader() {
                 asChild
                 className="bg-brand text-white font-semibold hover:bg-brand/90 shadow-md"
               >
-                <Link href="/signup">Get Started</Link>
+                <Link href="/signup">Start Free Trial</Link>
               </Button>
             </div>
           </div>
@@ -100,14 +100,17 @@ export function MarketingHeader() {
               className="bg-background/95 supports-[backdrop-filter]:bg-background/80 gap-0 backdrop-blur-lg"
               showCloseButton={false}
               side="left"
+              aria-describedby={undefined}
             >
+              <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+              <SheetDescription className="sr-only">Main navigation links</SheetDescription>
               <div className="flex items-center border-b px-4 py-4">
                 <Image
                   src="/images/logo-white.png"
                   alt="VroomX TMS"
-                  width={120}
-                  height={40}
-                  className="h-10 w-auto brightness-0 dark:brightness-100"
+                  width={180}
+                  height={56}
+                  className="h-[132px] w-auto brightness-0"
                 />
               </div>
               <div className="grid gap-y-1 overflow-y-auto px-4 pt-4 pb-5">
@@ -136,7 +139,7 @@ export function MarketingHeader() {
                   className="w-full bg-brand text-white hover:bg-brand/90"
                 >
                   <Link href="/signup" onClick={() => setOpen(false)}>
-                    Get Started
+                    Start Free Trial
                   </Link>
                 </Button>
               </SheetFooter>

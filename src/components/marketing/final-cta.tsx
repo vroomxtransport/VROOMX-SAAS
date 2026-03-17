@@ -17,7 +17,7 @@ export function FinalCTA() {
   const sectionRef = useRef<HTMLDivElement>(null)
 
   return (
-    <section ref={sectionRef} className="bg-background py-24 sm:py-32">
+    <section ref={sectionRef} className="bg-background py-20 sm:py-28 lg:py-32">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl">
           <TimelineContent as="div" animationNum={0} timelineRef={sectionRef} customVariants={revealVariants}>
@@ -25,32 +25,36 @@ export function FinalCTA() {
             <div className="rounded-2xl bg-gradient-to-br from-brand to-amber-500 p-px shadow-lg">
               {/* Inner card */}
               <div className="rounded-[calc(1rem-1px)] bg-surface p-8 text-center sm:p-12">
-                <h2 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
-                  Ready to modernize your auto transport business?
+                <h2 className="text-3xl font-bold tracking-[-0.015em] text-foreground sm:text-4xl lg:text-[2.75rem]">
+                  Every mile you run without knowing your numbers is money you&apos;ll never get back
                 </h2>
                 <p className="mt-4 text-lg text-muted-foreground">
-                  Join carriers who are dispatching smarter and delivering faster
-                  with VroomX.
+                  200+ carriers stopped guessing and started seeing Clean Gross, driver costs, and net profit on every load. Most set up in under 5 minutes.
                 </p>
+
+                <div className="mt-6 flex items-center justify-center gap-3 text-sm text-muted-foreground">
+                  <span className="italic text-foreground/70">&ldquo;I found $4,100/month in hidden losses in my first week.&rdquo;</span>
+                  <span className="ml-1 not-italic font-medium text-foreground">Carlos M., 3 trucks</span>
+                </div>
 
                 <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
                   <Link
                     href="/signup"
-                    className="group inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-gradient-to-br from-brand to-amber-500 px-6 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg hover:brightness-110"
+                    className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-brand to-amber-500 px-6 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg hover:brightness-110"
                   >
-                    Start Free Trial
+                    Start Your Free Trial
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                   </Link>
                   <Link
                     href="/pricing"
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-border-subtle bg-background px-6 text-sm font-medium text-foreground transition-all hover:bg-accent hover:border-border"
+                    className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-border-subtle bg-background px-6 text-sm font-medium text-foreground transition-all hover:bg-accent hover:border-border"
                   >
-                    Compare Plans
+                    See Pricing
                   </Link>
                 </div>
 
                 <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-medium text-muted-foreground">
-                  {['14-day free trial', 'No credit card', 'Cancel anytime'].map((item) => (
+                  {['No credit card required', 'Set up in 5 minutes', 'Cancel anytime'].map((item) => (
                     <span key={item} className="flex items-center gap-1.5">
                       <Check className="h-4 w-4 text-emerald-500" />
                       {item}

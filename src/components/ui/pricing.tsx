@@ -4,11 +4,34 @@ import { TimelineContent } from "@/components/ui/timeline-animation";
 import { VerticalCutReveal } from "@/components/ui/vertical-cut-reveal";
 import { cn } from "@/lib/utils";
 import NumberFlow from "@number-flow/react";
-import { Truck, CheckCheck, Users, Package, Headphones, Shield } from "lucide-react";
+import { Truck, CheckCheck, Package, Headphones, Shield, User } from "lucide-react";
+import Link from "next/link";
 import { motion } from "motion/react";
 import { useRef, useState } from "react";
 
 const plans = [
+  {
+    name: "Owner-Operator",
+    description:
+      "Everything a solo owner-operator needs to run lean and stay profitable",
+    price: 9.99,
+    yearlyPrice: 95.90,
+    buttonText: "Start Free Trial",
+    buttonVariant: "outline" as const,
+    features: [
+      { text: "1 truck, 1 driver (you)", icon: <User size={20} /> },
+      { text: "Up to 20 orders/month", icon: <Package size={20} /> },
+      { text: "Email support", icon: <Headphones size={20} /> },
+    ],
+    includes: [
+      "Free includes:",
+      "Basic dispatch board",
+      "Order management",
+      "Invoice generation",
+      "Driver mobile app",
+      "Expense tracking",
+    ],
+  },
   {
     name: "Starter",
     description:
@@ -52,28 +75,6 @@ const plans = [
       "Broker management",
       "Automated invoicing",
       "Up to 10 team members",
-    ],
-  },
-  {
-    name: "Enterprise",
-    description:
-      "Full-scale solution with custom integrations and dedicated support for large fleets",
-    price: 299,
-    yearlyPrice: 2870,
-    buttonText: "Contact Sales",
-    buttonVariant: "outline" as const,
-    features: [
-      { text: "Unlimited everything", icon: <Package size={20} /> },
-      { text: "Unlimited fleet size", icon: <Truck size={20} /> },
-      { text: "Dedicated account manager", icon: <Shield size={20} /> },
-    ],
-    includes: [
-      "Everything in Pro, plus:",
-      "Custom integrations",
-      "Multi-terminal support",
-      "SLA guarantee",
-      "Custom roles & permissions",
-      "Unlimited team members",
     ],
   },
 ];
@@ -168,17 +169,17 @@ export default function PricingSection() {
 
   return (
     <div
-      className="px-4 pt-20 pb-12 max-w-7xl mx-auto relative"
+      className="px-4 py-20 sm:py-28 lg:py-32 max-w-7xl mx-auto relative"
       ref={pricingRef}
     >
-      <article className="text-left mb-6 space-y-4 max-w-2xl">
-        <h2 className="md:text-6xl text-4xl capitalize font-extrabold text-foreground mb-4">
+      <article className="text-center mb-6 space-y-4 max-w-2xl mx-auto">
+        <h2 className="text-3xl font-bold sm:text-4xl lg:text-[2.75rem] text-foreground mb-4">
           <VerticalCutReveal
             splitBy="words"
             staggerDuration={0.15}
             staggerFrom="first"
             reverse={true}
-            containerClassName="justify-start"
+            containerClassName="justify-center"
             transition={{
               type: "spring",
               stiffness: 250,
@@ -195,10 +196,10 @@ export default function PricingSection() {
           animationNum={0}
           timelineRef={pricingRef}
           customVariants={revealVariants}
-          className="md:text-base text-sm text-muted-foreground w-[80%]"
+          className="md:text-base text-sm text-muted-foreground max-w-2xl mx-auto"
         >
-          Trusted by 200+ carriers hauling 10,000+ vehicles per month. Start
-          free for 14 days — no credit card required.
+          From solo owner-operators to 50-truck fleets. Plans that make sense
+          for your size. Start free for 14 days, no credit card required.
         </TimelineContent>
 
         <TimelineContent
@@ -211,7 +212,7 @@ export default function PricingSection() {
         </TimelineContent>
       </article>
 
-      <div className="grid md:grid-cols-3 gap-4 py-6">
+      <div className="grid md:grid-cols-3 gap-6 py-6">
         {plans.map((plan, index) => (
           <TimelineContent
             key={plan.name}
@@ -230,7 +231,7 @@ export default function PricingSection() {
             >
               <CardHeader className="text-left">
                 <div className="flex justify-between">
-                  <h3 className="xl:text-3xl md:text-2xl text-3xl font-bold text-foreground mb-2">
+                  <h3 className="text-2xl font-bold text-foreground mb-2">
                     {plan.name}
                   </h3>
                   {plan.popular && (
@@ -245,14 +246,14 @@ export default function PricingSection() {
                   {plan.description}
                 </p>
                 <div className="flex items-baseline">
-                  <span className="text-4xl font-extrabold text-foreground">
+                  <span className="text-4xl font-bold text-foreground">
                     $
                     <NumberFlow
                       format={{
                         currency: "USD",
                       }}
                       value={isYearly ? plan.yearlyPrice : plan.price}
-                      className="text-4xl font-extrabold"
+                      className="text-4xl font-bold"
                     />
                   </span>
                   <span className="text-muted-foreground ml-1">
@@ -262,16 +263,17 @@ export default function PricingSection() {
               </CardHeader>
 
               <CardContent className="pt-0">
-                <button
+                <Link
+                  href="/signup"
                   className={cn(
-                    "w-full mb-4 p-4 text-base font-semibold rounded-xl transition-all",
+                    "flex items-center justify-center w-full mb-4 h-12 text-sm font-semibold rounded-xl transition-all",
                     plan.popular
                       ? "bg-gradient-to-t from-[#ea5e1a] to-brand border border-brand text-white hover:brightness-110"
-                      : "bg-gradient-to-t from-neutral-900 to-neutral-700 shadow-lg shadow-neutral-900/25 border border-neutral-700 text-white hover:brightness-110"
+                      : "bg-[#1f1f1f] text-white hover:bg-[#333]"
                   )}
                 >
                   {plan.buttonText}
-                </button>
+                </Link>
 
                 <div className="space-y-3 pt-4 border-t border-border">
                   <h2 className="text-sm font-bold uppercase tracking-wider text-foreground mb-3">

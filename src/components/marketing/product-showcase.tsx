@@ -1,19 +1,17 @@
 'use client'
 
 import Image from 'next/image'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { useRef } from 'react'
 import { BrowserFrame } from './browser-frame'
+import { DeviceFrame } from './device-frame'
+import { TimelineContent } from '@/components/ui/timeline-animation'
 
-function DispatchMockup() {
-  return (
-    <Image
-      src="/images/dispatch-board.png"
-      alt="VroomX Dispatch Board - Kanban trip management"
-      width={1661}
-      height={907}
-      className="w-full h-auto"
-    />
-  )
+const revealVariants = {
+  visible: (i: number) => ({
+    y: 0, opacity: 1, filter: "blur(0px)",
+    transition: { delay: i * 0.15, duration: 0.5 },
+  }),
+  hidden: { filter: "blur(10px)", y: 20, opacity: 0 },
 }
 
 function OrdersMockup() {
@@ -73,63 +71,74 @@ function OrdersMockup() {
   )
 }
 
-function DriverAppMockup() {
-  return (
-    <div className="flex h-[300px] items-center justify-center rounded-2xl border border-border-subtle bg-muted/30 p-6">
-      <Image
-        src="/images/driver-app-inspection.png"
-        alt="VroomX Driver App - Vehicle Inspection"
-        width={160}
-        height={280}
-        className="h-full w-auto object-contain"
-      />
-    </div>
-  )
-}
-
 export function ProductShowcase() {
+  const sectionRef = useRef<HTMLDivElement>(null)
+
   return (
-    <section id="product" className="bg-background py-24 sm:py-32">
+    <section id="product" ref={sectionRef} className="bg-background py-20 sm:py-28 lg:py-36">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* Header */}
         <div className="mx-auto max-w-2xl text-center">
-          <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-brand">
-            Product
-          </p>
-          <h2 className="font-serif text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
-            See VroomX in action
-          </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
-            Purpose-built screens for every part of your auto transport
-            workflow.
-          </p>
+          <TimelineContent as="div" animationNum={0} timelineRef={sectionRef} customVariants={revealVariants}>
+            <p className="section-kicker mb-3">Product</p>
+          </TimelineContent>
+          <TimelineContent as="div" animationNum={1} timelineRef={sectionRef} customVariants={revealVariants}>
+            <h2 className="text-3xl font-bold tracking-[-0.015em] sm:text-4xl lg:text-[2.75rem] text-foreground">
+              See VroomX TMS in action
+            </h2>
+          </TimelineContent>
+          <TimelineContent as="div" animationNum={2} timelineRef={sectionRef} customVariants={revealVariants}>
+            <p className="mt-4 text-base sm:text-lg leading-relaxed text-muted-foreground">
+              Purpose-built screens for every part of your auto transport workflow.
+            </p>
+          </TimelineContent>
         </div>
 
-        <div className="mx-auto mt-12 max-w-4xl">
-          <Tabs defaultValue="dispatch">
-            <div className="flex justify-center">
-              <TabsList className="bg-surface border border-border-subtle shadow-sm">
-                <TabsTrigger value="dispatch">Dispatch Board</TabsTrigger>
-                <TabsTrigger value="orders">Order Management</TabsTrigger>
-                <TabsTrigger value="driver">Driver App</TabsTrigger>
-              </TabsList>
+        {/* Screenshot gallery — 3 items */}
+        <div className="mt-16 lg:mt-20 grid gap-8 lg:grid-cols-3 items-end">
+          {/* Dispatch Board */}
+          <TimelineContent as="div" animationNum={3} timelineRef={sectionRef} customVariants={revealVariants}>
+            <div className="lg:col-span-1">
+              <BrowserFrame>
+                <Image
+                  src="/images/dispatch-board.png"
+                  alt="VroomX Dispatch Board — Kanban trip management"
+                  width={1661}
+                  height={907}
+                  className="w-full h-auto"
+                />
+              </BrowserFrame>
+              <p className="mt-3 text-center text-sm font-medium text-muted-foreground">Dispatch Board</p>
             </div>
+          </TimelineContent>
 
-            <div className="mt-8">
-              <TabsContent value="dispatch">
-                <BrowserFrame>
-                  <DispatchMockup />
-                </BrowserFrame>
-              </TabsContent>
-              <TabsContent value="orders">
-                <BrowserFrame>
-                  <OrdersMockup />
-                </BrowserFrame>
-              </TabsContent>
-              <TabsContent value="driver">
-                <DriverAppMockup />
-              </TabsContent>
+          {/* Orders — code-drawn mockup in BrowserFrame */}
+          <TimelineContent as="div" animationNum={4} timelineRef={sectionRef} customVariants={revealVariants}>
+            <div className="lg:col-span-1">
+              <BrowserFrame>
+                <OrdersMockup />
+              </BrowserFrame>
+              <p className="mt-3 text-center text-sm font-medium text-muted-foreground">Order Management</p>
             </div>
-          </Tabs>
+          </TimelineContent>
+
+          {/* Driver App — in phone frame */}
+          <TimelineContent as="div" animationNum={5} timelineRef={sectionRef} customVariants={revealVariants}>
+            <div className="lg:col-span-1 flex flex-col items-center">
+              <div className="max-w-[200px]">
+                <DeviceFrame>
+                  <Image
+                    src="/images/driver-app-inspection.png"
+                    alt="VroomX Driver App — Vehicle Inspection"
+                    width={160}
+                    height={340}
+                    className="w-full h-auto"
+                  />
+                </DeviceFrame>
+              </div>
+              <p className="mt-3 text-center text-sm font-medium text-muted-foreground">Driver App</p>
+            </div>
+          </TimelineContent>
         </div>
       </div>
     </section>

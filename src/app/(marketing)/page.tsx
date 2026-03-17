@@ -1,31 +1,32 @@
 import type { Metadata } from 'next'
 import { HeroSection } from '@/components/marketing/hero-section'
-import { LogoStrip } from '@/components/marketing/logo-strip'
-import { ProblemSolution } from '@/components/marketing/problem-solution'
+import { MetricsBanner } from '@/components/marketing/metrics-banner'
+import { PainAgitationSection } from '@/components/marketing/pain-agitation-section'
+import { FinancialIntelligence } from '@/components/marketing/financial-intelligence'
 import { Feature197 } from '@/components/ui/accordion-feature-section'
-import { ProductShowcase } from '@/components/marketing/product-showcase'
-import { StatsBanner } from '@/components/marketing/stats-banner'
+import { DriverAppSection } from '@/components/marketing/driver-app-section'
 import { Testimonials } from '@/components/marketing/testimonials'
+import { ComparisonTable } from '@/components/marketing/comparison-table'
 import PricingSection from '@/components/ui/pricing'
 import { FAQSection } from '@/components/marketing/faq-section'
 import { FinalCTA } from '@/components/marketing/final-cta'
 
 export const metadata: Metadata = {
-  title: 'VroomX - Dispatch Smarter. Deliver Faster.',
+  title: 'VroomX TMS — They Built It for Brokers. We Built It for You.',
   description:
-    'VroomX is a modern SaaS transportation management system built for auto-transport carriers. Manage orders, dispatch trips, track drivers, and automate billing -- all in one platform.',
+    'VroomX TMS is the first auto-transport platform built for carriers, not brokers. See Clean Gross, automated settlements, per-truck profitability, and compliance tracking. From $9.99/mo.',
   openGraph: {
-    title: 'VroomX - Dispatch Smarter. Deliver Faster.',
+    title: 'VroomX TMS — They Built It for Brokers. We Built It for You.',
     description:
-      'Modern SaaS TMS for auto-transport carriers. Manage orders, dispatch trips, track drivers, and automate billing.',
+      'The carrier-first TMS with real financials. Clean Gross, driver settlements, and net profit on every load. No per-seat fees. From $9.99/mo.',
     type: 'website',
     siteName: 'VroomX',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'VroomX - Dispatch Smarter. Deliver Faster.',
+    title: 'VroomX TMS — They Built It for Brokers. We Built It for You.',
     description:
-      'Modern SaaS TMS for auto-transport carriers. Manage orders, dispatch trips, track drivers, and automate billing.',
+      'The carrier-first TMS with real financials. Clean Gross, driver settlements, and net profit on every load. No per-seat fees. From $9.99/mo.',
   },
 }
 
@@ -33,13 +34,14 @@ export default function LandingPage() {
   return (
     <>
       <HeroSection />
-      <LogoStrip />
-      <ProblemSolution />
+      <MetricsBanner />
       <Feature197 />
-      <ProductShowcase />
-      <StatsBanner />
+      <DriverAppSection />
+      <PainAgitationSection />
+      <FinancialIntelligence />
       <Testimonials />
-      <section className="border-t border-border bg-background">
+      <ComparisonTable />
+      <section className="border-t border-border">
         <PricingSection />
       </section>
       <FAQSection />
