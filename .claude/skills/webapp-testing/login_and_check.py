@@ -1,3 +1,4 @@
+import os
 from playwright.sync_api import sync_playwright
 import sys
 
@@ -15,7 +16,7 @@ with sync_playwright() as p:
 
     # Fill in login form
     page.fill('input[type="email"]', 'info@vroomxtransport.com')
-    page.fill('input[type="password"]', 'VroomX2025!')
+    page.fill('input[type="password"]', os.environ.get('TEST_USER_PASSWORD', ''))
     page.click('button[type="submit"]')
 
     # Wait for navigation to dashboard

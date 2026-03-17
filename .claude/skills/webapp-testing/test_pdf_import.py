@@ -1,3 +1,4 @@
+import os
 from playwright.sync_api import sync_playwright
 
 with sync_playwright() as p:
@@ -11,7 +12,7 @@ with sync_playwright() as p:
     print("=== Step 1: Login ===")
     page.goto('http://localhost:3000/login', wait_until='networkidle', timeout=15000)
     page.fill('input[name="email"]', 'test@vroomx.dev')
-    page.fill('input[name="password"]', 'TestPass123!')
+    page.fill('input[name="password"]', os.environ.get('TEST_USER_PASSWORD', ''))
     page.click('button:has-text("Sign in")')
     page.wait_for_url('**/dashboard**', timeout=15000)
     print("Logged in")
