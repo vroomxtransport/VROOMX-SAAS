@@ -88,9 +88,22 @@ export function OrderCard({ order, onClick, onEdit }: OrderCardProps) {
       )}
 
       <div className="mt-2 flex items-center justify-between border-t border-border pt-1.5">
-        <span className="text-sm font-semibold text-foreground">
-          {revenue > 0 ? formatCurrency(revenue) : '--'}
-        </span>
+        <div>
+          <span className="text-sm font-semibold text-foreground">
+            {revenue > 0 ? formatCurrency(revenue) : '--'}
+          </span>
+          {order.payment_type === 'SPLIT' && order.cod_amount && order.billing_amount && (
+            <div className="mt-0.5 flex items-center gap-1.5 text-xs">
+              <span className="text-emerald-600 dark:text-emerald-400">
+                COD {formatCurrency(order.cod_amount)}
+              </span>
+              <span className="text-muted-foreground">/</span>
+              <span className="text-brand">
+                Bill {formatCurrency(order.billing_amount)}
+              </span>
+            </div>
+          )}
+        </div>
         {driverName && (
           <span className="text-xs text-muted-foreground">{driverName}</span>
         )}

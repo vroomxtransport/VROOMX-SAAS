@@ -97,6 +97,9 @@ interface InvoiceDocumentProps {
     pickup_state: string | null
     delivery_city: string | null
     delivery_state: string | null
+    payment_type: string | null
+    cod_amount: string | null
+    billing_amount: string | null
     broker: { name: string; email: string | null } | null
   }
   tenant: {
@@ -129,6 +132,11 @@ export function InvoiceDocument({ order, tenant }: InvoiceDocumentProps) {
   ]
     .filter(Boolean)
     .join(' -> ')
+
+  // For SPLIT orders, the invoice reflects only the billing portion
+  const isSplit = order.payment_type === 'SPLIT' && order.billing_amount !== null
+  const invoiceAmount = isSplit ? order.billing_amount! : order.carrier_pay
+  const codAmount = isSplit && order.cod_amount ? order.cod_amount : null
 
   return (
     <Document>
@@ -178,15 +186,27 @@ export function InvoiceDocument({ order, tenant }: InvoiceDocumentProps) {
           <View style={styles.tableRow}>
             <Text style={styles.col1}>
               {vehicleDescription || 'Vehicle Transport'}
+              {isSplit ? ' (Billing Portion)' : ''}
             </Text>
             <Text style={styles.col2}>{routeDescription || 'N/A'}</Text>
-            <Text style={styles.col3}>{formatCurrency(order.carrier_pay)}</Text>
+            <Text style={styles.col3}>{formatCurrency(invoiceAmount)}</Text>
           </View>
 
           {/* VIN row (if available) */}
           {order.vehicle_vin && (
             <View style={styles.tableRow}>
               <Text style={styles.col1}>VIN: {order.vehicle_vin}</Text>
+              <Text style={styles.col2} />
+              <Text style={styles.col3} />
+            </View>
+          )}
+
+          {/* COD info line for SPLIT orders */}
+          {codAmount && (
+            <View style={styles.tableRow}>
+              <Text style={[styles.col1, { color: '#6b7280' }]}>
+                COD Amount (collected at delivery): {formatCurrency(codAmount)}
+              </Text>
               <Text style={styles.col2} />
               <Text style={styles.col3} />
             </View>
@@ -198,7 +218,7 @@ export function InvoiceDocument({ order, tenant }: InvoiceDocumentProps) {
           <Text style={[styles.col1, styles.bold]}>Total Due</Text>
           <Text style={styles.col2} />
           <Text style={[styles.col3, styles.bold]}>
-            {formatCurrency(order.carrier_pay)}
+            {formatCurrency(invoiceAmount)}
           </Text>
         </View>
 

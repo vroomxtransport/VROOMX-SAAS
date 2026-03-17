@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { recordPayment } from '@/app/actions/payments'
+import { recordPayment, recordCodPayment } from '@/app/actions/payments'
 import { usePaymentsByOrder } from '@/hooks/use-payments'
 import {
   recordPaymentSchema,
@@ -16,7 +16,7 @@ import type { PaymentStatus } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Loader2, DollarSign } from 'lucide-react'
+import { Loader2, DollarSign, Truck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface PaymentRecorderProps {
@@ -24,6 +24,9 @@ interface PaymentRecorderProps {
   carrierPay: number
   amountPaid: number
   paymentStatus: PaymentStatus
+  paymentType?: string | null
+  codAmount?: number | null
+  billingAmount?: number | null
 }
 
 function formatCurrency(value: number): string {
@@ -56,11 +59,24 @@ export function PaymentRecorder({
   carrierPay,
   amountPaid,
   paymentStatus,
+  paymentType,
+  codAmount,
+  billingAmount,
 }: PaymentRecorderProps) {
   const queryClient = useQueryClient()
   const [isPending, startTransition] = useTransition()
+  const [isCodPending, startCodTransition] = useTransition()
   const { data: payments, isLoading: paymentsLoading } =
     usePaymentsByOrder(orderId)
+
+  const isSplit = paymentType === 'SPLIT' && billingAmount != null && codAmount != null
+
+  // For SPLIT orders, calculate COD and billing portions separately
+  const codValue = isSplit ? codAmount : 0
+  const billingValue = isSplit ? billingAmount : carrierPay
+  const codCollected = isSplit ? Math.min(amountPaid, codValue) >= codValue : false
+  const billingPaid = isSplit ? Math.max(0, amountPaid - codValue) : amountPaid
+  const billingRemaining = Math.max(0, Math.round((billingValue - billingPaid) * 100) / 100)
 
   const remaining = Math.max(
     0,
@@ -68,6 +84,21 @@ export function PaymentRecorder({
   )
   const percentPaid =
     carrierPay > 0 ? Math.min(100, (amountPaid / carrierPay) * 100) : 0
+
+  const handleCodCollected = () => {
+    startCodTransition(async () => {
+      const result = await recordCodPayment(orderId)
+      if ('error' in result && result.error) {
+        const errorMsg = typeof result.error === 'string' ? result.error : 'Failed to record COD payment'
+        toast.error(errorMsg)
+        return
+      }
+      toast.success('COD payment collected')
+      queryClient.invalidateQueries({ queryKey: ['orders'] })
+      queryClient.invalidateQueries({ queryKey: ['order', orderId] })
+      queryClient.invalidateQueries({ queryKey: ['payments', orderId] })
+    })
+  }
 
   const {
     register,
@@ -122,6 +153,11 @@ export function PaymentRecorder({
             >
               {PAYMENT_STATUS_LABELS[paymentStatus]}
             </span>
+            {isSplit && (
+              <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300">
+                Split Payment
+              </span>
+            )}
           </div>
           <p className="text-sm text-muted-foreground">
             Paid: {formatCurrency(amountPaid)} / {formatCurrency(carrierPay)}
@@ -145,6 +181,66 @@ export function PaymentRecorder({
           </p>
         )}
       </div>
+
+      {/* SPLIT Order: COD + Billing Breakdown */}
+      {isSplit && (
+        <div className="space-y-4">
+          {/* COD Portion */}
+          <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Truck className="h-4 w-4 text-orange-500" />
+                <h4 className="text-sm font-medium text-foreground">COD Portion</h4>
+              </div>
+              <span className={cn(
+                'text-xs font-medium',
+                codCollected ? 'text-emerald-600' : 'text-orange-600'
+              )}>
+                {codCollected ? 'Collected' : 'Pending'}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">COD Amount:</span>
+              <span className="font-medium">{formatCurrency(codValue)}</span>
+            </div>
+            {!codCollected && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="w-full"
+                disabled={isCodPending}
+                onClick={handleCodCollected}
+              >
+                {isCodPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Mark COD Collected
+              </Button>
+            )}
+          </div>
+
+          {/* Billing Portion */}
+          <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+            <div className="flex items-center gap-2">
+              <DollarSign className="h-4 w-4 text-blue-500" />
+              <h4 className="text-sm font-medium text-foreground">Billing Portion</h4>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Billing Amount:</span>
+              <span className="font-medium">{formatCurrency(billingValue)}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Paid:</span>
+              <span className="font-medium">{formatCurrency(billingPaid)}</span>
+            </div>
+            {billingRemaining > 0 && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Remaining:</span>
+                <span className="font-medium text-amber-600">{formatCurrency(billingRemaining)}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Payment History */}
       <div>
@@ -189,7 +285,7 @@ export function PaymentRecorder({
       {paymentStatus !== 'paid' && (
         <div className="border-t border-border pt-4">
           <h3 className="mb-3 text-sm font-medium text-foreground">
-            Record Payment
+            Record {isSplit ? 'Billing ' : ''}Payment
           </h3>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
@@ -200,7 +296,7 @@ export function PaymentRecorder({
                   type="number"
                   step="0.01"
                   min="0.01"
-                  max={remaining}
+                  max={isSplit ? billingRemaining : remaining}
                   placeholder="0.00"
                   disabled={isPending}
                   {...register('amount')}

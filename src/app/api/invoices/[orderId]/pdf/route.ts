@@ -26,7 +26,7 @@ export async function GET(
   // Fetch order with broker relation
   const { data: order, error: orderError } = await supabase
     .from('orders')
-    .select('*, broker:brokers(id, name, email)')
+    .select('id, order_number, carrier_pay, vehicle_vin, vehicle_year, vehicle_make, vehicle_model, pickup_city, pickup_state, delivery_city, delivery_state, payment_type, cod_amount, billing_amount, broker:brokers(id, name, email)')
     .eq('id', orderId)
     .eq('tenant_id', tenantId)
     .single()
@@ -48,9 +48,13 @@ export async function GET(
     )
   }
 
+  // Normalize broker relation (Supabase may return array)
+  const brokerRaw = order.broker as unknown as { name: string; email: string | null } | { name: string; email: string | null }[] | null
+  const broker = Array.isArray(brokerRaw) ? brokerRaw[0] ?? null : brokerRaw
+
   try {
     const pdfBuffer = await renderToBuffer(
-      InvoiceDocument({ order, tenant })
+      InvoiceDocument({ order: { ...order, broker }, tenant })
     )
 
     return new Response(new Uint8Array(pdfBuffer), {

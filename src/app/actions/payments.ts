@@ -15,10 +15,10 @@ export async function recordPayment(orderId: string, data: unknown) {
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId } = auth.ctx
 
-  // Fetch the order to get current carrier_pay and amount_paid
+  // Fetch the order to get current carrier_pay, amount_paid, and SPLIT fields
   const { data: order, error: orderError } = await supabase
     .from('orders')
-    .select('carrier_pay, amount_paid, payment_status')
+    .select('carrier_pay, amount_paid, payment_status, payment_type, billing_amount, cod_amount')
     .eq('id', orderId)
     .eq('tenant_id', tenantId)
     .single()
@@ -29,7 +29,16 @@ export async function recordPayment(orderId: string, data: unknown) {
 
   const carrierPay = parseFloat(order.carrier_pay)
   const currentPaid = parseFloat(order.amount_paid)
-  const remaining = carrierPay - currentPaid
+
+  // For SPLIT orders, the billable amount is billing_amount (COD is collected separately)
+  const isSplit = order.payment_type === 'SPLIT' && order.billing_amount !== null
+  const billingAmount = isSplit ? parseFloat(order.billing_amount!) : carrierPay
+  const codAmount = isSplit && order.cod_amount ? parseFloat(order.cod_amount) : 0
+
+  // For SPLIT orders, the billing remaining is billing_amount minus (amount_paid - cod_amount already collected)
+  // For non-SPLIT orders, remaining is carrierPay - currentPaid
+  const billingPaid = isSplit ? Math.max(0, currentPaid - codAmount) : currentPaid
+  const remaining = billingAmount - billingPaid
 
   // Validate: payment amount must not exceed remaining balance (with threshold)
   if (parsed.data.amount > remaining + 0.01) {
@@ -57,6 +66,7 @@ export async function recordPayment(orderId: string, data: unknown) {
   const newTotalPaid = currentPaid + parsed.data.amount
 
   // Determine new payment_status
+  // For SPLIT orders: fully paid means total amount_paid >= carrier_pay (both COD + billing covered)
   let newPaymentStatus: string
   if (Math.abs(carrierPay - newTotalPaid) < 0.01 || newTotalPaid >= carrierPay) {
     newPaymentStatus = 'paid'
@@ -188,4 +198,100 @@ export async function batchMarkPaid(orderIds: string[], paymentDate: string) {
     processed,
     total: orderIds.length,
   }
+}
+
+/**
+ * Record COD payment for SPLIT orders.
+ * Marks the COD portion as collected by adding cod_amount to amount_paid.
+ */
+export async function recordCodPayment(orderId: string) {
+  const auth = await authorize('payments.create', { rateLimit: { key: 'recordCodPayment', limit: 30, windowMs: 60_000 } })
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
+
+  // Fetch the order
+  const { data: order, error: orderError } = await supabase
+    .from('orders')
+    .select('carrier_pay, amount_paid, payment_status, payment_type, cod_amount, billing_amount')
+    .eq('id', orderId)
+    .eq('tenant_id', tenantId)
+    .single()
+
+  if (orderError || !order) {
+    return { error: orderError?.message ?? 'Order not found' }
+  }
+
+  // Validate: must be a SPLIT order with a cod_amount
+  if (order.payment_type !== 'SPLIT' || !order.cod_amount) {
+    return { error: 'This order is not a SPLIT payment type or has no COD amount' }
+  }
+
+  const carrierPay = parseFloat(order.carrier_pay)
+  const currentPaid = parseFloat(order.amount_paid)
+  const codAmount = parseFloat(order.cod_amount)
+
+  // Check if COD was already collected (amount_paid already includes cod_amount)
+  // COD is the first thing collected, so if amount_paid >= cod_amount, it's already done
+  if (currentPaid >= codAmount) {
+    return { error: 'COD amount has already been collected' }
+  }
+
+  // Insert a payment record for the COD portion
+  const { data: payment, error: insertError } = await supabase
+    .from('payments')
+    .insert({
+      tenant_id: tenantId,
+      order_id: orderId,
+      amount: String(codAmount),
+      payment_date: new Date().toISOString().split('T')[0],
+      notes: 'COD collected at delivery',
+    })
+    .select()
+    .single()
+
+  if (insertError) {
+    return { error: safeError(insertError, 'recordCodPayment') }
+  }
+
+  // Calculate new total paid
+  const newTotalPaid = currentPaid + codAmount
+
+  // Determine new payment_status
+  let newPaymentStatus: string
+  if (Math.abs(carrierPay - newTotalPaid) < 0.01 || newTotalPaid >= carrierPay) {
+    newPaymentStatus = 'paid'
+  } else if (newTotalPaid > 0) {
+    newPaymentStatus = 'partially_paid'
+  } else {
+    newPaymentStatus = order.payment_status
+  }
+
+  // Update order with new amount_paid and payment_status
+  const { error: updateError } = await supabase
+    .from('orders')
+    .update({
+      amount_paid: String(Math.round(newTotalPaid * 100) / 100),
+      payment_status: newPaymentStatus,
+    })
+    .eq('id', orderId)
+    .eq('tenant_id', tenantId)
+
+  if (updateError) {
+    return { error: safeError(updateError, 'recordCodPayment') }
+  }
+
+  // Fire-and-forget activity log
+  logOrderActivity(supabase, {
+    tenantId,
+    orderId,
+    action: 'cod_payment_collected',
+    description: `COD payment of $${codAmount.toFixed(2)} collected at delivery`,
+    actorId: auth.ctx.user.id,
+    actorEmail: auth.ctx.user.email,
+    metadata: { codAmount, newPaymentStatus },
+  }).catch(() => {})
+
+  revalidatePath(`/orders/${orderId}`)
+  revalidatePath('/billing')
+  return { success: true, data: payment }
 }

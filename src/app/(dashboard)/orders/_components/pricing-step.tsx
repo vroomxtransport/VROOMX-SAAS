@@ -11,6 +11,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -33,7 +34,14 @@ export function PricingStep() {
   const brokerFee = form.watch('brokerFee') ?? 0
   const localFee = form.watch('localFee') ?? 0
   const driverId = form.watch('driverId')
+  const paymentType = form.watch('paymentType')
+  const codAmount = form.watch('codAmount')
   const margin = Number(revenue) - Number(carrierPay) - Number(brokerFee) - Number(localFee)
+
+  const isSplit = paymentType === 'SPLIT'
+  const numericCarrierPay = Number(carrierPay)
+  const numericCodAmount = Number(codAmount) || 0
+  const billingAmount = isSplit ? Math.max(0, numericCarrierPay - numericCodAmount) : 0
 
   // Find selected driver for showing default pay rate
   const selectedDriver = driversData?.drivers.find((d) => d.id === driverId)
@@ -266,6 +274,56 @@ export function PricingStep() {
           </FormItem>
         )}
       />
+
+      {/* Split Payment Fields */}
+      {isSplit && (
+        <div className="rounded-lg border border-border-subtle bg-accent/30 p-4 space-y-3">
+          <p className="text-xs font-medium text-muted-foreground">
+            COD: collected at delivery. Billing: invoiced to broker.
+          </p>
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="codAmount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>COD Amount</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max={numericCarrierPay}
+                        placeholder="0.00"
+                        className="pl-7"
+                        {...field}
+                        value={field.value as number ?? ''}
+                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="space-y-2">
+              <Label>Billing Amount</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
+                <Input
+                  type="text"
+                  readOnly
+                  tabIndex={-1}
+                  className="pl-7 bg-muted cursor-default"
+                  value={billingAmount.toFixed(2)}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Broker select */}
       <FormField

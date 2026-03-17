@@ -85,8 +85,17 @@ export function OrderRow({ order, onClick, onEdit }: OrderRowProps) {
       )}
 
       {/* Revenue */}
-      <div className="text-sm font-semibold text-foreground tabular-nums shrink-0 w-[70px] text-right">
-        {revenue > 0 ? formatCurrency(revenue) : '--'}
+      <div className="shrink-0 w-[70px] text-right">
+        <div className="text-sm font-semibold text-foreground tabular-nums">
+          {revenue > 0 ? formatCurrency(revenue) : '--'}
+        </div>
+        {order.payment_type === 'SPLIT' && order.cod_amount && order.billing_amount && (
+          <div className="text-xs text-muted-foreground tabular-nums">
+            <span className="text-emerald-600 dark:text-emerald-400">COD {formatCurrency(order.cod_amount)}</span>
+            {' / '}
+            <span className="text-brand">Bill {formatCurrency(order.billing_amount)}</span>
+          </div>
+        )}
       </div>
 
       {/* Edit */}

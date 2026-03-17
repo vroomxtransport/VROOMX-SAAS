@@ -240,13 +240,29 @@ export function OrderDetail({ order }: OrderDetailProps) {
                 </div>
               )}
               {order.payment_type && (
-                <div className="border-t border-border-subtle pt-3">
+                <div className="border-t border-border-subtle pt-3 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Payment Type</span>
                     <span className="text-sm font-medium text-foreground">
                       {PAYMENT_TYPE_LABELS[order.payment_type]}
                     </span>
                   </div>
+                  {order.payment_type === 'SPLIT' && order.cod_amount && (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">COD Amount</span>
+                        <span className="text-sm font-medium tabular-nums text-foreground">
+                          {formatCurrency(order.cod_amount)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Billing Amount</span>
+                        <span className="text-sm font-medium tabular-nums text-foreground">
+                          {formatCurrency(order.billing_amount ?? (carrierPay - parseFloat(order.cod_amount)))}
+                        </span>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -273,6 +289,9 @@ export function OrderDetail({ order }: OrderDetailProps) {
                 carrierPay={carrierPay}
                 amountPaid={parseFloat(order.amount_paid ?? '0')}
                 paymentStatus={order.payment_status as PaymentStatus}
+                paymentType={order.payment_type ?? null}
+                codAmount={order.cod_amount ? parseFloat(order.cod_amount) : null}
+                billingAmount={order.billing_amount ? parseFloat(order.billing_amount) : null}
               />
             </div>
           )}

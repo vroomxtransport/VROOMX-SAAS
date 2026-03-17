@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
-  createOrderSchema,
+  createOrderSchemaWithRefinements,
   orderVehicleSchema,
   orderLocationSchema,
   orderPricingSchema,
@@ -64,6 +64,7 @@ function mapOrderToFormValues(order: OrderWithRelations): CreateOrderInput {
     carrierPay: parseFloat(order.carrier_pay) || 0,
     brokerFee: parseFloat(order.broker_fee) || 0,
     distanceMiles: order.distance_miles ? parseFloat(order.distance_miles) : undefined,
+    codAmount: order.cod_amount ? parseFloat(order.cod_amount) : undefined,
     paymentType: order.payment_type ?? 'COP',
     brokerId: order.broker_id ?? '',
     driverId: order.driver_id ?? '',
@@ -119,7 +120,7 @@ export function OrderForm({ order, onSuccess, onCancel, onStepChange, onDirtyCha
   }, [isEditMode, order, loadDraft])
 
   const form = useForm<CreateOrderInput>({
-    resolver: zodResolver(createOrderSchema),
+    resolver: zodResolver(createOrderSchemaWithRefinements),
     defaultValues: getDefaultValues(),
   })
 

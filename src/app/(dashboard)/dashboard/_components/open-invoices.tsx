@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { fetchOutstandingAR, fetchReadyToInvoice } from '@/lib/queries/receivables'
-import { DollarSign, FileText, AlertTriangle } from 'lucide-react'
+import { DollarSign, FileText, AlertTriangle, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
@@ -32,22 +32,65 @@ export function OpenInvoices() {
   })
 
   const readyCount = readyToInvoice.length
-  const readyTotal = readyToInvoice.reduce((sum, o) => sum + o.carrierPay, 0)
+  const readyTotal = readyToInvoice.reduce((sum, o) => sum + o.invoiceableAmount, 0)
+
+  // Donut gauge math
+  const maxAR = Math.max(outstanding, 10000)
+  const ratio = Math.min(outstanding / maxAR, 1)
+  const circumference = 2 * Math.PI * 40
+  const strokeOffset = circumference * (1 - ratio)
 
   return (
-    <div className="rounded-xl border border-border-subtle bg-surface p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-base font-semibold text-foreground">Open Invoices</h3>
+    <div className="widget-card">
+      <div className="widget-header">
+        <span className="widget-title">
+          <span className="widget-accent-dot bg-[var(--accent-amber)]" />
+          Open Invoices
+        </span>
         <div className="rounded-lg p-1.5 bg-[var(--accent-amber-bg)]">
           <DollarSign className="h-4 w-4 text-[var(--accent-amber)]" />
         </div>
       </div>
 
-      <p className="text-2xl font-bold tabular-nums text-foreground">{fmt(outstanding)}</p>
-      <p className="text-xs text-muted-foreground mt-0.5">Outstanding receivables</p>
+      {/* Donut gauge */}
+      <div className="flex items-center gap-4 mb-4">
+        <div className="relative h-20 w-20 shrink-0">
+          <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
+            <circle
+              cx="50" cy="50" r="40"
+              fill="none"
+              stroke="var(--border-subtle)"
+              strokeWidth="8"
+            />
+            <circle
+              cx="50" cy="50" r="40"
+              fill="none"
+              stroke="url(#invoiceGradient)"
+              strokeWidth="8"
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeOffset}
+              className="transition-all duration-700"
+            />
+            <defs>
+              <linearGradient id="invoiceGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#fb7232" />
+                <stop offset="100%" stopColor="#f59e0b" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-lg font-bold tabular-nums text-foreground">{Math.round(ratio * 100)}%</span>
+          </div>
+        </div>
+        <div>
+          <p className="text-2xl font-bold tabular-nums text-foreground">{fmt(outstanding)}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Outstanding receivables</p>
+        </div>
+      </div>
 
-      <div className="mt-4 space-y-2">
-        <div className="flex items-center justify-between rounded-lg bg-muted/30 dark:bg-muted/10 px-3 py-2">
+      <div className="space-y-2">
+        <div className="flex items-center justify-between rounded-xl border-l-2 border-l-blue-500 bg-muted/30 dark:bg-muted/10 px-3 py-2.5">
           <div className="flex items-center gap-2">
             <FileText className="h-3.5 w-3.5 text-blue-500" />
             <span className="text-sm text-muted-foreground">Ready to invoice</span>
@@ -61,7 +104,7 @@ export function OpenInvoices() {
         </div>
 
         {outstanding > 0 && (
-          <div className="flex items-center justify-between rounded-lg bg-muted/30 dark:bg-muted/10 px-3 py-2">
+          <div className="flex items-center justify-between rounded-xl border-l-2 border-l-amber-500 bg-muted/30 dark:bg-muted/10 px-3 py-2.5">
             <div className="flex items-center gap-2">
               <AlertTriangle className={cn('h-3.5 w-3.5', outstanding > 5000 ? 'text-red-500' : 'text-amber-500')} />
               <span className="text-sm text-muted-foreground">Total owed</span>
@@ -73,9 +116,10 @@ export function OpenInvoices() {
 
       <Link
         href="/billing"
-        className="mt-3 block text-center text-xs font-medium text-brand hover:underline"
+        className="mt-4 flex items-center justify-center gap-1.5 rounded-xl border border-border-subtle bg-surface-raised px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted/50 hover:text-brand"
       >
-        View Billing →
+        View Billing
+        <ChevronRight className="h-3.5 w-3.5" />
       </Link>
     </div>
   )

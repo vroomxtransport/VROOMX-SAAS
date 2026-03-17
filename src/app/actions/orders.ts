@@ -59,6 +59,8 @@ export async function createOrder(data: unknown) {
       local_fee: String(v.localFee),
       driver_pay_rate_override: v.driverPayRateOverride ? String(v.driverPayRateOverride) : null,
       payment_type: v.paymentType,
+      cod_amount: v.paymentType === 'SPLIT' && v.codAmount != null ? String(v.codAmount) : null,
+      billing_amount: v.paymentType === 'SPLIT' && v.codAmount != null ? String(v.carrierPay - v.codAmount) : null,
       broker_id: v.brokerId || null,
       driver_id: v.driverId || null,
       distance_miles: v.distanceMiles ? String(v.distanceMiles) : null,
@@ -136,6 +138,16 @@ export async function updateOrder(id: string, data: unknown) {
   if (v.localFee !== undefined) updateData.local_fee = String(v.localFee)
   if (v.driverPayRateOverride !== undefined) updateData.driver_pay_rate_override = v.driverPayRateOverride ? String(v.driverPayRateOverride) : null
   if (v.paymentType !== undefined) updateData.payment_type = v.paymentType
+  // Split payment: auto-calculate billing_amount from carrier_pay - cod_amount
+  const effectivePaymentType = v.paymentType ?? updateData.payment_type
+  const effectiveCarrierPay = v.carrierPay ?? (updateData.carrier_pay ? parseFloat(updateData.carrier_pay as string) : undefined)
+  if (effectivePaymentType === 'SPLIT' && v.codAmount != null && effectiveCarrierPay != null) {
+    updateData.cod_amount = String(v.codAmount)
+    updateData.billing_amount = String(effectiveCarrierPay - v.codAmount)
+  } else if (v.paymentType !== undefined && v.paymentType !== 'SPLIT') {
+    updateData.cod_amount = null
+    updateData.billing_amount = null
+  }
   if (v.brokerId !== undefined) updateData.broker_id = v.brokerId || null
   if (v.driverId !== undefined) updateData.driver_id = v.driverId || null
   if (v.distanceMiles !== undefined) updateData.distance_miles = v.distanceMiles ? String(v.distanceMiles) : null
@@ -326,6 +338,7 @@ export interface CsvOrderRow {
   carrier_pay?: string | number
   broker_fee?: string | number
   payment_type?: string
+  cod_amount?: string | number
 }
 
 export interface BatchImportResult {
@@ -433,6 +446,10 @@ export async function batchCreateOrders(
       carrier_pay: String(carrierPay),
       broker_fee: String(brokerFee),
       payment_type: paymentType,
+      ...(paymentType === 'SPLIT' && r.cod_amount ? {
+        cod_amount: String(parseFloat(String(r.cod_amount))),
+        billing_amount: String(carrierPay - parseFloat(String(r.cod_amount))),
+      } : {}),
     })
 
     if (error) {

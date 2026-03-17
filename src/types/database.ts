@@ -141,6 +141,8 @@ export interface Order {
   broker_fee: string
   local_fee: string
   driver_pay_rate_override: string | null
+  cod_amount: string | null
+  billing_amount: string | null
   payment_type: 'COD' | 'COP' | 'CHECK' | 'BILL' | 'SPLIT' | null
   payment_status: 'unpaid' | 'invoiced' | 'partially_paid' | 'paid'
   invoice_date: string | null

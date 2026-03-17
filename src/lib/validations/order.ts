@@ -41,6 +41,7 @@ export const orderPricingSchema = z.object({
   brokerFee: z.coerce.number().min(0, 'Broker fee must be 0 or more').max(10_000_000).default(0),
   localFee: z.coerce.number().min(0, 'Local fee must be 0 or more').max(10_000_000).default(0),
   driverPayRateOverride: z.coerce.number().min(0, 'Rate must be 0 or more').max(100, 'Rate cannot exceed 100%').optional(),
+  codAmount: z.coerce.number().min(0, 'COD amount must be 0 or more').optional(),
   distanceMiles: z.coerce.number().min(0, 'Distance must be 0 or more').max(1_000_000).optional(),
   paymentType: z.enum(['COD', 'COP', 'CHECK', 'BILL', 'SPLIT']).default('COP'),
   brokerId: z.string().max(36).uuid('Invalid broker ID').optional().or(z.literal('')),
@@ -51,6 +52,20 @@ export const orderPricingSchema = z.object({
 export const createOrderSchema = orderVehicleSchema
   .merge(orderLocationSchema)
   .merge(orderPricingSchema)
+
+// Schema with cross-field refinement for SPLIT payment validation (use in form resolver)
+export const createOrderSchemaWithRefinements = createOrderSchema.refine(
+  (data) => {
+    if (data.paymentType === 'SPLIT' && data.codAmount != null) {
+      return data.codAmount <= data.carrierPay
+    }
+    return true
+  },
+  {
+    message: 'COD amount cannot exceed carrier pay',
+    path: ['codAmount'],
+  }
+)
 
 export type OrderVehicleValues = z.infer<typeof orderVehicleSchema>
 export type OrderLocationValues = z.infer<typeof orderLocationSchema>

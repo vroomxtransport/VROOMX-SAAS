@@ -83,7 +83,7 @@ export async function fetchBrokerReceivables(
   const { data: orders, error } = await supabase
     .from('orders')
     .select(
-      'id, order_number, broker_id, carrier_pay, amount_paid, payment_status, invoice_date, broker:brokers(id, name, email)'
+      'id, order_number, broker_id, carrier_pay, amount_paid, payment_status, invoice_date, payment_type, cod_amount, billing_amount, broker:brokers(id, name, email)'
     )
     .in('payment_status', ['invoiced', 'partially_paid'])
     .not('broker_id', 'is', null)
@@ -120,7 +120,14 @@ export async function fetchBrokerReceivables(
 
     const carrierPay = parseFloat(order.carrier_pay)
     const amountPaid = parseFloat(order.amount_paid)
-    const remaining = carrierPay - amountPaid
+
+    // For SPLIT orders: outstanding = billing_amount - (amount_paid - cod_amount)
+    // COD portion is NOT part of receivables (collected at delivery, not billed)
+    const isSplit = order.payment_type === 'SPLIT' && order.billing_amount !== null
+    const codAmount = isSplit && order.cod_amount ? parseFloat(order.cod_amount) : 0
+    const billingAmount = isSplit ? parseFloat(order.billing_amount!) : carrierPay
+    const billingPaid = isSplit ? Math.max(0, amountPaid - codAmount) : amountPaid
+    const remaining = billingAmount - billingPaid
 
     if (!brokerMap.has(broker.id)) {
       brokerMap.set(broker.id, {
@@ -315,9 +322,14 @@ export interface ReadyToInvoiceOrder {
   orderNumber: string | null
   vehicleName: string
   carrierPay: number
+  /** The amount that should appear on the invoice. For SPLIT orders this is billing_amount, otherwise carrier_pay. */
+  invoiceableAmount: number
   route: string
   updatedAt: string
   broker: { id: string; name: string; email: string | null } | null
+  paymentType: 'COD' | 'COP' | 'CHECK' | 'BILL' | 'SPLIT' | null
+  codAmount: number | null
+  billingAmount: number | null
 }
 
 export async function fetchReadyToInvoice(
@@ -326,7 +338,7 @@ export async function fetchReadyToInvoice(
   const { data: orders, error } = await supabase
     .from('orders')
     .select(
-      'id, order_number, vehicle_year, vehicle_make, vehicle_model, carrier_pay, pickup_city, pickup_state, delivery_city, delivery_state, updated_at, broker:brokers(id, name, email)'
+      'id, order_number, vehicle_year, vehicle_make, vehicle_model, carrier_pay, pickup_city, pickup_state, delivery_city, delivery_state, updated_at, payment_type, cod_amount, billing_amount, broker:brokers(id, name, email)'
     )
     .eq('status', 'delivered')
     .eq('payment_status', 'unpaid')
@@ -349,14 +361,28 @@ export async function fetchReadyToInvoice(
       .filter(Boolean)
       .join(' \u2192 ') || 'No route'
 
+    const carrierPay = parseFloat(o.carrier_pay)
+    const orderPaymentType = (o as Record<string, unknown>).payment_type as ReadyToInvoiceOrder['paymentType']
+    const orderBillingAmount = (o as Record<string, unknown>).billing_amount ? parseFloat((o as Record<string, unknown>).billing_amount as string) : null
+    const orderCodAmount = (o as Record<string, unknown>).cod_amount ? parseFloat((o as Record<string, unknown>).cod_amount as string) : null
+
+    // For SPLIT orders, the invoiceable amount is billing_amount (not carrier_pay)
+    const invoiceableAmount = orderPaymentType === 'SPLIT' && orderBillingAmount !== null
+      ? orderBillingAmount
+      : carrierPay
+
     return {
       id: o.id,
       orderNumber: o.order_number,
       vehicleName,
-      carrierPay: parseFloat(o.carrier_pay),
+      carrierPay,
+      invoiceableAmount,
       route,
       updatedAt: o.updated_at,
       broker,
+      paymentType: orderPaymentType,
+      codAmount: orderCodAmount,
+      billingAmount: orderBillingAmount,
     }
   })
 }

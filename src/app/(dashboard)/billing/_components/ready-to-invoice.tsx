@@ -235,7 +235,9 @@ export function ReadyToInvoice({ factoringFeeRate = 0 }: ReadyToInvoiceProps) {
       'Vehicle': o.vehicleName,
       'Broker': o.broker?.name ?? '',
       'Route': o.route,
-      'Amount': o.carrierPay,
+      'Amount': o.paymentType === 'SPLIT' && o.billingAmount != null ? o.billingAmount : o.carrierPay,
+      'Payment Type': o.paymentType ?? '',
+      'COD Amount': o.paymentType === 'SPLIT' && o.codAmount != null ? o.codAmount : '',
       'Delivered': o.updatedAt,
     }))
   }, [filteredOrders])
@@ -261,7 +263,7 @@ export function ReadyToInvoice({ factoringFeeRate = 0 }: ReadyToInvoiceProps) {
         <div className="flex items-center gap-2">
           <CsvExportButton
             filename="ready-to-invoice"
-            headers={['Order Number', 'Vehicle', 'Broker', 'Route', 'Amount', 'Delivered']}
+            headers={['Order Number', 'Vehicle', 'Broker', 'Route', 'Amount', 'Payment Type', 'COD Amount', 'Delivered']}
             fetchData={handleCsvExport}
           />
           {selectedIds.size > 0 && (
@@ -353,8 +355,17 @@ export function ReadyToInvoice({ factoringFeeRate = 0 }: ReadyToInvoiceProps) {
                 <div className="min-w-0 flex-1 text-sm text-muted-foreground truncate hidden md:block" title={order.route}>
                   {order.route}
                 </div>
-                <div className="w-24 shrink-0 text-sm font-semibold text-foreground text-right">
-                  {formatCurrency(order.carrierPay)}
+                <div className="w-24 shrink-0 text-right">
+                  <div className="text-sm font-semibold text-foreground">
+                    {order.paymentType === 'SPLIT' && order.billingAmount != null
+                      ? formatCurrency(order.billingAmount)
+                      : formatCurrency(order.carrierPay)}
+                  </div>
+                  {order.paymentType === 'SPLIT' && order.codAmount != null && (
+                    <div className="text-xs text-muted-foreground">
+                      Split: COD <span className="text-emerald-600 dark:text-emerald-400">{formatCurrency(order.codAmount)}</span> collected
+                    </div>
+                  )}
                 </div>
                 <div className="w-20 shrink-0 text-xs text-muted-foreground text-right hidden sm:block">
                   {formatDate(order.updatedAt)}

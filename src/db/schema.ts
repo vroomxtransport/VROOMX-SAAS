@@ -241,6 +241,8 @@ export const orders = pgTable('orders', {
   brokerFee: numeric('broker_fee', { precision: 12, scale: 2 }).default('0'),
   localFee: numeric('local_fee', { precision: 12, scale: 2 }).default('0'),
   driverPayRateOverride: numeric('driver_pay_rate_override', { precision: 5, scale: 2 }),
+  codAmount: numeric('cod_amount', { precision: 12, scale: 2 }),
+  billingAmount: numeric('billing_amount', { precision: 12, scale: 2 }),
   paymentType: paymentTypeEnum('payment_type').default('COP'),
   // Distance
   distanceMiles: numeric('distance_miles', { precision: 10, scale: 1 }),
