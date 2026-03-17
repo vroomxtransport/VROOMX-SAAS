@@ -6,6 +6,10 @@ export interface FuelFilters {
   truckId?: string
   driverId?: string
   search?: string
+  dateFrom?: string
+  dateTo?: string
+  sortBy?: string
+  sortDir?: 'asc' | 'desc'
   page?: number
   pageSize?: number
 }
@@ -25,12 +29,17 @@ export async function fetchFuelEntries(
   supabase: SupabaseClient,
   filters: FuelFilters = {}
 ): Promise<FuelEntriesResult> {
-  const { truckId, driverId, search, page = 0, pageSize = 20 } = filters
+  const { truckId, driverId, search, dateFrom, dateTo, sortBy, sortDir, page = 0, pageSize = 20 } = filters
+
+  // Determine sort column – whitelist allowed columns to prevent injection
+  const allowedSortColumns = ['date', 'gallons', 'total_cost', 'cost_per_gallon', 'location']
+  const resolvedSortBy = sortBy && allowedSortColumns.includes(sortBy) ? sortBy : 'date'
+  const ascending = sortDir === 'asc'
 
   let query = supabase
     .from('fuel_entries')
     .select('*, driver:drivers(id, first_name, last_name), truck:trucks(id, unit_number)', { count: 'exact' })
-    .order('date', { ascending: false })
+    .order(resolvedSortBy, { ascending })
     .range(page * pageSize, (page + 1) * pageSize - 1)
 
   if (truckId) {
@@ -39,6 +48,14 @@ export async function fetchFuelEntries(
 
   if (driverId) {
     query = query.eq('driver_id', driverId)
+  }
+
+  if (dateFrom) {
+    query = query.gte('date', dateFrom)
+  }
+
+  if (dateTo) {
+    query = query.lte('date', dateTo)
   }
 
   if (search) {

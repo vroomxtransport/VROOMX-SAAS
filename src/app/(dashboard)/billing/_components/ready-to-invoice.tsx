@@ -1,16 +1,19 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { fetchReadyToInvoice, type ReadyToInvoiceOrder } from '@/lib/queries/receivables'
+import { fetchReadyToInvoice } from '@/lib/queries/receivables'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Send, Loader2, CheckCircle2, FileText, Percent } from 'lucide-react'
+import { Send, Loader2, Percent } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { factorOrder } from '@/app/actions/factoring'
+import { EnhancedFilterBar } from '@/components/shared/enhanced-filter-bar'
+import { CsvExportButton } from '@/components/shared/csv-export-button'
+import type { EnhancedFilterConfig, DateRange } from '@/types/filters'
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-US', {
@@ -40,6 +43,9 @@ export function ReadyToInvoice({ factoringFeeRate = 0 }: ReadyToInvoiceProps) {
   const [factoringId, setFactoringId] = useState<string | null>(null)
   const [batchSending, setBatchSending] = useState(false)
   const [batchProgress, setBatchProgress] = useState({ sent: 0, total: 0 })
+  const [activeFilters, setActiveFilters] = useState<
+    Record<string, string | string[] | DateRange | undefined>
+  >({})
   const showFactoring = factoringFeeRate > 0
 
   const { data: orders, isLoading } = useQuery({
@@ -66,6 +72,73 @@ export function ReadyToInvoice({ factoringFeeRate = 0 }: ReadyToInvoiceProps) {
     }
   }, [supabase, queryClient])
 
+  // Build broker filter options from loaded data
+  const brokerOptions = useMemo(() => {
+    if (!orders) return []
+    const brokerMap = new Map<string, string>()
+    for (const order of orders) {
+      if (order.broker) {
+        brokerMap.set(order.broker.id, order.broker.name)
+      }
+    }
+    return Array.from(brokerMap.entries()).map(([id, name]) => ({
+      value: id,
+      label: name,
+    }))
+  }, [orders])
+
+  const filterConfig: EnhancedFilterConfig[] = useMemo(
+    () => [
+      {
+        key: 'search',
+        label: 'Search',
+        type: 'search',
+        placeholder: 'Search order #, vehicle, route...',
+      },
+      {
+        key: 'broker',
+        label: 'Broker',
+        type: 'multi-select',
+        options: brokerOptions,
+      },
+    ],
+    [brokerOptions]
+  )
+
+  const handleFilterChange = useCallback(
+    (key: string, value: string | string[] | DateRange | undefined) => {
+      setActiveFilters((prev) => ({ ...prev, [key]: value }))
+    },
+    []
+  )
+
+  // Apply filters
+  const filteredOrders = useMemo(() => {
+    if (!orders) return []
+    let result = [...orders]
+
+    // Search filter
+    const search = activeFilters.search as string | undefined
+    if (search) {
+      const term = search.toLowerCase()
+      result = result.filter(
+        (o) =>
+          (o.orderNumber?.toLowerCase().includes(term) ?? false) ||
+          o.vehicleName.toLowerCase().includes(term) ||
+          o.route.toLowerCase().includes(term) ||
+          (o.broker?.name.toLowerCase().includes(term) ?? false)
+      )
+    }
+
+    // Broker filter
+    const brokerIds = activeFilters.broker as string[] | undefined
+    if (brokerIds && brokerIds.length > 0) {
+      result = result.filter((o) => o.broker && brokerIds.includes(o.broker.id))
+    }
+
+    return result
+  }, [orders, activeFilters])
+
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev)
@@ -79,12 +152,12 @@ export function ReadyToInvoice({ factoringFeeRate = 0 }: ReadyToInvoiceProps) {
   }, [])
 
   const toggleAll = useCallback(() => {
-    if (!orders) return
+    if (!filteredOrders) return
     setSelectedIds((prev) => {
-      if (prev.size === orders.length) return new Set()
-      return new Set(orders.map((o) => o.id))
+      if (prev.size === filteredOrders.length) return new Set()
+      return new Set(filteredOrders.map((o) => o.id))
     })
-  }, [orders])
+  }, [filteredOrders])
 
   const handleSendInvoice = useCallback(async (orderId: string) => {
     setSendingId(orderId)
@@ -145,7 +218,7 @@ export function ReadyToInvoice({ factoringFeeRate = 0 }: ReadyToInvoiceProps) {
       if ('error' in result && result.error) {
         toast.error(typeof result.error === 'string' ? result.error : 'Failed to factor order')
       } else if ('data' in result && result.data) {
-        toast.success(`Factored at ${result.data.feeRate}% — Net: ${formatCurrency(result.data.netAmount)}`)
+        toast.success(`Factored at ${result.data.feeRate}% -- Net: ${formatCurrency(result.data.netAmount)}`)
         queryClient.invalidateQueries({ queryKey: ['ready-to-invoice'] })
         queryClient.invalidateQueries({ queryKey: ['orders'] })
       }
@@ -156,13 +229,25 @@ export function ReadyToInvoice({ factoringFeeRate = 0 }: ReadyToInvoiceProps) {
     }
   }, [queryClient])
 
+  const handleCsvExport = useCallback(async (): Promise<Record<string, unknown>[]> => {
+    return filteredOrders.map((o) => ({
+      'Order Number': o.orderNumber ?? '',
+      'Vehicle': o.vehicleName,
+      'Broker': o.broker?.name ?? '',
+      'Route': o.route,
+      'Amount': o.carrierPay,
+      'Delivered': o.updatedAt,
+    }))
+  }, [filteredOrders])
+
   if (isLoading) return null
 
-  const count = orders?.length ?? 0
-  if (count === 0) return null
+  const totalCount = orders?.length ?? 0
+  if (totalCount === 0) return null
 
-  const allSelected = count > 0 && selectedIds.size === count
-  const someSelected = selectedIds.size > 0 && selectedIds.size < count
+  const filteredCount = filteredOrders.length
+  const allSelected = filteredCount > 0 && selectedIds.size === filteredCount
+  const someSelected = selectedIds.size > 0 && selectedIds.size < filteredCount
 
   return (
     <section>
@@ -170,28 +255,45 @@ export function ReadyToInvoice({ factoringFeeRate = 0 }: ReadyToInvoiceProps) {
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-semibold text-foreground">Ready to Invoice</h2>
           <span className="rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 px-2.5 py-0.5 text-xs font-medium">
-            {count}
+            {totalCount}
           </span>
         </div>
-        {selectedIds.size > 0 && (
-          <Button
-            size="sm"
-            onClick={handleBatchSend}
-            disabled={batchSending}
-          >
-            {batchSending ? (
-              <>
-                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                Sending {batchProgress.sent}/{batchProgress.total}...
-              </>
-            ) : (
-              <>
-                <Send className="mr-1.5 h-3.5 w-3.5" />
-                Send {selectedIds.size} Invoice{selectedIds.size !== 1 ? 's' : ''}
-              </>
-            )}
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          <CsvExportButton
+            filename="ready-to-invoice"
+            headers={['Order Number', 'Vehicle', 'Broker', 'Route', 'Amount', 'Delivered']}
+            fetchData={handleCsvExport}
+          />
+          {selectedIds.size > 0 && (
+            <Button
+              size="sm"
+              onClick={handleBatchSend}
+              disabled={batchSending}
+            >
+              {batchSending ? (
+                <>
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  Sending {batchProgress.sent}/{batchProgress.total}...
+                </>
+              ) : (
+                <>
+                  <Send className="mr-1.5 h-3.5 w-3.5" />
+                  Send {selectedIds.size} Invoice{selectedIds.size !== 1 ? 's' : ''}
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Filter Bar */}
+      <div className="mb-3">
+        <EnhancedFilterBar
+          filters={filterConfig}
+          activeFilters={activeFilters}
+          onFilterChange={handleFilterChange}
+          resultCount={filteredCount}
+        />
       </div>
 
       <div className="rounded-lg border border-border-subtle bg-surface overflow-hidden">
@@ -213,79 +315,85 @@ export function ReadyToInvoice({ factoringFeeRate = 0 }: ReadyToInvoiceProps) {
         </div>
 
         {/* Order rows */}
-        {orders?.map((order) => {
-          const isSelected = selectedIds.has(order.id)
-          const isSending = sendingId === order.id
-          const hasBrokerEmail = !!order.broker?.email
+        {filteredOrders.length === 0 ? (
+          <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+            No orders match your filters
+          </div>
+        ) : (
+          filteredOrders.map((order) => {
+            const isSelected = selectedIds.has(order.id)
+            const isSending = sendingId === order.id
+            const hasBrokerEmail = !!order.broker?.email
 
-          return (
-            <div
-              key={order.id}
-              className={cn(
-                'flex items-center gap-4 px-4 py-3 border-b border-border-subtle last:border-b-0 transition-colors',
-                isSelected && 'bg-blue-50/50 dark:bg-blue-950/10'
-              )}
-            >
-              <div className="w-6 shrink-0">
-                <Checkbox
-                  checked={isSelected}
-                  onCheckedChange={() => toggleSelect(order.id)}
-                />
-              </div>
-              <div className="w-20 shrink-0 text-sm font-medium">
-                <Link href={`/orders/${order.id}`} className="text-blue-600 hover:underline">
-                  {order.orderNumber ?? 'N/A'}
-                </Link>
-              </div>
-              <div className="w-36 shrink-0 text-sm text-muted-foreground truncate" title={order.vehicleName}>
-                {order.vehicleName}
-              </div>
-              <div className="w-28 shrink-0 text-sm text-muted-foreground truncate" title={order.broker?.name ?? 'No broker'}>
-                {order.broker?.name ?? 'No broker'}
-              </div>
-              <div className="min-w-0 flex-1 text-sm text-muted-foreground truncate hidden md:block" title={order.route}>
-                {order.route}
-              </div>
-              <div className="w-24 shrink-0 text-sm font-semibold text-foreground text-right">
-                {formatCurrency(order.carrierPay)}
-              </div>
-              <div className="w-20 shrink-0 text-xs text-muted-foreground text-right hidden sm:block">
-                {formatDate(order.updatedAt)}
-              </div>
-              <div className={cn('shrink-0 flex justify-end gap-1.5', showFactoring ? 'w-44' : 'w-28')}>
-                {showFactoring && (
+            return (
+              <div
+                key={order.id}
+                className={cn(
+                  'flex items-center gap-4 px-4 py-3 border-b border-border-subtle last:border-b-0 transition-colors',
+                  isSelected && 'bg-blue-50/50 dark:bg-blue-950/10'
+                )}
+              >
+                <div className="w-6 shrink-0">
+                  <Checkbox
+                    checked={isSelected}
+                    onCheckedChange={() => toggleSelect(order.id)}
+                  />
+                </div>
+                <div className="w-20 shrink-0 text-sm font-medium">
+                  <Link href={`/orders/${order.id}`} className="text-blue-600 hover:underline">
+                    {order.orderNumber ?? 'N/A'}
+                  </Link>
+                </div>
+                <div className="w-36 shrink-0 text-sm text-muted-foreground truncate" title={order.vehicleName}>
+                  {order.vehicleName}
+                </div>
+                <div className="w-28 shrink-0 text-sm text-muted-foreground truncate" title={order.broker?.name ?? 'No broker'}>
+                  {order.broker?.name ?? 'No broker'}
+                </div>
+                <div className="min-w-0 flex-1 text-sm text-muted-foreground truncate hidden md:block" title={order.route}>
+                  {order.route}
+                </div>
+                <div className="w-24 shrink-0 text-sm font-semibold text-foreground text-right">
+                  {formatCurrency(order.carrierPay)}
+                </div>
+                <div className="w-20 shrink-0 text-xs text-muted-foreground text-right hidden sm:block">
+                  {formatDate(order.updatedAt)}
+                </div>
+                <div className={cn('shrink-0 flex justify-end gap-1.5', showFactoring ? 'w-44' : 'w-28')}>
+                  {showFactoring && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleFactor(order.id)}
+                      disabled={factoringId === order.id || batchSending}
+                    >
+                      {factoringId === order.id ? (
+                        <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Percent className="mr-1.5 h-3.5 w-3.5" />
+                      )}
+                      Factor
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleFactor(order.id)}
-                    disabled={factoringId === order.id || batchSending}
+                    onClick={() => handleSendInvoice(order.id)}
+                    disabled={isSending || !hasBrokerEmail || batchSending}
+                    title={!hasBrokerEmail ? 'Broker email required' : undefined}
                   >
-                    {factoringId === order.id ? (
+                    {isSending ? (
                       <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                     ) : (
-                      <Percent className="mr-1.5 h-3.5 w-3.5" />
+                      <Send className="mr-1.5 h-3.5 w-3.5" />
                     )}
-                    Factor
+                    Invoice
                   </Button>
-                )}
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleSendInvoice(order.id)}
-                  disabled={isSending || !hasBrokerEmail || batchSending}
-                  title={!hasBrokerEmail ? 'Broker email required' : undefined}
-                >
-                  {isSending ? (
-                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Send className="mr-1.5 h-3.5 w-3.5" />
-                  )}
-                  Invoice
-                </Button>
+                </div>
               </div>
-            </div>
-          )
-        })}
+            )
+          })
+        )}
       </div>
     </section>
   )

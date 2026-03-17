@@ -6,6 +6,8 @@ export interface BrokerFilters {
   search?: string
   page?: number
   pageSize?: number
+  sortBy?: string
+  sortDir?: 'asc' | 'desc'
 }
 
 export interface BrokersResult {
@@ -17,12 +19,12 @@ export async function fetchBrokers(
   supabase: SupabaseClient,
   filters: BrokerFilters = {}
 ): Promise<BrokersResult> {
-  const { search, page = 0, pageSize = 20 } = filters
+  const { search, page = 0, pageSize = 20, sortBy = 'name', sortDir = 'asc' } = filters
 
   let query = supabase
     .from('brokers')
     .select('*', { count: 'exact' })
-    .order('name', { ascending: true })
+    .order(sortBy, { ascending: sortDir === 'asc' })
     .range(page * pageSize, (page + 1) * pageSize - 1)
 
   if (search) {

@@ -8,6 +8,8 @@ export interface TruckFilters {
   search?: string
   page?: number
   pageSize?: number
+  sortBy?: string
+  sortDir?: 'asc' | 'desc'
 }
 
 export interface TrucksResult {
@@ -19,12 +21,12 @@ export async function fetchTrucks(
   supabase: SupabaseClient,
   filters: TruckFilters = {}
 ): Promise<TrucksResult> {
-  const { status, truckType, search, page = 0, pageSize = 20 } = filters
+  const { status, truckType, search, page = 0, pageSize = 20, sortBy, sortDir } = filters
 
   let query = supabase
     .from('trucks')
     .select('*', { count: 'exact' })
-    .order('unit_number', { ascending: true })
+    .order(sortBy ?? 'created_at', { ascending: sortDir === 'asc' })
     .range(page * pageSize, (page + 1) * pageSize - 1)
 
   if (status) {

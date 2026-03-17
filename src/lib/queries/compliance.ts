@@ -6,6 +6,10 @@ export interface ComplianceDocFilters {
   documentType?: string
   entityType?: string
   search?: string
+  expiryFrom?: string
+  expiryTo?: string
+  sortBy?: string
+  sortDir?: 'asc' | 'desc'
   page?: number
   pageSize?: number
 }
@@ -19,12 +23,16 @@ export async function fetchComplianceDocs(
   supabase: SupabaseClient,
   filters: ComplianceDocFilters = {}
 ): Promise<ComplianceDocsResult> {
-  const { documentType, entityType, search, page = 0, pageSize = 20 } = filters
+  const { documentType, entityType, search, expiryFrom, expiryTo, sortBy, sortDir, page = 0, pageSize = 20 } = filters
+
+  // Determine sort column and direction
+  const sortColumn = sortBy === 'expiry_date' ? 'expires_at' : 'expires_at'
+  const ascending = sortDir === 'desc' ? false : true
 
   let query = supabase
     .from('compliance_documents')
     .select('*', { count: 'exact' })
-    .order('expires_at', { ascending: true, nullsFirst: false })
+    .order(sortColumn, { ascending, nullsFirst: false })
     .range(page * pageSize, (page + 1) * pageSize - 1)
 
   if (documentType) {
@@ -40,6 +48,14 @@ export async function fetchComplianceDocs(
     if (s) {
       query = query.ilike('name', `%${s}%`)
     }
+  }
+
+  if (expiryFrom) {
+    query = query.gte('expires_at', expiryFrom)
+  }
+
+  if (expiryTo) {
+    query = query.lte('expires_at', expiryTo)
   }
 
   const { data, error, count } = await query

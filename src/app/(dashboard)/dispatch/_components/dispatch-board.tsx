@@ -30,9 +30,11 @@ import { Button } from '@/components/ui/button'
 import { Plus, Truck, ChevronDown, ChevronRight } from 'lucide-react'
 import { HelpTooltip } from '@/components/help-tooltip'
 import { PageHeader } from '@/components/shared/page-header'
+import { CsvExportButton } from '@/components/shared/csv-export-button'
 import { TRIP_STATUSES, TRIP_STATUS_LABELS, TRUCK_CAPACITY } from '@/types'
 import type { TripStatus, TruckType } from '@/types'
 import type { TripWithRelations } from '@/lib/queries/trips'
+import type { DateRange } from '@/types/filters'
 import { updateTripStatus, assignOrderToTrip } from '@/app/actions/trips'
 import { cn } from '@/lib/utils'
 
@@ -89,6 +91,12 @@ export function DispatchBoard() {
   const endDate = searchParams.get('endDate') ?? ''
   const page = parseInt(searchParams.get('page') ?? '0', 10)
 
+  // Reconstruct dateRange from URL params for the filter bar
+  const dateRange: DateRange | undefined = useMemo(() => {
+    if (startDate && endDate) return { from: startDate, to: endDate }
+    return undefined
+  }, [startDate, endDate])
+
   const { data, isPending, isError, error } = useTrips({
     search,
     status: status || undefined,
@@ -100,20 +108,40 @@ export function DispatchBoard() {
     pageSize: PAGE_SIZE,
   })
 
-  const activeFilters: Record<string, string> = {}
-  if (search) activeFilters.q = search
-  if (status) activeFilters.status = status
-  if (driverId) activeFilters.driver = driverId
-  if (truckId) activeFilters.truck = truckId
+  // Build activeFilters record for EnhancedFilterBar
+  const activeFilters: Record<string, string | string[] | DateRange | undefined> = useMemo(() => {
+    const filters: Record<string, string | string[] | DateRange | undefined> = {}
+    if (search) filters.q = search
+    if (status) filters.status = status
+    if (driverId) filters.driver = driverId
+    if (truckId) filters.truck = truckId
+    if (dateRange) filters.dateRange = dateRange
+    return filters
+  }, [search, status, driverId, truckId, dateRange])
 
-  const setFilter = useCallback(
-    (key: string, value: string | undefined) => {
+  const handleFilterChange = useCallback(
+    (key: string, value: string | string[] | DateRange | undefined) => {
       const params = new URLSearchParams(searchParams.toString())
-      if (value) {
+
+      if (key === 'dateRange') {
+        // Extract from/to into separate URL params
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+          const dr = value as DateRange
+          // Convert ISO string to date-only format for URL
+          const fromDate = dr.from.slice(0, 10)
+          const toDate = dr.to.slice(0, 10)
+          params.set('startDate', fromDate)
+          params.set('endDate', toDate)
+        } else {
+          params.delete('startDate')
+          params.delete('endDate')
+        }
+      } else if (typeof value === 'string') {
         params.set(key, value)
       } else {
         params.delete(key)
       }
+
       params.set('page', '0')
       router.push(`${pathname}?${params.toString()}`)
     },
@@ -129,19 +157,22 @@ export function DispatchBoard() {
     [searchParams, router, pathname]
   )
 
-  const handleDateChange = useCallback(
-    (key: 'startDate' | 'endDate', value: string) => {
-      const params = new URLSearchParams(searchParams.toString())
-      if (value) {
-        params.set(key, value)
-      } else {
-        params.delete(key)
-      }
-      params.set('page', '0')
-      router.push(`${pathname}?${params.toString()}`)
-    },
-    [searchParams, router, pathname]
-  )
+  // CSV export data fetcher
+  const fetchCsvData = useCallback(async (): Promise<Record<string, unknown>[]> => {
+    if (!data?.trips) return []
+    return data.trips.map((trip) => ({
+      trip_number: trip.trip_number ?? '',
+      status: TRIP_STATUS_LABELS[trip.status as TripStatus] ?? trip.status,
+      driver: trip.driver ? `${trip.driver.first_name} ${trip.driver.last_name}` : '',
+      truck: trip.truck?.unit_number ?? '',
+      order_count: trip.order_count ?? 0,
+      start_date: trip.start_date ?? '',
+      end_date: trip.end_date ?? '',
+      total_revenue: trip.total_revenue ?? '',
+      driver_pay: trip.driver_pay ?? '',
+      net_profit: trip.net_profit ?? '',
+    }))
+  }, [data?.trips])
 
   const toggleSection = useCallback((sectionStatus: string) => {
     setCollapsedSections((prev) => ({
@@ -280,6 +311,11 @@ export function DispatchBoard() {
           content="Create trips, assign orders, and track driver progress. Drag trip cards between columns to change status. Drag orders onto trips to assign them."
           side="right"
         />
+        <CsvExportButton
+          filename="trips-export"
+          headers={['trip_number', 'status', 'driver', 'truck', 'order_count', 'start_date', 'end_date', 'total_revenue', 'driver_pay', 'net_profit']}
+          fetchData={fetchCsvData}
+        />
         <Button onClick={() => setDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           New Trip
@@ -300,11 +336,8 @@ export function DispatchBoard() {
         <div className="flex-1 min-w-0">
           <TripFilters
             activeFilters={activeFilters}
-            onFilterChange={setFilter}
-            startDate={startDate}
-            endDate={endDate}
-            onStartDateChange={(v) => handleDateChange('startDate', v)}
-            onEndDateChange={(v) => handleDateChange('endDate', v)}
+            onFilterChange={handleFilterChange}
+            resultCount={data?.total}
           />
         </div>
         {/* Hide view toggle on mobile/tablet — force list view */}

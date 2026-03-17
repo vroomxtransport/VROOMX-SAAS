@@ -6,6 +6,8 @@ export interface TrailerFilters {
   status?: string
   trailerType?: string
   search?: string
+  sortBy?: string
+  sortDir?: 'asc' | 'desc'
   page?: number
   pageSize?: number
 }
@@ -23,12 +25,12 @@ export async function fetchTrailers(
   supabase: SupabaseClient,
   filters: TrailerFilters = {}
 ): Promise<TrailersResult> {
-  const { status, trailerType, search, page = 0, pageSize = 20 } = filters
+  const { status, trailerType, search, sortBy, sortDir, page = 0, pageSize = 20 } = filters
 
   let query = supabase
     .from('trailers')
     .select('*, assigned_truck:trucks!trailer_id(id, unit_number)', { count: 'exact' })
-    .order('trailer_number', { ascending: true })
+    .order(sortBy ?? 'trailer_number', { ascending: sortBy ? sortDir === 'asc' : true })
     .range(page * pageSize, (page + 1) * pageSize - 1)
 
   if (status) {

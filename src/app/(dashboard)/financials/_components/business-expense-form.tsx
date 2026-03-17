@@ -152,10 +152,10 @@ export function BusinessExpenseForm({ open, onClose, expense, trucks }: Props) {
 
             <div className="space-y-1.5">
               <Label>Truck</Label>
-              <Select value={truckId} onValueChange={setTruckId}>
+              <Select value={truckId || 'none'} onValueChange={(v) => setTruckId(v === 'none' ? '' : v)}>
                 <SelectTrigger><SelectValue placeholder="Company-wide" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Company-wide</SelectItem>
+                  <SelectItem value="none">Company-wide</SelectItem>
                   {trucks.map((t) => (
                     <SelectItem key={t.id} value={t.id}>{t.unit_number}</SelectItem>
                   ))}

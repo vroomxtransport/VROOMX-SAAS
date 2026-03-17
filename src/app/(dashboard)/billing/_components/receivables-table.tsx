@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import type { BrokerReceivable } from '@/lib/queries/receivables'
 import { PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS } from '@/types'
@@ -18,6 +18,9 @@ import {
 import { ChevronDown, ChevronRight, Package } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { BatchActions } from './batch-actions'
+import { EnhancedFilterBar } from '@/components/shared/enhanced-filter-bar'
+import { CsvExportButton } from '@/components/shared/csv-export-button'
+import type { EnhancedFilterConfig, DateRange } from '@/types/filters'
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('en-US', {
@@ -37,6 +40,57 @@ function formatDate(dateStr: string | null): string {
   })
 }
 
+// Determine the worst aging bucket for a broker based on oldest unpaid invoice
+function getBrokerAgingBucket(broker: BrokerReceivable, now: number): string {
+  if (!broker.oldestUnpaid) return 'current'
+  const days = Math.floor(
+    (now - new Date(broker.oldestUnpaid).getTime()) / (1000 * 60 * 60 * 24)
+  )
+  if (days <= 0) return 'current'
+  if (days <= 30) return '1_30'
+  if (days <= 60) return '31_60'
+  if (days <= 90) return '61_90'
+  return '90_plus'
+}
+
+const AGING_FILTER_OPTIONS = [
+  { value: 'current', label: 'Current (0 days)' },
+  { value: '1_30', label: '1-30 Days' },
+  { value: '31_60', label: '31-60 Days' },
+  { value: '61_90', label: '61-90 Days' },
+  { value: '90_plus', label: '90+ Days' },
+]
+
+const SORT_OPTIONS = [
+  { value: 'amount_desc', label: 'Amount (High to Low)' },
+  { value: 'amount_asc', label: 'Amount (Low to High)' },
+  { value: 'broker_asc', label: 'Broker (A-Z)' },
+  { value: 'broker_desc', label: 'Broker (Z-A)' },
+  { value: 'days_outstanding_desc', label: 'Days Outstanding (Most)' },
+  { value: 'days_outstanding_asc', label: 'Days Outstanding (Least)' },
+]
+
+const FILTER_CONFIG: EnhancedFilterConfig[] = [
+  {
+    key: 'search',
+    label: 'Search',
+    type: 'search',
+    placeholder: 'Search broker name...',
+  },
+  {
+    key: 'aging',
+    label: 'Aging Bucket',
+    type: 'multi-select',
+    options: AGING_FILTER_OPTIONS,
+  },
+  {
+    key: 'sort',
+    label: 'Sort By',
+    type: 'select',
+    options: SORT_OPTIONS,
+  },
+]
+
 interface ReceivablesTableProps {
   receivables: BrokerReceivable[]
 }
@@ -48,6 +102,66 @@ export function ReceivablesTable({ receivables }: ReceivablesTableProps) {
   const [expandedBrokers, setExpandedBrokers] = useState<Set<string>>(
     new Set()
   )
+  const [activeFilters, setActiveFilters] = useState<
+    Record<string, string | string[] | DateRange | undefined>
+  >({})
+
+  const handleFilterChange = useCallback(
+    (key: string, value: string | string[] | DateRange | undefined) => {
+      setActiveFilters((prev) => ({ ...prev, [key]: value }))
+    },
+    []
+  )
+
+  // Apply filters and sorting
+  const filteredReceivables = useMemo(() => {
+    const now = new Date().getTime()
+    let result = [...receivables]
+
+    // Search filter
+    const search = activeFilters.search as string | undefined
+    if (search) {
+      const term = search.toLowerCase()
+      result = result.filter((b) =>
+        b.brokerName.toLowerCase().includes(term)
+      )
+    }
+
+    // Aging bucket filter
+    const agingBuckets = activeFilters.aging as string[] | undefined
+    if (agingBuckets && agingBuckets.length > 0) {
+      result = result.filter((b) =>
+        agingBuckets.includes(getBrokerAgingBucket(b, now))
+      )
+    }
+
+    // Sort
+    const sortValue = activeFilters.sort as string | undefined
+    if (sortValue) {
+      const isAsc = sortValue.endsWith('_asc')
+      const dir = isAsc ? 1 : -1
+      const sortKey = sortValue.replace(/_asc$/, '').replace(/_desc$/, '')
+
+      result.sort((a, b) => {
+        if (sortKey === 'amount') {
+          return (a.totalOwed - b.totalOwed) * dir
+        }
+        if (sortKey === 'broker') {
+          return a.brokerName.localeCompare(b.brokerName) * dir
+        }
+        if (sortKey === 'days_outstanding') {
+          // Compare by oldest unpaid date directly (older date = more days outstanding)
+          const dateA = a.oldestUnpaid ? new Date(a.oldestUnpaid).getTime() : Infinity
+          const dateB = b.oldestUnpaid ? new Date(b.oldestUnpaid).getTime() : Infinity
+          // Older date = smaller timestamp = more days outstanding
+          return (dateA - dateB) * dir
+        }
+        return 0
+      })
+    }
+
+    return result
+  }, [receivables, activeFilters])
 
   const toggleBrokerExpand = useCallback((brokerId: string) => {
     setExpandedBrokers((prev) => {
@@ -93,7 +207,7 @@ export function ReceivablesTable({ receivables }: ReceivablesTableProps) {
 
   const toggleSelectAll = useCallback(() => {
     setSelectedOrderIds((prev) => {
-      const allOrderIds = receivables.flatMap((b) =>
+      const allOrderIds = filteredReceivables.flatMap((b) =>
         b.orders.map((o) => o.id)
       )
       const allSelected = allOrderIds.every((id) => prev.has(id))
@@ -103,13 +217,24 @@ export function ReceivablesTable({ receivables }: ReceivablesTableProps) {
       }
       return new Set(allOrderIds)
     })
-  }, [receivables])
+  }, [filteredReceivables])
 
   const clearSelection = useCallback(() => {
     setSelectedOrderIds(new Set())
   }, [])
 
-  const allOrderIds = receivables.flatMap((b) => b.orders.map((o) => o.id))
+  const handleCsvExport = useCallback(async (): Promise<Record<string, unknown>[]> => {
+    return filteredReceivables.map((b) => ({
+      'Broker': b.brokerName,
+      'Total Owed': b.totalOwed,
+      'Invoice Count': b.invoiceCount,
+      'Oldest Unpaid': b.oldestUnpaid ?? '',
+      'Paid This Month': b.paidThisMonth,
+      'Overdue Amount': b.overdueAmount,
+    }))
+  }, [filteredReceivables])
+
+  const allOrderIds = filteredReceivables.flatMap((b) => b.orders.map((o) => o.id))
   const allSelected =
     allOrderIds.length > 0 && allOrderIds.every((id) => selectedOrderIds.has(id))
   const someSelected = selectedOrderIds.size > 0
@@ -130,6 +255,23 @@ export function ReceivablesTable({ receivables }: ReceivablesTableProps) {
 
   return (
     <div className="space-y-3">
+      {/* Filter Bar */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <EnhancedFilterBar
+            filters={FILTER_CONFIG}
+            activeFilters={activeFilters}
+            onFilterChange={handleFilterChange}
+            resultCount={filteredReceivables.length}
+          />
+        </div>
+        <CsvExportButton
+          filename="receivables"
+          headers={['Broker', 'Total Owed', 'Invoice Count', 'Oldest Unpaid', 'Paid This Month', 'Overdue Amount']}
+          fetchData={handleCsvExport}
+        />
+      </div>
+
       {/* Batch Actions Toolbar */}
       {someSelected && (
         <BatchActions
@@ -159,30 +301,38 @@ export function ReceivablesTable({ receivables }: ReceivablesTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {receivables.map((broker) => {
-              const isExpanded = expandedBrokers.has(broker.brokerId)
-              const brokerOrderIds = broker.orders.map((o) => o.id)
-              const allBrokerSelected = brokerOrderIds.every((id) =>
-                selectedOrderIds.has(id)
-              )
-              const someBrokerSelected =
-                brokerOrderIds.some((id) => selectedOrderIds.has(id)) &&
-                !allBrokerSelected
+            {filteredReceivables.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={8} className="py-8 text-center text-sm text-muted-foreground">
+                  No receivables match your filters
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredReceivables.map((broker) => {
+                const isExpanded = expandedBrokers.has(broker.brokerId)
+                const brokerOrderIds = broker.orders.map((o) => o.id)
+                const allBrokerSelected = brokerOrderIds.every((id) =>
+                  selectedOrderIds.has(id)
+                )
+                const someBrokerSelected =
+                  brokerOrderIds.some((id) => selectedOrderIds.has(id)) &&
+                  !allBrokerSelected
 
-              return (
-                <BrokerRow
-                  key={broker.brokerId}
-                  broker={broker}
-                  isExpanded={isExpanded}
-                  allSelected={allBrokerSelected}
-                  indeterminate={someBrokerSelected}
-                  onToggleExpand={() => toggleBrokerExpand(broker.brokerId)}
-                  onToggleBrokerSelect={() => toggleBrokerSelection(broker)}
-                  selectedOrderIds={selectedOrderIds}
-                  onToggleOrderSelect={toggleOrderSelection}
-                />
-              )
-            })}
+                return (
+                  <BrokerRow
+                    key={broker.brokerId}
+                    broker={broker}
+                    isExpanded={isExpanded}
+                    allSelected={allBrokerSelected}
+                    indeterminate={someBrokerSelected}
+                    onToggleExpand={() => toggleBrokerExpand(broker.brokerId)}
+                    onToggleBrokerSelect={() => toggleBrokerSelection(broker)}
+                    selectedOrderIds={selectedOrderIds}
+                    onToggleOrderSelect={toggleOrderSelection}
+                  />
+                )
+              })
+            )}
           </TableBody>
         </Table>
       </div>

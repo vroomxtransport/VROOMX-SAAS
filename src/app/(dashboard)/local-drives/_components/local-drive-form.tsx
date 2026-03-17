@@ -156,14 +156,14 @@ export function LocalDriveForm({ localDrive, onSuccess, onCancel }: LocalDriveFo
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Driver</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={(v) => field.onChange(v === 'none' ? '' : v)} defaultValue={field.value || 'none'}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select driver" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="none">None</SelectItem>
                       {drivers.map((d) => (
                         <SelectItem key={d.id} value={d.id}>
                           {d.first_name} {d.last_name}
@@ -181,14 +181,14 @@ export function LocalDriveForm({ localDrive, onSuccess, onCancel }: LocalDriveFo
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Truck</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={(v) => field.onChange(v === 'none' ? '' : v)} defaultValue={field.value || 'none'}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select truck" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="none">None</SelectItem>
                       {trucks.map((t) => (
                         <SelectItem key={t.id} value={t.id}>
                           Unit #{t.unit_number}

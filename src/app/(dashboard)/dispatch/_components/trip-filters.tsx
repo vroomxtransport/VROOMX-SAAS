@@ -1,110 +1,95 @@
 'use client'
 
-import { FilterBar, type FilterConfig } from '@/components/shared/filter-bar'
+import { useMemo } from 'react'
+import { EnhancedFilterBar } from '@/components/shared/enhanced-filter-bar'
 import { useDrivers } from '@/hooks/use-drivers'
 import { useTrucks } from '@/hooks/use-trucks'
 import { TRIP_STATUSES, TRIP_STATUS_LABELS } from '@/types'
 import type { TripStatus } from '@/types'
+import type { EnhancedFilterConfig, DateRange } from '@/types/filters'
 
-function useFilterConfig(): FilterConfig[] {
+// Status pill color map (active state classes)
+const STATUS_PILL_COLORS: Record<TripStatus, string> = {
+  planned: 'bg-blue-500 text-white',
+  in_progress: 'bg-amber-500 text-white',
+  at_terminal: 'bg-violet-500 text-white',
+  completed: 'bg-emerald-500 text-white',
+}
+
+function useTripFilterConfig(): EnhancedFilterConfig[] {
   const { data: driversData } = useDrivers({ pageSize: 100 })
   const { data: trucksData } = useTrucks({ pageSize: 100 })
 
-  const statusOptions = TRIP_STATUSES.map((s) => ({
-    value: s,
-    label: TRIP_STATUS_LABELS[s as TripStatus],
-  }))
+  return useMemo(() => {
+    const statusOptions = TRIP_STATUSES.map((s) => ({
+      value: s,
+      label: TRIP_STATUS_LABELS[s as TripStatus],
+      color: STATUS_PILL_COLORS[s as TripStatus],
+    }))
 
-  const driverOptions = (driversData?.drivers ?? []).map((d) => ({
-    value: d.id,
-    label: `${d.first_name} ${d.last_name}`,
-  }))
+    const driverOptions = (driversData?.drivers ?? []).map((d) => ({
+      value: d.id,
+      label: `${d.first_name} ${d.last_name}`,
+    }))
 
-  const truckOptions = (trucksData?.trucks ?? []).map((t) => ({
-    value: t.id,
-    label: t.unit_number,
-  }))
+    const truckOptions = (trucksData?.trucks ?? []).map((t) => ({
+      value: t.id,
+      label: t.unit_number,
+    }))
 
-  return [
-    {
-      key: 'q',
-      label: 'Search',
-      type: 'search' as const,
-      placeholder: 'Search trip number...',
-    },
-    {
-      key: 'status',
-      label: 'Status',
-      type: 'select' as const,
-      options: statusOptions,
-    },
-    {
-      key: 'driver',
-      label: 'Drivers',
-      type: 'select' as const,
-      options: driverOptions,
-    },
-    {
-      key: 'truck',
-      label: 'Trucks',
-      type: 'select' as const,
-      options: truckOptions,
-    },
-  ]
+    return [
+      {
+        key: 'status',
+        label: 'Status',
+        type: 'status-pills' as const,
+        options: statusOptions,
+      },
+      {
+        key: 'q',
+        label: 'Search',
+        type: 'search' as const,
+        placeholder: 'Trip #...',
+      },
+      {
+        key: 'driver',
+        label: 'Driver',
+        type: 'select' as const,
+        options: driverOptions,
+      },
+      {
+        key: 'truck',
+        label: 'Truck',
+        type: 'select' as const,
+        options: truckOptions,
+      },
+      {
+        key: 'dateRange',
+        label: 'Trip Dates',
+        type: 'date-range' as const,
+      },
+    ]
+  }, [driversData, trucksData])
 }
 
 interface TripFiltersProps {
-  activeFilters: Record<string, string>
-  onFilterChange: (key: string, value: string | undefined) => void
-  startDate: string
-  endDate: string
-  onStartDateChange: (value: string) => void
-  onEndDateChange: (value: string) => void
+  activeFilters: Record<string, string | string[] | DateRange | undefined>
+  onFilterChange: (key: string, value: string | string[] | DateRange | undefined) => void
+  resultCount?: number
 }
 
 export function TripFilters({
   activeFilters,
   onFilterChange,
-  startDate,
-  endDate,
-  onStartDateChange,
-  onEndDateChange,
+  resultCount,
 }: TripFiltersProps) {
-  const filterConfig = useFilterConfig()
+  const filterConfig = useTripFilterConfig()
 
   return (
-    <div className="space-y-3">
-      <FilterBar
-        filters={filterConfig}
-        onFilterChange={onFilterChange}
-        activeFilters={activeFilters}
-      />
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2">
-          <label htmlFor="start-date" className="text-sm text-muted-foreground whitespace-nowrap">
-            From
-          </label>
-          <input
-            id="start-date"
-            type="date"
-            value={startDate}
-            onChange={(e) => onStartDateChange(e.target.value || '')}
-            className="h-9 rounded-md border border-border bg-surface px-3 text-sm text-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <label htmlFor="end-date" className="text-sm text-muted-foreground whitespace-nowrap">
-            To
-          </label>
-          <input
-            id="end-date"
-            type="date"
-            value={endDate}
-            onChange={(e) => onEndDateChange(e.target.value || '')}
-            className="h-9 rounded-md border border-border bg-surface px-3 text-sm text-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
-        </div>
-      </div>
-    </div>
+    <EnhancedFilterBar
+      filters={filterConfig}
+      activeFilters={activeFilters}
+      onFilterChange={onFilterChange}
+      resultCount={resultCount}
+    />
   )
 }

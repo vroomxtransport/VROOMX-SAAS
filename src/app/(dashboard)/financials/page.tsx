@@ -16,8 +16,14 @@ import { FinancialsDashboard } from './_components/financials-dashboard'
 async function safeQuery<T>(name: string, fn: () => Promise<T>, fallback: T): Promise<T> {
   try {
     return await fn()
-  } catch (err) {
-    console.error(`[Financials] ${name} failed:`, err)
+  } catch (err: unknown) {
+    // Supabase errors are often empty objects — extract message if available
+    const message = err instanceof Error
+      ? err.message
+      : typeof err === 'object' && err !== null && 'message' in err
+        ? (err as { message: string }).message
+        : 'Unknown error (likely auth context unavailable during SSR)'
+    console.warn(`[Financials] ${name} skipped:`, message)
     return fallback
   }
 }

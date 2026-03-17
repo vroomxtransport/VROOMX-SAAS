@@ -6,6 +6,9 @@ export interface DriverFilters {
   status?: string
   driverType?: string
   search?: string
+  payTypes?: string[]
+  sortBy?: string
+  sortDir?: 'asc' | 'desc'
   page?: number
   pageSize?: number
 }
@@ -19,14 +22,26 @@ export async function fetchDrivers(
   supabase: SupabaseClient,
   filters: DriverFilters = {}
 ): Promise<DriversResult> {
-  const { status, driverType, search, page = 0, pageSize = 20 } = filters
+  const { status, driverType, search, payTypes, sortBy, sortDir, page = 0, pageSize = 20 } = filters
+
+  // Determine sort column and direction
+  const sortColumn = sortBy ?? 'last_name'
+  const ascending = sortDir === 'desc' ? false : true
 
   let query = supabase
     .from('drivers')
     .select('*', { count: 'exact' })
-    .order('last_name', { ascending: true })
-    .order('first_name', { ascending: true })
-    .range(page * pageSize, (page + 1) * pageSize - 1)
+    .order(sortColumn, { ascending })
+
+  // Add secondary sort when primary is not already last_name
+  if (sortColumn !== 'last_name') {
+    query = query.order('last_name', { ascending: true })
+  }
+  if (sortColumn !== 'first_name') {
+    query = query.order('first_name', { ascending: true })
+  }
+
+  query = query.range(page * pageSize, (page + 1) * pageSize - 1)
 
   if (status) {
     query = query.eq('driver_status', status)
@@ -34,6 +49,10 @@ export async function fetchDrivers(
 
   if (driverType) {
     query = query.eq('driver_type', driverType)
+  }
+
+  if (payTypes && payTypes.length > 0) {
+    query = query.in('pay_type', payTypes)
   }
 
   if (search) {

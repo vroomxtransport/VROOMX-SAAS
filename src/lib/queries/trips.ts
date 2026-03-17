@@ -10,6 +10,8 @@ export interface TripFilters {
   startDate?: string // filter trips starting on or after this date
   endDate?: string // filter trips ending on or before this date
   search?: string // search by trip_number
+  sortBy?: string
+  sortDir?: 'asc' | 'desc'
   page?: number
   pageSize?: number
 }
@@ -30,12 +32,12 @@ export async function fetchTrips(
   supabase: SupabaseClient,
   filters: TripFilters = {}
 ): Promise<TripsResult> {
-  const { status, driverId, truckId, startDate, endDate, search, page = 0, pageSize = 20 } = filters
+  const { status, driverId, truckId, startDate, endDate, search, sortBy, sortDir, page = 0, pageSize = 20 } = filters
 
   let query = supabase
     .from('trips')
     .select(TRIP_SELECT, { count: 'exact' })
-    .order('start_date', { ascending: false })
+    .order(sortBy ?? 'created_at', { ascending: sortDir === 'asc' })
     .range(page * pageSize, (page + 1) * pageSize - 1)
 
   if (status) {

@@ -5,6 +5,11 @@ import { sanitizeSearch } from '@/lib/sanitize-search'
 export interface LocalDriveFilters {
   status?: string
   search?: string
+  driverId?: string
+  dateFrom?: string
+  dateTo?: string
+  sortBy?: string
+  sortDir?: 'asc' | 'desc'
   page?: number
   pageSize?: number
 }
@@ -18,16 +23,27 @@ export async function fetchLocalDrives(
   supabase: SupabaseClient,
   filters: LocalDriveFilters = {}
 ): Promise<LocalDrivesResult> {
-  const { status, search, page = 0, pageSize = 20 } = filters
+  const { status, search, driverId, dateFrom, dateTo, sortBy, sortDir, page = 0, pageSize = 20 } = filters
 
   let query = supabase
     .from('local_drives')
     .select('*, driver:drivers(id, first_name, last_name), truck:trucks(id, unit_number), order:orders(id, order_number, vehicle_make, vehicle_model, vehicle_vin)', { count: 'exact' })
-    .order('created_at', { ascending: false })
     .range(page * pageSize, (page + 1) * pageSize - 1)
 
   if (status) {
     query = query.eq('status', status)
+  }
+
+  if (driverId) {
+    query = query.eq('driver_id', driverId)
+  }
+
+  if (dateFrom) {
+    query = query.gte('scheduled_date', dateFrom)
+  }
+
+  if (dateTo) {
+    query = query.lte('scheduled_date', dateTo)
   }
 
   if (search) {
@@ -35,6 +51,13 @@ export async function fetchLocalDrives(
     if (s) {
       query = query.or(`pickup_city.ilike.%${s}%,delivery_city.ilike.%${s}%,pickup_location.ilike.%${s}%,delivery_location.ilike.%${s}%`)
     }
+  }
+
+  // Apply sort — default to created_at desc
+  if (sortBy) {
+    query = query.order(sortBy, { ascending: sortDir === 'asc' })
+  } else {
+    query = query.order('created_at', { ascending: false })
   }
 
   const { data, error, count } = await query

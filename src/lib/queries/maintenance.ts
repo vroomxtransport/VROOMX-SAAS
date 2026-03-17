@@ -7,6 +7,10 @@ export interface MaintenanceFilters {
   maintenanceType?: string
   status?: string
   search?: string
+  dateFrom?: string
+  dateTo?: string
+  sortBy?: string
+  sortDir?: 'asc' | 'desc'
   page?: number
   pageSize?: number
 }
@@ -26,12 +30,33 @@ export async function fetchMaintenanceRecords(
   supabase: SupabaseClient,
   filters: MaintenanceFilters = {}
 ): Promise<MaintenanceResult> {
-  const { truckId, maintenanceType, status, search, page = 0, pageSize = 20 } = filters
+  const {
+    truckId,
+    maintenanceType,
+    status,
+    search,
+    dateFrom,
+    dateTo,
+    sortBy,
+    sortDir,
+    page = 0,
+    pageSize = 20,
+  } = filters
+
+  // Determine sort column — only allow known columns to prevent injection
+  const allowedSortFields: Record<string, string> = {
+    scheduled_date: 'scheduled_date',
+    cost: 'cost',
+    created_at: 'created_at',
+    completed_date: 'completed_date',
+  }
+  const orderField = (sortBy && allowedSortFields[sortBy]) ?? 'scheduled_date'
+  const ascending = sortDir === 'asc'
 
   let query = supabase
     .from('maintenance_records')
     .select('*, truck:trucks(id, unit_number)', { count: 'exact' })
-    .order('scheduled_date', { ascending: false })
+    .order(orderField, { ascending })
     .range(page * pageSize, (page + 1) * pageSize - 1)
 
   if (truckId) {
@@ -53,6 +78,14 @@ export async function fetchMaintenanceRecords(
         `description.ilike.%${s}%,vendor.ilike.%${s}%,notes.ilike.%${s}%`
       )
     }
+  }
+
+  if (dateFrom) {
+    query = query.gte('scheduled_date', dateFrom)
+  }
+
+  if (dateTo) {
+    query = query.lte('scheduled_date', dateTo)
   }
 
   const { data, error, count } = await query

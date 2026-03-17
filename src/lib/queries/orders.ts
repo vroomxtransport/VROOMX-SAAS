@@ -9,6 +9,9 @@ export interface OrderFilters {
   dateFrom?: string
   dateTo?: string
   search?: string
+  paymentStatuses?: string[]
+  sortBy?: string
+  sortDir?: 'asc' | 'desc'
   page?: number
   pageSize?: number
 }
@@ -28,12 +31,12 @@ export async function fetchOrders(
   supabase: SupabaseClient,
   filters: OrderFilters = {}
 ): Promise<OrdersResult> {
-  const { status, brokerId, driverId, dateFrom, dateTo, search, page = 0, pageSize = 20 } = filters
+  const { status, brokerId, driverId, dateFrom, dateTo, search, paymentStatuses, sortBy, sortDir, page = 0, pageSize = 20 } = filters
 
   let query = supabase
     .from('orders')
     .select('*, broker:brokers(id, name, email), driver:drivers(id, first_name, last_name), trip:trips(id, trip_number, status)', { count: 'exact' })
-    .order('created_at', { ascending: false })
+    .order(sortBy ?? 'created_at', { ascending: sortBy ? sortDir === 'asc' : false })
     .range(page * pageSize, (page + 1) * pageSize - 1)
 
   if (status) {
@@ -54,6 +57,10 @@ export async function fetchOrders(
 
   if (dateTo) {
     query = query.lte('created_at', dateTo)
+  }
+
+  if (paymentStatuses && paymentStatuses.length > 0) {
+    query = query.in('payment_status', paymentStatuses)
   }
 
   if (search) {

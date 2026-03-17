@@ -33,7 +33,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https://*.supabase.co https://randomuser.me https://cdn1.iconfinder.com",
       "font-src 'self'",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://us.i.posthog.com https://api.stripe.com",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://us.i.posthog.com https://api.stripe.com https://api.eia.gov",
       "frame-src https://js.stripe.com https://hooks.stripe.com",
       "frame-ancestors 'none'",
     ].join('; '),

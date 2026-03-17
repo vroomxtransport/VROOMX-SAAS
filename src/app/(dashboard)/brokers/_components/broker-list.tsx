@@ -3,25 +3,35 @@
 import { useState, useCallback } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { useBrokers } from '@/hooks/use-brokers'
+import { createClient } from '@/lib/supabase/client'
+import { fetchBrokers } from '@/lib/queries/brokers'
 import { BrokerCard } from './broker-card'
 import { BrokerDrawer } from './broker-drawer'
-import { FilterBar, type FilterConfig } from '@/components/shared/filter-bar'
+import { EnhancedFilterBar } from '@/components/shared/enhanced-filter-bar'
+import { ViewToggle } from '@/components/shared/view-toggle'
+import { SortHeader } from '@/components/shared/sort-header'
+import { CsvExportButton } from '@/components/shared/csv-export-button'
 import { Pagination } from '@/components/shared/pagination'
 import { EmptyState } from '@/components/shared/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
-import { Plus, Building2 } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Plus, Building2, Pencil, Mail, Phone } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
+import { PAYMENT_TERMS_LABELS } from '@/types'
 import type { Broker } from '@/types/database'
+import type { EnhancedFilterConfig, SortConfig, DateRange } from '@/types/filters'
 
 const PAGE_SIZE = 20
 
-const filterConfig: FilterConfig[] = [
+const CSV_HEADERS = ['name', 'email', 'phone', 'address', 'city', 'state', 'zip', 'payment_terms', 'factoring_company']
+
+const filterConfig: EnhancedFilterConfig[] = [
   {
     key: 'q',
     label: 'Search',
     type: 'search',
-    placeholder: 'Search brokers by name...',
+    placeholder: 'Broker name, email...',
   },
 ]
 
@@ -32,29 +42,54 @@ export function BrokerList() {
 
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editingBroker, setEditingBroker] = useState<Broker | undefined>(undefined)
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
-  // Parse URL search params for filters
+  // Parse URL search params for filters + sort
   const search = searchParams.get('q') ?? undefined
   const page = parseInt(searchParams.get('page') ?? '0', 10)
+  const sortBy = searchParams.get('sortBy') ?? undefined
+  const sortDir = (searchParams.get('sortDir') as 'asc' | 'desc') ?? undefined
+
+  const sort: SortConfig | undefined = sortBy
+    ? { field: sortBy, direction: sortDir ?? 'asc' }
+    : undefined
 
   const { data, isPending, isError, error } = useBrokers({
     search,
     page,
     pageSize: PAGE_SIZE,
+    sortBy,
+    sortDir,
   })
 
-  const activeFilters: Record<string, string> = {}
+  const activeFilters: Record<string, string | string[] | DateRange | undefined> = {}
   if (search) activeFilters.q = search
 
   const setFilter = useCallback(
-    (key: string, value: string | undefined) => {
+    (key: string, value: string | string[] | DateRange | undefined) => {
       const params = new URLSearchParams(searchParams.toString())
-      if (value) {
+      if (value && typeof value === 'string') {
         params.set(key, value)
       } else {
         params.delete(key)
       }
       // Reset page on filter change
+      params.set('page', '0')
+      router.push(`${pathname}?${params.toString()}`)
+    },
+    [searchParams, router, pathname]
+  )
+
+  const handleSort = useCallback(
+    (newSort: SortConfig | undefined) => {
+      const params = new URLSearchParams(searchParams.toString())
+      if (newSort) {
+        params.set('sortBy', newSort.field)
+        params.set('sortDir', newSort.direction)
+      } else {
+        params.delete('sortBy')
+        params.delete('sortDir')
+      }
       params.set('page', '0')
       router.push(`${pathname}?${params.toString()}`)
     },
@@ -87,6 +122,31 @@ export function BrokerList() {
     [router]
   )
 
+  const fetchCsvData = useCallback(async (): Promise<Record<string, unknown>[]> => {
+    const supabase = createClient()
+    const result = await fetchBrokers(supabase, {
+      search,
+      page: 0,
+      pageSize: 10000,
+      sortBy,
+      sortDir,
+    })
+    return result.brokers.map((b) => ({
+      name: b.name,
+      email: b.email ?? '',
+      phone: b.phone ?? '',
+      address: b.address ?? '',
+      city: b.city ?? '',
+      state: b.state ?? '',
+      zip: b.zip ?? '',
+      payment_terms: b.payment_terms ?? '',
+      factoring_company: b.factoring_company ?? '',
+    }))
+  }, [search, sortBy, sortDir])
+
+  const brokers = data?.brokers ?? []
+  const total = data?.total ?? 0
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -97,12 +157,24 @@ export function BrokerList() {
         </Button>
       </PageHeader>
 
-      {/* Filters */}
-      <FilterBar
-        filters={filterConfig}
-        onFilterChange={setFilter}
-        activeFilters={activeFilters}
-      />
+      {/* Filters + controls */}
+      <div className="space-y-3">
+        <EnhancedFilterBar
+          filters={filterConfig}
+          onFilterChange={setFilter}
+          activeFilters={activeFilters}
+          resultCount={data ? total : undefined}
+        />
+
+        <div className="flex items-center justify-between gap-2">
+          <ViewToggle viewMode={viewMode} onViewChange={setViewMode} />
+          <CsvExportButton
+            filename="brokers"
+            headers={CSV_HEADERS}
+            fetchData={fetchCsvData}
+          />
+        </div>
+      </div>
 
       {/* Content */}
       {isPending ? (
@@ -121,7 +193,7 @@ export function BrokerList() {
         <div className="rounded-md bg-red-50 dark:bg-red-950/30 p-4 text-sm text-red-700 dark:text-red-400">
           Failed to load brokers: {error?.message ?? 'Unknown error'}
         </div>
-      ) : data && data.brokers.length === 0 ? (
+      ) : brokers.length === 0 ? (
         <EmptyState
           icon={Building2}
           title="No brokers yet"
@@ -131,10 +203,10 @@ export function BrokerList() {
             onClick: handleAddBroker,
           }}
         />
-      ) : (
+      ) : viewMode === 'grid' ? (
         <>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-            {data?.brokers.map((broker) => (
+            {brokers.map((broker) => (
               <BrokerCard
                 key={broker.id}
                 broker={broker}
@@ -144,14 +216,108 @@ export function BrokerList() {
             ))}
           </div>
 
-          {data && (
-            <Pagination
-              page={page}
-              pageSize={PAGE_SIZE}
-              total={data.total}
-              onPageChange={setPage}
-            />
-          )}
+          <Pagination
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={total}
+            onPageChange={setPage}
+          />
+        </>
+      ) : (
+        <>
+          {/* List view */}
+          <div className="rounded-lg border border-border bg-surface overflow-hidden">
+            {/* Table header */}
+            <div className="grid grid-cols-[1fr_1fr_140px_140px_100px_48px] gap-2 border-b border-border bg-muted/50 px-4 py-2.5">
+              <SortHeader
+                label="Name"
+                field="name"
+                currentSort={sort}
+                onSort={handleSort}
+              />
+              <span className="text-xs font-medium text-muted-foreground">Email</span>
+              <span className="text-xs font-medium text-muted-foreground">Phone</span>
+              <span className="text-xs font-medium text-muted-foreground">Factoring</span>
+              <span className="text-xs font-medium text-muted-foreground">Terms</span>
+              <span className="sr-only">Actions</span>
+            </div>
+
+            {/* Table rows */}
+            {brokers.map((broker) => (
+              <div
+                key={broker.id}
+                role="row"
+                tabIndex={0}
+                onClick={() => handleCardClick(broker.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    handleCardClick(broker.id)
+                  }
+                }}
+                className="grid grid-cols-[1fr_1fr_140px_140px_100px_48px] gap-2 items-center border-b border-border px-4 py-3 cursor-pointer transition-colors hover:bg-muted/30 last:border-b-0"
+              >
+                <div className="truncate text-sm font-medium text-foreground">
+                  {broker.name}
+                </div>
+                <div className="truncate text-sm text-muted-foreground">
+                  {broker.email ? (
+                    <span className="flex items-center gap-1.5">
+                      <Mail className="h-3.5 w-3.5 shrink-0" />
+                      {broker.email}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground/50">--</span>
+                  )}
+                </div>
+                <div className="truncate text-sm text-muted-foreground">
+                  {broker.phone ? (
+                    <span className="flex items-center gap-1.5">
+                      <Phone className="h-3.5 w-3.5 shrink-0" />
+                      {broker.phone}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground/50">--</span>
+                  )}
+                </div>
+                <div className="truncate text-sm text-muted-foreground">
+                  {broker.factoring_company ?? (
+                    <span className="text-muted-foreground/50">--</span>
+                  )}
+                </div>
+                <div>
+                  {broker.payment_terms ? (
+                    <Badge variant="outline" className="text-xs">
+                      {PAYMENT_TERMS_LABELS[broker.payment_terms]}
+                    </Badge>
+                  ) : (
+                    <span className="text-xs text-muted-foreground/50">--</span>
+                  )}
+                </div>
+                <div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground/60 hover:text-muted-foreground"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleEditBroker(broker)
+                    }}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                    <span className="sr-only">Edit {broker.name}</span>
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <Pagination
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={total}
+            onPageChange={setPage}
+          />
         </>
       )}
 
