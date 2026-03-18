@@ -60,19 +60,14 @@ export function DashboardWidgets(props: DashboardWidgetsProps) {
   )
 
   // On mobile, stack everything single-column
-  const smLayouts = useMemo(
-    (): readonly LayoutItem[] =>
-      visibleWidgets.map((w, i) => ({
-        i: w.id,
-        x: 0,
-        y: i * 3,
-        w: 1,
-        h: w.grid.h,
-        minH: w.grid.minH,
-        static: true,
-      })),
-    [visibleWidgets]
-  )
+  const smLayouts = useMemo((): readonly LayoutItem[] => {
+    let cumY = 0
+    return visibleWidgets.map((w) => {
+      const item = { i: w.id, x: 0, y: cumY, w: 1, h: w.grid.h, minH: w.grid.minH, static: true }
+      cumY += w.grid.h
+      return item
+    })
+  }, [visibleWidgets])
 
   const handleLayoutChange = useCallback(
     (layout: Layout, _layouts: ResponsiveLayouts) => {
@@ -114,7 +109,7 @@ export function DashboardWidgets(props: DashboardWidgetsProps) {
                     <GripVertical className="h-4 w-4 text-muted-foreground" />
                   </div>
                 )}
-                <div className="h-full w-full overflow-auto">
+                <div className="h-full w-full overflow-hidden rounded-xl">
                   {props[widgetContent[widget.id as Exclude<WidgetId, 'statCards'>]]}
                 </div>
               </div>
