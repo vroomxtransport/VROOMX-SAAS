@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSidebarStore } from '@/stores/sidebar-store'
@@ -146,24 +147,32 @@ export function Sidebar({ userRole, tenantName }: SidebarProps) {
         )}
       >
         {/* Logo area */}
-        <div className="flex h-12 items-center justify-between border-b border-[var(--sidebar-border-color)] px-4">
-          <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#fb7232] to-[#f59e0b]">
-              <Truck className="h-4.5 w-4.5 text-white" />
-            </div>
-            <span
-              className={cn(
-                'text-lg font-bold tracking-tight whitespace-nowrap transition-opacity duration-200',
-                'bg-gradient-to-r from-white to-[#f9a06c] bg-clip-text text-transparent',
-                isCollapsed && 'lg:hidden'
-              )}
-            >
-              VroomX
-            </span>
-          </div>
+        <div className="flex h-14 items-center border-b border-[var(--sidebar-border-color)] px-3">
+          <Link href="/dashboard" className={cn(
+            'flex flex-1 items-center justify-center overflow-hidden',
+            isCollapsed ? 'lg:justify-center' : 'lg:justify-start lg:pl-1'
+          )}>
+            {isCollapsed ? (
+              <Image
+                src="/images/logo-white.png"
+                alt="VroomX"
+                width={32}
+                height={32}
+                className="h-8 w-auto object-contain"
+              />
+            ) : (
+              <Image
+                src="/images/logo-white.png"
+                alt="VroomX TMS"
+                width={140}
+                height={48}
+                className="h-9 w-auto"
+              />
+            )}
+          </Link>
           <button
             onClick={close}
-            className="lg:hidden rounded-md p-1 text-[var(--sidebar-text)] hover:bg-[var(--sidebar-hover)] transition-colors"
+            className="lg:hidden shrink-0 rounded-md p-1 text-[var(--sidebar-text)] hover:bg-[var(--sidebar-hover)] transition-colors"
             aria-label="Close sidebar"
           >
             <X className="h-5 w-5" />
