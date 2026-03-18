@@ -183,7 +183,7 @@ export function Sidebar({ userRole, tenantName }: SidebarProps) {
             isCollapsed && 'lg:hidden'
           )}
         >
-          <p className="text-sm font-medium text-[var(--sidebar-text)] truncate">{tenantName}</p>
+          <p className="text-sm font-medium text-white text-center truncate">{tenantName}</p>
         </div>
 
         {/* Collapse toggle (desktop only) */}
