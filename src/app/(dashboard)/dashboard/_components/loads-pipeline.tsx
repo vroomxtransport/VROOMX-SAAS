@@ -32,14 +32,20 @@ export function LoadsPipeline({ pipelineCounts, recentOrders }: LoadsPipelinePro
   })
 
   return (
-    <div className="rounded-xl border border-border-subtle bg-surface p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-base font-semibold text-foreground">Loads Pipeline</h3>
-        <span className="text-sm text-muted-foreground">{total} total</span>
+    <div className="widget-card-primary h-full flex flex-col">
+      {/* Header */}
+      <div className="widget-header">
+        <span className="widget-title">
+          <span className="widget-accent-dot bg-brand" />
+          Loads Pipeline
+        </span>
+        <span className="rounded-full bg-brand/10 text-brand px-2.5 py-0.5 text-xs font-semibold tabular-nums">
+          {total} total
+        </span>
       </div>
 
       {/* Segmented status bar */}
-      <div className="h-8 rounded-lg overflow-hidden flex">
+      <div className="h-5 rounded-full overflow-hidden flex gap-0.5">
         {PIPELINE_STATUSES.map((status) => {
           const count = pipelineCounts[status.key] ?? 0
           const pct = total > 0 ? (count / total) * 100 : 0
@@ -53,17 +59,17 @@ export function LoadsPipeline({ pipelineCounts, recentOrders }: LoadsPipelinePro
             <div
               key={status.key}
               className={cn(
-                'transition-all duration-500 flex items-center justify-center shadow-inner group/seg relative cursor-default',
+                'shine-line transition-all duration-500 flex items-center justify-center group/seg relative cursor-default',
                 status.color,
-                isFirst && 'rounded-l-lg',
-                isLast && 'rounded-r-lg'
+                isFirst && 'rounded-l-full',
+                isLast && 'rounded-r-full'
               )}
               style={{ width: `${pct}%` }}
             >
               {pct > 6 && (
                 <span className="text-xs font-semibold text-white">{count}</span>
               )}
-              <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-foreground/90 px-2 py-1 text-[10px] font-medium text-background opacity-0 transition-opacity group-hover/seg:opacity-100 pointer-events-none">
+              <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-foreground/90 px-2 py-1 text-[10px] font-medium text-background opacity-0 transition-opacity group-hover/seg:opacity-100 pointer-events-none z-10">
                 {status.label}: {count} ({Math.round(pct)}%)
               </div>
             </div>
@@ -72,11 +78,14 @@ export function LoadsPipeline({ pipelineCounts, recentOrders }: LoadsPipelinePro
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3">
+      <div className="flex flex-wrap gap-x-2 gap-y-1.5 mt-3">
         {PIPELINE_STATUSES.map((status) => (
-          <div key={status.key} className="flex items-center gap-1.5">
-            <span className={cn('h-2.5 w-2.5 rounded-full', status.color)} />
-            <span className="text-xs text-muted-foreground">
+          <div
+            key={status.key}
+            className="flex items-center gap-1.5 rounded-full bg-muted/60 px-2.5 py-1 text-xs"
+          >
+            <span className={cn('h-2 w-2 rounded-full shrink-0', status.color)} />
+            <span className="text-muted-foreground">
               {status.label} ({pipelineCounts[status.key] ?? 0})
             </span>
           </div>
@@ -84,7 +93,7 @@ export function LoadsPipeline({ pipelineCounts, recentOrders }: LoadsPipelinePro
       </div>
 
       {/* Recent orders mini-table */}
-      <div className="mt-4">
+      <div className="flex-1 min-h-0 overflow-auto mt-4">
         <div className="border-l-2 border-brand/50 pl-3 mb-2">
           <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Recent Orders</h4>
         </div>
@@ -101,8 +110,13 @@ export function LoadsPipeline({ pipelineCounts, recentOrders }: LoadsPipelinePro
             </thead>
             <tbody className="divide-y divide-border-subtle">
               {recentOrders.map((order) => (
-                <tr key={order.orderNumber} className="group transition-colors hover:bg-accent/30">
-                  <td className="py-2 font-medium text-foreground group-hover:text-brand transition-colors">{order.orderNumber}</td>
+                <tr
+                  key={order.orderNumber}
+                  className="group transition-colors hover:bg-[var(--accent-blue-bg)]"
+                >
+                  <td className="py-2 font-semibold text-foreground group-hover:text-brand transition-colors">
+                    {order.orderNumber}
+                  </td>
                   <td className="py-2 text-muted-foreground hidden sm:table-cell">{order.vehicle}</td>
                   <td className="py-2 text-muted-foreground hidden md:table-cell">{order.route}</td>
                   <td className="py-2">

@@ -93,7 +93,7 @@ export function DashboardWidgets(props: DashboardWidgetsProps) {
             containerPadding={[0, 0] as const}
             autoSize
             dragConfig={{ enabled: editMode, handle: '.widget-drag-handle' }}
-            resizeConfig={{ enabled: editMode, handles: ['se'] }}
+            resizeConfig={{ enabled: editMode, handles: ['se', 's', 'e'] }}
             onLayoutChange={handleLayoutChange}
           >
             {visibleWidgets.map((widget) => (

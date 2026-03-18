@@ -27,6 +27,16 @@ function getDateLabel(dateStr: string): string {
   return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
 }
 
+function getDatePillClass(dateLabel: string): string {
+  if (dateLabel === 'Today') {
+    return 'bg-brand/10 text-brand'
+  }
+  if (dateLabel === 'Tomorrow') {
+    return 'bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400'
+  }
+  return 'bg-muted text-muted-foreground'
+}
+
 export function UpcomingPickups({ pickups }: UpcomingPickupsProps) {
   // Group pickups by date label
   const grouped: Record<string, Pickup[]> = {}
@@ -37,9 +47,12 @@ export function UpcomingPickups({ pickups }: UpcomingPickupsProps) {
   }
 
   return (
-    <div className="rounded-xl border border-border-subtle bg-surface p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-base font-semibold text-foreground">Upcoming Pickups</h3>
+    <div className="widget-card h-full flex flex-col">
+      <div className="widget-header">
+        <span className="widget-title">
+          <span className="widget-accent-dot bg-amber-500" />
+          Upcoming Pickups
+        </span>
         <Link href="/orders?status=assigned" className="text-sm text-brand hover:underline">
           View All
         </Link>
@@ -48,22 +61,29 @@ export function UpcomingPickups({ pickups }: UpcomingPickupsProps) {
       {pickups.length === 0 ? (
         <p className="text-sm text-muted-foreground py-4">No upcoming pickups scheduled.</p>
       ) : (
-        <div className="space-y-3">
+        <div className="flex-1 min-h-0 overflow-auto space-y-3">
           {Object.entries(grouped).map(([dateLabel, items]) => (
             <div key={dateLabel}>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              <span
+                className={cn(
+                  'inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider mb-2',
+                  getDatePillClass(dateLabel)
+                )}
+              >
                 {dateLabel}
-              </p>
-              <div className="space-y-2">
+              </span>
+              <div className="space-y-1">
                 {items.map((pickup) => (
                   <div
                     key={pickup.orderNumber}
-                    className="flex items-start gap-3 rounded-lg p-2 hover:bg-accent/50 transition-colors"
+                    className="flex items-start gap-3 rounded-xl border border-transparent p-2.5 transition-all hover:border-border-subtle hover:bg-surface-raised"
                   >
                     <span
                       className={cn(
-                        'mt-1.5 h-2.5 w-2.5 rounded-full shrink-0',
-                        pickup.driverName ? 'bg-green-500' : 'bg-amber-500'
+                        'mt-1.5 h-2.5 w-2.5 rounded-full shrink-0 ring-2',
+                        pickup.driverName
+                          ? 'bg-green-500 ring-green-500/20'
+                          : 'bg-amber-500 ring-amber-500/20'
                       )}
                     />
                     <div className="flex-1 min-w-0">

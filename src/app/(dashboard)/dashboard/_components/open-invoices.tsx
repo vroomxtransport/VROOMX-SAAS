@@ -41,7 +41,7 @@ export function OpenInvoices() {
   const strokeOffset = circumference * (1 - ratio)
 
   return (
-    <div className="widget-card">
+    <div className="widget-card h-full flex flex-col">
       <div className="widget-header">
         <span className="widget-title">
           <span className="widget-accent-dot bg-[var(--accent-amber)]" />
@@ -53,7 +53,7 @@ export function OpenInvoices() {
       </div>
 
       {/* Donut gauge */}
-      <div className="flex items-center gap-4 mb-4">
+      <div className="flex-1 min-h-0 flex items-center gap-4 mb-4">
         <div className="relative h-20 w-20 shrink-0">
           <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
             <circle

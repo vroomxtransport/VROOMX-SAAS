@@ -45,21 +45,31 @@ const PERIOD_DATA: Record<Period, { date: string; revenue: number }[]> = {
   '90D': generateSampleData(90),
 }
 
-function computeStats(data: { revenue: number }[]) {
+function computeStats(data: { date: string; revenue: number }[]) {
   const total = data.reduce((s, d) => s + d.revenue, 0)
   const avg = data.length > 0 ? Math.round(total / data.length) : 0
-  return { total, avg }
+  const peak = data.reduce(
+    (best, d) => (d.revenue > best.revenue ? d : best),
+    data[0] ?? { date: '—', revenue: 0 }
+  )
+  return { total, avg, peakDay: peak.date }
 }
 
 export function RevenueChart() {
   const [period, setPeriod] = useState<Period>('30D')
   const data = PERIOD_DATA[period]
-  const { total, avg } = computeStats(data)
+  const { total, avg, peakDay } = computeStats(data)
 
   return (
-    <div className="rounded-xl border border-border-subtle bg-surface p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-base font-semibold text-foreground">Revenue</h3>
+    <div className="widget-card-primary h-full flex flex-col">
+      {/* Header */}
+      <div className="widget-header">
+        <span className="widget-title">
+          <span className="widget-accent-dot bg-[var(--brand)]" />
+          Revenue
+        </span>
+
+        {/* Period selector */}
         <div className="flex rounded-lg bg-muted p-0.5">
           {(['7D', '30D', '90D'] as Period[]).map((p) => (
             <button
@@ -68,7 +78,7 @@ export function RevenueChart() {
               className={cn(
                 'px-3 py-1 text-xs font-medium rounded-md transition-all',
                 period === p
-                  ? 'bg-surface shadow-sm text-foreground'
+                  ? 'bg-brand text-white shadow-[0_1px_4px_rgba(251,114,50,0.3)]'
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
@@ -78,16 +88,25 @@ export function RevenueChart() {
         </div>
       </div>
 
-      <div className="h-[180px]">
+      {/* Chart */}
+      <div className="flex-1 min-h-0">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#fb7232" stopOpacity={0.2} />
-                <stop offset="95%" stopColor="#fb7232" stopOpacity={0.02} />
+                <stop offset="5%" stopColor="#fb7232" stopOpacity={0.25} />
+                <stop offset="45%" stopColor="#f59e0b" stopOpacity={0.08} />
+                <stop offset="95%" stopColor="#fb7232" stopOpacity={0} />
               </linearGradient>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="2" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e8e7e4" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" vertical={false} />
             <XAxis
               dataKey="date"
               tick={{ fontSize: 11, fill: '#7a7a7a' }}
@@ -116,22 +135,30 @@ export function RevenueChart() {
               stroke="#fb7232"
               strokeWidth={2}
               fill="url(#revenueGradient)"
+              filter="url(#glow)"
             />
           </AreaChart>
         </ResponsiveContainer>
       </div>
 
-      <div className="flex gap-6 mt-3 pt-3 border-t border-border-subtle">
-        <div>
+      {/* Footer stats */}
+      <div className="flex gap-3 mt-3 pt-3 border-t border-border-subtle">
+        <div className="rounded-xl bg-muted/40 px-3 py-2.5">
           <p className="text-xs text-muted-foreground">Total</p>
           <p className="text-base font-semibold tabular-nums text-foreground">
             ${total.toLocaleString()}
           </p>
         </div>
-        <div>
+        <div className="rounded-xl bg-muted/40 px-3 py-2.5">
           <p className="text-xs text-muted-foreground">Daily Avg</p>
           <p className="text-base font-semibold tabular-nums text-foreground">
             ${avg.toLocaleString()}
+          </p>
+        </div>
+        <div className="rounded-xl bg-muted/40 px-3 py-2.5">
+          <p className="text-xs text-muted-foreground">Peak Day</p>
+          <p className="text-base font-semibold tabular-nums text-foreground">
+            {peakDay}
           </p>
         </div>
       </div>

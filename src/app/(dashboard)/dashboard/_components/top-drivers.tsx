@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { User } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
@@ -21,6 +21,16 @@ function fmt(value: number): string {
     maximumFractionDigits: 0,
   }).format(value)
 }
+
+function getInitials(name: string): string {
+  return name.split(' ').map(n => n[0] ?? '').join('').toUpperCase().slice(0, 2)
+}
+
+const RANK_STYLES = [
+  { badge: 'bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-amber-500/30 shadow-sm', avatar: 'bg-gradient-to-br from-brand to-amber-500 text-white', bar: 'bg-gradient-to-r from-brand to-amber-500' },
+  { badge: 'bg-gradient-to-br from-slate-300 to-slate-500 text-white shadow-sm', avatar: 'bg-violet-100 text-violet-700 dark:bg-violet-950/30 dark:text-violet-400', bar: 'bg-gradient-to-r from-violet-500 to-violet-400' },
+  { badge: 'bg-gradient-to-br from-amber-600 to-amber-800 text-white shadow-sm', avatar: 'bg-blue-100 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400', bar: 'bg-gradient-to-r from-blue-500 to-blue-400' },
+]
 
 export function TopDrivers() {
   const supabase = createClient()
@@ -76,52 +86,48 @@ export function TopDrivers() {
   const topRevenue = drivers[0]?.revenue ?? 1
 
   return (
-    <div className="rounded-xl border border-border-subtle bg-surface p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-base font-semibold text-foreground">Top Drivers</h3>
-        <div className="rounded-lg p-1.5 bg-[var(--accent-violet-bg)]">
-          <User className="h-4 w-4 text-[var(--accent-violet)]" />
-        </div>
+    <div className="widget-card h-full flex flex-col">
+      <div className="widget-header">
+        <span className="widget-title">
+          <span className="widget-accent-dot bg-[var(--accent-violet)]" />
+          Top Drivers
+        </span>
+        <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+          MTD
+        </span>
       </div>
 
       {drivers.length === 0 ? (
         <p className="text-sm text-muted-foreground py-4 text-center">No driver data this month</p>
       ) : (
-        <div className="space-y-2.5">
+        <div className="flex-1 min-h-0 overflow-auto space-y-3">
           {drivers.map((driver, i) => {
             const pct = topRevenue > 0 ? (driver.revenue / topRevenue) * 100 : 0
+            const style = RANK_STYLES[i] ?? { badge: 'bg-muted text-muted-foreground', avatar: 'bg-muted text-muted-foreground', bar: 'bg-gradient-to-r from-blue-500/50 to-blue-400/50' }
+
             return (
-              <div key={driver.driverId} className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className={cn(
-                      'flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold',
-                      i === 0
-                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                        : 'bg-muted text-muted-foreground'
-                    )}>
-                      {i + 1}
-                    </span>
-                    <Link
-                      href={`/drivers/${driver.driverId}`}
-                      className="text-sm font-medium text-foreground hover:text-brand truncate"
-                    >
-                      {driver.driverName}
-                    </Link>
-                  </div>
-                  <div className="text-right shrink-0 ml-2">
+              <div key={driver.driverId} className="space-y-1.5">
+                <div className="flex items-center gap-2.5">
+                  <span className={cn('flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold', style.badge)}>
+                    {i + 1}
+                  </span>
+                  <span className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold', style.avatar)}>
+                    {getInitials(driver.driverName)}
+                  </span>
+                  <Link
+                    href={`/drivers/${driver.driverId}`}
+                    className="flex-1 min-w-0 text-sm font-medium text-foreground hover:text-brand truncate"
+                  >
+                    {driver.driverName}
+                  </Link>
+                  <div className="text-right shrink-0">
                     <span className="text-sm font-semibold tabular-nums text-foreground">{fmt(driver.revenue)}</span>
-                    <span className="text-[10px] text-muted-foreground ml-1">({driver.loadCount})</span>
+                    <span className="text-[10px] text-muted-foreground ml-1">{driver.loadCount} loads</span>
                   </div>
                 </div>
-                <div className="h-1.5 rounded-full bg-border-subtle overflow-hidden">
+                <div className="h-1.5 rounded-full bg-border-subtle overflow-hidden ml-[3.75rem]">
                   <div
-                    className={cn(
-                      'h-1.5 rounded-full transition-all duration-500',
-                      i === 0
-                        ? 'bg-gradient-to-r from-violet-500 to-violet-400'
-                        : 'bg-gradient-to-r from-blue-500/60 to-blue-400/60'
-                    )}
+                    className={cn('h-1.5 rounded-full transition-all duration-500', style.bar)}
                     style={{ width: `${pct}%` }}
                   />
                 </div>
@@ -133,9 +139,10 @@ export function TopDrivers() {
 
       <Link
         href="/drivers"
-        className="mt-3 block text-center text-xs font-medium text-brand hover:underline"
+        className="mt-4 flex items-center justify-center gap-1.5 rounded-xl border border-border-subtle bg-surface-raised px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted/50 hover:text-brand"
       >
-        View All Drivers →
+        View All Drivers
+        <ChevronRight className="h-3.5 w-3.5" />
       </Link>
     </div>
   )

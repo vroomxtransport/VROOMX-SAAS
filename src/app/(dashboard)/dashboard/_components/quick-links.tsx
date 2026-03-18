@@ -12,29 +12,34 @@ import {
 import { cn } from '@/lib/utils'
 
 const LINKS = [
-  { label: 'New Order', href: '/orders', icon: PackageSearch, accent: 'text-blue-600 bg-blue-50 dark:bg-blue-950/30' },
-  { label: 'Trips', href: '/dispatch', icon: Route, accent: 'text-violet-600 bg-violet-50 dark:bg-violet-950/30' },
-  { label: 'Drivers', href: '/drivers', icon: Users, accent: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30' },
-  { label: 'Fleet', href: '/trucks', icon: Truck, accent: 'text-amber-600 bg-amber-50 dark:bg-amber-950/30' },
-  { label: 'Billing', href: '/billing', icon: Receipt, accent: 'text-rose-600 bg-rose-50 dark:bg-rose-950/30' },
-  { label: 'Reports', href: '/financials/reports', icon: BarChart3, accent: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-950/30' },
+  { label: 'New Order', href: '/orders', icon: PackageSearch, accent: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-950/30' },
+  { label: 'Trips', href: '/dispatch', icon: Route, accent: 'text-violet-600 dark:text-violet-400', bg: 'bg-violet-50 dark:bg-violet-950/30' },
+  { label: 'Drivers', href: '/drivers', icon: Users, accent: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-950/30' },
+  { label: 'Fleet', href: '/trucks', icon: Truck, accent: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-950/30' },
+  { label: 'Billing', href: '/billing', icon: Receipt, accent: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-50 dark:bg-rose-950/30' },
+  { label: 'Reports', href: '/financials/reports', icon: BarChart3, accent: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-950/30' },
 ]
 
 export function QuickLinks() {
   return (
-    <div className="rounded-xl border border-border-subtle bg-surface p-4">
-      <h3 className="text-base font-semibold text-foreground mb-3">Quick Links</h3>
-      <div className="grid grid-cols-2 gap-2">
-        {LINKS.map(({ label, href, icon: Icon, accent }) => (
+    <div className="widget-card h-full flex flex-col">
+      <div className="widget-header">
+        <span className="widget-title">
+          <span className="widget-accent-dot bg-brand" />
+          Quick Links
+        </span>
+      </div>
+      <div className="flex-1 min-h-0 grid grid-cols-3 gap-2.5">
+        {LINKS.map(({ label, href, icon: Icon, accent, bg }) => (
           <Link
             key={href}
             href={href}
-            className="flex items-center gap-2.5 rounded-lg border border-border-subtle px-3 py-2.5 transition-colors hover:bg-muted/50"
+            className="group flex flex-col items-center gap-2 rounded-xl border border-border-subtle bg-surface p-3.5 transition-all hover:-translate-y-0.5 hover:shadow-md hover:border-transparent hover:bg-surface-raised"
           >
-            <div className={cn('rounded-md p-1.5', accent)}>
-              <Icon className="h-3.5 w-3.5" />
+            <div className={cn('flex h-10 w-10 items-center justify-center rounded-xl transition-transform group-hover:scale-110', bg)}>
+              <Icon className={cn('h-5 w-5', accent)} />
             </div>
-            <span className="text-sm font-medium text-foreground">{label}</span>
+            <span className="text-xs font-medium text-foreground">{label}</span>
           </Link>
         ))}
       </div>

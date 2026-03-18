@@ -51,6 +51,13 @@ function ProgressRow({
     amber: 'text-[var(--accent-amber)]',
   }
 
+  const countColor =
+    pct > 90
+      ? 'text-red-500 dark:text-red-400'
+      : pct >= 70
+        ? 'text-amber-500 dark:text-amber-400'
+        : 'text-emerald-600 dark:text-emerald-400'
+
   const glowColor = glowColors[color]
 
   return (
@@ -62,16 +69,16 @@ function ProgressRow({
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline justify-between">
             <p className="text-sm font-medium text-foreground">{label}</p>
-            <p className="text-sm font-semibold tabular-nums text-foreground">
+            <p className={cn('text-sm font-semibold tabular-nums', countColor)}>
               {current}/{total}
             </p>
           </div>
           <p className="text-xs text-muted-foreground">{sublabel}</p>
         </div>
       </div>
-      <div className="h-2 rounded-full bg-border-subtle overflow-hidden">
+      <div className="h-2.5 rounded-full bg-border-subtle overflow-hidden">
         <div
-          className={cn('h-2 rounded-full transition-all duration-500', barColors[color])}
+          className={cn('h-2.5 rounded-full transition-all duration-500 shine-line', barColors[color])}
           style={{
             width: `${Math.min(pct, 100)}%`,
             ...(pct > 50 ? { boxShadow: `0 0 8px ${glowColor}, 0 0 16px ${glowColor}40` } : {}),
@@ -92,9 +99,21 @@ function ProgressRow({
 
 export function FleetPulse({ trucks, drivers, capacity }: FleetPulseProps) {
   return (
-    <div className="rounded-xl border border-border-subtle bg-surface p-4">
-      <h3 className="text-base font-semibold text-foreground mb-3">Fleet Pulse</h3>
-      <div className="space-y-3">
+    <div className="widget-card h-full flex flex-col">
+      <div className="widget-header">
+        <span className="widget-title">
+          <span className="widget-accent-dot bg-emerald-500" />
+          Fleet Pulse
+        </span>
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/30 px-2.5 py-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          </span>
+          Live
+        </span>
+      </div>
+      <div className="flex-1 min-h-0 overflow-auto space-y-3">
         <ProgressRow
           icon={Truck}
           label="Trucks"
