@@ -16,10 +16,25 @@ interface ProfitByDriverTableProps {
   data: ProfitByDriver[]
 }
 
-function marginColor(margin: number): string {
-  if (margin >= 10) return 'text-emerald-600'
-  if (margin >= 5) return 'text-amber-600'
-  return 'text-red-600'
+function marginBadge(margin: number) {
+  if (margin >= 20) {
+    return {
+      bg: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400',
+    }
+  }
+  if (margin >= 10) {
+    return {
+      bg: 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400',
+    }
+  }
+  return {
+    bg: 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400',
+  }
+}
+
+const PAY_TYPE_STYLES: Record<string, string> = {
+  company: 'bg-blue-100 text-blue-700 ring-1 ring-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:ring-blue-800/40',
+  owner_operator: 'bg-purple-100 text-purple-700 ring-1 ring-purple-200 dark:bg-purple-950/40 dark:text-purple-400 dark:ring-purple-800/40',
 }
 
 export function ProfitByDriverTable({ data }: ProfitByDriverTableProps) {
@@ -51,6 +66,12 @@ export function ProfitByDriverTable({ data }: ProfitByDriverTableProps) {
     })
   }, [filtered, sort])
 
+  // Max revenue for profit bar scaling (use revenue as proxy since driver table has no profit column)
+  const maxRevenue = useMemo(() => {
+    if (sorted.length === 0) return 1
+    return Math.max(...sorted.map((d) => d.revenue), 1)
+  }, [sorted])
+
   // CSV export handler
   const handleCsvExport = useCallback(async () => {
     return sorted.map((driver) => ({
@@ -65,17 +86,25 @@ export function ProfitByDriverTable({ data }: ProfitByDriverTableProps) {
 
   if (data.length === 0) {
     return (
-      <div className="rounded-xl border border-border-subtle bg-surface p-4">
-        <h3 className="text-base font-semibold text-foreground mb-3">Profit by Driver</h3>
+      <div className="widget-card">
+        <div className="widget-header">
+          <h3 className="widget-title">
+            <span className="widget-accent-dot bg-brand" />
+            Profit by Driver
+          </h3>
+        </div>
         <p className="text-sm text-muted-foreground py-8 text-center">No trip data for this period</p>
       </div>
     )
   }
 
   return (
-    <div className="rounded-xl border border-border-subtle bg-surface p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-        <h3 className="text-base font-semibold text-foreground">Profit by Driver</h3>
+    <div className="widget-card">
+      <div className="widget-header">
+        <h3 className="widget-title">
+          <span className="widget-accent-dot bg-brand" />
+          Profit by Driver
+        </h3>
         <div className="flex items-center gap-2">
           {/* Search input */}
           <div className="relative">
@@ -154,37 +183,52 @@ export function ProfitByDriverTable({ data }: ProfitByDriverTableProps) {
               </tr>
             </thead>
             <tbody>
-              {sorted.map((driver) => (
-                <tr key={driver.driverId} className="border-b border-border-subtle/50 last:border-0">
-                  <td className="py-2 pr-3">
-                    <Link href={`/drivers`} className="font-medium text-foreground hover:text-brand transition-colors">
-                      {driver.name}
-                    </Link>
-                  </td>
-                  <td className="py-2 px-3">
-                    <span className={cn(
-                      'inline-flex rounded-md px-1.5 py-0.5 text-[11px] font-medium',
-                      driver.driverType === 'company'
-                        ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400'
-                        : 'bg-purple-50 text-purple-700 dark:bg-purple-950/30 dark:text-purple-400'
-                    )}>
-                      {DRIVER_TYPE_LABELS[driver.driverType as DriverType] ?? driver.driverType}
-                    </span>
-                  </td>
-                  <td className="py-2 px-3 text-right tabular-nums text-muted-foreground">
-                    {driver.tripCount}
-                  </td>
-                  <td className="py-2 px-3 text-right tabular-nums text-foreground">
-                    ${driver.revenue.toLocaleString()}
-                  </td>
-                  <td className="py-2 px-3 text-right tabular-nums text-muted-foreground">
-                    ${driver.driverPay.toLocaleString()}
-                  </td>
-                  <td className={cn('py-2 pl-3 text-right tabular-nums font-medium', marginColor(driver.profitMargin))}>
-                    {driver.profitMargin.toFixed(1)}%
-                  </td>
-                </tr>
-              ))}
+              {sorted.map((driver) => {
+                const revenueBarWidth = Math.min((driver.revenue / maxRevenue) * 100, 100)
+                const badge = marginBadge(driver.profitMargin)
+                const payTypeStyle = PAY_TYPE_STYLES[driver.driverType] ??
+                  'bg-gray-100 text-gray-700 ring-1 ring-gray-200 dark:bg-gray-800/40 dark:text-gray-400 dark:ring-gray-700/40'
+
+                return (
+                  <tr key={driver.driverId} className="border-b border-border-subtle/50 last:border-0 hover:bg-muted/30 transition-colors">
+                    <td className="py-2 pr-3">
+                      <Link href="/drivers" className="font-medium text-brand hover:underline transition-colors">
+                        {driver.name}
+                      </Link>
+                    </td>
+                    <td className="py-2 px-3">
+                      <span className={cn(
+                        'inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium',
+                        payTypeStyle
+                      )}>
+                        {DRIVER_TYPE_LABELS[driver.driverType as DriverType] ?? driver.driverType}
+                      </span>
+                    </td>
+                    <td className="py-2 px-3 text-right tabular-nums text-muted-foreground">
+                      {driver.tripCount}
+                    </td>
+                    <td className="py-2 px-3 text-right">
+                      <div className="relative flex items-center justify-end">
+                        <div
+                          className="absolute inset-y-0 right-0 rounded-sm bg-emerald-500/20"
+                          style={{ width: `${revenueBarWidth}%` }}
+                        />
+                        <span className="relative tabular-nums text-foreground">
+                          ${driver.revenue.toLocaleString()}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-2 px-3 text-right tabular-nums text-muted-foreground">
+                      ${driver.driverPay.toLocaleString()}
+                    </td>
+                    <td className="py-2 pl-3 text-right">
+                      <span className={cn('inline-block rounded-full px-2 py-0.5 text-xs font-medium tabular-nums', badge.bg)}>
+                        {driver.profitMargin.toFixed(1)}%
+                      </span>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
           {filtered.length > 0 && (

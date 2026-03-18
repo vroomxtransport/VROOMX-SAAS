@@ -39,7 +39,7 @@ export function ExpenseBreakdownChart({ data, totalExpenses }: ExpenseBreakdownC
                   data={data}
                   cx="50%"
                   cy="50%"
-                  innerRadius={55}
+                  innerRadius={60}
                   outerRadius={85}
                   paddingAngle={2}
                   dataKey="amount"
@@ -60,29 +60,46 @@ export function ExpenseBreakdownChart({ data, totalExpenses }: ExpenseBreakdownC
                 />
               </PieChart>
             </ResponsiveContainer>
-            {/* Center label */}
+            {/* Center label with total */}
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <p className="text-xs text-muted-foreground">Total</p>
-              <p className="text-lg font-bold tabular-nums text-foreground">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Total</p>
+              <p className="text-xl font-bold tabular-nums text-foreground">
                 ${totalExpenses >= 1000 ? `${(totalExpenses / 1000).toFixed(1)}k` : totalExpenses.toLocaleString()}
               </p>
             </div>
           </div>
 
-          {/* Legend */}
-          <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1">
-            {data.slice(0, 6).map((item, i) => (
-              <div key={item.category} className="flex items-center gap-1.5 min-w-0">
-                <span
-                  className="h-2 w-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: COLORS[i % COLORS.length] }}
-                />
-                <span className="text-[11px] text-muted-foreground truncate">{item.label}</span>
-                <span className="text-[11px] font-medium tabular-nums text-foreground ml-auto shrink-0">
-                  {item.percentage}%
-                </span>
-              </div>
-            ))}
+          {/* Custom legend with amount + percentage bar */}
+          <div className="mt-3 space-y-1.5">
+            {data.slice(0, 6).map((item, i) => {
+              const pct = totalExpenses > 0 ? (item.amount / totalExpenses) * 100 : 0
+              return (
+                <div key={item.category} className="flex items-center gap-2 min-w-0">
+                  <span
+                    className="h-2.5 w-2.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: COLORS[i % COLORS.length] }}
+                  />
+                  <span className="text-xs text-muted-foreground truncate flex-1">{item.label}</span>
+                  <span className="text-xs font-medium tabular-nums text-foreground shrink-0 w-16 text-right">
+                    ${item.amount >= 1000 ? `${(item.amount / 1000).toFixed(1)}k` : item.amount.toLocaleString()}
+                  </span>
+                  <div className="w-16 shrink-0">
+                    <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-300"
+                        style={{
+                          width: `${Math.min(pct, 100)}%`,
+                          backgroundColor: COLORS[i % COLORS.length],
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <span className="text-[11px] font-medium tabular-nums text-muted-foreground shrink-0 w-8 text-right">
+                    {item.percentage}%
+                  </span>
+                </div>
+              )
+            })}
           </div>
         </>
       )}

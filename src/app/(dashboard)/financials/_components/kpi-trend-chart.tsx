@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import {
-  LineChart,
+  ComposedChart,
   Line,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -20,10 +21,51 @@ interface KPITrendChartProps {
   data: MonthlyKPITrend[]
 }
 
+interface CustomTooltipProps {
+  active?: boolean
+  payload?: Array<{ name: string; value: number; color: string }>
+  label?: string
+  view: TrendView
+}
+
+function TrendTooltip({ active, payload, label, view }: CustomTooltipProps) {
+  if (!active || !payload?.length) return null
+
+  return (
+    <div className="rounded-lg border border-border-subtle bg-surface p-3 shadow-lg">
+      <p className="text-xs font-medium text-muted-foreground mb-1.5">{label}</p>
+      {payload.map((entry) => {
+        if (entry.value == null) return null
+        const formatted = view === 'per_mile'
+          ? `$${Number(entry.value).toFixed(2)}/mi`
+          : `${Number(entry.value).toFixed(1)}%`
+        return (
+          <div key={entry.name} className="flex items-center gap-2">
+            <span
+              className="h-2 w-2 rounded-full shrink-0"
+              style={{ backgroundColor: entry.color }}
+            />
+            <span className="text-xs text-muted-foreground">{entry.name}</span>
+            <span className="text-xs font-semibold tabular-nums text-foreground ml-auto">
+              {formatted}
+            </span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export function KPITrendChart({ data }: KPITrendChartProps) {
   const [view, setView] = useState<TrendView>('per_mile')
 
   const hasPerMileData = data.some((d) => d.rpm !== null)
+
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  const renderTooltip = useCallback(
+    (props: any) => <TrendTooltip {...(props as CustomTooltipProps)} view={view} />,
+    [view]
+  )
 
   return (
     <div className="rounded-xl border border-border-subtle bg-surface p-4">
@@ -57,7 +99,36 @@ export function KPITrendChart({ data }: KPITrendChartProps) {
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+            <ComposedChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+              <defs>
+                {view === 'per_mile' ? (
+                  <>
+                    <linearGradient id="rpmAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.12} />
+                      <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.02} />
+                    </linearGradient>
+                    <linearGradient id="cpmAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.12} />
+                      <stop offset="100%" stopColor="#f43f5e" stopOpacity={0.02} />
+                    </linearGradient>
+                    <linearGradient id="ppmAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#10b981" stopOpacity={0.12} />
+                      <stop offset="100%" stopColor="#10b981" stopOpacity={0.02} />
+                    </linearGradient>
+                  </>
+                ) : (
+                  <>
+                    <linearGradient id="grossMarginAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.12} />
+                      <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.02} />
+                    </linearGradient>
+                    <linearGradient id="netMarginAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#10b981" stopOpacity={0.12} />
+                      <stop offset="100%" stopColor="#10b981" stopOpacity={0.02} />
+                    </linearGradient>
+                  </>
+                )}
+              </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#e8e7e4" vertical={false} />
               <XAxis
                 dataKey="month"
@@ -73,37 +144,28 @@ export function KPITrendChart({ data }: KPITrendChartProps) {
                   view === 'per_mile' ? `$${v.toFixed(2)}` : `${v.toFixed(0)}%`
                 }
               />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'var(--surface)',
-                  border: '1px solid var(--border-subtle)',
-                  borderRadius: '8px',
-                  fontSize: '13px',
-                }}
-                formatter={(value, name) => {
-                  if (value == null) return ['N/A', name]
-                  const v = Number(value)
-                  return view === 'per_mile'
-                    ? [`$${v.toFixed(2)}/mi`, name]
-                    : [`${v.toFixed(1)}%`, name]
-                }}
-              />
+              <Tooltip content={renderTooltip} />
               <Legend wrapperStyle={{ fontSize: '11px' }} />
 
               {view === 'per_mile' ? (
                 <>
-                  <Line type="monotone" dataKey="rpm" name="RPM" stroke="#3b82f6" strokeWidth={2} dot={false} connectNulls />
-                  <Line type="monotone" dataKey="cpm" name="CPM" stroke="#f43f5e" strokeWidth={2} dot={false} connectNulls />
-                  <Line type="monotone" dataKey="ppm" name="PPM" stroke="#10b981" strokeWidth={2} dot={false} connectNulls />
+                  <Area type="monotone" dataKey="rpm" name="RPM" stroke="none" fill="url(#rpmAreaGrad)" connectNulls />
+                  <Area type="monotone" dataKey="cpm" name="CPM" stroke="none" fill="url(#cpmAreaGrad)" connectNulls legendType="none" />
+                  <Area type="monotone" dataKey="ppm" name="PPM" stroke="none" fill="url(#ppmAreaGrad)" connectNulls legendType="none" />
+                  <Line type="monotone" dataKey="rpm" name="RPM" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3, fill: '#3b82f6', strokeWidth: 0 }} connectNulls legendType="none" />
+                  <Line type="monotone" dataKey="cpm" name="CPM" stroke="#f43f5e" strokeWidth={2} dot={{ r: 3, fill: '#f43f5e', strokeWidth: 0 }} connectNulls />
+                  <Line type="monotone" dataKey="ppm" name="PPM" stroke="#10b981" strokeWidth={2} dot={{ r: 3, fill: '#10b981', strokeWidth: 0 }} connectNulls />
                 </>
               ) : (
                 <>
-                  <Line type="monotone" dataKey="grossMargin" name="Gross Margin" stroke="#3b82f6" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="netMargin" name="Net Margin" stroke="#10b981" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="operatingRatio" name="Op. Ratio" stroke="#f59e0b" strokeWidth={2} dot={false} strokeDasharray="5 5" />
+                  <Area type="monotone" dataKey="grossMargin" name="Gross Margin" stroke="none" fill="url(#grossMarginAreaGrad)" legendType="none" />
+                  <Area type="monotone" dataKey="netMargin" name="Net Margin" stroke="none" fill="url(#netMarginAreaGrad)" legendType="none" />
+                  <Line type="monotone" dataKey="grossMargin" name="Gross Margin" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3, fill: '#3b82f6', strokeWidth: 0 }} />
+                  <Line type="monotone" dataKey="netMargin" name="Net Margin" stroke="#10b981" strokeWidth={2} dot={{ r: 3, fill: '#10b981', strokeWidth: 0 }} />
+                  <Line type="monotone" dataKey="operatingRatio" name="Op. Ratio" stroke="#f59e0b" strokeWidth={2} dot={{ r: 3, fill: '#f59e0b', strokeWidth: 0 }} strokeDasharray="5 5" />
                 </>
               )}
-            </LineChart>
+            </ComposedChart>
           </ResponsiveContainer>
         )}
       </div>

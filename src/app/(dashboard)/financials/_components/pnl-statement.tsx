@@ -23,28 +23,32 @@ export function PnLStatement({ pnl }: Props) {
     .sort((a, b) => b[1] - a[1])
 
   return (
-    <div className="rounded-lg border border-border bg-card">
-      <div className="border-b border-border px-4 py-3">
-        <h3 className="text-sm font-semibold text-foreground">Operational Statement</h3>
+    <div className="widget-card-primary">
+      <div className="widget-header">
+        <div className="widget-title">
+          <div className="widget-accent-dot" />
+          Profit &amp; Loss Statement
+        </div>
       </div>
 
-      <div className="divide-y divide-border text-sm">
+      <div className="mt-4 space-y-1 text-sm">
         {/* Revenue Section */}
+        <SectionHeader label="Revenue" accentColor="bg-blue-500" />
         <LineItem label="Load Revenue" value={pnl.revenue} bold />
         <LineItem label="Less: Broker Fees" value={-pnl.brokerFees} indent />
         <LineItem label="Less: Local Fees" value={-pnl.localFees} indent />
-        <LineItem label="Clean Gross" value={pnl.cleanGross} bold highlight />
+        <SubtotalRow label="Clean Gross" value={pnl.cleanGross} />
         <LineItem label="Less: Driver Pay" value={-pnl.driverPay} indent />
-        <LineItem label="Truck Gross" value={pnl.truckGross} bold highlight />
+        <SubtotalRow label="Truck Gross" value={pnl.truckGross} />
         <LineItem
           label="Gross Profit Margin"
           valueStr={pct(pnl.grossProfitMargin)}
           muted
         />
 
-        {/* Separator */}
-        <div className="px-4 py-2 bg-muted/30">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Operating Expenses</span>
+        {/* Operating Expenses Section */}
+        <div className="pt-3">
+          <SectionHeader label="Operating Expenses" accentColor="bg-amber-500" />
         </div>
 
         {/* Fixed Costs */}
@@ -56,40 +60,39 @@ export function PnLStatement({ pnl }: Props) {
                 label={BUSINESS_EXPENSE_CATEGORY_LABELS[cat as BusinessExpenseCategory] ?? cat}
                 value={amount}
                 indent
-              />
+                             />
             ))}
-            <LineItem label="Total Fixed Costs" value={pnl.fixedCosts} bold />
+            <SubtotalRow label="Total Fixed Costs" value={pnl.fixedCosts} />
           </>
         )}
 
         {/* Direct Trip Costs */}
         {pnl.directTripCosts > 0 && (
           <>
-            {pnl.fuelCosts > 0 && <LineItem label="Fuel" value={pnl.fuelCosts} indent />}
-            {pnl.tollCosts > 0 && <LineItem label="Tolls" value={pnl.tollCosts} indent />}
-            {pnl.maintenanceCosts > 0 && <LineItem label="Maintenance" value={pnl.maintenanceCosts} indent />}
-            {pnl.lodgingCosts > 0 && <LineItem label="Lodging" value={pnl.lodgingCosts} indent />}
-            {pnl.miscCosts > 0 && <LineItem label="Miscellaneous" value={pnl.miscCosts} indent />}
-            <LineItem label="Total Direct Trip Costs" value={pnl.directTripCosts} bold />
+            {pnl.fuelCosts > 0 && <LineItem label="Fuel" value={pnl.fuelCosts} indent section="expense" />}
+            {pnl.tollCosts > 0 && <LineItem label="Tolls" value={pnl.tollCosts} indent section="expense" />}
+            {pnl.maintenanceCosts > 0 && <LineItem label="Maintenance" value={pnl.maintenanceCosts} indent section="expense" />}
+            {pnl.lodgingCosts > 0 && <LineItem label="Lodging" value={pnl.lodgingCosts} indent section="expense" />}
+            {pnl.miscCosts > 0 && <LineItem label="Miscellaneous" value={pnl.miscCosts} indent section="expense" />}
+            <SubtotalRow label="Total Direct Trip Costs" value={pnl.directTripCosts} />
           </>
         )}
 
         {pnl.carrierPay > 0 && (
-          <LineItem label="Carrier Pay" value={pnl.carrierPay} />
+          <LineItem label="Carrier Pay" value={pnl.carrierPay} section="expense" />
         )}
 
-        <LineItem label="Total Operating Expenses" value={pnl.totalOperatingExpenses} bold />
+        <SubtotalRow label="Total Operating Expenses" value={pnl.totalOperatingExpenses} />
 
-        {/* Bottom Line */}
+        {/* Net Profit Banner */}
         <div className={cn(
-          'flex items-center justify-between px-4 py-3',
-          pnl.netProfitBeforeTax >= 0 ? 'bg-green-50/50 dark:bg-green-950/20' : 'bg-red-50/50 dark:bg-red-950/20'
+          'flex items-center justify-between rounded-xl p-4 mt-4',
+          pnl.netProfitBeforeTax >= 0
+            ? 'bg-emerald-50 border border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-300'
+            : 'bg-red-50 border border-red-200 text-red-800 dark:bg-red-950/30 dark:border-red-800 dark:text-red-300'
         )}>
-          <span className="font-bold text-foreground">NET PROFIT BEFORE TAX</span>
-          <span className={cn(
-            'font-bold tabular-nums',
-            pnl.netProfitBeforeTax >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'
-          )}>
+          <span className="font-bold">NET PROFIT BEFORE TAX</span>
+          <span className="font-bold tabular-nums text-lg">
             {fmt(pnl.netProfitBeforeTax)}
           </span>
         </div>
@@ -112,24 +115,50 @@ export function PnLStatement({ pnl }: Props) {
   )
 }
 
-function LineItem({ label, value, valueStr, bold, indent, highlight, muted }: {
+function SectionHeader({ label, accentColor }: { label: string; accentColor: string }) {
+  return (
+    <div className="flex items-center gap-2 pb-1 pt-2">
+      <div className={cn('h-1 w-6 rounded-full', accentColor)} />
+      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </span>
+    </div>
+  )
+}
+
+function SubtotalRow({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="bg-muted/50 -mx-4 px-4 py-2 rounded-lg font-semibold flex items-center justify-between">
+      <span className="text-foreground">{label}</span>
+      <span className={cn(
+        'tabular-nums text-foreground',
+        value < 0 && 'text-red-600 dark:text-red-400',
+      )}>
+        {fmt(value)}
+      </span>
+    </div>
+  )
+}
+
+function LineItem({ label, value, valueStr, bold, indent, muted }: {
   label: string
   value?: number
   valueStr?: string
   bold?: boolean
   indent?: boolean
-  highlight?: boolean
   muted?: boolean
+  section?: string
 }) {
   return (
     <div className={cn(
-      'flex items-center justify-between px-4 py-2',
-      highlight && 'bg-muted/30',
+      'flex items-center justify-between px-4 py-1.5',
+      indent && 'border-l-2 border-border ml-2',
     )}>
       <span className={cn(
-        indent && 'pl-4',
-        bold ? 'font-semibold text-foreground' : 'text-muted-foreground',
-        muted && 'text-xs italic',
+        indent && 'pl-3',
+        !indent && bold ? 'font-semibold text-foreground' : '',
+        !bold && !muted && 'text-muted-foreground',
+        muted && 'text-xs italic text-muted-foreground',
       )}>
         {label}
       </span>

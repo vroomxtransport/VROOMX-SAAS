@@ -34,14 +34,6 @@ interface KPICardDef {
   tooltip?: string
 }
 
-const ACCENT_STYLES = {
-  blue: 'border-blue-200/50 bg-blue-500/5 dark:border-blue-800/50 dark:bg-blue-500/10',
-  emerald: 'border-emerald-200/50 bg-emerald-500/5 dark:border-emerald-800/50 dark:bg-emerald-500/10',
-  amber: 'border-amber-200/50 bg-amber-500/5 dark:border-amber-800/50 dark:bg-amber-500/10',
-  violet: 'border-violet-200/50 bg-violet-500/5 dark:border-violet-800/50 dark:bg-violet-500/10',
-  rose: 'border-rose-200/50 bg-rose-500/5 dark:border-rose-800/50 dark:bg-rose-500/10',
-}
-
 const ICON_STYLES = {
   blue: 'text-blue-600 bg-blue-100 dark:bg-blue-900/50 dark:text-blue-400',
   emerald: 'text-emerald-600 bg-emerald-100 dark:bg-emerald-900/50 dark:text-emerald-400',
@@ -67,7 +59,7 @@ function fmtPerMile(val: number | null): string {
 }
 
 export function BusinessKPICards({ pnl, unitMetrics }: BusinessKPICardsProps) {
-  const row1: KPICardDef[] = [
+  const topCards: KPICardDef[] = [
     { label: 'Revenue', value: fmt$(pnl.revenue), icon: DollarSign, accent: 'blue' },
     {
       label: 'Net Profit',
@@ -83,14 +75,15 @@ export function BusinessKPICards({ pnl, unitMetrics }: BusinessKPICardsProps) {
       accent: pnl.netMargin >= 10 ? 'emerald' : pnl.netMargin >= 0 ? 'amber' : 'rose',
       description: 'Net profit / revenue',
     },
-    {
-      label: 'Fixed Costs',
-      value: fmt$(pnl.fixedCosts),
-      icon: Shield,
-      accent: 'violet',
-      description: 'Insurance, rent, leases, etc.',
-    },
   ]
+
+  const fixedCostCard: KPICardDef = {
+    label: 'Fixed Costs',
+    value: fmt$(pnl.fixedCosts),
+    icon: Shield,
+    accent: 'violet',
+    description: 'Insurance, rent, leases, etc.',
+  }
 
   const row2: KPICardDef[] = [
     {
@@ -170,28 +163,82 @@ export function BusinessKPICards({ pnl, unitMetrics }: BusinessKPICardsProps) {
           </Tooltip>
         </TooltipProvider>
       </div>
+
+      {/* Top 3 premium cards + Fixed Costs */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {row1.map((card) => (
-          <KPICard key={card.label} {...card} />
+        {topCards.map((card) => (
+          <PrimaryKPICard
+            key={card.label}
+            {...card}
+            shimmer={card.label === 'Net Profit'}
+          />
         ))}
+        <StandardKPICard {...fixedCostCard} />
       </div>
+
+      {/* Business Metrics section */}
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mt-6 mb-3">Business Metrics</p>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {row2.map((card) => (
-          <KPICard key={card.label} {...card} />
+          <StandardKPICard key={card.label} {...card} />
         ))}
       </div>
+
+      {/* Per-Truck Analysis section */}
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mt-6 mb-3">Per-Truck Analysis</p>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         {row3.map((card) => (
-          <KPICard key={card.label} {...card} />
+          <StandardKPICard key={card.label} {...card} />
         ))}
       </div>
     </div>
   )
 }
 
-function KPICard({ label, value, icon: Icon, accent, description, tooltip }: KPICardDef) {
+function PrimaryKPICard({ label, value, icon: Icon, accent, description, tooltip, shimmer }: KPICardDef & { shimmer?: boolean }) {
   const card = (
-    <div className={cn('rounded-xl border p-4 transition-shadow hover:shadow-sm', ACCENT_STYLES[accent])}>
+    <div className={cn('widget-card-primary p-4', shimmer && 'shimmer-border')}>
+      <div className="flex items-start justify-between">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1">
+            <p className="text-xs font-medium text-muted-foreground truncate">{label}</p>
+            {tooltip && (
+              <Info className="h-3 w-3 shrink-0 text-muted-foreground/40" />
+            )}
+          </div>
+          <p className="mt-1 text-3xl font-bold tabular-nums text-foreground truncate">{value}</p>
+          {description && (
+            <p className="mt-0.5 text-[10px] text-muted-foreground/70">{description}</p>
+          )}
+        </div>
+        <div className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-lg', ICON_STYLES[accent])}>
+          <Icon className="h-4 w-4" />
+        </div>
+      </div>
+    </div>
+  )
+
+  if (tooltip) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            {card}
+          </TooltipTrigger>
+          <TooltipContent className="max-w-xs">
+            <p className="text-xs">{tooltip}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    )
+  }
+
+  return card
+}
+
+function StandardKPICard({ label, value, icon: Icon, accent, description, tooltip }: KPICardDef) {
+  const card = (
+    <div className="widget-card p-4">
       <div className="flex items-start justify-between">
         <div className="min-w-0">
           <div className="flex items-center gap-1">

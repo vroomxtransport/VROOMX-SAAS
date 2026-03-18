@@ -1,5 +1,6 @@
 'use client'
 
+import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import type { FinancialPeriod } from '@/lib/queries/financials'
 
@@ -18,19 +19,26 @@ interface PeriodSelectorProps {
 
 export function PeriodSelector({ value, onChange }: PeriodSelectorProps) {
   return (
-    <div className="flex rounded-lg bg-muted p-0.5">
+    <div className="rounded-xl border border-border-subtle bg-muted/50 p-1 flex">
       {PERIODS.map((p) => (
         <button
           key={p.value}
           onClick={() => onChange(p.value)}
           className={cn(
-            'px-3 py-1.5 text-xs font-medium rounded-md transition-all',
+            'relative px-3 py-1.5 text-xs font-medium rounded-lg transition-colors z-10',
             value === p.value
-              ? 'bg-surface shadow-sm text-foreground'
+              ? 'text-white'
               : 'text-muted-foreground hover:text-foreground'
           )}
         >
-          {p.label}
+          {value === p.value && (
+            <motion.span
+              layoutId="period-indicator"
+              className="absolute inset-0 bg-brand rounded-lg"
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+            />
+          )}
+          <span className="relative z-10">{p.label}</span>
         </button>
       ))}
     </div>

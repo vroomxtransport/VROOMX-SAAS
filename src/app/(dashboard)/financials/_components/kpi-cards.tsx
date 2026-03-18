@@ -32,14 +32,7 @@ interface KPICardDef {
   icon: LucideIcon
   accent: 'blue' | 'emerald' | 'amber' | 'violet' | 'rose'
   description?: string
-}
-
-const ACCENT_STYLES = {
-  blue: 'border-blue-200/50 bg-blue-500/5 dark:border-blue-800/50 dark:bg-blue-500/10',
-  emerald: 'border-emerald-200/50 bg-emerald-500/5 dark:border-emerald-800/50 dark:bg-emerald-500/10',
-  amber: 'border-amber-200/50 bg-amber-500/5 dark:border-amber-800/50 dark:bg-amber-500/10',
-  violet: 'border-violet-200/50 bg-violet-500/5 dark:border-violet-800/50 dark:bg-violet-500/10',
-  rose: 'border-rose-200/50 bg-rose-500/5 dark:border-rose-800/50 dark:bg-rose-500/10',
+  borderColor: string
 }
 
 const ICON_STYLES = {
@@ -68,23 +61,23 @@ function fmtPerMile(val: number | null): string {
 
 export function KPICards({ kpis, revenue }: KPICardsProps) {
   const row1: KPICardDef[] = [
-    { label: 'Revenue', value: fmt$(revenue), icon: DollarSign, accent: 'blue' },
-    { label: 'Net Profit', value: fmt$(kpis.netProfit), icon: kpis.netProfit >= 0 ? TrendingUp : TrendingDown, accent: kpis.netProfit >= 0 ? 'emerald' : 'rose' },
-    { label: 'Operating Ratio', value: fmtPct(kpis.operatingRatio), icon: Gauge, accent: kpis.operatingRatio <= 95 ? 'emerald' : kpis.operatingRatio <= 100 ? 'amber' : 'rose' },
-    { label: 'Gross Margin', value: fmtPct(kpis.grossMargin), icon: TrendingUp, accent: kpis.grossMargin >= 30 ? 'emerald' : kpis.grossMargin >= 15 ? 'amber' : 'rose' },
+    { label: 'Revenue', value: fmt$(revenue), icon: DollarSign, accent: 'blue', borderColor: 'border-l-blue-500' },
+    { label: 'Net Profit', value: fmt$(kpis.netProfit), icon: kpis.netProfit >= 0 ? TrendingUp : TrendingDown, accent: kpis.netProfit >= 0 ? 'emerald' : 'rose', borderColor: kpis.netProfit >= 0 ? 'border-l-emerald-500' : 'border-l-rose-500' },
+    { label: 'Operating Ratio', value: fmtPct(kpis.operatingRatio), icon: Gauge, accent: kpis.operatingRatio <= 95 ? 'emerald' : kpis.operatingRatio <= 100 ? 'amber' : 'rose', borderColor: kpis.operatingRatio <= 95 ? 'border-l-emerald-500' : 'border-l-amber-500' },
+    { label: 'Gross Margin', value: fmtPct(kpis.grossMargin), icon: TrendingUp, accent: kpis.grossMargin >= 30 ? 'emerald' : kpis.grossMargin >= 15 ? 'amber' : 'rose', borderColor: kpis.grossMargin >= 30 ? 'border-l-emerald-500' : 'border-l-amber-500' },
   ]
 
   const row2: KPICardDef[] = [
-    { label: 'Clean Gross', value: fmt$(kpis.cleanGross), icon: BarChart3, accent: 'blue', description: 'Revenue - Fees' },
-    { label: 'Truck Gross', value: fmt$(kpis.truckGross), icon: Truck, accent: 'violet', description: 'Clean Gross - Driver Pay' },
-    { label: 'Truck Gross Margin', value: fmtPct(kpis.truckGrossMargin), icon: Gauge, accent: kpis.truckGrossMargin >= 30 ? 'emerald' : kpis.truckGrossMargin >= 15 ? 'amber' : 'rose' },
+    { label: 'Clean Gross', value: fmt$(kpis.cleanGross), icon: BarChart3, accent: 'blue', description: 'Revenue - Fees', borderColor: 'border-l-blue-500' },
+    { label: 'Truck Gross', value: fmt$(kpis.truckGross), icon: Truck, accent: 'violet', description: 'Clean Gross - Driver Pay', borderColor: 'border-l-violet-500' },
+    { label: 'Truck Gross Margin', value: fmtPct(kpis.truckGrossMargin), icon: Gauge, accent: kpis.truckGrossMargin >= 30 ? 'emerald' : kpis.truckGrossMargin >= 15 ? 'amber' : 'rose', borderColor: kpis.truckGrossMargin >= 30 ? 'border-l-emerald-500' : 'border-l-amber-500' },
   ]
 
   const row3: KPICardDef[] = [
-    { label: 'RPM', value: fmtPerMile(kpis.rpm), icon: Route, accent: 'blue', description: 'Revenue Per Mile' },
-    { label: 'CPM', value: fmtPerMile(kpis.cpm), icon: TrendingDown, accent: 'amber', description: 'Cost Per Mile' },
-    { label: 'PPM', value: fmtPerMile(kpis.ppm), icon: TrendingUp, accent: kpis.ppm !== null && kpis.ppm >= 0 ? 'emerald' : 'rose', description: 'Profit Per Mile' },
-    { label: 'APPO', value: fmt$(kpis.appo), icon: Package, accent: 'violet', description: 'Avg Pay Per Order' },
+    { label: 'RPM', value: fmtPerMile(kpis.rpm), icon: Route, accent: 'blue', description: 'Revenue Per Mile', borderColor: 'border-l-blue-500' },
+    { label: 'CPM', value: fmtPerMile(kpis.cpm), icon: TrendingDown, accent: 'amber', description: 'Cost Per Mile', borderColor: 'border-l-amber-500' },
+    { label: 'PPM', value: fmtPerMile(kpis.ppm), icon: TrendingUp, accent: kpis.ppm !== null && kpis.ppm >= 0 ? 'emerald' : 'rose', description: 'Profit Per Mile', borderColor: kpis.ppm !== null && kpis.ppm >= 0 ? 'border-l-emerald-500' : 'border-l-rose-500' },
+    { label: 'APPO', value: fmt$(kpis.appo), icon: Package, accent: 'violet', description: 'Avg Pay Per Order', borderColor: 'border-l-violet-500' },
   ]
 
   return (
@@ -104,16 +97,25 @@ export function KPICards({ kpis, revenue }: KPICardsProps) {
           </Tooltip>
         </TooltipProvider>
       </div>
+
+      {/* Revenue & Profit */}
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mt-4 mb-2">Revenue &amp; Profit</p>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {row1.map((card) => (
           <KPICard key={card.label} {...card} />
         ))}
       </div>
+
+      {/* Clean Gross Analysis */}
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mt-6 mb-2">Clean Gross Analysis</p>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         {row2.map((card) => (
           <KPICard key={card.label} {...card} />
         ))}
       </div>
+
+      {/* Per-Mile & Per-Order */}
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mt-6 mb-2">Per-Mile &amp; Per-Order</p>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {row3.map((card) => (
           <KPICard key={card.label} {...card} />
@@ -123,9 +125,9 @@ export function KPICards({ kpis, revenue }: KPICardsProps) {
   )
 }
 
-function KPICard({ label, value, icon: Icon, accent, description }: KPICardDef) {
+function KPICard({ label, value, icon: Icon, accent, description, borderColor }: KPICardDef) {
   return (
-    <div className={cn('rounded-xl border p-4 transition-shadow hover:shadow-sm', ACCENT_STYLES[accent])}>
+    <div className={cn('widget-card border-l-4 p-4', borderColor)}>
       <div className="flex items-start justify-between">
         <div className="min-w-0">
           <p className="text-xs font-medium text-muted-foreground truncate">{label}</p>

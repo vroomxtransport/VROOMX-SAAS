@@ -23,26 +23,29 @@ interface RowDef {
   bold?: boolean
   highlight?: boolean
   indent?: boolean
+  group?: 'revenue' | 'expense' | 'summary'
+  isGroupHeader?: boolean
+  isSubtotal?: boolean
 }
 
 const ROWS: RowDef[] = [
-  { label: 'Revenue', key: 'revenue', bold: true },
-  { label: 'Broker Fees', key: 'brokerFees', indent: true },
-  { label: 'Local Fees', key: 'localFees', indent: true },
-  { label: 'Clean Gross', key: 'cleanGross', bold: true, highlight: true },
-  { label: 'Driver Pay', key: 'driverPay', indent: true },
-  { label: 'Truck Gross', key: 'truckGross', bold: true, highlight: true },
-  { label: 'Fixed Costs', key: 'fixedCosts' },
-  { label: 'Trip Costs', key: 'directTripCosts' },
-  { label: 'Carrier Pay', key: 'carrierPay' },
-  { label: 'Total Operating', key: 'totalOperatingExpenses', bold: true },
-  { label: 'Net Profit', key: 'netProfitBeforeTax', bold: true, highlight: true },
+  { label: 'Revenue', key: 'revenue', bold: true, group: 'revenue', isGroupHeader: true },
+  { label: 'Broker Fees', key: 'brokerFees', indent: true, group: 'revenue' },
+  { label: 'Local Fees', key: 'localFees', indent: true, group: 'revenue' },
+  { label: 'Clean Gross', key: 'cleanGross', bold: true, highlight: true, group: 'revenue', isSubtotal: true },
+  { label: 'Driver Pay', key: 'driverPay', indent: true, group: 'revenue' },
+  { label: 'Truck Gross', key: 'truckGross', bold: true, highlight: true, group: 'revenue', isSubtotal: true },
+  { label: 'Fixed Costs', key: 'fixedCosts', group: 'expense' },
+  { label: 'Trip Costs', key: 'directTripCosts', group: 'expense' },
+  { label: 'Carrier Pay', key: 'carrierPay', group: 'expense' },
+  { label: 'Total Operating', key: 'totalOperatingExpenses', bold: true, group: 'expense', isSubtotal: true },
+  { label: 'Net Profit', key: 'netProfitBeforeTax', bold: true, highlight: true, group: 'summary' },
 ]
 
 export function MonthlyPnLTable({ data }: Props) {
   // Group into quarters and compute QTR subtotals + YTD
   const { columns } = useMemo(() => {
-    type Col = { label: string; pnl: Record<string, number>; isSubtotal?: boolean }
+    type Col = { label: string; pnl: Record<string, number>; isSubtotal?: boolean; isYTD?: boolean }
     const cols: Col[] = []
     const ytdPnl: Record<string, number> = {}
 
@@ -83,30 +86,42 @@ export function MonthlyPnLTable({ data }: Props) {
       }
     }
 
-    cols.push({ label: 'YTD', pnl: { ...ytdPnl }, isSubtotal: true })
+    cols.push({ label: 'YTD', pnl: { ...ytdPnl }, isSubtotal: true, isYTD: true })
 
     return { columns: cols }
   }, [data])
 
+  // Determine which group the previous row belonged to for visual separation
+  const groupBoundaries = new Set<number>()
+  for (let i = 1; i < ROWS.length; i++) {
+    if (ROWS[i].group !== ROWS[i - 1].group) {
+      groupBoundaries.add(i)
+    }
+  }
+
   return (
-    <div className="rounded-lg border border-border bg-card">
-      <div className="border-b border-border px-4 py-3">
-        <h3 className="text-sm font-semibold text-foreground">Monthly P&L</h3>
+    <div className="widget-card overflow-hidden">
+      <div className="widget-header">
+        <div className="widget-title">
+          <div className="widget-accent-dot" />
+          Monthly P&amp;L
+        </div>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-border bg-muted/50">
-              <th className="sticky left-0 z-10 bg-muted/50 px-3 py-2 text-left font-medium text-muted-foreground min-w-[120px]">
+              <th className="sticky left-0 z-10 bg-muted/50 px-3 py-2.5 text-left font-medium text-muted-foreground min-w-[120px]">
                 Line Item
               </th>
               {columns.map((col, i) => (
                 <th
                   key={i}
                   className={cn(
-                    'px-2 py-2 text-right font-medium text-muted-foreground min-w-[70px]',
-                    col.isSubtotal && 'bg-muted/80 font-semibold'
+                    'px-2 py-2.5 text-right font-medium text-muted-foreground min-w-[70px]',
+                    col.isSubtotal && !col.isYTD && 'bg-muted/20 font-semibold',
+                    col.isYTD && 'bg-brand/5 font-bold',
                   )}
                 >
                   {col.label}
@@ -115,27 +130,45 @@ export function MonthlyPnLTable({ data }: Props) {
             </tr>
           </thead>
           <tbody>
-            {ROWS.map((row) => (
-              <tr key={row.key} className={cn('border-b border-border/50', row.highlight && 'bg-muted/20')}>
+            {ROWS.map((row, rowIdx) => (
+              <tr
+                key={row.key}
+                className={cn(
+                  'border-b border-border/50',
+                  groupBoundaries.has(rowIdx) && 'border-t-2 border-t-border',
+                  row.isGroupHeader && 'bg-muted/30',
+                  row.isSubtotal && !row.highlight && 'bg-muted/50',
+                  row.key === 'netProfitBeforeTax' && 'bg-emerald-50/50 dark:bg-emerald-950/10',
+                )}
+              >
                 <td className={cn(
-                  'sticky left-0 z-10 bg-card px-3 py-1.5',
+                  'sticky left-0 z-10 px-3 py-2',
                   row.bold ? 'font-semibold text-foreground' : 'text-muted-foreground',
                   row.indent && 'pl-6',
-                  row.highlight && 'bg-muted/20',
+                  row.isGroupHeader && 'bg-muted/30',
+                  row.isSubtotal && !row.highlight && 'bg-muted/50',
+                  row.key === 'netProfitBeforeTax' && 'bg-emerald-50/50 dark:bg-emerald-950/10',
+                  !row.isGroupHeader && !row.isSubtotal && row.key !== 'netProfitBeforeTax' && 'bg-card',
                 )}>
                   {row.label}
                 </td>
                 {columns.map((col, i) => {
                   const val = col.pnl[row.key] ?? 0
+                  const isNegative = val < 0
+                  const isZero = val === 0
+                  const isNetProfit = row.key === 'netProfitBeforeTax'
                   return (
                     <td
                       key={i}
                       className={cn(
-                        'px-2 py-1.5 text-right tabular-nums',
+                        'px-2 py-2 text-right tabular-nums',
                         row.bold ? 'font-semibold text-foreground' : 'text-muted-foreground',
-                        col.isSubtotal && 'bg-muted/30 font-semibold',
-                        row.key === 'netProfitBeforeTax' && val < 0 && 'text-red-600 dark:text-red-400',
-                        row.key === 'netProfitBeforeTax' && val > 0 && 'text-green-600 dark:text-green-400',
+                        col.isSubtotal && !col.isYTD && 'bg-muted/20 font-semibold',
+                        col.isYTD && 'bg-brand/5 font-bold',
+                        isNegative && !isNetProfit && 'text-red-600 dark:text-red-400',
+                        isZero && 'text-muted-foreground',
+                        isNetProfit && val < 0 && 'text-red-600 dark:text-red-400',
+                        isNetProfit && val > 0 && 'text-green-600 dark:text-green-400',
                       )}
                     >
                       {fmt(val)}

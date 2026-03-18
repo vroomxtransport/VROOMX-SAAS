@@ -14,10 +14,20 @@ interface ProfitByTruckTableProps {
   data: ProfitByTruck[]
 }
 
-function marginColor(margin: number): string {
-  if (margin >= 10) return 'text-emerald-600'
-  if (margin >= 5) return 'text-amber-600'
-  return 'text-red-600'
+function marginBadge(margin: number) {
+  if (margin >= 20) {
+    return {
+      bg: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400',
+    }
+  }
+  if (margin >= 10) {
+    return {
+      bg: 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400',
+    }
+  }
+  return {
+    bg: 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400',
+  }
 }
 
 export function ProfitByTruckTable({ data }: ProfitByTruckTableProps) {
@@ -49,6 +59,12 @@ export function ProfitByTruckTable({ data }: ProfitByTruckTableProps) {
     })
   }, [filtered, sort])
 
+  // Max profit for bar scaling
+  const maxAbsProfit = useMemo(() => {
+    if (sorted.length === 0) return 1
+    return Math.max(...sorted.map((t) => Math.abs(t.profit)), 1)
+  }, [sorted])
+
   // CSV export handler
   const handleCsvExport = useCallback(async () => {
     return sorted.map((truck) => ({
@@ -63,17 +79,25 @@ export function ProfitByTruckTable({ data }: ProfitByTruckTableProps) {
 
   if (data.length === 0) {
     return (
-      <div className="rounded-xl border border-border-subtle bg-surface p-4">
-        <h3 className="text-base font-semibold text-foreground mb-3">Profit by Truck</h3>
+      <div className="widget-card">
+        <div className="widget-header">
+          <h3 className="widget-title">
+            <span className="widget-accent-dot bg-brand" />
+            Profit by Truck
+          </h3>
+        </div>
         <p className="text-sm text-muted-foreground py-8 text-center">No trip data for this period</p>
       </div>
     )
   }
 
   return (
-    <div className="rounded-xl border border-border-subtle bg-surface p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-        <h3 className="text-base font-semibold text-foreground">Profit by Truck</h3>
+    <div className="widget-card">
+      <div className="widget-header">
+        <h3 className="widget-title">
+          <span className="widget-accent-dot bg-brand" />
+          Profit by Truck
+        </h3>
         <div className="flex items-center gap-2">
           {/* Search input */}
           <div className="relative">
@@ -152,30 +176,48 @@ export function ProfitByTruckTable({ data }: ProfitByTruckTableProps) {
               </tr>
             </thead>
             <tbody>
-              {sorted.map((truck) => (
-                <tr key={truck.truckId} className="border-b border-border-subtle/50 last:border-0">
-                  <td className="py-2 pr-3">
-                    <Link href={`/trucks`} className="font-medium text-foreground hover:text-brand transition-colors">
-                      {truck.unitNumber}
-                    </Link>
-                  </td>
-                  <td className="py-2 px-3 text-right tabular-nums text-foreground">
-                    ${truck.revenue.toLocaleString()}
-                  </td>
-                  <td className="py-2 px-3 text-right tabular-nums text-muted-foreground">
-                    ${truck.expenses.toLocaleString()}
-                  </td>
-                  <td className="py-2 px-3 text-right tabular-nums font-medium text-foreground">
-                    ${truck.profit.toLocaleString()}
-                  </td>
-                  <td className={cn('py-2 px-3 text-right tabular-nums font-medium', marginColor(truck.margin))}>
-                    {truck.margin.toFixed(1)}%
-                  </td>
-                  <td className="py-2 pl-3 text-right tabular-nums text-muted-foreground">
-                    {truck.tripCount}
-                  </td>
-                </tr>
-              ))}
+              {sorted.map((truck) => {
+                const profitBarWidth = Math.min((Math.abs(truck.profit) / maxAbsProfit) * 100, 100)
+                const badge = marginBadge(truck.margin)
+
+                return (
+                  <tr key={truck.truckId} className="border-b border-border-subtle/50 last:border-0 hover:bg-muted/30 transition-colors">
+                    <td className="py-2 pr-3">
+                      <Link href="/trucks" className="font-medium text-brand hover:underline transition-colors">
+                        {truck.unitNumber}
+                      </Link>
+                    </td>
+                    <td className="py-2 px-3 text-right tabular-nums text-foreground">
+                      ${truck.revenue.toLocaleString()}
+                    </td>
+                    <td className="py-2 px-3 text-right tabular-nums text-muted-foreground">
+                      ${truck.expenses.toLocaleString()}
+                    </td>
+                    <td className="py-2 px-3 text-right">
+                      <div className="relative flex items-center justify-end">
+                        <div
+                          className={cn(
+                            'absolute inset-y-0 right-0 rounded-sm',
+                            truck.profit >= 0 ? 'bg-emerald-500/20' : 'bg-red-500/20'
+                          )}
+                          style={{ width: `${profitBarWidth}%` }}
+                        />
+                        <span className="relative tabular-nums font-medium text-foreground">
+                          ${truck.profit.toLocaleString()}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-2 px-3 text-right">
+                      <span className={cn('inline-block rounded-full px-2 py-0.5 text-xs font-medium tabular-nums', badge.bg)}>
+                        {truck.margin.toFixed(1)}%
+                      </span>
+                    </td>
+                    <td className="py-2 pl-3 text-right tabular-nums text-muted-foreground">
+                      {truck.tripCount}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
           {filtered.length > 0 && (

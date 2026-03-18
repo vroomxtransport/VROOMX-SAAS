@@ -16,7 +16,7 @@ export function FinancialsNav() {
   const pathname = usePathname()
 
   return (
-    <div className="flex items-center gap-1 rounded-lg border border-border bg-muted/50 p-1 w-fit">
+    <div className="widget-card flex items-center gap-1 p-1.5 w-fit">
       {TABS.map((tab) => {
         const Icon = tab.icon
         const isActive = pathname === tab.href
@@ -25,10 +25,10 @@ export function FinancialsNav() {
             key={tab.href}
             href={tab.href}
             className={cn(
-              'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+              'flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-all duration-200',
               isActive
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
+                ? 'bg-surface shadow-sm rounded-lg text-foreground border-b-2 border-brand'
+                : 'text-muted-foreground hover:text-foreground rounded-lg'
             )}
           >
             <Icon className="h-4 w-4" />

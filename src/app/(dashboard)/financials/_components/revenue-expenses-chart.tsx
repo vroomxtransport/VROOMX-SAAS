@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import {
   AreaChart,
   Area,
@@ -19,12 +19,43 @@ interface RevenueExpensesChartProps {
   data: MonthlyRevenue[]
 }
 
+interface CustomTooltipProps {
+  active?: boolean
+  payload?: Array<{ name: string; value: number; color: string }>
+  label?: string
+}
+
+function ChartTooltip({ active, payload, label }: CustomTooltipProps) {
+  if (!active || !payload?.length) return null
+
+  return (
+    <div className="rounded-lg border border-border-subtle bg-surface p-3 shadow-lg">
+      <p className="text-xs font-medium text-muted-foreground mb-1.5">{label}</p>
+      {payload.map((entry) => (
+        <div key={entry.name} className="flex items-center gap-2">
+          <span
+            className="h-2 w-2 rounded-full shrink-0"
+            style={{ backgroundColor: entry.color }}
+          />
+          <span className="text-xs text-muted-foreground">{entry.name}</span>
+          <span className="text-xs font-semibold tabular-nums text-foreground ml-auto">
+            ${Number(entry.value).toLocaleString()}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function RevenueExpensesChart({ data }: RevenueExpensesChartProps) {
   const [period, setPeriod] = useState<Period>('6M')
   const displayData = period === '3M' ? data.slice(-3) : data
 
   const totalRevenue = displayData.reduce((s, d) => s + d.revenue, 0)
   const totalExpenses = displayData.reduce((s, d) => s + d.expenses, 0)
+
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  const renderTooltip = useCallback((props: any) => <ChartTooltip {...(props as CustomTooltipProps)} />, [])
 
   return (
     <div className="rounded-xl border border-border-subtle bg-surface p-4">
@@ -52,13 +83,13 @@ export function RevenueExpensesChart({ data }: RevenueExpensesChartProps) {
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={displayData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
             <defs>
-              <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#fb7232" stopOpacity={0.2} />
-                <stop offset="95%" stopColor="#fb7232" stopOpacity={0.02} />
+              <linearGradient id="revenueGradientFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#fb7232" stopOpacity={0.4} />
+                <stop offset="100%" stopColor="#fb7232" stopOpacity={0.05} />
               </linearGradient>
-              <linearGradient id="expensesGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.15} />
-                <stop offset="95%" stopColor="#f43f5e" stopOpacity={0.02} />
+              <linearGradient id="expensesGradientFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.4} />
+                <stop offset="100%" stopColor="#f43f5e" stopOpacity={0.05} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#e8e7e4" vertical={false} />
@@ -74,30 +105,26 @@ export function RevenueExpensesChart({ data }: RevenueExpensesChartProps) {
               axisLine={false}
               tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`}
             />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: 'var(--surface)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '8px',
-                fontSize: '13px',
-              }}
-              formatter={(value) => [`$${Number(value).toLocaleString()}`]}
-            />
+            <Tooltip content={renderTooltip} />
             <Area
               type="monotone"
               dataKey="revenue"
               name="Revenue"
               stroke="#fb7232"
-              strokeWidth={2}
-              fill="url(#revenueGradient)"
+              strokeWidth={2.5}
+              strokeLinecap="round"
+              fill="url(#revenueGradientFill)"
+              dot={false}
             />
             <Area
               type="monotone"
               dataKey="expenses"
               name="Expenses"
               stroke="#f43f5e"
-              strokeWidth={2}
-              fill="url(#expensesGradient)"
+              strokeWidth={2.5}
+              strokeLinecap="round"
+              fill="url(#expensesGradientFill)"
+              dot={false}
             />
           </AreaChart>
         </ResponsiveContainer>
