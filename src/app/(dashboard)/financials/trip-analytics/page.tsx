@@ -17,7 +17,7 @@ export default async function TripAnalyticsPage() {
 
   const trips = await safeQuery<TripAnalyticsRow[]>(
     'fetchTripAnalytics',
-    () => fetchTripAnalytics(supabase, 'mtd'),
+    () => fetchTripAnalytics(supabase),
     []
   )
 

@@ -3,7 +3,8 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
-import type { FinancialPeriod, TripAnalyticsRow } from '@/lib/queries/financials'
+import type { DateRange } from '@/types/filters'
+import type { TripAnalyticsRow } from '@/lib/queries/financials'
 import { fetchTripAnalytics } from '@/lib/queries/financials'
 import { PeriodSelector } from './period-selector'
 import { StatusBadge } from '@/components/shared/status-badge'
@@ -43,15 +44,15 @@ function formatDate(dateStr: string): string {
 }
 
 export function TripAnalyticsDashboard({ initialTrips }: TripAnalyticsDashboardProps) {
-  const [period, setPeriod] = useState<FinancialPeriod>('mtd')
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined)
   const [sortField, setSortField] = useState<SortField>('startDate')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const supabase = createClient()
 
   const { data: trips } = useQuery({
-    queryKey: ['financials', 'trip-analytics', period],
-    queryFn: () => fetchTripAnalytics(supabase, period),
-    initialData: period === 'mtd' ? initialTrips : undefined,
+    queryKey: ['financials', 'trip-analytics', dateRange?.from, dateRange?.to],
+    queryFn: () => fetchTripAnalytics(supabase, dateRange),
+    initialData: dateRange === undefined ? initialTrips : undefined,
     staleTime: 60_000,
   })
 
@@ -118,7 +119,7 @@ export function TripAnalyticsDashboard({ initialTrips }: TripAnalyticsDashboardP
     <div className="space-y-6">
       {/* Period Selector */}
       <div className="flex items-center justify-end">
-        <PeriodSelector value={period} onChange={setPeriod} />
+        <PeriodSelector value={dateRange} onChange={setDateRange} />
       </div>
 
       {/* Summary Cards */}

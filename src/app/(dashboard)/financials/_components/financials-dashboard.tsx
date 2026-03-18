@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import type { FinancialPeriod, KPIAggregates, ProfitByTruck, ProfitByDriver, MonthlyKPITrend, MonthlyRevenue, TopBroker } from '@/lib/queries/financials'
+import type { DateRange } from '@/types/filters'
+import type { KPIAggregates, ProfitByTruck, ProfitByDriver, MonthlyKPITrend, MonthlyRevenue, TopBroker } from '@/lib/queries/financials'
 import type { PnLInput } from '@/lib/financial/pnl-calculations'
 import { calculateKPIs, calculateExpenseBreakdown } from '@/lib/financial/kpi-calculations'
 import { calculatePnL, calculateUnitMetrics } from '@/lib/financial/pnl-calculations'
@@ -37,36 +38,36 @@ export function FinancialsDashboard({
   revenueByMonth,
   topBrokers,
 }: FinancialsDashboardProps) {
-  const [period, setPeriod] = useState<FinancialPeriod>('mtd')
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined)
   const supabase = createClient()
 
   // Fetch KPI aggregates for selected period
   const { data: aggregates } = useQuery({
-    queryKey: ['financials', 'kpi', period],
-    queryFn: () => fetchKPIAggregates(supabase, period),
-    initialData: period === 'mtd' ? initialAggregates : undefined,
+    queryKey: ['financials', 'kpi', dateRange?.from, dateRange?.to],
+    queryFn: () => fetchKPIAggregates(supabase, dateRange),
+    initialData: dateRange === undefined ? initialAggregates : undefined,
     staleTime: 60_000,
   })
 
   // Fetch PnL data for selected period (includes business expenses)
   const { data: pnlData } = useQuery({
-    queryKey: ['financials', 'pnl', period],
-    queryFn: () => fetchPnLData(supabase, period),
-    initialData: period === 'mtd' ? initialPnLData : undefined,
+    queryKey: ['financials', 'pnl', dateRange?.from, dateRange?.to],
+    queryFn: () => fetchPnLData(supabase, dateRange),
+    initialData: dateRange === undefined ? initialPnLData : undefined,
     staleTime: 60_000,
   })
 
   const { data: profitByTruck } = useQuery({
-    queryKey: ['financials', 'profit-by-truck', period],
-    queryFn: () => fetchProfitByTruck(supabase, period),
-    initialData: period === 'mtd' ? initialProfitByTruck : undefined,
+    queryKey: ['financials', 'profit-by-truck', dateRange?.from, dateRange?.to],
+    queryFn: () => fetchProfitByTruck(supabase, dateRange),
+    initialData: dateRange === undefined ? initialProfitByTruck : undefined,
     staleTime: 60_000,
   })
 
   const { data: profitByDriver } = useQuery({
-    queryKey: ['financials', 'profit-by-driver', period],
-    queryFn: () => fetchProfitByDriver(supabase, period),
-    initialData: period === 'mtd' ? initialProfitByDriver : undefined,
+    queryKey: ['financials', 'profit-by-driver', dateRange?.from, dateRange?.to],
+    queryFn: () => fetchProfitByDriver(supabase, dateRange),
+    initialData: dateRange === undefined ? initialProfitByDriver : undefined,
     staleTime: 60_000,
   })
 
@@ -93,7 +94,7 @@ export function FinancialsDashboard({
     <div className="space-y-6">
       {/* Period Selector */}
       <div className="flex items-center justify-end">
-        <PeriodSelector value={period} onChange={setPeriod} />
+        <PeriodSelector value={dateRange} onChange={setDateRange} />
       </div>
 
       {/* Section 1: Business KPIs (includes overhead) */}

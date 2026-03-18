@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { startOfMonth, startOfQuarter, startOfYear, endOfMonth, subMonths, subDays, format } from 'date-fns'
 import { fetchFixedExpensesForPeriod } from './business-expenses'
 import type { PnLInput } from '@/lib/financial/pnl-calculations'
+import type { DateRange } from '@/types/filters'
 
 // ============================================================================
 // Types
@@ -96,6 +97,33 @@ function getPeriodStart(period: FinancialPeriod): Date {
     case 'last30': return subDays(now, 30)
     case 'last90': return subDays(now, 90)
   }
+}
+
+/**
+ * Resolve a DateRange (or undefined) into { startDate, endDate } Date objects.
+ * When undefined, defaults to MTD (month-to-date).
+ */
+export function getDateBounds(dateRange?: DateRange): { startDate: Date; endDate: Date } {
+  if (dateRange) {
+    return {
+      startDate: new Date(dateRange.from),
+      endDate: new Date(dateRange.to),
+    }
+  }
+  // Default: MTD
+  return {
+    startDate: startOfMonth(new Date()),
+    endDate: new Date(),
+  }
+}
+
+/**
+ * Convert a FinancialPeriod preset to a DateRange.
+ * Keep for backwards compatibility.
+ */
+export function periodToDateRange(period: FinancialPeriod): DateRange {
+  const start = getPeriodStart(period)
+  return { from: start.toISOString(), to: new Date().toISOString() }
 }
 
 // ============================================================================
@@ -240,15 +268,22 @@ export async function fetchRevenueByMonth(
 }
 
 /**
- * Fetch top 5 brokers by total revenue.
+ * Fetch top 5 brokers by total revenue within a date range.
  */
 export async function fetchTopBrokersByRevenue(
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
+  dateRange?: DateRange
 ): Promise<TopBroker[]> {
+  const { startDate: periodStart, endDate: periodEnd } = getDateBounds(dateRange)
+  const startISO = periodStart.toISOString()
+  const endISO = periodEnd.toISOString()
+
   const { data: orders, error } = await supabase
     .from('orders')
     .select('revenue, broker:brokers(id, name)')
     .not('broker_id', 'is', null)
+    .gte('created_at', startISO)
+    .lte('created_at', endISO)
 
   if (error) throw error
 
@@ -288,14 +323,21 @@ export async function fetchTopBrokersByRevenue(
  */
 async function safeFetchMiles(
   supabase: SupabaseClient,
-  filter: { column: string; op: 'gte'; value: string }
+  filter: { column: string; op: 'gte'; value: string },
+  upperBound?: string
 ): Promise<{ distance_miles: string; created_at?: string }[]> {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('orders')
       .select('distance_miles, created_at')
       .gte(filter.column, filter.value)
       .not('distance_miles', 'is', null)
+
+    if (upperBound) {
+      query = query.lte(filter.column, upperBound)
+    }
+
+    const { data, error } = await query
 
     if (error) return []
     return (data ?? []) as { distance_miles: string; created_at?: string }[]
@@ -313,27 +355,32 @@ async function safeFetchMiles(
  */
 export async function fetchKPIAggregates(
   supabase: SupabaseClient,
-  period: FinancialPeriod
+  dateRange?: DateRange
 ): Promise<KPIAggregates> {
-  const periodStart = getPeriodStart(period)
+  const { startDate: periodStart, endDate: periodEnd } = getDateBounds(dateRange)
   const startISO = periodStart.toISOString()
+  const endISO = periodEnd.toISOString()
   const startDate = format(periodStart, 'yyyy-MM-dd')
+  const endDate = format(periodEnd, 'yyyy-MM-dd')
 
   // Parallel queries — distance_miles fetched separately to gracefully handle missing column
   const [ordersRes, milesData, tripsRes, expensesRes, trucksRes] = await Promise.all([
     supabase
       .from('orders')
       .select('revenue, broker_fee, local_fee, carrier_pay')
-      .gte('created_at', startISO),
-    safeFetchMiles(supabase, { column: 'created_at', op: 'gte', value: startISO }),
+      .gte('created_at', startISO)
+      .lte('created_at', endISO),
+    safeFetchMiles(supabase, { column: 'created_at', op: 'gte', value: startISO }, endISO),
     supabase
       .from('trips')
       .select('driver_pay, total_revenue, total_expenses, status')
-      .gte('start_date', startDate),
+      .gte('start_date', startDate)
+      .lte('start_date', endDate),
     supabase
       .from('trip_expenses')
       .select('amount, category')
-      .gte('expense_date', startDate),
+      .gte('expense_date', startDate)
+      .lte('expense_date', endDate),
     supabase
       .from('trucks')
       .select('id', { count: 'exact', head: true })
@@ -410,14 +457,17 @@ export async function fetchKPIAggregates(
  */
 export async function fetchProfitByTruck(
   supabase: SupabaseClient,
-  period: FinancialPeriod
+  dateRange?: DateRange
 ): Promise<ProfitByTruck[]> {
-  const startDate = format(getPeriodStart(period), 'yyyy-MM-dd')
+  const { startDate: periodStart, endDate: periodEnd } = getDateBounds(dateRange)
+  const startDate = format(periodStart, 'yyyy-MM-dd')
+  const endDate = format(periodEnd, 'yyyy-MM-dd')
 
   const { data: trips, error } = await supabase
     .from('trips')
     .select('truck_id, total_revenue, total_broker_fees, total_local_fees, driver_pay, total_expenses, carrier_pay, truck:trucks(id, unit_number)')
     .gte('start_date', startDate)
+    .lte('start_date', endDate)
 
   if (error) throw error
 
@@ -474,14 +524,17 @@ export async function fetchProfitByTruck(
  */
 export async function fetchProfitByDriver(
   supabase: SupabaseClient,
-  period: FinancialPeriod
+  dateRange?: DateRange
 ): Promise<ProfitByDriver[]> {
-  const startDate = format(getPeriodStart(period), 'yyyy-MM-dd')
+  const { startDate: periodStart, endDate: periodEnd } = getDateBounds(dateRange)
+  const startDate = format(periodStart, 'yyyy-MM-dd')
+  const endDate = format(periodEnd, 'yyyy-MM-dd')
 
   const { data: trips, error } = await supabase
     .from('trips')
     .select('driver_id, total_revenue, driver_pay, driver:drivers(id, first_name, last_name, driver_type)')
     .gte('start_date', startDate)
+    .lte('start_date', endDate)
 
   if (error) throw error
 
@@ -629,20 +682,21 @@ export async function fetchMonthlyKPITrend(
  */
 export async function fetchPnLData(
   supabase: SupabaseClient,
-  period: FinancialPeriod
+  dateRange?: DateRange
 ): Promise<PnLInput> {
-  const periodStart = getPeriodStart(period)
+  const { startDate: periodStart, endDate: periodEnd } = getDateBounds(dateRange)
   const startDate = format(periodStart, 'yyyy-MM-dd')
-  const endDate = format(new Date(), 'yyyy-MM-dd')
+  const endDate = format(periodEnd, 'yyyy-MM-dd')
 
   // Fetch KPI aggregates (orders, trips, expenses, trucks) and fixed expenses in parallel
   const [kpi, fixedExpenses, carsHauledRes] = await Promise.all([
-    fetchKPIAggregates(supabase, period),
+    fetchKPIAggregates(supabase, dateRange),
     fetchFixedExpensesForPeriod(supabase, startDate, endDate),
     supabase
       .from('orders')
       .select('id', { count: 'exact', head: true })
       .gte('created_at', periodStart.toISOString())
+      .lte('created_at', periodEnd.toISOString())
       .in('status', ['delivered', 'invoiced', 'paid']),
   ])
 
@@ -873,14 +927,17 @@ export interface TripAnalyticsRow {
  */
 export async function fetchTripAnalytics(
   supabase: SupabaseClient,
-  period: FinancialPeriod
+  dateRange?: DateRange
 ): Promise<TripAnalyticsRow[]> {
-  const startDate = format(getPeriodStart(period), 'yyyy-MM-dd')
+  const { startDate: periodStart, endDate: periodEnd } = getDateBounds(dateRange)
+  const startDate = format(periodStart, 'yyyy-MM-dd')
+  const endDate = format(periodEnd, 'yyyy-MM-dd')
 
   const { data: trips, error } = await supabase
     .from('trips')
     .select('id, trip_number, status, start_date, total_revenue, total_broker_fees, total_local_fees, driver_pay, total_expenses, net_profit, carrier_pay, order_count, total_miles, driver:drivers(first_name, last_name), truck:trucks(unit_number)')
     .gte('start_date', startDate)
+    .lte('start_date', endDate)
     .order('start_date', { ascending: false })
 
   if (error) throw error

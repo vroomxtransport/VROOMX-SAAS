@@ -3,16 +3,17 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { fetchPnLData, fetchMonthlyPnLTrend, type FinancialPeriod, type MonthlyPnLItem } from '@/lib/queries/financials'
+import { fetchPnLData, fetchMonthlyPnLTrend, type MonthlyPnLItem } from '@/lib/queries/financials'
 import { calculatePnL, calculateUnitMetrics, type PnLOutput, type UnitMetrics, type PnLInput } from '@/lib/financial/pnl-calculations'
+import type { DateRange } from '@/types/filters'
 
-export function usePnLData(period: FinancialPeriod) {
+export function usePnLData(dateRange?: DateRange) {
   const supabase = createClient()
   const queryClient = useQueryClient()
 
   const query = useQuery({
-    queryKey: ['pnl', period],
-    queryFn: () => fetchPnLData(supabase, period),
+    queryKey: ['pnl', dateRange?.from, dateRange?.to],
+    queryFn: () => fetchPnLData(supabase, dateRange),
     staleTime: 60_000,
   })
 
