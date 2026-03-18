@@ -28,17 +28,17 @@ export interface WidgetLayout {
   grid: WidgetGridPos
 }
 
-// rowHeight=1px — each h unit = 1 pixel for free-form resizing.
+// rowHeight=40px — fine granularity (40px steps) with reliable compaction.
 const DEFAULT_LAYOUT: WidgetLayout[] = [
-  { id: 'statCards', visible: true, grid: { x: 0, y: 0, w: 12, h: 80, minW: 6, minH: 60 } },
-  { id: 'loadsPipeline', visible: true, grid: { x: 0, y: 92, w: 8, h: 340, minW: 4, minH: 160 } },
-  { id: 'fleetPulse', visible: true, grid: { x: 8, y: 92, w: 4, h: 340, minW: 3, minH: 160 } },
-  { id: 'revenueChart', visible: true, grid: { x: 0, y: 444, w: 8, h: 420, minW: 4, minH: 200 } },
-  { id: 'upcomingPickups', visible: true, grid: { x: 8, y: 444, w: 4, h: 420, minW: 3, minH: 200 } },
-  { id: 'activityFeed', visible: true, grid: { x: 0, y: 876, w: 6, h: 420, minW: 4, minH: 200 } },
-  { id: 'openInvoices', visible: true, grid: { x: 6, y: 876, w: 3, h: 240, minW: 3, minH: 120 } },
-  { id: 'topDrivers', visible: true, grid: { x: 9, y: 876, w: 3, h: 240, minW: 3, minH: 120 } },
-  { id: 'quickLinks', visible: true, grid: { x: 0, y: 1308, w: 4, h: 200, minW: 3, minH: 120 } },
+  { id: 'statCards', visible: true, grid: { x: 0, y: 0, w: 12, h: 2, minW: 6, minH: 2 } },
+  { id: 'loadsPipeline', visible: true, grid: { x: 0, y: 2, w: 8, h: 8, minW: 4, minH: 4 } },
+  { id: 'fleetPulse', visible: true, grid: { x: 8, y: 2, w: 4, h: 8, minW: 3, minH: 4 } },
+  { id: 'revenueChart', visible: true, grid: { x: 0, y: 10, w: 8, h: 10, minW: 4, minH: 5 } },
+  { id: 'upcomingPickups', visible: true, grid: { x: 8, y: 10, w: 4, h: 10, minW: 3, minH: 5 } },
+  { id: 'activityFeed', visible: true, grid: { x: 0, y: 20, w: 6, h: 10, minW: 4, minH: 5 } },
+  { id: 'openInvoices', visible: true, grid: { x: 6, y: 20, w: 3, h: 6, minW: 3, minH: 3 } },
+  { id: 'topDrivers', visible: true, grid: { x: 9, y: 20, w: 3, h: 6, minW: 3, minH: 3 } },
+  { id: 'quickLinks', visible: true, grid: { x: 0, y: 30, w: 4, h: 5, minW: 3, minH: 3 } },
 ]
 
 interface DashboardStore {
@@ -89,11 +89,11 @@ export const useDashboardStore = create<DashboardStore>()(
     }),
     {
       name: 'vroomx-dashboard',
-      version: 8,
+      version: 9,
       partialize: (state) => ({ widgetLayout: state.widgetLayout }),
       migrate: (persisted, version) => {
-        if (version < 8) {
-          // Reset to defaults — v8: 1px row height for free-form resize
+        if (version < 9) {
+          // Reset to defaults — v9: 40px row height for balanced granularity
           return { widgetLayout: DEFAULT_LAYOUT.map((w) => ({ ...w, grid: { ...w.grid } })) }
         }
         return persisted as { widgetLayout: WidgetLayout[] }

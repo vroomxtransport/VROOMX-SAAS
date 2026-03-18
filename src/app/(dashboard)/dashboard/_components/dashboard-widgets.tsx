@@ -88,7 +88,7 @@ export function DashboardWidgets(props: DashboardWidgetsProps) {
             layouts={{ lg: lgLayouts, sm: smLayouts }}
             breakpoints={{ lg: 1024, sm: 0 }}
             cols={{ lg: 12, sm: 1 }}
-            rowHeight={1}
+            rowHeight={40}
             margin={[12, 12] as const}
             containerPadding={[0, 0] as const}
             autoSize
