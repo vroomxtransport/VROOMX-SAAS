@@ -147,26 +147,23 @@ export function Sidebar({ userRole, tenantName }: SidebarProps) {
         )}
       >
         {/* Logo area */}
-        <div className="flex h-14 items-center border-b border-[var(--sidebar-border-color)] px-3">
-          <Link href="/dashboard" className={cn(
-            'flex flex-1 items-center justify-center overflow-hidden',
-            isCollapsed ? 'lg:justify-center' : 'lg:justify-start lg:pl-1'
-          )}>
+        <div className="flex h-16 items-center border-b border-[var(--sidebar-border-color)] px-3">
+          <Link href="/dashboard" className="flex flex-1 items-center justify-center overflow-hidden">
             {isCollapsed ? (
               <Image
                 src="/images/logo-white.png"
                 alt="VroomX"
-                width={32}
-                height={32}
-                className="h-8 w-auto object-contain"
+                width={45}
+                height={45}
+                className="h-[2.8rem] w-auto object-contain"
               />
             ) : (
               <Image
                 src="/images/logo-white.png"
                 alt="VroomX TMS"
-                width={140}
-                height={48}
-                className="h-9 w-auto"
+                width={196}
+                height={67}
+                className="h-[3.15rem] w-auto"
               />
             )}
           </Link>
