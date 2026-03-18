@@ -88,8 +88,8 @@ export function DashboardWidgets(props: DashboardWidgetsProps) {
             layouts={{ lg: lgLayouts, sm: smLayouts }}
             breakpoints={{ lg: 1024, sm: 0 }}
             cols={{ lg: 12, sm: 1 }}
-            rowHeight={120}
-            margin={[12, 12] as const}
+            rowHeight={80}
+            margin={[10, 10] as const}
             containerPadding={[0, 0] as const}
             autoSize
             dragConfig={{ enabled: editMode, handle: '.widget-drag-handle' }}
@@ -109,7 +109,7 @@ export function DashboardWidgets(props: DashboardWidgetsProps) {
                     <GripVertical className="h-4 w-4 text-muted-foreground" />
                   </div>
                 )}
-                <div className="h-full w-full overflow-hidden rounded-xl">
+                <div className="h-full w-full overflow-auto">
                   {props[widgetContent[widget.id as Exclude<WidgetId, 'statCards'>]]}
                 </div>
               </div>
