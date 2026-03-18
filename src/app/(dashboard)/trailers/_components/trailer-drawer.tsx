@@ -60,7 +60,7 @@ export function TrailerDrawer({ open, onOpenChange, trailer }: TrailerDrawerProp
             </SheetDescription>
           </SheetHeader>
 
-          <div className="mt-6">
+          <div className="mt-6 px-4 pb-4">
             <TrailerForm
               trailer={trailer}
               onSuccess={handleSuccess}

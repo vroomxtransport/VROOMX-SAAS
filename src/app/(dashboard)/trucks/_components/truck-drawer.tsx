@@ -60,7 +60,7 @@ export function TruckDrawer({ open, onOpenChange, truck }: TruckDrawerProps) {
             </SheetDescription>
           </SheetHeader>
 
-          <div className="mt-6">
+          <div className="mt-6 px-4 pb-4">
             <TruckForm
               truck={truck}
               onSuccess={handleSuccess}
