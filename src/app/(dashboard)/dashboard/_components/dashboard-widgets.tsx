@@ -88,8 +88,8 @@ export function DashboardWidgets(props: DashboardWidgetsProps) {
             layouts={{ lg: lgLayouts, sm: smLayouts }}
             breakpoints={{ lg: 1024, sm: 0 }}
             cols={{ lg: 12, sm: 1 }}
-            rowHeight={80}
-            margin={[10, 10] as const}
+            rowHeight={1}
+            margin={[12, 12] as const}
             containerPadding={[0, 0] as const}
             autoSize
             dragConfig={{ enabled: editMode, handle: '.widget-drag-handle' }}
