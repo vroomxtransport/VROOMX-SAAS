@@ -66,9 +66,9 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           <Image
             src="/images/logo-white.png"
             alt="VroomX TMS"
-            width={280}
-            height={96}
-            className="pointer-events-none h-20 w-auto brightness-0"
+            width={616}
+            height={211}
+            className="pointer-events-none h-44 w-auto brightness-0"
           />
         </TechOrbitDisplay>
       </div>
