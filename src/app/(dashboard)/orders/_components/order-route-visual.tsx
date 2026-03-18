@@ -1,6 +1,6 @@
 'use client'
 
-import { ExternalLink, MapPin } from 'lucide-react'
+import { ExternalLink, MapPin, Phone, Calendar } from 'lucide-react'
 import type { OrderWithRelations } from '@/lib/queries/orders'
 
 interface OrderRouteVisualProps {
@@ -28,6 +28,11 @@ function formatDate(dateStr: string | null | undefined): string {
   })
 }
 
+function isDatePast(dateStr: string | null | undefined): boolean {
+  if (!dateStr) return false
+  return new Date(dateStr) < new Date()
+}
+
 export function OrderRouteVisual({ order }: OrderRouteVisualProps) {
   const pickupAddress = buildAddress(
     order.pickup_location,
@@ -43,6 +48,9 @@ export function OrderRouteVisual({ order }: OrderRouteVisualProps) {
   )
   const pickupMapUrl = buildMapUrl(order.pickup_latitude, order.pickup_longitude, pickupAddress)
   const deliveryMapUrl = buildMapUrl(order.delivery_latitude, order.delivery_longitude, deliveryAddress)
+
+  const pickupOverdue = isDatePast(order.pickup_date) && !order.actual_pickup_date
+  const deliveryOverdue = isDatePast(order.delivery_date) && !order.actual_delivery_date
 
   return (
     <div className="rounded-xl border border-border-subtle bg-surface p-6">
@@ -75,20 +83,40 @@ export function OrderRouteVisual({ order }: OrderRouteVisualProps) {
                 <span>Open in Maps</span>
               </a>
             )}
+            {/* Contact with clickable phone */}
             {order.pickup_contact_name && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                {order.pickup_contact_name}
-                {order.pickup_contact_phone && ` - ${order.pickup_contact_phone}`}
-              </p>
+              <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                <span>{order.pickup_contact_name}</span>
+                {order.pickup_contact_phone && (
+                  <a
+                    href={`tel:${order.pickup_contact_phone}`}
+                    className="inline-flex items-center gap-1 text-brand hover:underline"
+                  >
+                    <Phone className="h-3 w-3" />
+                    {order.pickup_contact_phone}
+                  </a>
+                )}
+              </div>
             )}
-            <div className="mt-1 flex flex-wrap items-center gap-3">
-              <p className="text-xs text-muted-foreground">
-                Scheduled: {formatDate(order.pickup_date)}
-              </p>
+            {/* Dates — color-coded pills */}
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              {order.pickup_date && (
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium border ${
+                    pickupOverdue
+                      ? 'bg-red-50 text-red-700 border-red-200'
+                      : 'bg-blue-50 text-blue-700 border-blue-200'
+                  }`}
+                >
+                  <Calendar className="h-3 w-3" />
+                  {pickupOverdue ? 'Overdue' : 'Scheduled'}: {formatDate(order.pickup_date)}
+                </span>
+              )}
               {order.actual_pickup_date && (
-                <p className="text-xs text-emerald-600">
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 text-xs font-medium">
+                  <Calendar className="h-3 w-3" />
                   Actual: {formatDate(order.actual_pickup_date)}
-                </p>
+                </span>
               )}
             </div>
           </div>
@@ -114,20 +142,40 @@ export function OrderRouteVisual({ order }: OrderRouteVisualProps) {
                 <span>Open in Maps</span>
               </a>
             )}
+            {/* Contact with clickable phone */}
             {order.delivery_contact_name && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                {order.delivery_contact_name}
-                {order.delivery_contact_phone && ` - ${order.delivery_contact_phone}`}
-              </p>
+              <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                <span>{order.delivery_contact_name}</span>
+                {order.delivery_contact_phone && (
+                  <a
+                    href={`tel:${order.delivery_contact_phone}`}
+                    className="inline-flex items-center gap-1 text-brand hover:underline"
+                  >
+                    <Phone className="h-3 w-3" />
+                    {order.delivery_contact_phone}
+                  </a>
+                )}
+              </div>
             )}
-            <div className="mt-1 flex flex-wrap items-center gap-3">
-              <p className="text-xs text-muted-foreground">
-                Scheduled: {formatDate(order.delivery_date)}
-              </p>
+            {/* Dates — color-coded pills */}
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              {order.delivery_date && (
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium border ${
+                    deliveryOverdue
+                      ? 'bg-red-50 text-red-700 border-red-200'
+                      : 'bg-amber-50 text-amber-700 border-amber-200'
+                  }`}
+                >
+                  <Calendar className="h-3 w-3" />
+                  {deliveryOverdue ? 'Overdue' : 'Scheduled'}: {formatDate(order.delivery_date)}
+                </span>
+              )}
               {order.actual_delivery_date && (
-                <p className="text-xs text-emerald-600">
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 text-xs font-medium">
+                  <Calendar className="h-3 w-3" />
                   Actual: {formatDate(order.actual_delivery_date)}
-                </p>
+                </span>
               )}
             </div>
           </div>
