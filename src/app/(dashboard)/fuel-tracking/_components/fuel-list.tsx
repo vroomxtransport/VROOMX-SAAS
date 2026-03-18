@@ -18,7 +18,8 @@ import { Pagination } from '@/components/shared/pagination'
 import { EmptyState } from '@/components/shared/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
-import { Plus, Fuel } from 'lucide-react'
+import { Plus, Fuel, Upload } from 'lucide-react'
+import { FuelCsvImportDialog } from './fuel-csv-import-dialog'
 import { createClient } from '@/lib/supabase/client'
 import { fetchFuelEntries } from '@/lib/queries/fuel'
 import type { FuelEntry } from '@/types/database'
@@ -146,6 +147,9 @@ export function FuelList() {
   // Drawer state
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editingEntry, setEditingEntry] = useState<FuelEntry | undefined>(undefined)
+
+  // CSV import dialog state
+  const [importOpen, setImportOpen] = useState(false)
 
   const handleFilterChange = useCallback(
     (key: string, value: string | string[] | DateRange | undefined) => {
@@ -297,6 +301,10 @@ export function FuelList() {
             fetchData={handleCsvExport}
           />
           <ViewToggle viewMode={viewMode} onViewChange={(mode) => setView('fuel', mode)} />
+          <Button variant="outline" onClick={() => setImportOpen(true)}>
+            <Upload className="mr-2 h-4 w-4" />
+            Import CSV
+          </Button>
           <Button onClick={handleAddEntry}>
             <Plus className="mr-2 h-4 w-4" />
             Add Fuel Entry
@@ -395,6 +403,8 @@ export function FuelList() {
         onOpenChange={setDrawerOpen}
         entry={editingEntry}
       />
+
+      <FuelCsvImportDialog open={importOpen} onOpenChange={setImportOpen} />
     </div>
   )
 }
