@@ -202,14 +202,6 @@ const vroomxFeatures: FeatureItem[] = [
 ]
 
 const featureIcons = [Package, Navigation, CreditCard, Truck, Fuel, Lock]
-const featureGradients = [
-  "from-blue-500 to-blue-600",
-  "from-violet-500 to-purple-600",
-  "from-emerald-500 to-green-600",
-  "from-amber-500 to-orange-500",
-  "from-sky-500 to-cyan-600",
-  "from-rose-500 to-pink-600",
-]
 
 /* ── Component ──────────────────────────────────────────────────────── */
 
@@ -259,9 +251,9 @@ function Feature197({ features = vroomxFeatures }: { features?: FeatureItem[] })
                     <AccordionTrigger className="cursor-pointer py-5 !no-underline transition hover:!no-underline">
                       <div className="flex items-center gap-3">
                         <div
-                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${featureGradients[idx] ?? "from-brand to-amber-500"}`}
+                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-brand/15 bg-gradient-to-b from-brand/[0.12] to-brand/[0.04]"
                         >
-                          <Icon className="h-4 w-4 text-white" strokeWidth={2.5} />
+                          <Icon className="h-5 w-5 text-brand" />
                         </div>
                         <h6
                           className={`text-left text-lg font-semibold transition-colors ${
