@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { Ripple, TechOrbitDisplay } from '@/components/blocks/modern-animated-sign-in'
 import {
   Truck, Package, MapPin, CreditCard,
@@ -61,7 +62,15 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       {/* Left panel — animated orbit display (hidden on mobile) */}
       <div className="relative hidden w-1/2 overflow-hidden bg-background lg:flex lg:flex-col lg:items-center lg:justify-center">
         <Ripple mainCircleSize={100} />
-        <TechOrbitDisplay iconsArray={vroomxIcons} text="VroomX" />
+        <TechOrbitDisplay iconsArray={vroomxIcons}>
+          <Image
+            src="/images/logo-white.png"
+            alt="VroomX TMS"
+            width={280}
+            height={96}
+            className="pointer-events-none h-20 w-auto brightness-0"
+          />
+        </TechOrbitDisplay>
       </div>
 
       {/* Right panel — form (elevated surface with subtle border + shadow) */}

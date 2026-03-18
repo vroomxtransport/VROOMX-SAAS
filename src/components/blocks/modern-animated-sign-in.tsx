@@ -270,17 +270,21 @@ type IconConfig = {
 type TechnologyOrbitDisplayProps = {
   iconsArray: IconConfig[];
   text?: string;
+  children?: ReactNode;
 };
 
 const TechOrbitDisplay = memo(function TechOrbitDisplay({
   iconsArray,
   text = 'VroomX',
+  children,
 }: TechnologyOrbitDisplayProps) {
   return (
     <section className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-lg">
-      <span className="pointer-events-none whitespace-pre-wrap bg-gradient-to-b from-brand to-amber-400/80 bg-clip-text text-center text-7xl font-semibold leading-none text-transparent">
-        {text}
-      </span>
+      {children ?? (
+        <span className="pointer-events-none whitespace-pre-wrap bg-gradient-to-b from-brand to-amber-400/80 bg-clip-text text-center text-7xl font-semibold leading-none text-transparent">
+          {text}
+        </span>
+      )}
       {iconsArray.map((icon, index) => (
         <OrbitingCircles
           key={index}
