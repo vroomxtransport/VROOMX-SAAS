@@ -98,16 +98,30 @@ function GlassTooltip({ active, payload, label }: { active?: boolean; payload?: 
   )
 }
 
-// Custom active dot with glow
+// Custom active dot with animated glow ring
 function ActiveDot(props: { cx?: number; cy?: number }) {
   const { cx, cy } = props
   if (cx == null || cy == null) return null
   return (
     <g>
+      {/* Outer pulse ring */}
+      <circle cx={cx} cy={cy} r={14} fill="#fb7232" opacity={0.08}>
+        <animate attributeName="r" from="10" to="18" dur="1.5s" repeatCount="indefinite" />
+        <animate attributeName="opacity" from="0.12" to="0" dur="1.5s" repeatCount="indefinite" />
+      </circle>
+      {/* Mid glow */}
       <circle cx={cx} cy={cy} r={8} fill="#fb7232" opacity={0.15} />
-      <circle cx={cx} cy={cy} r={4} fill="#fb7232" stroke="white" strokeWidth={2} />
+      {/* Core dot */}
+      <circle cx={cx} cy={cy} r={5} fill="#fb7232" stroke="white" strokeWidth={2.5} />
     </g>
   )
+}
+
+// Small static dot for data points
+function SmallDot(props: { cx?: number; cy?: number }) {
+  const { cx, cy } = props
+  if (cx == null || cy == null) return null
+  return <circle cx={cx} cy={cy} r={2} fill="#fb7232" opacity={0.6} />
 }
 
 export function RevenueChart() {
@@ -180,22 +194,30 @@ export function RevenueChart() {
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
             <defs>
-              {/* Main gradient — stronger fill */}
+              {/* Horizontal gradient stroke — orange to amber */}
+              <linearGradient id="revStrokeGradient" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#fb7232" />
+                <stop offset="50%" stopColor="#f59e0b" />
+                <stop offset="100%" stopColor="#fb7232" />
+              </linearGradient>
+              {/* Rich 3-stop fill gradient */}
               <linearGradient id="revGradientMain" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#fb7232" stopOpacity={0.35} />
-                <stop offset="40%" stopColor="#fb7232" stopOpacity={0.12} />
+                <stop offset="0%" stopColor="#fb7232" stopOpacity={0.4} />
+                <stop offset="35%" stopColor="#f59e0b" stopOpacity={0.15} />
                 <stop offset="100%" stopColor="#fb7232" stopOpacity={0} />
               </linearGradient>
-              {/* Previous period gradient — very subtle */}
+              {/* Previous period gradient — neutral gray */}
               <linearGradient id="revGradientPrev" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#fb7232" stopOpacity={0.06} />
-                <stop offset="100%" stopColor="#fb7232" stopOpacity={0} />
+                <stop offset="0%" stopColor="#9ca3af" stopOpacity={0.06} />
+                <stop offset="100%" stopColor="#9ca3af" stopOpacity={0} />
               </linearGradient>
-              {/* Glow filter for line */}
+              {/* Colored glow filter */}
               <filter id="lineGlow" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="3" result="blur" />
+                <feGaussianBlur stdDeviation="4" result="blur" />
+                <feFlood floodColor="#fb7232" floodOpacity="0.3" result="color" />
+                <feComposite in="color" in2="blur" operator="in" result="coloredBlur" />
                 <feMerge>
-                  <feMergeNode in="blur" />
+                  <feMergeNode in="coloredBlur" />
                   <feMergeNode in="SourceGraphic" />
                 </feMerge>
               </filter>
@@ -241,28 +263,31 @@ export function RevenueChart() {
               }}
             />
 
-            {/* Previous period — subtle dashed background */}
+            {/* Previous period — subtle gray dashed line */}
             <Area
-              type="monotone"
+              type="natural"
               dataKey="prevRevenue"
-              stroke="#fb7232"
-              strokeWidth={1}
-              strokeDasharray="4 4"
-              strokeOpacity={0.25}
+              stroke="#9ca3af"
+              strokeWidth={1.5}
+              strokeDasharray="6 4"
+              strokeOpacity={0.35}
+              strokeLinecap="round"
               fill="url(#revGradientPrev)"
               dot={false}
               activeDot={false}
             />
 
-            {/* Current period — bold with glow */}
+            {/* Current period — gradient stroke with colored glow */}
             <Area
-              type="monotone"
+              type="natural"
               dataKey="revenue"
-              stroke="#fb7232"
-              strokeWidth={2.5}
+              stroke="url(#revStrokeGradient)"
+              strokeWidth={3}
+              strokeLinecap="round"
+              strokeLinejoin="round"
               fill="url(#revGradientMain)"
               filter="url(#lineGlow)"
-              dot={false}
+              dot={period === '7D' ? <SmallDot /> : false}
               activeDot={<ActiveDot />}
             />
           </AreaChart>
