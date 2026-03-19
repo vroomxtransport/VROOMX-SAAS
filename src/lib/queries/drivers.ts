@@ -72,6 +72,21 @@ export async function fetchDrivers(
   }
 }
 
+/**
+ * Lightweight query for dropdowns — only id + name, no pagination.
+ */
+export async function fetchDriverOptions(
+  supabase: SupabaseClient
+): Promise<{ id: string; first_name: string; last_name: string }[]> {
+  const { data, error } = await supabase
+    .from('drivers')
+    .select('id, first_name, last_name')
+    .order('first_name')
+
+  if (error) throw error
+  return (data ?? []) as { id: string; first_name: string; last_name: string }[]
+}
+
 export async function fetchDriver(
   supabase: SupabaseClient,
   id: string

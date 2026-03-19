@@ -3,7 +3,8 @@
 import { useState, useCallback, useMemo } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useLocalDrives } from '@/hooks/use-local-drives'
-import { useDrivers } from '@/hooks/use-drivers'
+import { useQuery } from '@tanstack/react-query'
+import { fetchDriverOptions } from '@/lib/queries/drivers'
 import { LocalDriveCard } from './local-drive-card'
 import { LocalDriveRow } from './local-drive-row'
 import { LocalDriveDrawer } from './local-drive-drawer'
@@ -56,12 +57,17 @@ export function LocalDriveList() {
   const viewMode = useViewMode('local-drives')
   const setView = useViewStore((s) => s.setView)
 
-  // Fetch drivers for the driver filter dropdown
-  const { data: driversData } = useDrivers({ pageSize: 500 })
+  // Lightweight driver fetch for filter dropdown only (id + name, no pagination)
+  const supabase = createClient()
+  const { data: driverOptionsRaw = [] } = useQuery({
+    queryKey: ['driver-options'],
+    queryFn: () => fetchDriverOptions(supabase),
+    staleTime: 60_000,
+  })
 
   // Build filter config with dynamic driver options
   const enhancedFilterConfig = useMemo((): EnhancedFilterConfig[] => {
-    const driverOptions = (driversData?.drivers ?? []).map((d) => ({
+    const driverOptions = driverOptionsRaw.map((d) => ({
       value: d.id,
       label: `${d.first_name} ${d.last_name}`,
     }))
@@ -97,7 +103,7 @@ export function LocalDriveList() {
         type: 'date-range',
       },
     ]
-  }, [driversData])
+  }, [driverOptionsRaw])
 
   // Parse filters from URL
   const currentPage = parseInt(searchParams.get('page') ?? '0', 10)
