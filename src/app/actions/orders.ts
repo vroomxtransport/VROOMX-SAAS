@@ -64,6 +64,7 @@ export async function createOrder(data: unknown) {
       broker_id: v.brokerId || null,
       driver_id: v.driverId || null,
       distance_miles: v.distanceMiles ? String(v.distanceMiles) : null,
+      dispatched_by: auth.ctx.user.id,
     })
     .select()
     .single()

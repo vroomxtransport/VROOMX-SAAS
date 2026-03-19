@@ -326,6 +326,41 @@ export const BUSINESS_EXPENSE_RECURRENCE_LABELS: Record<BusinessExpenseRecurrenc
 }
 
 // ============================================================================
+// Dispatcher Payroll Types
+// ============================================================================
+
+export type DispatcherPayType = 'fixed_salary' | 'performance_revenue'
+export type PayFrequency = 'weekly' | 'biweekly' | 'monthly'
+export type PayrollPeriodStatus = 'draft' | 'approved' | 'paid'
+
+export const DISPATCHER_PAY_TYPES: readonly DispatcherPayType[] = ['fixed_salary', 'performance_revenue'] as const
+export const PAY_FREQUENCIES: readonly PayFrequency[] = ['weekly', 'biweekly', 'monthly'] as const
+export const PAYROLL_PERIOD_STATUSES: readonly PayrollPeriodStatus[] = ['draft', 'approved', 'paid'] as const
+
+export const DISPATCHER_PAY_TYPE_LABELS: Record<DispatcherPayType, string> = {
+  fixed_salary: 'Fixed Salary',
+  performance_revenue: 'Performance Revenue',
+}
+
+export const PAY_FREQUENCY_LABELS: Record<PayFrequency, string> = {
+  weekly: 'Weekly',
+  biweekly: 'Biweekly',
+  monthly: 'Monthly',
+}
+
+export const PAYROLL_PERIOD_STATUS_LABELS: Record<PayrollPeriodStatus, string> = {
+  draft: 'Draft',
+  approved: 'Approved',
+  paid: 'Paid',
+}
+
+export const PAYROLL_PERIOD_STATUS_COLORS: Record<PayrollPeriodStatus, string> = {
+  draft: 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800/30 dark:text-gray-400 dark:border-gray-700',
+  approved: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800',
+  paid: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800',
+}
+
+// ============================================================================
 // Order Activity Log Types
 // ============================================================================
 

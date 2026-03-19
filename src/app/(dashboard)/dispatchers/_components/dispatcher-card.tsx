@@ -2,8 +2,11 @@
 
 import { EntityCard } from '@/components/shared/entity-card'
 import { Badge } from '@/components/ui/badge'
-import { UserCircle, Mail, Calendar } from 'lucide-react'
-import type { Dispatcher } from '@/lib/queries/dispatchers'
+import { Button } from '@/components/ui/button'
+import { UserCircle, Mail, Calendar, Banknote } from 'lucide-react'
+import { DISPATCHER_PAY_TYPE_LABELS, PAY_FREQUENCY_LABELS } from '@/types'
+import type { DispatcherPayType, PayFrequency } from '@/types'
+import type { DispatcherPayConfig } from '@/types/database'
 
 const ROLE_COLORS: Record<string, string> = {
   owner: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
@@ -12,10 +15,19 @@ const ROLE_COLORS: Record<string, string> = {
 }
 
 interface DispatcherCardProps {
-  dispatcher: Dispatcher
+  dispatcher: {
+    id: string
+    user_id: string
+    role: string
+    email: string
+    full_name: string
+    created_at: string
+  }
+  payConfig?: DispatcherPayConfig | null
+  onConfigurePay?: () => void
 }
 
-export function DispatcherCard({ dispatcher }: DispatcherCardProps) {
+export function DispatcherCard({ dispatcher, payConfig, onConfigurePay }: DispatcherCardProps) {
   const displayName = dispatcher.full_name || dispatcher.user_id.substring(0, 8)
   const roleColor = ROLE_COLORS[dispatcher.role] ?? 'bg-gray-500/10 text-gray-500 border-gray-500/20'
   const joinDate = new Date(dispatcher.created_at).toLocaleDateString('en-US', {
@@ -49,6 +61,36 @@ export function DispatcherCard({ dispatcher }: DispatcherCardProps) {
             <Calendar className="h-3 w-3" />
             <span>Member since {joinDate}</span>
           </div>
+
+          {/* Pay Config Badge */}
+          {payConfig ? (
+            <div className="mt-2 flex items-center gap-1.5 text-xs">
+              <Banknote className="h-3 w-3 text-emerald-500" />
+              <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                {DISPATCHER_PAY_TYPE_LABELS[payConfig.pay_type as DispatcherPayType]}
+                {' — '}
+                {payConfig.pay_type === 'performance_revenue'
+                  ? `${parseFloat(payConfig.pay_rate)}%`
+                  : `$${parseFloat(payConfig.pay_rate).toLocaleString()}`
+                }
+                {' / '}
+                {PAY_FREQUENCY_LABELS[payConfig.pay_frequency as PayFrequency]}
+              </span>
+            </div>
+          ) : onConfigurePay ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-2 h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+              onClick={(e) => {
+                e.stopPropagation()
+                onConfigurePay()
+              }}
+            >
+              <Banknote className="mr-1 h-3 w-3" />
+              Set up pay
+            </Button>
+          ) : null}
         </div>
       </div>
     </EntityCard>

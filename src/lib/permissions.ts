@@ -26,6 +26,7 @@ export const PERMISSION_CATEGORIES = {
   documents: ['documents.view', 'documents.create', 'documents.update', 'documents.delete'],
   trip_expenses: ['trip_expenses.view', 'trip_expenses.create', 'trip_expenses.update', 'trip_expenses.delete'],
   business_expenses: ['business_expenses.view', 'business_expenses.create', 'business_expenses.update', 'business_expenses.delete'],
+  dispatcher_payroll: ['dispatcher_payroll.view', 'dispatcher_payroll.create', 'dispatcher_payroll.update', 'dispatcher_payroll.approve'],
   settings: ['settings.view', 'settings.manage'],
 } as const
 
@@ -52,6 +53,7 @@ export const CATEGORY_LABELS: Record<string, string> = {
   documents: 'Documents',
   trip_expenses: 'Trip Expenses',
   business_expenses: 'Business Expenses',
+  dispatcher_payroll: 'Dispatcher Payroll',
   settings: 'Settings',
 }
 
@@ -64,7 +66,7 @@ export const BUILT_IN_ROLES: Record<string, string[]> = {
     'orders.*', 'trips.*', 'drivers.*', 'trucks.*', 'trailers.*',
     'brokers.*', 'local_drives.*', 'fuel.*', 'maintenance.*',
     'tasks.*', 'chat.*', 'documents.*', 'trip_expenses.*',
-    'business_expenses.*',
+    'business_expenses.*', 'dispatcher_payroll.view',
   ],
   billing: [
     'orders.view', 'orders.update',

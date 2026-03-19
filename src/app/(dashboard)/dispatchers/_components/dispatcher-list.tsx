@@ -2,13 +2,17 @@
 
 import { useState, useCallback, useMemo } from 'react'
 import { useDispatchers } from '@/hooks/use-dispatchers'
+import { useDispatchersWithPayConfig } from '@/hooks/use-dispatcher-payroll'
 import { DispatcherCard } from './dispatcher-card'
+import { DispatcherPayConfigDrawer } from './dispatcher-pay-config-drawer'
 import { EnhancedFilterBar } from '@/components/shared/enhanced-filter-bar'
 import { CsvExportButton } from '@/components/shared/csv-export-button'
 import { EmptyState } from '@/components/shared/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Users } from 'lucide-react'
 import type { EnhancedFilterConfig, DateRange } from '@/types/filters'
+import type { Dispatcher } from '@/lib/queries/dispatchers'
+import type { DispatcherPayConfig } from '@/types/database'
 
 const ROLE_OPTIONS = [
   { value: 'owner', label: 'Owner' },
@@ -33,9 +37,23 @@ const FILTER_CONFIG: EnhancedFilterConfig[] = [
 
 export function DispatcherList() {
   const { data: dispatchers, isLoading } = useDispatchers()
+  const { data: dispatchersWithConfig } = useDispatchersWithPayConfig()
 
   const [search, setSearch] = useState<string | undefined>(undefined)
   const [role, setRole] = useState<string | undefined>(undefined)
+  const [payConfigDrawerOpen, setPayConfigDrawerOpen] = useState(false)
+  const [selectedDispatcher, setSelectedDispatcher] = useState<Dispatcher | null>(null)
+
+  // Build pay config map from dispatcher-with-pay-config data
+  const payConfigMap = useMemo(() => {
+    const map = new Map<string, DispatcherPayConfig>()
+    for (const d of dispatchersWithConfig ?? []) {
+      if (d.pay_config) {
+        map.set(d.user_id, d.pay_config)
+      }
+    }
+    return map
+  }, [dispatchersWithConfig])
 
   const activeFilters = useMemo(() => {
     const filters: Record<string, string | string[] | DateRange | undefined> = {}
@@ -83,6 +101,11 @@ export function DispatcherList() {
       created_at: new Date(d.created_at).toLocaleDateString('en-US'),
     }))
   }, [filtered])
+
+  const handleConfigurePay = useCallback((dispatcher: Dispatcher) => {
+    setSelectedDispatcher(dispatcher)
+    setPayConfigDrawerOpen(true)
+  }, [])
 
   if (isLoading) {
     return (
@@ -138,9 +161,23 @@ export function DispatcherList() {
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((dispatcher) => (
-            <DispatcherCard key={dispatcher.id} dispatcher={dispatcher} />
+            <DispatcherCard
+              key={dispatcher.id}
+              dispatcher={dispatcher}
+              payConfig={payConfigMap.get(dispatcher.user_id)}
+              onConfigurePay={() => handleConfigurePay(dispatcher)}
+            />
           ))}
         </div>
+      )}
+
+      {selectedDispatcher && (
+        <DispatcherPayConfigDrawer
+          open={payConfigDrawerOpen}
+          onOpenChange={setPayConfigDrawerOpen}
+          dispatcher={selectedDispatcher}
+          existingConfig={payConfigMap.get(selectedDispatcher.user_id)}
+        />
       )}
     </div>
   )

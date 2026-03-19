@@ -21,28 +21,38 @@ export async function fetchDispatcherPerformance(
 
   const { data: orders, error: ordersError } = await supabase
     .from('orders')
-    .select('status, revenue')
+    .select('status, revenue, dispatched_by')
 
   if (ordersError) throw ordersError
 
-  const totalOrders = orders?.length ?? 0
-  const completedOrders = orders?.filter(
-    (o: Record<string, unknown>) =>
-      o.status === 'delivered' || o.status === 'invoiced' || o.status === 'paid'
-  ).length ?? 0
-  const totalRevenue = orders?.reduce(
-    (sum: number, o: Record<string, unknown>) => sum + parseFloat((o.revenue as string) || '0'),
-    0
-  ) ?? 0
+  // Group orders by dispatched_by for real per-dispatcher attribution
+  const ordersByDispatcher = new Map<string, { total: number; completed: number; revenue: number }>()
 
-  const memberCount = (members ?? []).length || 1
+  for (const o of orders ?? []) {
+    const dispatcherId = (o as Record<string, unknown>).dispatched_by as string | null
+    if (!dispatcherId) continue
 
-  return (members ?? []).map((m: Record<string, unknown>) => ({
-    user_id: m.user_id as string,
-    name: (m.full_name as string) || (m.user_id as string).substring(0, 8),
-    role: m.role as string,
-    total_orders: Math.round(totalOrders / memberCount),
-    completed_orders: Math.round(completedOrders / memberCount),
-    total_revenue: Math.round(totalRevenue / memberCount),
-  }))
+    const stats = ordersByDispatcher.get(dispatcherId) ?? { total: 0, completed: 0, revenue: 0 }
+    stats.total++
+    const status = (o as Record<string, unknown>).status as string
+    if (status === 'delivered' || status === 'invoiced' || status === 'paid') {
+      stats.completed++
+    }
+    stats.revenue += parseFloat(((o as Record<string, unknown>).revenue as string) || '0')
+    ordersByDispatcher.set(dispatcherId, stats)
+  }
+
+  return (members ?? []).map((m: Record<string, unknown>) => {
+    const userId = m.user_id as string
+    const stats = ordersByDispatcher.get(userId)
+
+    return {
+      user_id: userId,
+      name: (m.full_name as string) || userId.substring(0, 8),
+      role: m.role as string,
+      total_orders: stats?.total ?? 0,
+      completed_orders: stats?.completed ?? 0,
+      total_revenue: stats?.revenue ?? 0,
+    }
+  })
 }

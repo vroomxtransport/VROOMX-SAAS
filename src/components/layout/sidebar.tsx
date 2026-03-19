@@ -29,6 +29,7 @@ import {
   ShieldCheck,
   DollarSign,
   Container,
+  Banknote,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -83,6 +84,7 @@ const NAV_CATEGORIES: NavCategory[] = [
     items: [
       { name: 'Dispatchers', href: '/dispatchers', icon: Users, minRole: 'admin' },
       { name: 'Performance', href: '/dispatcher-performance', icon: TrendingUp, minRole: 'admin' },
+      { name: 'Payroll', href: '/payroll', icon: Banknote, minRole: 'admin' },
     ],
   },
   {
