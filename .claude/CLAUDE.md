@@ -98,6 +98,14 @@ When a task matches one of these, behave as that specialist first, then cross-ch
 - KPI engine: src/lib/financial/kpi-calculations.ts — pure functions, totalLocalFees included in expenses
 - Supabase returns numeric columns as **strings** — always `parseFloat()` and store with `String()`
 
+## Database Access (I can do this myself)
+- **Direct DB access**: I can run migrations via the `postgres` npm driver with dotenv (`.env.local`)
+- **Pattern**: Parse DATABASE_URL manually (has `@` in password), connect with `prepare: false`
+- **Migrations**: Generate with `npx drizzle-kit generate`, then run SQL statements directly
+- **Always use IF NOT EXISTS / IF NOT EXISTS** for idempotent migrations
+- **RLS**: Always enable RLS + create policies after creating tables
+- **Never ask user to run SQL** — I do it myself
+
 ## Key Gotchas (never violate)
 - Drizzle = schema/migrations ONLY → runtime = Supabase JS client
 - Server auth: getUser() via proxy.ts (NEVER getSession())
@@ -105,5 +113,6 @@ When a task matches one of these, behave as that specialist first, then cross-ch
 - Custom roles: "custom:{uuid}" → extract with .slice(7)
 - DB: pooled URL + prepare: false (PgBouncer)
 - Financial numeric fields: DB stores as string, Zod uses z.coerce.number(), actions convert with String()
+- DATABASE_URL has `@` in password — parse with regex, not URL constructor
 
 When suggesting changes, first state which rules apply. If security risk → warn loudly and suggest alternatives.
