@@ -146,6 +146,7 @@ export interface Order {
   payment_type: 'COD' | 'COP' | 'CHECK' | 'BILL' | 'SPLIT' | null
   payment_status: 'unpaid' | 'invoiced' | 'partially_paid' | 'paid'
   invoice_date: string | null
+  dispatched_by: string | null
   amount_paid: string
   notes: string | null
   created_at: string
@@ -285,13 +286,21 @@ export interface ChatChannel {
   updated_at: string
 }
 
+export interface ChatAttachment {
+  fileName: string
+  storagePath: string
+  fileSize: number
+  mimeType: string
+}
+
 export interface ChatMessage {
   id: string
   tenant_id: string
   channel_id: string
   user_id: string
   user_name: string | null
-  content: string
+  content: string | null
+  attachments: ChatAttachment[] | null
   created_at: string
 }
 
@@ -411,6 +420,47 @@ export interface OrderActivityLog {
   actor_email: string | null
   metadata: Record<string, unknown> | null
   created_at: string
+}
+
+// ============================================================================
+// Dispatcher Payroll Interfaces
+// ============================================================================
+
+export interface DispatcherPayConfig {
+  id: string
+  tenant_id: string
+  user_id: string
+  pay_type: 'fixed_salary' | 'performance_revenue'
+  pay_rate: string
+  pay_frequency: 'weekly' | 'biweekly' | 'monthly'
+  effective_from: string
+  effective_to: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface DispatcherPayrollPeriod {
+  id: string
+  tenant_id: string
+  user_id: string
+  period_start: string
+  period_end: string
+  pay_type: 'fixed_salary' | 'performance_revenue'
+  pay_rate: string
+  base_amount: string
+  performance_amount: string
+  total_amount: string
+  order_count: number
+  total_order_revenue: string
+  status: 'draft' | 'approved' | 'paid'
+  approved_by: string | null
+  approved_at: string | null
+  paid_at: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+  dispatcher?: { full_name: string; email: string }
 }
 
 export interface WebNotification {

@@ -30,6 +30,11 @@ export const paymentStatusEnum = pgEnum('payment_status', [
   'unpaid', 'invoiced', 'partially_paid', 'paid', 'factored',
 ])
 
+// Dispatcher Payroll Enums
+export const dispatcherPayTypeEnum = pgEnum('dispatcher_pay_type', ['fixed_salary', 'performance_revenue'])
+export const payFrequencyEnum = pgEnum('pay_frequency', ['weekly', 'biweekly', 'monthly'])
+export const payrollPeriodStatusEnum = pgEnum('payroll_period_status', ['draft', 'approved', 'paid'])
+
 // ============================================================================
 // Phase 1 Tables
 // ============================================================================
@@ -257,6 +262,8 @@ export const orders = pgTable('orders', {
   paymentStatus: paymentStatusEnum('payment_status').notNull().default('unpaid'),
   invoiceDate: timestamp('invoice_date', { withTimezone: true }),
   amountPaid: numeric('amount_paid', { precision: 12, scale: 2 }).default('0'),
+  // Dispatcher attribution
+  dispatchedBy: uuid('dispatched_by'),
   // Metadata
   notes: text('notes'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -269,6 +276,7 @@ export const orders = pgTable('orders', {
   index('idx_orders_tenant_trip').on(table.tenantId, table.tripId),
   index('idx_orders_tenant_payment_status').on(table.tenantId, table.paymentStatus),
   index('idx_orders_tenant_invoice_date').on(table.tenantId, table.invoiceDate),
+  index('idx_orders_tenant_dispatched_by').on(table.tenantId, table.dispatchedBy),
 ])
 
 // ============================================================================
@@ -595,7 +603,8 @@ export const chatMessages = pgTable('chat_messages', {
   channelId: uuid('channel_id').notNull().references(() => chatChannels.id, { onDelete: 'cascade' }),
   userId: uuid('user_id').notNull(),
   userName: text('user_name'),
-  content: text('content').notNull(),
+  content: text('content'),
+  attachments: jsonb('attachments'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
   index('idx_chat_messages_tenant_id').on(table.tenantId),
@@ -769,6 +778,63 @@ export const orderActivityLogs = pgTable('order_activity_logs', {
 ])
 
 // ============================================================================
+// Dispatcher Payroll Tables
+// ============================================================================
+
+/**
+ * Dispatcher Pay Configs Table
+ * Configures how a dispatcher is compensated (fixed salary or performance %).
+ * Supports effective date ranges for pay history tracking.
+ */
+export const dispatcherPayConfigs = pgTable('dispatcher_pay_configs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull(),
+  payType: dispatcherPayTypeEnum('pay_type').notNull(),
+  payRate: numeric('pay_rate', { precision: 12, scale: 2 }).notNull(),
+  payFrequency: payFrequencyEnum('pay_frequency').notNull(),
+  effectiveFrom: date('effective_from').notNull(),
+  effectiveTo: date('effective_to'),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_dispatcher_pay_configs_tenant_id').on(table.tenantId),
+  index('idx_dispatcher_pay_configs_tenant_user').on(table.tenantId, table.userId),
+])
+
+/**
+ * Dispatcher Payroll Periods Table
+ * Tracks payroll periods with calculated amounts and approval workflow.
+ */
+export const dispatcherPayrollPeriods = pgTable('dispatcher_payroll_periods', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull(),
+  periodStart: date('period_start').notNull(),
+  periodEnd: date('period_end').notNull(),
+  payType: dispatcherPayTypeEnum('pay_type').notNull(),
+  payRate: numeric('pay_rate', { precision: 12, scale: 2 }).notNull(),
+  baseAmount: numeric('base_amount', { precision: 12, scale: 2 }).default('0'),
+  performanceAmount: numeric('performance_amount', { precision: 12, scale: 2 }).default('0'),
+  totalAmount: numeric('total_amount', { precision: 12, scale: 2 }).default('0'),
+  orderCount: integer('order_count').default(0),
+  totalOrderRevenue: numeric('total_order_revenue', { precision: 12, scale: 2 }).default('0'),
+  status: payrollPeriodStatusEnum('status').notNull().default('draft'),
+  approvedBy: uuid('approved_by'),
+  approvedAt: timestamp('approved_at', { withTimezone: true }),
+  paidAt: timestamp('paid_at', { withTimezone: true }),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_dispatcher_payroll_periods_tenant_id').on(table.tenantId),
+  index('idx_dispatcher_payroll_periods_tenant_user').on(table.tenantId, table.userId),
+  index('idx_dispatcher_payroll_periods_tenant_status').on(table.tenantId, table.status),
+  index('idx_dispatcher_payroll_periods_tenant_dates').on(table.tenantId, table.periodStart, table.periodEnd),
+])
+
+// ============================================================================
 // Type Exports
 // ============================================================================
 
@@ -845,3 +911,9 @@ export type NewWebNotification = typeof webNotifications.$inferInsert
 // Order Activity Logs
 export type DrizzleOrderActivityLog = typeof orderActivityLogs.$inferSelect
 export type NewOrderActivityLog = typeof orderActivityLogs.$inferInsert
+
+// Dispatcher Payroll
+export type DrizzleDispatcherPayConfig = typeof dispatcherPayConfigs.$inferSelect
+export type NewDispatcherPayConfig = typeof dispatcherPayConfigs.$inferInsert
+export type DrizzleDispatcherPayrollPeriod = typeof dispatcherPayrollPeriods.$inferSelect
+export type NewDispatcherPayrollPeriod = typeof dispatcherPayrollPeriods.$inferInsert

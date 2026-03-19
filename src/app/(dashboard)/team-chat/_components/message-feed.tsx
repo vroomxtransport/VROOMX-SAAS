@@ -19,7 +19,7 @@ export function MessageFeed({ channelId }: MessageFeedProps) {
   const prevMessageCountRef = useRef(0)
   const [isAtBottom, setIsAtBottom] = useState(true)
   const [hasNewMessages, setHasNewMessages] = useState(false)
-  const initialLoadRef = useRef(true)
+  const [initialLoad, setInitialLoad] = useState(true)
 
   // Track whether user is at bottom via IntersectionObserver
   useEffect(() => {
@@ -44,10 +44,10 @@ export function MessageFeed({ channelId }: MessageFeedProps) {
     const isNewMessage = messages.length > prevMessageCountRef.current
     prevMessageCountRef.current = messages.length
 
-    if (initialLoadRef.current) {
+    if (initialLoad) {
       // Instant scroll on first load
       bottomRef.current?.scrollIntoView({ behavior: 'instant' })
-      initialLoadRef.current = false
+      setInitialLoad(false)
       return
     }
 
@@ -59,11 +59,11 @@ export function MessageFeed({ channelId }: MessageFeedProps) {
         setHasNewMessages(true)
       }
     }
-  }, [messages, isAtBottom])
+  }, [messages, isAtBottom, initialLoad])
 
   // Reset on channel switch
   useEffect(() => {
-    initialLoadRef.current = true
+    setInitialLoad(true)
     prevMessageCountRef.current = 0
     setHasNewMessages(false)
   }, [channelId])
@@ -112,7 +112,7 @@ export function MessageFeed({ channelId }: MessageFeedProps) {
             const currentDateKey = getDateKey(message.created_at)
             const prevDateKey = prev ? getDateKey(prev.created_at) : null
             const showDateSeparator = currentDateKey !== prevDateKey
-            const isRecent = index >= messages.length - 3 && !initialLoadRef.current
+            const isRecent = index >= messages.length - 3 && !initialLoad
 
             return (
               <div key={message.id}>
@@ -133,12 +133,13 @@ export function MessageFeed({ channelId }: MessageFeedProps) {
 
       {/* Screen reader live region for new messages */}
       <div aria-live="polite" aria-atomic="false" className="sr-only">
-        {messages.length > 0 && (
-          <span>
-            {messages[messages.length - 1].user_name} says:{' '}
-            {messages[messages.length - 1].content}
-          </span>
-        )}
+        {messages.length > 0 && (() => {
+          const last = messages[messages.length - 1]
+          const parts = [last.user_name ?? 'Unknown']
+          if (last.content) parts.push(`says: ${last.content}`)
+          if (last.attachments?.length) parts.push(`sent ${last.attachments.length} file${last.attachments.length > 1 ? 's' : ''}`)
+          return <span>{parts.join(' ')}</span>
+        })()}
       </div>
 
       {/* Scroll-to-bottom button */}

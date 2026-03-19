@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { getUserColor, getUserInitials, getUserTextColor } from './chat-utils'
+import { AttachmentDisplay } from './attachment-display'
 import type { ChatMessage } from '@/types/database'
 
 interface MessageBubbleProps {
@@ -25,6 +26,15 @@ export function MessageBubble({ message, isGrouped, animate }: MessageBubbleProp
   const avatarBg = getUserColor(message.user_id)
   const nameColor = getUserTextColor(message.user_id)
   const initials = getUserInitials(message.user_name)
+  const hasText = message.content && message.content.trim().length > 0
+  const hasAttachments = message.attachments && message.attachments.length > 0
+  const attachmentCount = message.attachments?.length ?? 0
+
+  const ariaLabel = [
+    `${message.user_name ?? 'Unknown'} at ${time}:`,
+    hasText ? message.content : null,
+    hasAttachments ? `${attachmentCount} attachment${attachmentCount > 1 ? 's' : ''}` : null,
+  ].filter(Boolean).join(' ')
 
   return (
     <div
@@ -34,7 +44,7 @@ export function MessageBubble({ message, isGrouped, animate }: MessageBubbleProp
         animate && 'animate-message-in'
       )}
       role="article"
-      aria-label={`${message.user_name ?? 'Unknown'} at ${time}: ${message.content}`}
+      aria-label={ariaLabel}
     >
       {isGrouped ? (
         <Tooltip>
@@ -64,10 +74,17 @@ export function MessageBubble({ message, isGrouped, animate }: MessageBubbleProp
             <span className="text-xs text-muted-foreground">{time}</span>
           </div>
         )}
-        <div className="rounded-lg bg-surface-raised px-3 py-2 max-w-[85%] w-fit">
-          <p className="text-sm text-foreground whitespace-pre-wrap break-words">
-            {message.content}
-          </p>
+        <div className="max-w-[85%] w-fit">
+          {hasText && (
+            <div className="rounded-lg bg-surface-raised px-3 py-2">
+              <p className="text-sm text-foreground whitespace-pre-wrap break-words">
+                {message.content}
+              </p>
+            </div>
+          )}
+          {hasAttachments && (
+            <AttachmentDisplay attachments={message.attachments!} />
+          )}
         </div>
       </div>
     </div>

@@ -16,7 +16,11 @@ import {
 } from '@/components/ui/sheet'
 import { TooltipProvider } from '@/components/ui/tooltip'
 
-export function ChatLayout() {
+interface ChatLayoutProps {
+  tenantId: string
+}
+
+export function ChatLayout({ tenantId }: ChatLayoutProps) {
   const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { data: channels } = useChannels()
@@ -83,6 +87,7 @@ export function ChatLayout() {
               <MessageInput
                 channelId={selectedChannelId}
                 channelName={selectedChannel?.name}
+                tenantId={tenantId}
               />
             </>
           ) : (
