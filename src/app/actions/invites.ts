@@ -2,10 +2,8 @@
 
 import { authorize, safeError } from '@/lib/authz'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
-import { getResend } from '@/lib/resend/client'
 import { inviteSchema } from '@/lib/validations/invite'
 import { checkTierLimit } from '@/lib/tier'
-import { InviteEmail } from '@/components/email/invite-email'
 import { revalidatePath } from 'next/cache'
 
 export async function sendInvite(data: unknown) {
@@ -27,8 +25,9 @@ export async function sendInvite(data: unknown) {
     return { error: `Team member limit reached (${tierCheck.current}/${tierCheck.limit}). Upgrade your plan to add more team members.` }
   }
 
-  // Check for existing pending invite to same email in this tenant
   const admin = createServiceRoleClient()
+
+  // Check for existing pending invite to same email in this tenant
   const { data: existingInvite } = await admin
     .from('invites')
     .select('id')
@@ -41,9 +40,19 @@ export async function sendInvite(data: unknown) {
     return { error: 'An invite has already been sent to this email address' }
   }
 
-  // Duplicate membership is caught by unique constraint on acceptance
+  // Check if already a member
+  const { data: existingMember } = await admin
+    .from('tenant_memberships')
+    .select('id')
+    .eq('tenant_id', tenantId)
+    .eq('email', parsed.data.email)
+    .single()
 
-  // Create invite token (crypto.randomUUID)
+  if (existingMember) {
+    return { error: 'This person is already a team member' }
+  }
+
+  // Create invite token
   const token = crypto.randomUUID()
   const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000) // 72 hours
 
@@ -60,39 +69,39 @@ export async function sendInvite(data: unknown) {
     })
 
   if (insertError) {
-    console.error('Failed to create invite:', insertError)
+    console.error('[INVITE] Failed to create invite:', insertError)
     return { error: 'Failed to create invite' }
   }
 
-  // Fetch tenant name for email
-  const { data: tenant } = await supabase
-    .from('tenants')
-    .select('name')
-    .eq('id', tenantId)
-    .single()
-
-  // Send invite email via Resend with React Email template
-  const acceptUrl = `${process.env.NEXT_PUBLIC_APP_URL}/invite/accept?token=${token}`
-  const inviterName = auth.ctx.user.email || 'A team member'
+  // Use Supabase Admin API to invite user by email
+  // This creates an auth user (if new) and sends Supabase's built-in invite email
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const redirectTo = `${appUrl}/auth-confirm?next=${encodeURIComponent(`/invite/accept?token=${token}`)}`
 
   try {
-    await getResend().emails.send({
-      from: `${tenant?.name || 'VroomX'} <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
-      to: [parsed.data.email],
-      subject: `You've been invited to join ${tenant?.name || 'a team'} on VroomX`,
-      react: InviteEmail({
-        tenantName: tenant?.name || 'Your team',
-        inviterName,
-        role: parsed.data.role,
-        acceptUrl,
-      }),
-    })
-  } catch (emailError) {
-    console.error('Failed to send invite email:', emailError)
-    // Don't fail the invite -- it's created in DB. User can resend.
+    const { error: inviteError } = await admin.auth.admin.inviteUserByEmail(
+      parsed.data.email,
+      {
+        redirectTo,
+        data: {
+          invited_tenant_id: tenantId,
+          invited_role: parsed.data.role,
+        },
+      }
+    )
+
+    if (inviteError) {
+      // User may already exist in auth — that's OK, they'll use the login flow
+      // The invite record is already created, so they can still accept via login
+      console.log('[INVITE] Supabase invite note:', inviteError.message)
+    }
+  } catch (err) {
+    // Non-fatal: invite record exists, user can still accept via login page
+    console.error('[INVITE] Supabase invite failed (non-fatal):', err)
   }
 
   revalidatePath('/settings')
+  revalidatePath('/dispatchers')
   return { success: true }
 }
 
@@ -107,7 +116,7 @@ export async function revokeInvite(inviteId: string) {
     .from('invites')
     .update({ status: 'revoked' })
     .eq('id', inviteId)
-    .eq('tenant_id', tenantId) // Security: only revoke own tenant's invites
+    .eq('tenant_id', tenantId)
 
   if (error) {
     return { error: safeError(error, 'revokeInvite') }

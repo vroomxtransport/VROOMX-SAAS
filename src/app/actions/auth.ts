@@ -100,15 +100,38 @@ export async function signUpAction(prevState: any, formData: FormData) {
 
   const inviteToken = formData.get('invite_token') as string | null
 
-  // Invited user: just create auth user, skip tenant/Stripe setup.
+  // Invited user: create auth user with confirmed email, skip tenant/Stripe setup.
   // The accept route will assign them to the inviting tenant.
   if (inviteToken) {
     const admin = createServiceRoleClient()
-    await admin.auth.admin.updateUserById(authData.user.id, {
-      app_metadata: { pending_invite: true },
-    })
+
+    // Check if user was already pre-created by admin.inviteUserByEmail()
+    // If so, just update their password and metadata
+    const { data: existingUsers } = await admin.auth.admin.listUsers()
+    const existingUser = existingUsers?.users?.find(u => u.email === email)
+
+    if (existingUser) {
+      // User was pre-created by invite — update their password and confirm
+      await admin.auth.admin.updateUserById(existingUser.id, {
+        password,
+        email_confirm: true,
+        user_metadata: { full_name },
+        app_metadata: { pending_invite: true },
+      })
+    } else {
+      // User wasn't pre-created — confirm email directly so sign-in works
+      await admin.auth.admin.updateUserById(authData.user.id, {
+        email_confirm: true,
+        app_metadata: { pending_invite: true },
+      })
+    }
+
     // Sign them in so the accept route sees an authenticated user
-    await supabase.auth.signInWithPassword({ email, password })
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+    if (signInError) {
+      console.error('[SIGNUP] Sign-in after invite signup failed:', signInError.message)
+      return { error: 'Account created but sign-in failed. Please try logging in.' }
+    }
     revalidatePath('/', 'layout')
     redirect(`/invite/accept?token=${inviteToken}`)
   }
@@ -149,11 +172,13 @@ export async function signUpAction(prevState: any, formData: FormData) {
     return { error: 'Failed to create organization' }
   }
 
-  // 5. Create tenant membership (admin role)
+  // 5. Create tenant membership (admin role) with name/email for display
   await admin.from('tenant_memberships').insert({
     tenant_id: tenant.id,
     user_id: authData.user.id,
     role: 'admin',
+    full_name,
+    email,
   })
 
   // 6. Set app_metadata on user

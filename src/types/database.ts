@@ -27,6 +27,8 @@ export interface TenantMembership {
   tenant_id: string
   user_id: string
   role: string
+  full_name: string | null
+  email: string | null
   created_at: string
   updated_at: string
 }

@@ -55,13 +55,15 @@ export async function GET(request: NextRequest) {
         redirect('/dashboard')
       }
 
-      // Add to tenant_memberships
+      // Add to tenant_memberships with name/email for display
       const { error: memberError } = await admin
         .from('tenant_memberships')
         .insert({
           tenant_id: invite.tenant_id,
           user_id: user.id,
           role: invite.role,
+          full_name: user.user_metadata?.full_name || '',
+          email: user.email || '',
         })
 
       if (memberError) {

@@ -80,6 +80,8 @@ export const tenantMemberships = pgTable('tenant_memberships', {
   tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
   userId: uuid('user_id').notNull(), // References auth.users (not defined in this schema)
   role: text('role').notNull().default('viewer'),
+  fullName: text('full_name'),
+  email: text('email'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
