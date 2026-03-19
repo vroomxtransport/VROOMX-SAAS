@@ -3,6 +3,7 @@
 import { authorize, safeError } from '@/lib/authz'
 import { recordPaymentSchema } from '@/lib/validations/payment'
 import { logOrderActivity } from '@/lib/activity-log'
+import { createWebNotification } from '@/app/actions/notifications'
 import { revalidatePath } from 'next/cache'
 
 export async function recordPayment(orderId: string, data: unknown) {
@@ -18,7 +19,7 @@ export async function recordPayment(orderId: string, data: unknown) {
   // Fetch the order to get current carrier_pay, amount_paid, and SPLIT fields
   const { data: order, error: orderError } = await supabase
     .from('orders')
-    .select('carrier_pay, amount_paid, payment_status, payment_type, billing_amount, cod_amount')
+    .select('order_number, carrier_pay, amount_paid, payment_status, payment_type, billing_amount, cod_amount')
     .eq('id', orderId)
     .eq('tenant_id', tenantId)
     .single()
@@ -99,6 +100,16 @@ export async function recordPayment(orderId: string, data: unknown) {
     actorId: auth.ctx.user.id,
     actorEmail: auth.ctx.user.email,
     metadata: { amount: parsed.data.amount, paymentDate: parsed.data.paymentDate, newPaymentStatus },
+  }).catch(() => {})
+
+  // Fire-and-forget notification
+  void createWebNotification({
+    userId: auth.ctx.user.id,
+    tenantId,
+    type: 'payment_received',
+    title: 'Payment Recorded',
+    body: `$${parsed.data.amount.toFixed(2)} payment recorded on order ${order.order_number}`,
+    link: `/orders/${orderId}`,
   }).catch(() => {})
 
   revalidatePath(`/orders/${orderId}`)

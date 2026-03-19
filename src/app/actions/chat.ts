@@ -2,6 +2,7 @@
 
 import { authorize, safeError } from '@/lib/authz'
 import { messageSchema, channelSchema } from '@/lib/validations/chat'
+import { createWebNotification } from '@/app/actions/notifications'
 import { revalidatePath } from 'next/cache'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -37,6 +38,44 @@ export async function sendMessage(channelId: string, data: unknown) {
   }).select().single()
 
   if (error) return { error: safeError(error, 'sendMessage') }
+
+  // Fire-and-forget: notify other team members of the new message
+  void (async () => {
+    try {
+      // Fetch channel name for the notification title
+      const { data: channel } = await supabase
+        .from('chat_channels')
+        .select('name')
+        .eq('id', channelId)
+        .eq('tenant_id', tenantId)
+        .single()
+
+      const channelName = channel?.name ?? 'chat'
+
+      // Fetch all tenant members except the sender
+      const { data: members } = await supabase
+        .from('tenant_memberships')
+        .select('user_id')
+        .eq('tenant_id', tenantId)
+        .neq('user_id', user.id)
+
+      if (members) {
+        for (const member of members) {
+          createWebNotification({
+            userId: member.user_id,
+            tenantId,
+            type: 'chat_message',
+            title: `New message in #${channelName}`,
+            body: parsed.data.content?.slice(0, 100) || 'Sent an attachment',
+            link: '/team-chat',
+          }).catch(() => {})
+        }
+      }
+    } catch {
+      // Notifications are best-effort — never let them break message delivery
+    }
+  })()
+
   revalidatePath('/team-chat')
   return { success: true, data: message }
 }

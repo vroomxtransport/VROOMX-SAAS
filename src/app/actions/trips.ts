@@ -3,6 +3,7 @@
 import { authorize, safeError } from '@/lib/authz'
 import { tripSchema } from '@/lib/validations/trip'
 import { logOrderActivity } from '@/lib/activity-log'
+import { createWebNotification } from '@/app/actions/notifications'
 import { revalidatePath } from 'next/cache'
 import { calculateTripFinancials } from '@/lib/financial/trip-calculations'
 import { z } from 'zod'
@@ -215,6 +216,16 @@ export async function updateTripStatus(id: string, newStatus: TripStatus) {
       }
     }
   }
+
+  // Fire-and-forget notification
+  void createWebNotification({
+    userId: auth.ctx.user.id,
+    tenantId,
+    type: 'trip_status',
+    title: `Trip ${trip.trip_number} → ${newStatus}`,
+    body: `Trip status changed to ${newStatus}`,
+    link: '/dispatch',
+  }).catch(() => {})
 
   revalidatePath('/dispatch')
   revalidatePath(`/trips/${id}`)

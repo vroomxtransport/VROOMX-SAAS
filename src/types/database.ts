@@ -306,6 +306,14 @@ export interface ChatMessage {
   created_at: string
 }
 
+export interface ChatChannelRead {
+  id: string
+  tenant_id: string
+  user_id: string
+  channel_id: string
+  last_read_at: string
+}
+
 export interface LocalDrive {
   id: string
   tenant_id: string

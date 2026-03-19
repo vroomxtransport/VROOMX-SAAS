@@ -38,12 +38,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { useChatUnread } from '@/hooks/use-chat-unread'
 
 type NavItem = {
   name: string
   href: string
   icon: React.ElementType
   minRole?: TenantRole
+  badge?: number
 }
 
 type NavCategory = {
@@ -112,11 +114,13 @@ const NAV_CATEGORIES: NavCategory[] = [
 interface SidebarProps {
   userRole: TenantRole
   tenantName: string
+  userId: string
 }
 
-export function Sidebar({ userRole, tenantName }: SidebarProps) {
+export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
   const pathname = usePathname()
   const { isOpen, close, isCollapsed, toggleCollapse } = useSidebarStore()
+  const { totalUnread } = useChatUnread(userId)
 
   const filteredCategories = NAV_CATEGORIES.map((category) => ({
     ...category,
@@ -231,6 +235,8 @@ export function Sidebar({ userRole, tenantName }: SidebarProps) {
                 {category.items.map((item) => {
                   const Icon = item.icon
                   const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+                  // Inject live unread count for Team Chat
+                  const badge = item.href === '/team-chat' && totalUnread > 0 ? totalUnread : undefined
 
                   const linkContent = (
                     <Link
@@ -262,6 +268,12 @@ export function Sidebar({ userRole, tenantName }: SidebarProps) {
                       >
                         {item.name}
                       </span>
+                      {/* Unread badge — hidden when sidebar is collapsed on desktop */}
+                      {badge && !isCollapsed && (
+                        <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--brand)] px-1.5 text-[10px] font-bold text-white leading-none">
+                          {badge > 99 ? '99+' : badge}
+                        </span>
+                      )}
                     </Link>
                   )
 
@@ -269,10 +281,17 @@ export function Sidebar({ userRole, tenantName }: SidebarProps) {
                     return (
                       <Tooltip key={item.href}>
                         <TooltipTrigger asChild className="hidden lg:flex">
-                          {linkContent}
+                          <div className="relative">
+                            {linkContent}
+                            {/* Collapsed dot indicator for unread */}
+                            {badge && (
+                              <span className="pointer-events-none absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-[var(--brand)] ring-2 ring-[var(--sidebar-bg)]" />
+                            )}
+                          </div>
                         </TooltipTrigger>
                         <TooltipContent side="right" sideOffset={8}>
                           {item.name}
+                          {badge ? ` (${badge > 99 ? '99+' : badge} unread)` : ''}
                         </TooltipContent>
                         {/* Mobile: show without tooltip */}
                         <div className="lg:hidden">{linkContent}</div>

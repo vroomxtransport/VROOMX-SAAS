@@ -4,6 +4,7 @@ import { authorize, safeError } from '@/lib/authz'
 import { createOrderSchema } from '@/lib/validations/order'
 import { geocodeAndSaveOrder } from '@/lib/geocoding-helpers'
 import { logOrderActivity } from '@/lib/activity-log'
+import { createWebNotification } from '@/app/actions/notifications'
 import { revalidatePath } from 'next/cache'
 import type { OrderStatus } from '@/types'
 
@@ -302,6 +303,16 @@ export async function updateOrderStatus(
     actorId: auth.ctx.user.id,
     actorEmail: auth.ctx.user.email,
     metadata: { oldStatus, newStatus },
+  }).catch(() => {})
+
+  // Fire-and-forget notification
+  void createWebNotification({
+    userId: auth.ctx.user.id,
+    tenantId,
+    type: 'order_status',
+    title: `Order ${order.order_number} → ${newStatus}`,
+    body: `Order status changed to ${newStatus}`,
+    link: `/orders/${id}`,
   }).catch(() => {})
 
   revalidatePath(`/orders/${id}`)

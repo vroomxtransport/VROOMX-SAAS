@@ -67,7 +67,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex h-screen overflow-hidden bg-content-bg">
-      <Sidebar userRole={userRole} tenantName={tenant.name} />
+      <Sidebar userRole={userRole} tenantName={tenant.name} userId={user.id} />
 
       <SidebarLayoutWrapper>
         <QueryProvider>

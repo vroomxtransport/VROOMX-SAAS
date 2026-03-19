@@ -615,6 +615,21 @@ export const chatMessages = pgTable('chat_messages', {
 ])
 
 /**
+ * Chat Channel Reads Table
+ * Tracks last-read timestamp per user per channel for unread badge counts.
+ */
+export const chatChannelReads = pgTable('chat_channel_reads', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull(),
+  channelId: uuid('channel_id').notNull().references(() => chatChannels.id, { onDelete: 'cascade' }),
+  lastReadAt: timestamp('last_read_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_chat_channel_reads_user').on(table.userId),
+  unique('uq_chat_channel_reads_user_channel').on(table.userId, table.channelId),
+])
+
+/**
  * Local Drives Table
  * Short-distance, non-trip vehicle transports.
  */

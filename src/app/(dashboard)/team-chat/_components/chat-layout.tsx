@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo, useSyncExternalStore } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useChannels } from '@/hooks/use-chat'
 import { useChatPresence } from '@/hooks/use-chat-presence'
+import { markChannelRead } from '@/app/actions/chat-reads'
 import { ChannelList } from './channel-list'
 import { ChannelHeader } from './channel-header'
 import { MessageFeed } from './message-feed'
@@ -41,6 +43,7 @@ export function ChatLayout({ tenantId, userId, userName, email }: ChatLayoutProp
   const [memberListOpen, setMemberListOpen] = useState(false)
   const { data: channels } = useChannels()
   const headerRef = useRef<HTMLHeadingElement>(null)
+  const queryClient = useQueryClient()
 
   const { members, onlineCount, setStatus } = useChatPresence(tenantId, {
     userId,
@@ -59,6 +62,14 @@ export function ChatLayout({ tenantId, userId, userName, email }: ChatLayoutProp
       requestAnimationFrame(() => headerRef.current?.focus())
     }
   }, [selectedChannelId])
+
+  // Mark channel as read when user opens or switches to it
+  useEffect(() => {
+    if (!selectedChannelId) return
+    markChannelRead(selectedChannelId).then(() => {
+      queryClient.invalidateQueries({ queryKey: ['chat-unread'] })
+    })
+  }, [selectedChannelId, queryClient])
 
   return (
     <TooltipProvider delayDuration={300}>
