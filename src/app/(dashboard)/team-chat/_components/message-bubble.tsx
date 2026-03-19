@@ -76,8 +76,8 @@ export function MessageBubble({ message, isGrouped, animate }: MessageBubbleProp
         )}
         <div className="max-w-[85%] w-fit">
           {hasText && (
-            <div className="rounded-lg bg-surface-raised px-3 py-2">
-              <p className="text-sm text-foreground whitespace-pre-wrap break-words">
+            <div className="rounded-lg bg-surface-raised border border-border-subtle shadow-sm px-3 py-2">
+              <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap break-words">
                 {message.content}
               </p>
             </div>
