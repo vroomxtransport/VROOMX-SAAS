@@ -93,7 +93,7 @@ export function DispatcherPayConfigDrawer({
           </SheetDescription>
         </SheetHeader>
 
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="mt-6 space-y-4">
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="mt-6 px-4 pb-4 space-y-4">
           {error && (
             <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
               {error}
