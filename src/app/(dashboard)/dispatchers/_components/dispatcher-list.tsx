@@ -9,7 +9,27 @@ import { EnhancedFilterBar } from '@/components/shared/enhanced-filter-bar'
 import { CsvExportButton } from '@/components/shared/csv-export-button'
 import { EmptyState } from '@/components/shared/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Users } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Users, UserPlus, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { sendInvite } from '@/app/actions/invites'
+import { INVITABLE_ROLES } from '@/types'
 import type { EnhancedFilterConfig, DateRange } from '@/types/filters'
 import type { Dispatcher } from '@/lib/queries/dispatchers'
 import type { DispatcherPayConfig } from '@/types/database'
@@ -43,6 +63,10 @@ export function DispatcherList() {
   const [role, setRole] = useState<string | undefined>(undefined)
   const [payConfigDrawerOpen, setPayConfigDrawerOpen] = useState(false)
   const [selectedDispatcher, setSelectedDispatcher] = useState<Dispatcher | null>(null)
+  const [inviteOpen, setInviteOpen] = useState(false)
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteRole, setInviteRole] = useState<string>('dispatcher')
+  const [inviteSending, setInviteSending] = useState(false)
 
   // Build pay config map from dispatcher-with-pay-config data
   const payConfigMap = useMemo(() => {
@@ -107,6 +131,24 @@ export function DispatcherList() {
     setPayConfigDrawerOpen(true)
   }, [])
 
+  const handleInvite = useCallback(async () => {
+    if (!inviteEmail) return
+    setInviteSending(true)
+    const result = await sendInvite({ email: inviteEmail, role: inviteRole })
+    setInviteSending(false)
+
+    if (result?.error) {
+      const msg = typeof result.error === 'string' ? result.error : 'Invalid input'
+      toast.error(msg)
+      return
+    }
+
+    toast.success(`Invite sent to ${inviteEmail}`)
+    setInviteEmail('')
+    setInviteRole('dispatcher')
+    setInviteOpen(false)
+  }, [inviteEmail, inviteRole])
+
   if (isLoading) {
     return (
       <div>
@@ -149,6 +191,10 @@ export function DispatcherList() {
             headers={['full_name', 'email', 'role', 'created_at']}
             fetchData={handleCsvExport}
           />
+          <Button size="sm" onClick={() => setInviteOpen(true)}>
+            <UserPlus className="mr-1.5 h-4 w-4" />
+            Invite Dispatcher
+          </Button>
         </div>
       </div>
 
@@ -179,6 +225,63 @@ export function DispatcherList() {
           existingConfig={payConfigMap.get(selectedDispatcher.user_id)}
         />
       )}
+
+      {/* Invite Dispatcher Drawer */}
+      <Sheet open={inviteOpen} onOpenChange={setInviteOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle>Invite Dispatcher</SheetTitle>
+            <SheetDescription>
+              Send an email invitation to add a new team member.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-6 space-y-4 px-4 pb-4">
+            <div>
+              <Label htmlFor="invite-email">Email Address</Label>
+              <Input
+                id="invite-email"
+                type="email"
+                placeholder="colleague@example.com"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
+              />
+            </div>
+            <div>
+              <Label htmlFor="invite-role">Role</Label>
+              <Select value={inviteRole} onValueChange={setInviteRole}>
+                <SelectTrigger id="invite-role">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {INVITABLE_ROLES.map((r) => (
+                    <SelectItem key={r} value={r} className="capitalize">
+                      {r.charAt(0).toUpperCase() + r.slice(1)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setInviteOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={handleInvite}
+                disabled={inviteSending || !inviteEmail}
+              >
+                {inviteSending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Send Invite
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }

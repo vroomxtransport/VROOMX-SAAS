@@ -64,8 +64,16 @@ export function DispatcherCard({ dispatcher, payConfig, onConfigurePay }: Dispat
 
           {/* Pay Config Badge */}
           {payConfig ? (
-            <div className="mt-2 flex items-center gap-1.5 text-xs">
-              <Banknote className="h-3 w-3 text-emerald-500" />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-2 h-6 px-2 text-xs"
+              onClick={(e) => {
+                e.stopPropagation()
+                onConfigurePay?.()
+              }}
+            >
+              <Banknote className="mr-1 h-3 w-3 text-emerald-500" />
               <span className="text-emerald-600 dark:text-emerald-400 font-medium">
                 {DISPATCHER_PAY_TYPE_LABELS[payConfig.pay_type as DispatcherPayType]}
                 {' — '}
@@ -76,7 +84,7 @@ export function DispatcherCard({ dispatcher, payConfig, onConfigurePay }: Dispat
                 {' / '}
                 {PAY_FREQUENCY_LABELS[payConfig.pay_frequency as PayFrequency]}
               </span>
-            </div>
+            </Button>
           ) : onConfigurePay ? (
             <Button
               variant="ghost"
