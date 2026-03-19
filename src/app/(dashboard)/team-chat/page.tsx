@@ -13,5 +13,12 @@ export default async function TeamChatPage() {
   const tenantId = user.app_metadata?.tenant_id
   if (!tenantId) redirect('/login')
 
-  return <ChatLayout tenantId={tenantId} />
+  return (
+    <ChatLayout
+      tenantId={tenantId}
+      userId={user.id}
+      userName={user.user_metadata?.full_name || user.email?.split('@')[0] || 'Unknown'}
+      email={user.email || ''}
+    />
+  )
 }

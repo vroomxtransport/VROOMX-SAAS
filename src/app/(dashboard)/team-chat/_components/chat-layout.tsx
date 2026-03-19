@@ -2,10 +2,12 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useChannels } from '@/hooks/use-chat'
+import { useChatPresence } from '@/hooks/use-chat-presence'
 import { ChannelList } from './channel-list'
 import { ChannelHeader } from './channel-header'
 import { MessageFeed } from './message-feed'
 import { MessageInput } from './message-input'
+import { MemberList } from './member-list'
 import { MessageSquare } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -18,13 +20,23 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 
 interface ChatLayoutProps {
   tenantId: string
+  userId: string
+  userName: string
+  email: string
 }
 
-export function ChatLayout({ tenantId }: ChatLayoutProps) {
+export function ChatLayout({ tenantId, userId, userName, email }: ChatLayoutProps) {
   const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [memberListOpen, setMemberListOpen] = useState(false)
   const { data: channels } = useChannels()
   const headerRef = useRef<HTMLHeadingElement>(null)
+
+  const { members, onlineCount, setStatus } = useChatPresence(tenantId, {
+    userId,
+    userName,
+    email,
+  })
 
   const selectedChannel = useMemo(
     () => channels?.find((c) => c.id === selectedChannelId),
@@ -34,7 +46,6 @@ export function ChatLayout({ tenantId }: ChatLayoutProps) {
   // Focus channel heading on channel switch
   useEffect(() => {
     if (selectedChannelId) {
-      // Small delay to let the DOM update
       requestAnimationFrame(() => headerRef.current?.focus())
     }
   }, [selectedChannelId])
@@ -42,7 +53,7 @@ export function ChatLayout({ tenantId }: ChatLayoutProps) {
   return (
     <TooltipProvider delayDuration={300}>
       <div className="flex h-[calc(100vh-3.5rem)] -m-4 lg:-mx-8 lg:-my-6 rounded-xl overflow-hidden border border-border-subtle glass-panel shadow-sm">
-        {/* Desktop sidebar */}
+        {/* Desktop channel sidebar */}
         <div
           className="hidden md:flex w-72 shrink-0 flex-col border-r border-border-subtle glass-panel"
           role="complementary"
@@ -54,7 +65,7 @@ export function ChatLayout({ tenantId }: ChatLayoutProps) {
           />
         </div>
 
-        {/* Mobile Sheet */}
+        {/* Mobile channel Sheet */}
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetContent
             side="left"
@@ -82,6 +93,9 @@ export function ChatLayout({ tenantId }: ChatLayoutProps) {
                 ref={headerRef}
                 channel={selectedChannel}
                 onMobileMenuOpen={() => setMobileMenuOpen(true)}
+                members={members}
+                onlineCount={onlineCount}
+                onToggleMemberList={() => setMemberListOpen(!memberListOpen)}
               />
               <MessageFeed channelId={selectedChannelId} />
               <MessageInput
@@ -114,6 +128,34 @@ export function ChatLayout({ tenantId }: ChatLayoutProps) {
             </div>
           )}
         </div>
+
+        {/* Member list sidebar (desktop) */}
+        {selectedChannelId && memberListOpen && (
+          <div className="hidden md:flex w-64 shrink-0 flex-col border-l border-border-subtle glass-panel">
+            <MemberList
+              members={members}
+              currentUserId={userId}
+              onSetStatus={setStatus}
+              onClose={() => setMemberListOpen(false)}
+            />
+          </div>
+        )}
+
+        {/* Member list Sheet (mobile) */}
+        <Sheet open={memberListOpen} onOpenChange={setMemberListOpen}>
+          <SheetContent
+            side="right"
+            className="w-[280px] p-0 md:hidden"
+            showCloseButton={false}
+          >
+            <MemberList
+              members={members}
+              currentUserId={userId}
+              onSetStatus={setStatus}
+              onClose={() => setMemberListOpen(false)}
+            />
+          </SheetContent>
+        </Sheet>
       </div>
     </TooltipProvider>
   )
