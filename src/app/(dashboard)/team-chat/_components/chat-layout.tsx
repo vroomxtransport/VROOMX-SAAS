@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, useSyncExternalStore } from 'react'
 import { useChannels } from '@/hooks/use-chat'
 import { useChatPresence } from '@/hooks/use-chat-presence'
 import { ChannelList } from './channel-list'
@@ -25,7 +25,17 @@ interface ChatLayoutProps {
   email: string
 }
 
+const MD_BREAKPOINT = '(max-width: 767px)'
+const subscribe = (cb: () => void) => {
+  const mql = window.matchMedia(MD_BREAKPOINT)
+  mql.addEventListener('change', cb)
+  return () => mql.removeEventListener('change', cb)
+}
+const getSnapshot = () => window.matchMedia(MD_BREAKPOINT).matches
+const getServerSnapshot = () => false
+
 export function ChatLayout({ tenantId, userId, userName, email }: ChatLayoutProps) {
+  const isMobile = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
   const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [memberListOpen, setMemberListOpen] = useState(false)
@@ -141,8 +151,8 @@ export function ChatLayout({ tenantId, userId, userName, email }: ChatLayoutProp
           </div>
         )}
 
-        {/* Member list Sheet (mobile) */}
-        <Sheet open={memberListOpen} onOpenChange={setMemberListOpen}>
+        {/* Member list Sheet (mobile only — desktop uses inline sidebar above) */}
+        <Sheet open={memberListOpen && isMobile} onOpenChange={setMemberListOpen}>
           <SheetContent
             side="right"
             className="w-[280px] p-0 md:hidden"
