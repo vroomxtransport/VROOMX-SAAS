@@ -66,11 +66,11 @@ export default async function DashboardLayout({
   const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'
 
   return (
+    <QueryProvider>
     <div className="flex h-screen overflow-hidden bg-content-bg">
       <Sidebar userRole={userRole} tenantName={tenant.name} userId={user.id} />
 
       <SidebarLayoutWrapper>
-        <QueryProvider>
         <Header
           userName={userName}
           userEmail={user.email!}
@@ -128,8 +128,8 @@ export default async function DashboardLayout({
               {children}
           </div>
         </main>
-        </QueryProvider>
       </SidebarLayoutWrapper>
     </div>
+    </QueryProvider>
   )
 }
