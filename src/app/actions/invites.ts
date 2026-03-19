@@ -2,6 +2,8 @@
 
 import { authorize, safeError } from '@/lib/authz'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
+import { getResend } from '@/lib/resend/client'
+import { InviteEmail } from '@/components/email/invite-email'
 import { inviteSchema } from '@/lib/validations/invite'
 import { checkTierLimit } from '@/lib/tier'
 import { revalidatePath } from 'next/cache'
@@ -62,10 +64,18 @@ export async function sendInvite(data: unknown) {
     return { error: 'Failed to create invite. Please try again.' }
   }
 
-  // Use Supabase Admin API to invite user by email (requires service role)
-  // This creates an auth user (if new) and sends Supabase's built-in invite email
+  // Send invite email
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const acceptUrl = `${appUrl}/invite/accept?token=${token}`
   const redirectTo = `${appUrl}/auth-confirm?next=${encodeURIComponent(`/invite/accept?token=${token}`)}`
+
+  // Fetch tenant name + inviter name for email template
+  const [{ data: tenantData }, { data: memberData }] = await Promise.all([
+    supabase.from('tenants').select('name').eq('id', tenantId).single(),
+    supabase.from('tenant_memberships').select('full_name').eq('user_id', auth.ctx.user.id).eq('tenant_id', tenantId).single(),
+  ])
+  const tenantName = tenantData?.name || 'Your Team'
+  const inviterName = memberData?.full_name || auth.ctx.user.email || 'A team member'
 
   try {
     const admin = createServiceRoleClient()
@@ -81,12 +91,18 @@ export async function sendInvite(data: unknown) {
     )
 
     if (inviteError) {
-      // User may already exist in auth — that's OK, they'll use the login flow
-      console.log('[INVITE] Supabase invite note:', inviteError.message)
+      // User already exists in auth — send invite email directly via Resend
+      console.log('[INVITE] Supabase invite note (sending via Resend):', inviteError.message)
+      await getResend().emails.send({
+        from: 'VroomX <noreply@vroomx.com>',
+        to: parsed.data.email,
+        subject: `You've been invited to join ${tenantName} on VroomX`,
+        react: InviteEmail({ tenantName, inviterName, role: parsed.data.role, acceptUrl }),
+      })
     }
   } catch (err) {
     // Non-fatal: invite record exists, user can still accept via login page
-    console.error('[INVITE] Supabase invite email failed (non-fatal):', err)
+    console.error('[INVITE] Invite email failed (non-fatal):', err)
   }
 
   revalidatePath('/settings')
