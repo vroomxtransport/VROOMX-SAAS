@@ -17,6 +17,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { X, Search, SlidersHorizontal, ChevronDown, Calendar as CalendarIcon } from 'lucide-react'
 import { Calendar } from '@/components/ui/calendar'
 import { cn } from '@/lib/utils'
@@ -183,7 +189,7 @@ function MultiSelectFilter({
   )
 }
 
-// ── Date Range Picker (inline) ────────────────────────────────────────────────
+// ── Date Range Picker (presets in popover, custom calendar in dialog) ──────────
 function DateRangeFilter({
   label,
   value,
@@ -194,7 +200,8 @@ function DateRangeFilter({
   onChange: (range: DateRange | undefined) => void
 }) {
   const presets = getDatePresets()
-  const [showCustom, setShowCustom] = useState(false)
+  const [popoverOpen, setPopoverOpen] = useState(false)
+  const [calendarOpen, setCalendarOpen] = useState(false)
   const [customFrom, setCustomFrom] = useState<Date | undefined>(
     value ? new Date(value.from) : undefined
   )
@@ -208,112 +215,123 @@ function DateRangeFilter({
   }
 
   const handlePreset = (preset: DatePreset) => {
-    setShowCustom(false)
+    setPopoverOpen(false)
     onChange(preset.getValue())
   }
 
-  const handleCustomFromSelect = (date: Date | undefined) => {
-    setCustomFrom(date)
-    if (date && customTo && date <= customTo) {
-      onChange({ from: date.toISOString(), to: customTo.toISOString() })
-    }
+  const handleOpenCustom = () => {
+    setPopoverOpen(false)
+    setCustomFrom(value ? new Date(value.from) : undefined)
+    setCustomTo(value ? new Date(value.to) : undefined)
+    setCalendarOpen(true)
   }
 
-  const handleCustomToSelect = (date: Date | undefined) => {
-    setCustomTo(date)
-    if (date && customFrom && customFrom <= date) {
-      onChange({ from: customFrom.toISOString(), to: date.toISOString() })
+  const handleApplyCustom = () => {
+    if (customFrom && customTo) {
+      onChange({ from: customFrom.toISOString(), to: customTo.toISOString() })
     }
+    setCalendarOpen(false)
   }
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-9 gap-1.5">
-          <CalendarIcon className="h-3.5 w-3.5" />
-          {value ? (
-            <span className="text-xs">
-              {formatDate(value.from)} – {formatDate(value.to)}
-            </span>
-          ) : (
-            label
-          )}
-          <ChevronDown className="h-3.5 w-3.5 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-2" align="start">
-        {/* Presets */}
-        <div className="space-y-1">
-          {presets.map((preset) => (
-            <button
-              key={preset.label}
-              className="flex w-full items-center rounded-md px-2 py-1.5 text-sm hover:bg-muted text-left"
-              onClick={() => handlePreset(preset)}
-            >
-              {preset.label}
-            </button>
-          ))}
-          <button
-            className={cn(
-              'flex w-full items-center rounded-md px-2 py-1.5 text-sm hover:bg-muted text-left font-medium',
-              showCustom && 'bg-muted'
+    <>
+      <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="outline" size="sm" className="h-9 gap-1.5">
+            <CalendarIcon className="h-3.5 w-3.5" />
+            {value ? (
+              <span className="text-xs">
+                {formatDate(value.from)} – {formatDate(value.to)}
+              </span>
+            ) : (
+              label
             )}
-            onClick={() => setShowCustom(!showCustom)}
-          >
-            Custom Range...
-          </button>
-        </div>
-
-        {/* Custom calendar pickers */}
-        {showCustom && (
-          <div className="mt-3 border-t border-border-subtle pt-3">
-            <div className="flex gap-4">
-              <div>
-                <p className="mb-1 text-xs font-medium text-muted-foreground">From</p>
-                <Calendar
-                  mode="single"
-                  selected={customFrom}
-                  onSelect={handleCustomFromSelect}
-                  disabled={(date) => (customTo ? date > customTo : false)}
-                />
-              </div>
-              <div>
-                <p className="mb-1 text-xs font-medium text-muted-foreground">To</p>
-                <Calendar
-                  mode="single"
-                  selected={customTo}
-                  onSelect={handleCustomToSelect}
-                  disabled={(date) => (customFrom ? date < customFrom : false)}
-                />
-              </div>
-            </div>
-            {customFrom && customTo && (
-              <p className="mt-2 text-center text-xs text-muted-foreground">
-                {customFrom.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                {' – '}
-                {customTo.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-              </p>
-            )}
-          </div>
-        )}
-
-        {value && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mt-2 w-full h-7 text-xs"
-            onClick={() => {
-              onChange(undefined)
-              setCustomFrom(undefined)
-              setCustomTo(undefined)
-              setShowCustom(false)
-            }}
-          >
-            Clear dates
+            <ChevronDown className="h-3.5 w-3.5 opacity-50" />
           </Button>
-        )}
-      </PopoverContent>
-    </Popover>
+        </PopoverTrigger>
+        <PopoverContent className="w-[200px] p-2" align="start">
+          <div className="space-y-1">
+            {presets.map((preset) => (
+              <button
+                key={preset.label}
+                className="flex w-full items-center rounded-md px-2 py-1.5 text-sm hover:bg-muted text-left"
+                onClick={() => handlePreset(preset)}
+              >
+                {preset.label}
+              </button>
+            ))}
+            <button
+              className="flex w-full items-center rounded-md px-2 py-1.5 text-sm hover:bg-muted text-left font-medium"
+              onClick={handleOpenCustom}
+            >
+              Custom Range...
+            </button>
+          </div>
+          {value && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-2 w-full h-7 text-xs"
+              onClick={() => {
+                onChange(undefined)
+                setPopoverOpen(false)
+              }}
+            >
+              Clear dates
+            </Button>
+          )}
+        </PopoverContent>
+      </Popover>
+
+      {/* Custom date range dialog — separate from popover */}
+      <Dialog open={calendarOpen} onOpenChange={setCalendarOpen}>
+        <DialogContent className="sm:max-w-fit">
+          <DialogHeader>
+            <DialogTitle>Select Date Range</DialogTitle>
+          </DialogHeader>
+          <div className="flex gap-6 pt-2">
+            <div>
+              <p className="mb-2 text-xs font-medium text-muted-foreground">From</p>
+              <Calendar
+                mode="single"
+                selected={customFrom}
+                onSelect={setCustomFrom}
+                disabled={(date) => (customTo ? date > customTo : false)}
+              />
+            </div>
+            <div>
+              <p className="mb-2 text-xs font-medium text-muted-foreground">To</p>
+              <Calendar
+                mode="single"
+                selected={customTo}
+                onSelect={setCustomTo}
+                disabled={(date) => (customFrom ? date < customFrom : false)}
+              />
+            </div>
+          </div>
+          {customFrom && customTo && (
+            <p className="text-center text-sm text-muted-foreground">
+              {customFrom.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              {' – '}
+              {customTo.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            </p>
+          )}
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" size="sm" onClick={() => setCalendarOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleApplyCustom}
+              disabled={!customFrom || !customTo}
+              className="bg-brand text-white hover:bg-brand/90"
+            >
+              Apply Range
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 
