@@ -25,10 +25,11 @@ export async function sendInvite(data: unknown) {
     return { error: `Team member limit reached (${tierCheck.current}/${tierCheck.limit}). Upgrade your plan to add more team members.` }
   }
 
-  const admin = createServiceRoleClient()
+  // Use the authenticated user's client for DB operations (passes RLS via JWT tenant_id)
+  // Service role client is ONLY used for admin auth API calls below
 
   // Check for existing pending invite to same email in this tenant
-  const { data: existingInvite } = await admin
+  const { data: existingInvite } = await supabase
     .from('invites')
     .select('id')
     .eq('tenant_id', tenantId)
@@ -40,23 +41,11 @@ export async function sendInvite(data: unknown) {
     return { error: 'An invite has already been sent to this email address' }
   }
 
-  // Check if already a member
-  const { data: existingMember } = await admin
-    .from('tenant_memberships')
-    .select('id')
-    .eq('tenant_id', tenantId)
-    .eq('email', parsed.data.email)
-    .single()
-
-  if (existingMember) {
-    return { error: 'This person is already a team member' }
-  }
-
   // Create invite token
   const token = crypto.randomUUID()
   const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000) // 72 hours
 
-  const { error: insertError } = await admin
+  const { error: insertError } = await supabase
     .from('invites')
     .insert({
       tenant_id: tenantId,
@@ -69,16 +58,17 @@ export async function sendInvite(data: unknown) {
     })
 
   if (insertError) {
-    console.error('[INVITE] Failed to create invite:', insertError)
-    return { error: 'Failed to create invite' }
+    console.error('[INVITE] Failed to create invite:', insertError.message, insertError.code, insertError.details)
+    return { error: 'Failed to create invite. Please try again.' }
   }
 
-  // Use Supabase Admin API to invite user by email
+  // Use Supabase Admin API to invite user by email (requires service role)
   // This creates an auth user (if new) and sends Supabase's built-in invite email
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
   const redirectTo = `${appUrl}/auth-confirm?next=${encodeURIComponent(`/invite/accept?token=${token}`)}`
 
   try {
+    const admin = createServiceRoleClient()
     const { error: inviteError } = await admin.auth.admin.inviteUserByEmail(
       parsed.data.email,
       {
@@ -92,12 +82,11 @@ export async function sendInvite(data: unknown) {
 
     if (inviteError) {
       // User may already exist in auth — that's OK, they'll use the login flow
-      // The invite record is already created, so they can still accept via login
       console.log('[INVITE] Supabase invite note:', inviteError.message)
     }
   } catch (err) {
     // Non-fatal: invite record exists, user can still accept via login page
-    console.error('[INVITE] Supabase invite failed (non-fatal):', err)
+    console.error('[INVITE] Supabase invite email failed (non-fatal):', err)
   }
 
   revalidatePath('/settings')
@@ -108,11 +97,10 @@ export async function sendInvite(data: unknown) {
 export async function revokeInvite(inviteId: string) {
   const auth = await authorize('settings.manage')
   if (!auth.ok) return { error: auth.error }
-  const { tenantId } = auth.ctx
+  const { supabase, tenantId } = auth.ctx
 
-  const admin = createServiceRoleClient()
-
-  const { error } = await admin
+  // Use authenticated client — RLS ensures tenant isolation
+  const { error } = await supabase
     .from('invites')
     .update({ status: 'revoked' })
     .eq('id', inviteId)
