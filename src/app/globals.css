@@ -407,6 +407,27 @@
   }
 }
 
+@keyframes message-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@layer components {
+  .animate-message-in {
+    animation: message-in 0.2s ease-out both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-message-in {
+      animation: none;
+    }
+  }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
 @layer components {
   .hero-dark-grid {
     background-image:
