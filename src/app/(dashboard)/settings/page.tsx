@@ -25,34 +25,61 @@ export default async function SettingsPage() {
   }
 
   // Fetch tenant details and resource counts in parallel
-  const admin = createServiceRoleClient()
-  const [tenantResult, trucksResult, membershipsResult, pendingInvitesResult, customRolesResult] = await Promise.all([
-    supabase
-      .from('tenants')
-      .select('name, plan, subscription_status, stripe_customer_id, grace_period_ends_at, trial_ends_at, factoring_fee_rate')
-      .eq('id', tenantId)
-      .single(),
-    supabase
-      .from('trucks')
-      .select('id', { count: 'exact', head: true })
-      .eq('tenant_id', tenantId),
-    admin
-      .from('tenant_memberships')
-      .select('id, user_id, role, full_name, email, created_at', { count: 'exact' })
-      .eq('tenant_id', tenantId)
-      .order('created_at', { ascending: true }),
-    supabase
-      .from('invites')
-      .select('id, email, role, created_at, expires_at')
-      .eq('tenant_id', tenantId)
-      .eq('status', 'pending')
-      .order('created_at', { ascending: false }),
-    supabase
-      .from('custom_roles')
-      .select('id, name, description, permissions, created_at')
-      .eq('tenant_id', tenantId)
-      .order('name', { ascending: true }),
-  ])
+  let admin
+  try {
+    admin = createServiceRoleClient()
+  } catch (e) {
+    console.error('[SETTINGS] Failed to create service role client:', e)
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Settings" subtitle="Manage your subscription, team, and account preferences." />
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-center">
+          <p className="text-sm text-amber-800">Unable to load settings. Please try again later.</p>
+        </div>
+      </div>
+    )
+  }
+
+  let tenantResult, trucksResult, membershipsResult, pendingInvitesResult, customRolesResult
+  try {
+    [tenantResult, trucksResult, membershipsResult, pendingInvitesResult, customRolesResult] = await Promise.all([
+      supabase
+        .from('tenants')
+        .select('name, plan, subscription_status, stripe_customer_id, grace_period_ends_at, trial_ends_at, factoring_fee_rate')
+        .eq('id', tenantId)
+        .single(),
+      supabase
+        .from('trucks')
+        .select('id', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId),
+      admin
+        .from('tenant_memberships')
+        .select('id, user_id, role, full_name, email, created_at', { count: 'exact' })
+        .eq('tenant_id', tenantId)
+        .order('created_at', { ascending: true }),
+      supabase
+        .from('invites')
+        .select('id, email, role, created_at, expires_at')
+        .eq('tenant_id', tenantId)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('custom_roles')
+        .select('id, name, description, permissions, created_at')
+        .eq('tenant_id', tenantId)
+        .order('name', { ascending: true }),
+    ])
+  } catch (e) {
+    console.error('[SETTINGS] Data fetch failed:', e)
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Settings" subtitle="Manage your subscription, team, and account preferences." />
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-center">
+          <p className="text-sm text-amber-800">Unable to load settings data. Please refresh the page.</p>
+        </div>
+      </div>
+    )
+  }
 
   const tenant = tenantResult.data
   if (!tenant) {
