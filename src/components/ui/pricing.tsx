@@ -4,7 +4,7 @@ import { TimelineContent } from "@/components/ui/timeline-animation";
 import { VerticalCutReveal } from "@/components/ui/vertical-cut-reveal";
 import { cn } from "@/lib/utils";
 import NumberFlow from "@number-flow/react";
-import { Truck, CheckCheck, Package, Headphones, Shield, User } from "lucide-react";
+import { Truck, CheckCheck, Car, Headphones, Shield, User } from "lucide-react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { useRef, useState } from "react";
@@ -20,7 +20,7 @@ const plans = [
     buttonVariant: "outline" as const,
     features: [
       { text: "1 truck, 1 driver (you)", icon: <User size={20} /> },
-      { text: "Up to 20 orders/month", icon: <Package size={20} /> },
+      { text: "Up to 20 orders/month", icon: <Car size={20} /> },
       { text: "Email support", icon: <Headphones size={20} /> },
     ],
     includes: [
@@ -41,7 +41,7 @@ const plans = [
     buttonText: "Start Free Trial",
     buttonVariant: "outline" as const,
     features: [
-      { text: "Up to 50 orders/month", icon: <Package size={20} /> },
+      { text: "Up to 50 orders/month", icon: <Car size={20} /> },
       { text: "5 trucks, 5 drivers", icon: <Truck size={20} /> },
       { text: "Email support", icon: <Headphones size={20} /> },
     ],
@@ -64,7 +64,7 @@ const plans = [
     buttonVariant: "default" as const,
     popular: true,
     features: [
-      { text: "Unlimited orders", icon: <Package size={20} /> },
+      { text: "Unlimited orders", icon: <Car size={20} /> },
       { text: "25 trucks, unlimited drivers", icon: <Truck size={20} /> },
       { text: "Priority support", icon: <Headphones size={20} /> },
     ],

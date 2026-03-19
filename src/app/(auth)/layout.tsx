@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import { Ripple, TechOrbitDisplay } from '@/components/blocks/modern-animated-sign-in'
 import {
-  Truck, Package, MapPin, CreditCard,
+  Truck, Car, MapPin, CreditCard,
   FileCheck, Shield, Smartphone, BarChart3, Navigation,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
@@ -15,7 +15,7 @@ const vroomxIcons = [
     duration: 20, delay: 20, radius: 100, path: false, reverse: false,
   },
   {
-    component: () => <Package className="h-5 w-5 text-brand" />,
+    component: () => <Car className="h-5 w-5 text-brand" />,
     className: 'size-[30px] border-none bg-brand/10',
     duration: 20, delay: 10, radius: 100, path: false, reverse: false,
   },

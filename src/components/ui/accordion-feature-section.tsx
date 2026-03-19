@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react"
 import Image from "next/image"
 import {
-  Package,
+  Car,
   Navigation,
   CreditCard,
   Truck,
@@ -201,7 +201,7 @@ const vroomxFeatures: FeatureItem[] = [
   },
 ]
 
-const featureIcons = [Package, Navigation, CreditCard, Truck, Fuel, Lock]
+const featureIcons = [Car, Navigation, CreditCard, Truck, Fuel, Lock]
 
 /* ── Component ──────────────────────────────────────────────────────── */
 
@@ -241,7 +241,7 @@ function Feature197({ features = vroomxFeatures }: { features?: FeatureItem[] })
               }}
             >
               {features.map((tab, idx) => {
-                const Icon = featureIcons[idx] ?? Package
+                const Icon = featureIcons[idx] ?? Car
                 return (
                   <AccordionItem
                     key={tab.id}
