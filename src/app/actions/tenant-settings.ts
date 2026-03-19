@@ -1,11 +1,9 @@
 'use server'
 
 import { authorize, safeError } from '@/lib/authz'
+import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { factoringFeeRateSchema } from '@/lib/validations/tenant-settings'
 import { revalidatePath } from 'next/cache'
-import { db } from '@/db'
-import { tenants } from '@/db/schema'
-import { eq } from 'drizzle-orm'
 
 export async function updateFactoringFeeRate(data: unknown) {
   const parsed = factoringFeeRateSchema.safeParse(data)
@@ -18,10 +16,14 @@ export async function updateFactoringFeeRate(data: unknown) {
   const { tenantId } = auth.ctx
 
   try {
-    await db
-      .update(tenants)
-      .set({ factoringFeeRate: String(parsed.data.factoringFeeRate) })
-      .where(eq(tenants.id, tenantId))
+    // Use service-role client to bypass RLS (admin-only action, already authorized above)
+    const admin = createServiceRoleClient()
+    const { error } = await admin
+      .from('tenants')
+      .update({ factoring_fee_rate: String(parsed.data.factoringFeeRate) })
+      .eq('id', tenantId)
+
+    if (error) throw error
 
     revalidatePath('/settings')
     revalidatePath('/billing')

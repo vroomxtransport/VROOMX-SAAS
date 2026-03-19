@@ -38,7 +38,7 @@ export default async function SettingsPage() {
       .eq('tenant_id', tenantId),
     admin
       .from('tenant_memberships')
-      .select('id, user_id, role, created_at', { count: 'exact' })
+      .select('id, user_id, role, full_name, email, created_at', { count: 'exact' })
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: true }),
     supabase
@@ -64,12 +64,20 @@ export default async function SettingsPage() {
   const truckCount = trucksResult.count ?? 0
 
   // Fetch user details only for this tenant's members
+  // Use try-catch per user to prevent page crash if any user is deleted/invalid
   const memberUserIds = memberships.map(m => m.user_id)
   const userMap = new Map<string, { email: string; name: string }>()
   for (const uid of memberUserIds) {
-    const { data } = await admin.auth.admin.getUserById(uid)
-    if (data?.user) {
-      userMap.set(uid, { email: data.user.email || '', name: data.user.user_metadata?.full_name || '' })
+    try {
+      const { data } = await admin.auth.admin.getUserById(uid)
+      if (data?.user) {
+        userMap.set(uid, { email: data.user.email || '', name: data.user.user_metadata?.full_name || '' })
+      } else {
+        userMap.set(uid, { email: memberships.find(m => m.user_id === uid)?.email || '', name: memberships.find(m => m.user_id === uid)?.full_name || 'Unknown User' })
+      }
+    } catch {
+      // User may be deleted from auth — use membership data as fallback
+      userMap.set(uid, { email: memberships.find(m => m.user_id === uid)?.email || '', name: memberships.find(m => m.user_id === uid)?.full_name || 'Unknown User' })
     }
   }
 
