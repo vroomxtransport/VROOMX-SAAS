@@ -8,11 +8,11 @@ import { hasMinRole } from '@/lib/tier'
 import type { TenantRole } from '@/types'
 import {
   LayoutDashboard,
-  PackageSearch,
+  Car,
   Route,
   Truck,
   UserCog,
-  Landmark,
+  Handshake,
   Receipt,
   Settings,
   X,
@@ -28,7 +28,7 @@ import {
   MessageSquare,
   ShieldCheck,
   DollarSign,
-  Container,
+  Caravan,
   Banknote,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -64,7 +64,7 @@ const NAV_CATEGORIES: NavCategory[] = [
   {
     label: 'Operations',
     items: [
-      { name: 'Orders', href: '/orders', icon: PackageSearch },
+      { name: 'Orders', href: '/orders', icon: Car },
       { name: 'Trips', href: '/dispatch', icon: Route },
     ],
   },
@@ -72,7 +72,7 @@ const NAV_CATEGORIES: NavCategory[] = [
     label: 'Fleet',
     items: [
       { name: 'Trucks', href: '/trucks', icon: Truck },
-      { name: 'Trailers', href: '/trailers', icon: Container },
+      { name: 'Trailers', href: '/trailers', icon: Caravan },
       { name: 'Drivers', href: '/drivers', icon: UserCog, minRole: 'dispatcher' },
       { name: 'Local Drives', href: '/local-drives', icon: Navigation, minRole: 'dispatcher' },
       { name: 'Maintenance', href: '/maintenance', icon: Wrench, minRole: 'dispatcher' },
@@ -98,7 +98,7 @@ const NAV_CATEGORIES: NavCategory[] = [
     items: [
       { name: 'Financials', href: '/financials', icon: DollarSign, minRole: 'admin' },
       { name: 'Billing', href: '/billing', icon: Receipt, minRole: 'admin' },
-      { name: 'Brokers', href: '/brokers', icon: Landmark, minRole: 'dispatcher' },
+      { name: 'Brokers', href: '/brokers', icon: Handshake, minRole: 'dispatcher' },
     ],
   },
   {
