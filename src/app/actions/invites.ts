@@ -97,10 +97,11 @@ export async function sendInvite(data: unknown) {
 export async function revokeInvite(inviteId: string) {
   const auth = await authorize('settings.manage')
   if (!auth.ok) return { error: auth.error }
-  const { supabase, tenantId } = auth.ctx
+  const { tenantId } = auth.ctx
 
-  // Use authenticated client — RLS ensures tenant isolation
-  const { error } = await supabase
+  // Use service role — RLS has no UPDATE policy for authenticated users
+  const admin = createServiceRoleClient()
+  const { error } = await admin
     .from('invites')
     .update({ status: 'revoked' })
     .eq('id', inviteId)
