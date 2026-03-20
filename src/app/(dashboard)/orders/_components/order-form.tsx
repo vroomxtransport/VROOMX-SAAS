@@ -60,6 +60,7 @@ function mapOrderToFormValues(order: OrderWithRelations): CreateOrderInput {
 
   return {
     vehicles,
+    pickupCustomerType: (order.pickup_customer_type as 'private' | 'dealer' | 'business' | 'auction') ?? '',
     pickupLocation: order.pickup_location ?? '',
     pickupCity: order.pickup_city ?? '',
     pickupState: order.pickup_state ?? '',
@@ -67,6 +68,7 @@ function mapOrderToFormValues(order: OrderWithRelations): CreateOrderInput {
     pickupContactName: order.pickup_contact_name ?? '',
     pickupContactPhone: order.pickup_contact_phone ?? '',
     pickupDate: order.pickup_date ?? '',
+    deliveryCustomerType: (order.delivery_customer_type as 'private' | 'dealer' | 'business' | 'auction') ?? '',
     deliveryLocation: order.delivery_location ?? '',
     deliveryCity: order.delivery_city ?? '',
     deliveryState: order.delivery_state ?? '',
@@ -112,6 +114,7 @@ export function OrderForm({ order, onSuccess, onCancel, onStepChange, onDirtyCha
         type: '',
         color: '',
       }],
+      pickupCustomerType: '',
       pickupLocation: '',
       pickupCity: '',
       pickupState: '',
@@ -119,6 +122,7 @@ export function OrderForm({ order, onSuccess, onCancel, onStepChange, onDirtyCha
       pickupContactName: '',
       pickupContactPhone: '',
       pickupDate: '',
+      deliveryCustomerType: '',
       deliveryLocation: '',
       deliveryCity: '',
       deliveryState: '',

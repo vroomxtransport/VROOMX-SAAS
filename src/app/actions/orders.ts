@@ -53,6 +53,8 @@ export async function createOrder(data: unknown) {
       pickup_contact_name: v.pickupContactName || null,
       pickup_contact_phone: v.pickupContactPhone || null,
       pickup_date: v.pickupDate || null,
+      pickup_customer_type: v.pickupCustomerType || null,
+      delivery_customer_type: v.deliveryCustomerType || null,
       delivery_location: v.deliveryLocation,
       delivery_city: v.deliveryCity,
       delivery_state: v.deliveryState,
@@ -138,6 +140,8 @@ export async function updateOrder(id: string, data: unknown) {
   if (v.pickupContactName !== undefined) updateData.pickup_contact_name = v.pickupContactName || null
   if (v.pickupContactPhone !== undefined) updateData.pickup_contact_phone = v.pickupContactPhone || null
   if (v.pickupDate !== undefined) updateData.pickup_date = v.pickupDate || null
+  if (v.pickupCustomerType !== undefined) updateData.pickup_customer_type = v.pickupCustomerType || null
+  if (v.deliveryCustomerType !== undefined) updateData.delivery_customer_type = v.deliveryCustomerType || null
   if (v.deliveryLocation !== undefined) updateData.delivery_location = v.deliveryLocation
   if (v.deliveryCity !== undefined) updateData.delivery_city = v.deliveryCity
   if (v.deliveryState !== undefined) updateData.delivery_state = v.deliveryState

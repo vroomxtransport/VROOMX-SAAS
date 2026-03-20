@@ -150,6 +150,17 @@ export const TRUCK_TYPE_LABELS: Record<TruckType, string> = {
   enclosed: 'Enclosed',
 }
 
+export type CustomerType = 'private' | 'dealer' | 'business' | 'auction'
+
+export const CUSTOMER_TYPES: CustomerType[] = ['private', 'dealer', 'business', 'auction']
+
+export const CUSTOMER_TYPE_LABELS: Record<CustomerType, string> = {
+  private: 'Private',
+  dealer: 'Dealer',
+  business: 'Business',
+  auction: 'Auction',
+}
+
 export const TRUCK_STATUS_LABELS: Record<TruckStatus, string> = {
   active: 'Active',
   inactive: 'Inactive',

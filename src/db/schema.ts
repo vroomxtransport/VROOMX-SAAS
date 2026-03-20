@@ -233,6 +233,7 @@ export const orders = pgTable('orders', {
   pickupContactName: text('pickup_contact_name'),
   pickupContactPhone: text('pickup_contact_phone'),
   pickupDate: date('pickup_date'),
+  pickupCustomerType: text('pickup_customer_type'),
   // Delivery
   deliveryLocation: text('delivery_location'),
   deliveryCity: text('delivery_city'),
@@ -241,6 +242,7 @@ export const orders = pgTable('orders', {
   deliveryContactName: text('delivery_contact_name'),
   deliveryContactPhone: text('delivery_contact_phone'),
   deliveryDate: date('delivery_date'),
+  deliveryCustomerType: text('delivery_customer_type'),
   // Actual dates
   actualPickupDate: timestamp('actual_pickup_date', { withTimezone: true }),
   actualDeliveryDate: timestamp('actual_delivery_date', { withTimezone: true }),

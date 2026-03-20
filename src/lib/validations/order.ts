@@ -39,6 +39,7 @@ export const orderVehicleSchema = z.object({
 
 // Step 2: Pickup and delivery locations
 export const orderLocationSchema = z.object({
+  pickupCustomerType: z.enum(['private', 'dealer', 'business', 'auction']).optional().or(z.literal('')),
   pickupLocation: z.string().min(1, 'Pickup location is required').max(500),
   pickupCity: z.string().min(1, 'Pickup city is required').max(500),
   pickupState: z.string().min(2, 'State required').max(2, 'Use 2-letter state code'),
@@ -46,6 +47,7 @@ export const orderLocationSchema = z.object({
   pickupContactName: z.string().max(200).optional().or(z.literal('')),
   pickupContactPhone: z.string().max(30).optional().or(z.literal('')),
   pickupDate: z.string().max(200).optional().or(z.literal('')),
+  deliveryCustomerType: z.enum(['private', 'dealer', 'business', 'auction']).optional().or(z.literal('')),
   deliveryLocation: z.string().min(1, 'Delivery location is required').max(500),
   deliveryCity: z.string().min(1, 'Delivery city is required').max(500),
   deliveryState: z.string().min(2, 'State required').max(2, 'Use 2-letter state code'),

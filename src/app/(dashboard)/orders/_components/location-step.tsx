@@ -11,8 +11,17 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { MapPin, Loader2 } from 'lucide-react'
+import { MapPin, Loader2, Building2, Home, Briefcase, Gavel } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { CUSTOMER_TYPES, CUSTOMER_TYPE_LABELS, type CustomerType } from '@/types'
 import type { CreateOrderInput } from '@/lib/validations/order'
+
+const CUSTOMER_TYPE_ICONS: Record<CustomerType, typeof Home> = {
+  private: Home,
+  dealer: Building2,
+  business: Briefcase,
+  auction: Gavel,
+}
 
 function AddressInput({
   value,
@@ -97,6 +106,7 @@ function LocationSection({
 }) {
   const form = useFormContext<CreateOrderInput>()
 
+  const customerTypeField = `${prefix}CustomerType` as keyof CreateOrderInput
   const locationField = `${prefix}Location` as keyof CreateOrderInput
   const cityField = `${prefix}City` as keyof CreateOrderInput
   const stateField = `${prefix}State` as keyof CreateOrderInput
@@ -112,9 +122,35 @@ function LocationSection({
     if (suggestion.zip) form.setValue(zipField, suggestion.zip)
   }
 
+  const currentCustomerType = form.watch(customerTypeField) as string
+
   return (
     <div className="space-y-3">
       <h4 className="text-sm font-semibold text-foreground">{label}</h4>
+
+      {/* Customer type pills */}
+      <div className="flex flex-wrap gap-1.5">
+        {CUSTOMER_TYPES.map((type) => {
+          const Icon = CUSTOMER_TYPE_ICONS[type]
+          const isSelected = currentCustomerType === type
+          return (
+            <button
+              key={type}
+              type="button"
+              onClick={() => form.setValue(customerTypeField, isSelected ? '' : type)}
+              className={cn(
+                'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-all border',
+                isSelected
+                  ? 'bg-brand/10 text-brand border-brand/30 shadow-sm'
+                  : 'bg-muted/50 text-muted-foreground border-transparent hover:bg-muted hover:text-foreground'
+              )}
+            >
+              <Icon className="h-3 w-3" />
+              {CUSTOMER_TYPE_LABELS[type]}
+            </button>
+          )
+        })}
+      </div>
 
       <FormField
         control={form.control}

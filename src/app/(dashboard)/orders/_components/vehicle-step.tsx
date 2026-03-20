@@ -2,8 +2,9 @@
 
 import { useFormContext, useFieldArray } from 'react-hook-form'
 import { useVinDecode } from '@/hooks/use-vin-decode'
+import { decodeVin } from '@/lib/vin-decoder'
 import { useVehicleMakes, useVehicleModels, getVehicleType } from '@/hooks/use-vehicle-autocomplete'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import {
   FormControl,
   FormField,
@@ -12,8 +13,16 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
-import { Loader2, CheckCircle2, AlertCircle, Plus, Trash2, Car, ChevronDown, ChevronUp } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import { Loader2, CheckCircle2, AlertCircle, Plus, Trash2, Car, ChevronDown, ChevronUp, ClipboardPaste } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { CreateOrderInput } from '@/lib/validations/order'
 
@@ -299,6 +308,52 @@ export function VehicleStep() {
     control: form.control,
     name: 'vehicles',
   })
+  const [bulkOpen, setBulkOpen] = useState(false)
+  const [bulkVins, setBulkVins] = useState('')
+  const [bulkDecoding, setBulkDecoding] = useState(false)
+  const [bulkProgress, setBulkProgress] = useState('')
+
+  const handleBulkDecode = useCallback(async () => {
+    const vins = bulkVins
+      .split(/[\n,]+/)
+      .map((v) => v.trim().toUpperCase())
+      .filter((v) => v.length === 17)
+
+    if (vins.length === 0) return
+
+    const remaining = MAX_VEHICLES - fields.length
+    const toProcess = vins.slice(0, remaining)
+
+    setBulkDecoding(true)
+    for (let i = 0; i < toProcess.length; i++) {
+      setBulkProgress(`Decoding ${i + 1}/${toProcess.length}...`)
+      try {
+        const result = await decodeVin(toProcess[i])
+        append({
+          vin: toProcess[i],
+          year: result.year ? parseInt(result.year, 10) : new Date().getFullYear(),
+          make: result.make || '',
+          model: result.model || '',
+          type: result.vehicleType || getVehicleType(result.model || ''),
+          color: '',
+        })
+      } catch {
+        // Still add with just the VIN if decode fails
+        append({
+          vin: toProcess[i],
+          year: new Date().getFullYear(),
+          make: '',
+          model: '',
+          type: '',
+          color: '',
+        })
+      }
+    }
+    setBulkDecoding(false)
+    setBulkProgress('')
+    setBulkVins('')
+    setBulkOpen(false)
+  }, [bulkVins, fields.length, append])
 
   return (
     <div className="space-y-3">
@@ -306,25 +361,78 @@ export function VehicleStep() {
         <p className="text-xs text-muted-foreground">
           {fields.length}/{MAX_VEHICLES} vehicles
         </p>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => append({
-            vin: '',
-            year: new Date().getFullYear(),
-            make: '',
-            model: '',
-            type: '',
-            color: '',
-          })}
-          disabled={fields.length >= MAX_VEHICLES}
-          className="gap-1.5"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          Add Vehicle
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setBulkOpen(true)}
+            disabled={fields.length >= MAX_VEHICLES}
+            className="gap-1.5"
+          >
+            <ClipboardPaste className="h-3.5 w-3.5" />
+            Paste VINs
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => append({
+              vin: '',
+              year: new Date().getFullYear(),
+              make: '',
+              model: '',
+              type: '',
+              color: '',
+            })}
+            disabled={fields.length >= MAX_VEHICLES}
+            className="gap-1.5"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add Vehicle
+          </Button>
+        </div>
       </div>
+
+      {/* Bulk VIN Decode Dialog */}
+      <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Paste VINs</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Textarea
+              placeholder="Paste VINs here — one per line or comma-separated"
+              value={bulkVins}
+              onChange={(e) => setBulkVins(e.target.value)}
+              rows={5}
+              disabled={bulkDecoding}
+              className="font-mono text-xs"
+            />
+            <p className="text-xs text-muted-foreground">
+              {bulkVins.split(/[\n,]+/).filter((v) => v.trim().length === 17).length} valid VINs detected
+              {fields.length > 0 && ` (${MAX_VEHICLES - fields.length} slots remaining)`}
+            </p>
+            {bulkProgress && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                {bulkProgress}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkOpen(false)} disabled={bulkDecoding}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleBulkDecode}
+              disabled={bulkDecoding || bulkVins.split(/[\n,]+/).filter((v) => v.trim().length === 17).length === 0}
+            >
+              {bulkDecoding ? 'Decoding...' : 'Decode & Add'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {fields.map((field, index) => (
         <VehicleEntry
