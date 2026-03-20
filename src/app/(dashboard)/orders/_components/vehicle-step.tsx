@@ -326,32 +326,40 @@ export function VehicleStep() {
 
     const remaining = MAX_VEHICLES - fields.length
     const toProcess = vins.slice(0, remaining)
+    const BATCH_SIZE = 3
 
     setBulkDecoding(true)
-    for (let i = 0; i < toProcess.length; i++) {
-      setBulkProgress(`Decoding ${i + 1}/${toProcess.length}...`)
-      try {
-        const result = await decodeVin(toProcess[i])
-        append({
-          vin: toProcess[i],
-          year: result.year ? parseInt(result.year, 10) : new Date().getFullYear(),
-          make: result.make || '',
-          model: result.model || '',
-          type: result.vehicleType || getVehicleType(result.model || ''),
-          color: '',
+    let completed = 0
+
+    // Process in batches of 3 for concurrency
+    for (let i = 0; i < toProcess.length; i += BATCH_SIZE) {
+      const batch = toProcess.slice(i, i + BATCH_SIZE)
+      setBulkProgress(`Decoding ${completed + 1}-${Math.min(completed + batch.length, toProcess.length)}/${toProcess.length}...`)
+
+      const results = await Promise.allSettled(
+        batch.map(async (vin) => {
+          try {
+            const result = await decodeVin(vin)
+            return {
+              vin,
+              year: result.year ? parseInt(result.year, 10) : new Date().getFullYear(),
+              make: result.make || '',
+              model: result.model || '',
+              type: result.vehicleType || getVehicleType(result.model || ''),
+              color: '',
+            }
+          } catch {
+            return { vin, year: new Date().getFullYear(), make: '', model: '', type: '', color: '' }
+          }
         })
-      } catch {
-        // Still add with just the VIN if decode fails
-        append({
-          vin: toProcess[i],
-          year: new Date().getFullYear(),
-          make: '',
-          model: '',
-          type: '',
-          color: '',
-        })
+      )
+
+      for (const r of results) {
+        if (r.status === 'fulfilled') append(r.value)
       }
+      completed += batch.length
     }
+
     setBulkDecoding(false)
     setBulkProgress('')
     setBulkVins('')

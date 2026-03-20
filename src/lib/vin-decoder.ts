@@ -1,4 +1,5 @@
 const BASE_URL = 'https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValues'
+const TIMEOUT_MS = 10_000
 
 export interface VinDecodeResult {
   make: string
@@ -15,11 +16,21 @@ export async function decodeVin(vin: string): Promise<VinDecodeResult> {
     throw new Error('VIN must be exactly 17 characters')
   }
 
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS)
+
   let response: Response
   try {
-    response = await fetch(`${BASE_URL}/${vin}?format=json`)
-  } catch {
+    response = await fetch(`${BASE_URL}/${vin}?format=json`, {
+      signal: controller.signal,
+    })
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error('VIN decode timed out. NHTSA service may be slow — please try again.')
+    }
     throw new Error('Failed to connect to NHTSA VIN decoder service. Please try again.')
+  } finally {
+    clearTimeout(timeout)
   }
 
   if (!response.ok) {

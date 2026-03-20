@@ -1,6 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
+import { useState, useEffect } from 'react'
 
 export interface AddressSuggestion {
   displayName: string
@@ -32,63 +33,95 @@ function getStateAbbrev(stateName: string): string {
 }
 
 async function searchAddresses(query: string): Promise<AddressSuggestion[]> {
-  const url = new URL('https://nominatim.openstreetmap.org/search')
-  url.searchParams.set('q', query)
-  url.searchParams.set('format', 'json')
-  url.searchParams.set('addressdetails', '1')
-  url.searchParams.set('countrycodes', 'us')
-  url.searchParams.set('limit', '5')
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 8_000)
 
-  const res = await fetch(url.toString(), {
-    headers: { 'User-Agent': 'VroomX-TMS/1.0' },
-  })
-  if (!res.ok) return []
+  try {
+    const url = new URL('https://nominatim.openstreetmap.org/search')
+    url.searchParams.set('q', query)
+    url.searchParams.set('format', 'json')
+    url.searchParams.set('addressdetails', '1')
+    url.searchParams.set('countrycodes', 'us')
+    url.searchParams.set('limit', '5')
 
-  const results = await res.json()
+    const res = await fetch(url.toString(), {
+      signal: controller.signal,
+      headers: { 'User-Agent': 'VroomX-TMS/1.0 (https://vroomxtms.com)' },
+    })
 
-  return results.map((r: {
-    display_name: string
-    lat: string
-    lon: string
-    address?: {
-      road?: string
-      house_number?: string
-      city?: string
-      town?: string
-      village?: string
-      county?: string
-      state?: string
-      postcode?: string
+    if (res.status === 429) {
+      throw new Error('Address search rate limited. Please wait a moment and try again.')
     }
-  }) => {
-    const addr = r.address ?? {}
-    const city = addr.city || addr.town || addr.village || addr.county || ''
-    const state = addr.state ? getStateAbbrev(addr.state) : ''
-    const location = [addr.house_number, addr.road].filter(Boolean).join(' ') || city
+    if (!res.ok) return []
 
-    return {
-      displayName: r.display_name,
-      location,
-      city,
-      state,
-      zip: addr.postcode || '',
-      lat: r.lat,
-      lon: r.lon,
-    }
-  })
+    const results = await res.json()
+
+    return results.map((r: {
+      display_name: string
+      lat: string
+      lon: string
+      address?: {
+        road?: string
+        house_number?: string
+        city?: string
+        town?: string
+        village?: string
+        county?: string
+        state?: string
+        postcode?: string
+      }
+    }) => {
+      const addr = r.address ?? {}
+      const city = addr.city || addr.town || addr.village || addr.county || ''
+      const state = addr.state ? getStateAbbrev(addr.state) : ''
+      const location = [addr.house_number, addr.road].filter(Boolean).join(' ') || city
+
+      return {
+        displayName: r.display_name,
+        location,
+        city,
+        state,
+        zip: addr.postcode || '',
+        lat: r.lat,
+        lon: r.lon,
+      }
+    })
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') return []
+    throw err
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
+/**
+ * Debounce hook — delays value updates by the specified ms.
+ */
+function useDebouncedValue(value: string, delayMs: number): string {
+  const [debounced, setDebounced] = useState(value)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delayMs)
+    return () => clearTimeout(timer)
+  }, [value, delayMs])
+
+  return debounced
 }
 
 /**
  * Address autocomplete using Nominatim (OpenStreetMap).
- * Debounced via TanStack Query's staleTime + enabled check.
+ * Debounced 400ms to comply with Nominatim's 1 req/sec policy.
  */
 export function useAddressSearch(query: string) {
+  const debouncedQuery = useDebouncedValue(query, 400)
+
   const { data: suggestions = [], isLoading } = useQuery({
-    queryKey: ['address-search', query],
-    queryFn: () => searchAddresses(query),
-    enabled: query.length >= 3,
-    staleTime: 30_000,
-    gcTime: 60_000,
+    queryKey: ['address-search', debouncedQuery],
+    queryFn: () => searchAddresses(debouncedQuery),
+    enabled: debouncedQuery.length >= 3,
+    staleTime: 60_000,
+    gcTime: 120_000,
+    retry: false,
   })
 
   return { suggestions, isLoading }
