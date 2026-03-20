@@ -102,6 +102,15 @@ export interface RouteStop {
   stopType: 'pickup' | 'delivery'
 }
 
+export interface OrderVehicle {
+  vin: string | null
+  year: number
+  make: string
+  model: string
+  type: string | null
+  color: string | null
+}
+
 export interface Order {
   id: string
   tenant_id: string
@@ -114,6 +123,7 @@ export interface Order {
   vehicle_model: string | null
   vehicle_type: string | null
   vehicle_color: string | null
+  vehicles: OrderVehicle[] | null
   trip_id: string | null
   status: 'new' | 'assigned' | 'picked_up' | 'delivered' | 'invoiced' | 'paid' | 'cancelled'
   cancelled_reason: string | null

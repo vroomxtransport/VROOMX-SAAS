@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   createOrderSchemaWithRefinements,
-  orderVehicleSchema,
+  orderVehiclesSchema,
   orderLocationSchema,
   orderPricingSchema,
   type CreateOrderValues,
@@ -23,7 +23,7 @@ import { CheckCircle2 } from 'lucide-react'
 import type { OrderWithRelations } from '@/lib/queries/orders'
 
 const STEPS = [
-  { label: 'Vehicle', schema: orderVehicleSchema },
+  { label: 'Vehicles', schema: orderVehiclesSchema },
   { label: 'Location', schema: orderLocationSchema },
   { label: 'Pricing', schema: orderPricingSchema },
 ] as const
@@ -39,13 +39,27 @@ interface OrderFormProps {
 }
 
 function mapOrderToFormValues(order: OrderWithRelations): CreateOrderInput {
+  // Build vehicles array from JSONB or fall back to flat columns
+  const vehicles = order.vehicles && Array.isArray(order.vehicles) && order.vehicles.length > 0
+    ? order.vehicles.map((v: { vin?: string; year?: number; make?: string; model?: string; type?: string; color?: string }) => ({
+        vin: v.vin ?? '',
+        year: v.year ?? new Date().getFullYear(),
+        make: v.make ?? '',
+        model: v.model ?? '',
+        type: v.type ?? '',
+        color: v.color ?? '',
+      }))
+    : [{
+        vin: order.vehicle_vin ?? '',
+        year: order.vehicle_year ?? new Date().getFullYear(),
+        make: order.vehicle_make ?? '',
+        model: order.vehicle_model ?? '',
+        type: order.vehicle_type ?? '',
+        color: order.vehicle_color ?? '',
+      }]
+
   return {
-    vehicleVin: order.vehicle_vin ?? '',
-    vehicleYear: order.vehicle_year ?? new Date().getFullYear(),
-    vehicleMake: order.vehicle_make ?? '',
-    vehicleModel: order.vehicle_model ?? '',
-    vehicleType: order.vehicle_type ?? '',
-    vehicleColor: order.vehicle_color ?? '',
+    vehicles,
     pickupLocation: order.pickup_location ?? '',
     pickupCity: order.pickup_city ?? '',
     pickupState: order.pickup_state ?? '',
@@ -90,12 +104,14 @@ export function OrderForm({ order, onSuccess, onCancel, onStepChange, onDirtyCha
       return draftValues as unknown as CreateOrderInput
     }
     return {
-      vehicleVin: '',
-      vehicleYear: new Date().getFullYear(),
-      vehicleMake: '',
-      vehicleModel: '',
-      vehicleType: '',
-      vehicleColor: '',
+      vehicles: [{
+        vin: '',
+        year: new Date().getFullYear(),
+        make: '',
+        model: '',
+        type: '',
+        color: '',
+      }],
       pickupLocation: '',
       pickupCity: '',
       pickupState: '',

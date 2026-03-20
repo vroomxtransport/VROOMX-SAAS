@@ -11,6 +11,8 @@ export interface OrderFinancials {
   localFee: number
   distanceMiles: number | null
   driverPayRateOverride: number | null
+  /** Number of vehicles on this order (for per_car driver pay). Defaults to 1. */
+  vehicleCount?: number
 }
 
 /** Driver configuration for pay calculation */
@@ -62,7 +64,7 @@ export interface TripFinancials {
  * Driver pay models:
  * - Company driver (percentage_of_carrier_pay): % of Clean Gross per order
  * - Owner-operator (dispatch_fee_percent): driver gets remainder after dispatch fee % per order
- * - Per-car flat rate (per_car): payRate * number of orders
+ * - Per-car flat rate (per_car): payRate * total vehicle count across orders
  * - Per-mile (per_mile): payRate * total distance miles across orders
  * - No driver / unknown: driverPay = 0
  *
@@ -156,8 +158,9 @@ function calculateDriverPay(
     }
 
     case 'per_car': {
-      // Flat rate per car (order)
-      return driver.payRate * orders.length
+      // Flat rate per vehicle (counts all vehicles across orders, not just order count)
+      const totalVehicles = orders.reduce((sum, o) => sum + (o.vehicleCount ?? 1), 0)
+      return driver.payRate * totalVehicles
     }
 
     case 'per_mile': {

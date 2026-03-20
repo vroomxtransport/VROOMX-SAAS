@@ -1,6 +1,27 @@
 import { z } from 'zod'
 
-// Step 1: Vehicle information
+// Single vehicle item
+export const orderVehicleItemSchema = z.object({
+  vin: z
+    .string()
+    .optional()
+    .or(z.literal(''))
+    .refine((val) => !val || val.length === 17, {
+      message: 'VIN must be exactly 17 characters',
+    }),
+  year: z.coerce.number().min(1900).max(new Date().getFullYear() + 2),
+  make: z.string().min(1, 'Make is required').max(200),
+  model: z.string().min(1, 'Model is required').max(200),
+  type: z.string().max(200).optional().or(z.literal('')),
+  color: z.string().max(200).optional().or(z.literal('')),
+})
+
+// Step 1: Vehicles (array of 1-10)
+export const orderVehiclesSchema = z.object({
+  vehicles: z.array(orderVehicleItemSchema).min(1, 'At least one vehicle required').max(10),
+})
+
+// Legacy single-vehicle schema (kept for backward compat with CSV import, etc.)
 export const orderVehicleSchema = z.object({
   vehicleVin: z
     .string()
@@ -48,8 +69,8 @@ export const orderPricingSchema = z.object({
   driverId: z.string().max(36).uuid('Invalid driver ID').optional().or(z.literal('')),
 })
 
-// Combined schema for server-side validation
-export const createOrderSchema = orderVehicleSchema
+// Combined schema for server-side validation (multi-vehicle)
+export const createOrderSchema = orderVehiclesSchema
   .merge(orderLocationSchema)
   .merge(orderPricingSchema)
 
@@ -67,6 +88,7 @@ export const createOrderSchemaWithRefinements = createOrderSchema.refine(
   }
 )
 
+export type OrderVehicleItemValues = z.infer<typeof orderVehicleItemSchema>
 export type OrderVehicleValues = z.infer<typeof orderVehicleSchema>
 export type OrderLocationValues = z.infer<typeof orderLocationSchema>
 export type OrderPricingValues = z.infer<typeof orderPricingSchema>

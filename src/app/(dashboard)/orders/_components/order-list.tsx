@@ -161,7 +161,11 @@ export function OrderList() {
       order_number: o.order_number ?? '',
       status: o.status,
       payment_status: o.payment_status ?? '',
-      vehicle: [o.vehicle_year, o.vehicle_make, o.vehicle_model].filter(Boolean).join(' '),
+      vehicle: (() => {
+        const firstVehicle = [o.vehicle_year, o.vehicle_make, o.vehicle_model].filter(Boolean).join(' ')
+        const vehicleCount = Array.isArray(o.vehicles) ? o.vehicles.length : 1
+        return vehicleCount > 1 ? `${firstVehicle} +${vehicleCount - 1} more` : firstVehicle
+      })(),
       vin: o.vehicle_vin ?? '',
       broker: o.broker?.name ?? '',
       driver: o.driver ? `${o.driver.first_name} ${o.driver.last_name}` : '',

@@ -452,6 +452,7 @@ export async function recalculateTripFinancials(tripId: string) {
     localFee: parseFloat(o.local_fee || '0'),
     distanceMiles: o.distance_miles ? parseFloat(o.distance_miles) : null,
     driverPayRateOverride: o.driver_pay_rate_override ? parseFloat(o.driver_pay_rate_override) : null,
+    vehicleCount: Array.isArray(o.vehicles) ? o.vehicles.length : 1,
     pickup_state: o.pickup_state as string | null,
     delivery_state: o.delivery_state as string | null,
   }))

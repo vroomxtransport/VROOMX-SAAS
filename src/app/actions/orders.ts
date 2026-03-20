@@ -28,18 +28,24 @@ export async function createOrder(data: unknown) {
 
   const v = parsed.data
 
+  // Extract first vehicle for flat columns (backward compat + search)
+  const firstVehicle = v.vehicles[0]
+
   // Map camelCase form fields to snake_case DB columns
   // Do NOT set order_number -- the DB trigger generates it atomically
   const { data: order, error } = await supabase
     .from('orders')
     .insert({
       tenant_id: tenantId,
-      vehicle_vin: v.vehicleVin || null,
-      vehicle_year: v.vehicleYear,
-      vehicle_make: v.vehicleMake,
-      vehicle_model: v.vehicleModel,
-      vehicle_type: v.vehicleType || null,
-      vehicle_color: v.vehicleColor || null,
+      // Flat vehicle columns from first vehicle (for search + backward compat)
+      vehicle_vin: firstVehicle.vin || null,
+      vehicle_year: firstVehicle.year,
+      vehicle_make: firstVehicle.make,
+      vehicle_model: firstVehicle.model,
+      vehicle_type: firstVehicle.type || null,
+      vehicle_color: firstVehicle.color || null,
+      // Full vehicles array
+      vehicles: v.vehicles,
       pickup_location: v.pickupLocation,
       pickup_city: v.pickupCity,
       pickup_state: v.pickupState,
@@ -114,12 +120,17 @@ export async function updateOrder(id: string, data: unknown) {
 
   // Build update object with only provided fields
   const updateData: Record<string, unknown> = {}
-  if (v.vehicleVin !== undefined) updateData.vehicle_vin = v.vehicleVin || null
-  if (v.vehicleYear !== undefined) updateData.vehicle_year = v.vehicleYear
-  if (v.vehicleMake !== undefined) updateData.vehicle_make = v.vehicleMake
-  if (v.vehicleModel !== undefined) updateData.vehicle_model = v.vehicleModel
-  if (v.vehicleType !== undefined) updateData.vehicle_type = v.vehicleType || null
-  if (v.vehicleColor !== undefined) updateData.vehicle_color = v.vehicleColor || null
+  // Multi-vehicle support: sync flat columns from first vehicle
+  if (v.vehicles !== undefined && v.vehicles.length > 0) {
+    const first = v.vehicles[0]
+    updateData.vehicles = v.vehicles
+    updateData.vehicle_vin = first.vin || null
+    updateData.vehicle_year = first.year
+    updateData.vehicle_make = first.make
+    updateData.vehicle_model = first.model
+    updateData.vehicle_type = first.type || null
+    updateData.vehicle_color = first.color || null
+  }
   if (v.pickupLocation !== undefined) updateData.pickup_location = v.pickupLocation
   if (v.pickupCity !== undefined) updateData.pickup_city = v.pickupCity
   if (v.pickupState !== undefined) updateData.pickup_state = v.pickupState

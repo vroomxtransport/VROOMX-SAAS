@@ -220,6 +220,8 @@ export const orders = pgTable('orders', {
   vehicleModel: text('vehicle_model'),
   vehicleType: text('vehicle_type'),
   vehicleColor: text('vehicle_color'),
+  // Multi-vehicle support (JSONB array, flat columns remain for search/backward compat)
+  vehicles: jsonb('vehicles'),
   // Status
   status: orderStatusEnum('status').notNull().default('new'),
   cancelledReason: text('cancelled_reason'),

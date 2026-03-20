@@ -46,9 +46,13 @@ export function OrderHeaderBar({ order, onEdit, onDelete, canDelete }: OrderHead
   const status = order.status as OrderStatus
   const gradient = STATUS_GRADIENTS[status] ?? STATUS_GRADIENTS.new
 
-  const vehicleInfo = [order.vehicle_year, order.vehicle_make, order.vehicle_model]
+  const firstVehicle = [order.vehicle_year, order.vehicle_make, order.vehicle_model]
     .filter(Boolean)
     .join(' ')
+  const vehicleCount = Array.isArray(order.vehicles) ? order.vehicles.length : 1
+  const vehicleInfo = vehicleCount > 1
+    ? `${firstVehicle} +${vehicleCount - 1} more`
+    : firstVehicle
   const vinExcerpt = order.vehicle_vin
     ? `VIN: ...${order.vehicle_vin.slice(-6)}`
     : null
