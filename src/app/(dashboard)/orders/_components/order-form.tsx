@@ -41,7 +41,7 @@ interface OrderFormProps {
 function mapOrderToFormValues(order: OrderWithRelations): CreateOrderInput {
   // Build vehicles array from JSONB or fall back to flat columns
   const vehicles = order.vehicles && Array.isArray(order.vehicles) && order.vehicles.length > 0
-    ? order.vehicles.map((v: { vin?: string; year?: number; make?: string; model?: string; type?: string; color?: string }) => ({
+    ? order.vehicles.map((v: { vin?: string | null; year?: number; make?: string; model?: string; type?: string | null; color?: string | null }) => ({
         vin: v.vin ?? '',
         year: v.year ?? new Date().getFullYear(),
         make: v.make ?? '',
