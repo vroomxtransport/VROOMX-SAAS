@@ -105,15 +105,18 @@ function VehicleEntry({ index, onRemove, canRemove }: { index: number; onRemove:
   const { makes: makeSuggestions } = useVehicleMakes(make)
   const { models: modelSuggestions } = useVehicleModels(make, model)
 
-  // Auto-fill fields when VIN decode succeeds
+  // Auto-fill fields when VIN decode succeeds (track processed VIN to prevent loops)
+  const lastProcessedVinRef = useRef('')
   useEffect(() => {
-    if (vinData && vinData.errorCode === '0') {
-      if (vinData.year) form.setValue(`vehicles.${index}.year`, parseInt(vinData.year, 10))
-      if (vinData.make) form.setValue(`vehicles.${index}.make`, vinData.make)
-      if (vinData.model) form.setValue(`vehicles.${index}.model`, vinData.model)
-      if (vinData.vehicleType) form.setValue(`vehicles.${index}.type`, vinData.vehicleType)
-    }
-  }, [vinData, form, index])
+    if (!vinData || vinData.errorCode !== '0') return
+    if (lastProcessedVinRef.current === vin) return
+    lastProcessedVinRef.current = vin
+    if (vinData.year) form.setValue(`vehicles.${index}.year`, parseInt(vinData.year, 10), { shouldDirty: false })
+    if (vinData.make) form.setValue(`vehicles.${index}.make`, vinData.make, { shouldDirty: false })
+    if (vinData.model) form.setValue(`vehicles.${index}.model`, vinData.model, { shouldDirty: false })
+    if (vinData.vehicleType) form.setValue(`vehicles.${index}.type`, vinData.vehicleType, { shouldDirty: false })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vinData, index])
 
   // Auto-set vehicle type when model changes (manual entry)
   const handleModelSelect = (selectedModel: string) => {
