@@ -47,3 +47,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# WIP marketing pages (local testing only)
+src/app/(marketing)/compare/
+src/app/(marketing)/features/
+src/app/(marketing)/for/
+src/components/marketing/before-after.tsx
+src/components/marketing/breadcrumbs.tsx
+src/components/marketing/comparison-verdict.tsx
+src/components/marketing/feature-walkthrough.tsx
+src/components/marketing/related-pages.tsx
+src/components/shared/json-ld.tsx
+src/lib/content/
