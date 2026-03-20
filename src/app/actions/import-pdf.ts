@@ -53,14 +53,16 @@ export async function confirmPdfImport(orders: unknown) {
   const errors: string[] = []
 
   for (const order of parsed.data) {
+    const firstVehicle = order.vehicles?.[0]
     const { error } = await supabase.from('orders').insert({
       tenant_id: tenantId,
-      vehicle_vin: order.vehicleVin || null,
-      vehicle_year: order.vehicleYear,
-      vehicle_make: order.vehicleMake,
-      vehicle_model: order.vehicleModel,
-      vehicle_type: order.vehicleType || null,
-      vehicle_color: order.vehicleColor || null,
+      vehicle_vin: firstVehicle?.vin || null,
+      vehicle_year: firstVehicle?.year,
+      vehicle_make: firstVehicle?.make || '',
+      vehicle_model: firstVehicle?.model || '',
+      vehicle_type: firstVehicle?.type || null,
+      vehicle_color: firstVehicle?.color || null,
+      vehicles: order.vehicles,
       pickup_location: order.pickupLocation,
       pickup_city: order.pickupCity,
       pickup_state: order.pickupState,
@@ -87,9 +89,11 @@ export async function confirmPdfImport(orders: unknown) {
     })
 
     if (error) {
-      errors.push(`${order.vehicleYear} ${order.vehicleMake} ${order.vehicleModel}: ${error.message}`)
+      const label = firstVehicle ? `${firstVehicle.year} ${firstVehicle.make} ${firstVehicle.model}` : 'Unknown vehicle'
+      errors.push(`${label}: ${error.message}`)
     } else {
-      created.push(`${order.vehicleYear} ${order.vehicleMake} ${order.vehicleModel}`)
+      const label = firstVehicle ? `${firstVehicle.year} ${firstVehicle.make} ${firstVehicle.model}` : 'Unknown vehicle'
+      created.push(label)
     }
   }
 

@@ -84,12 +84,14 @@ If no orders can be extracted, return an empty array [].`,
   const orders: ExtractedOrder[] = parsed.map((raw) => {
     const obj = raw as Record<string, unknown>
     const formData = {
-      vehicleYear: obj.vehicleYear ?? undefined,
-      vehicleMake: obj.vehicleMake ?? '',
-      vehicleModel: obj.vehicleModel ?? '',
-      vehicleVin: obj.vehicleVin ?? '',
-      vehicleType: obj.vehicleType ?? '',
-      vehicleColor: obj.vehicleColor ?? '',
+      vehicles: [{
+        year: obj.vehicleYear ? Number(obj.vehicleYear) : new Date().getFullYear(),
+        make: (obj.vehicleMake as string) ?? '',
+        model: (obj.vehicleModel as string) ?? '',
+        vin: (obj.vehicleVin as string) ?? '',
+        type: (obj.vehicleType as string) ?? '',
+        color: (obj.vehicleColor as string) ?? '',
+      }],
       pickupLocation: obj.pickupLocation ?? '',
       pickupCity: obj.pickupCity ?? '',
       pickupState: obj.pickupState ?? '',

@@ -200,7 +200,7 @@ export function PDFImportDialog({ open, onOpenChange }: PDFImportDialogProps) {
                       <AlertCircle className="h-4 w-4 text-amber-500" />
                     )}
                     <span className="text-sm font-medium">
-                      {order.data.vehicleYear} {order.data.vehicleMake} {order.data.vehicleModel}
+                      {order.data.vehicles?.[0]?.year} {order.data.vehicles?.[0]?.make} {order.data.vehicles?.[0]?.model}
                     </span>
                   </div>
                   <Button
@@ -214,7 +214,7 @@ export function PDFImportDialog({ open, onOpenChange }: PDFImportDialogProps) {
                 </div>
 
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                  <div>VIN: {order.data.vehicleVin || 'N/A'}</div>
+                  <div>VIN: {order.data.vehicles?.[0]?.vin || 'N/A'}</div>
                   <div>Revenue: ${order.data.revenue ?? 0}</div>
                   <div>From: {order.data.pickupCity}, {order.data.pickupState}</div>
                   <div>To: {order.data.deliveryCity}, {order.data.deliveryState}</div>
