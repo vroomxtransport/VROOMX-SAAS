@@ -425,7 +425,7 @@ export async function recalculateTripFinancials(tripId: string) {
   // Fetch trip's orders for revenue and route summary
   const { data: orders, error: ordersError } = await supabase
     .from('orders')
-    .select('revenue, broker_fee, local_fee, distance_miles, driver_pay_rate_override, pickup_state, delivery_state, created_at')
+    .select('revenue, broker_fee, local_fee, distance_miles, driver_pay_rate_override, vehicles, pickup_state, delivery_state, created_at')
     .eq('trip_id', tripId)
     .eq('tenant_id', tenantId)
     .order('created_at', { ascending: true })
