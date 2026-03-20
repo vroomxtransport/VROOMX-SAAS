@@ -82,7 +82,7 @@ export function HeroSection() {
               >
                 <span className="whitespace-nowrap">They built it for brokers.</span>
                 <br />
-                <span className="bg-gradient-to-r from-brand via-amber-400 to-amber-300 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-brand via-[#2a3a4f] to-[#334a60] bg-clip-text text-transparent">
                   We built it for you.
                 </span>
               </motion.h1>

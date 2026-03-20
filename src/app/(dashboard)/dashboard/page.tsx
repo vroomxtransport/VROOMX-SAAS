@@ -1,9 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { getTierDisplayName, getStatusBadgeColor } from '@/lib/tier'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { PageHeader } from '@/components/shared/page-header'
 import { StatCard } from '@/components/shared/stat-card'
 import { Truck, Users, Package, TrendingUp, ChevronRight, PackageSearch, DollarSign, CheckCircle2, Plus } from 'lucide-react'
 import Link from 'next/link'
@@ -227,36 +225,45 @@ export default async function DashboardPage({
       )}
 
       {/* Hero Header */}
-      <div className="space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+      <div className="relative overflow-hidden rounded-2xl border border-border-subtle bg-surface p-5 lg:p-6">
+        {/* Background layers */}
+        <div className="pointer-events-none absolute inset-0 hero-grid-bg opacity-40" />
+        <div className="pointer-events-none absolute inset-0 hero-radial-glow opacity-60" />
+
+        <div className="relative flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
           <div>
-            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{dayOfWeek}, {fullDate}</p>
-            <h1 className="mt-1 text-xl font-bold tracking-tight text-foreground lg:text-2xl">
-              Welcome back, {userName}!
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              <span className="text-brand font-semibold">{dayOfWeek}</span>, {fullDate}
+            </p>
+            <h1 className="mt-1.5 text-xl font-bold tracking-tight lg:text-2xl">
+              Welcome back, <span className="bg-gradient-to-r from-[#192334] to-[#2a3a4f] bg-clip-text text-transparent">{userName}</span>!
             </h1>
             {orderCount > 0 ? (
-              <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-surface px-3 py-1 font-medium text-foreground">
-                  <span className="h-1.5 w-1.5 rounded-full bg-brand" />
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="stat-pill">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-brand" />
+                  </span>
                   {activeLoads} active loads
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-surface px-3 py-1 font-medium text-foreground">
-                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                <span className="stat-pill">
+                  <span className="h-2 w-2 rounded-full bg-amber-500" />
                   {inTransit} in transit
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-surface px-3 py-1 font-medium text-foreground">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  ${monthlyRevenue.toLocaleString()} revenue this month
+                <span className="stat-pill">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  ${monthlyRevenue.toLocaleString()} MTD
                 </span>
-              </p>
+              </div>
             ) : (
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1.5 text-sm text-muted-foreground">
                 Your fleet command center — manage loads, drivers, and revenue at a glance.
               </p>
             )}
           </div>
           <div className="flex gap-2 shrink-0">
-            <Button asChild size="sm" className="bg-gradient-to-r from-[#fb7232] to-[#f59e0b] text-white border-0 hover:brightness-110">
+            <Button asChild size="sm" className="bg-gradient-to-r from-[#192334] to-[#2a3a4f] text-white border-0 hover:brightness-110 shadow-[0_2px_12px_rgba(25,35,52,0.25)]">
               <Link href="/orders">
                 <Plus className="h-4 w-4" />
                 New Order
@@ -271,7 +278,6 @@ export default async function DashboardPage({
             <CustomizeDashboard />
           </div>
         </div>
-
       </div>
 
       {/* Onboarding card (if needed) */}
@@ -280,7 +286,7 @@ export default async function DashboardPage({
           <CardHeader className="flex flex-row items-start justify-between">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--brand)] to-[#f59e0b]">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--brand)] to-[#2a3a4f]">
                   <Package className="h-4.5 w-4.5 text-white" />
                 </div>
                 <CardTitle>Get Started with VroomX</CardTitle>
@@ -289,7 +295,7 @@ export default async function DashboardPage({
               <div className="mt-3 flex items-center gap-3">
                 <div className="h-2 flex-1 rounded-full bg-border-subtle overflow-hidden">
                   <div
-                    className="h-2 rounded-full bg-gradient-to-r from-[var(--brand)] to-[#f59e0b] transition-all duration-500"
+                    className="h-2 rounded-full bg-gradient-to-r from-[var(--brand)] to-[#2a3a4f] transition-all duration-500"
                     style={{ width: `${(completedSteps / 3) * 100}%` }}
                   />
                 </div>

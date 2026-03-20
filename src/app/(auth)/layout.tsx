@@ -76,7 +76,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       {/* Right panel — form (elevated surface with subtle border + shadow) */}
       <div className="relative flex w-full flex-col items-center justify-center bg-surface px-6 lg:w-1/2 lg:border-l lg:border-border-subtle lg:shadow-[−8px_0_30px_rgba(0,0,0,0.04)]">
         {/* Subtle top-to-bottom gradient overlay for depth */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-brand/[0.02] via-transparent to-amber-500/[0.02]" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-brand/[0.02] via-transparent to-[#2a3a4f]/[0.02]" />
         <div className="relative w-full max-w-md py-12">
           {children}
         </div>

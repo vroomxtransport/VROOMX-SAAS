@@ -44,7 +44,7 @@ const AnimatedInput = memo(
           background: useMotionTemplate`
             radial-gradient(
               ${visible ? radius + 'px' : '0px'} circle at ${mouseX}px ${mouseY}px,
-              #fb7232,
+              #192334,
               transparent 80%
             )
           `,
@@ -139,7 +139,7 @@ const BoxReveal = memo(function BoxReveal({
           left: 0,
           right: 0,
           zIndex: 20,
-          background: boxColor ?? '#fb7232',
+          background: boxColor ?? '#192334',
           borderRadius: 4,
         }}
       />
@@ -187,7 +187,7 @@ const Ripple = memo(function Ripple({
               animationDelay,
               borderStyle,
               borderWidth: '1px',
-              borderColor: `rgba(251, 114, 50, ${borderOpacity / 100})`,
+              borderColor: `rgba(25, 35, 52, ${borderOpacity / 100})`,
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
@@ -281,7 +281,7 @@ const TechOrbitDisplay = memo(function TechOrbitDisplay({
   return (
     <section className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-lg">
       {children ?? (
-        <span className="pointer-events-none whitespace-pre-wrap bg-gradient-to-b from-brand to-amber-400/80 bg-clip-text text-center text-7xl font-semibold leading-none text-transparent">
+        <span className="pointer-events-none whitespace-pre-wrap bg-gradient-to-b from-brand to-[#2a3a4f] bg-clip-text text-center text-7xl font-semibold leading-none text-transparent">
           {text}
         </span>
       )}
@@ -326,7 +326,7 @@ const BottomGradient = () => {
   return (
     <>
       <span className="group-hover/btn:opacity-100 block transition duration-500 opacity-0 absolute h-px w-full -bottom-px inset-x-0 bg-gradient-to-r from-transparent via-brand to-transparent" />
-      <span className="group-hover/btn:opacity-100 blur-sm block transition duration-500 opacity-0 absolute h-px w-1/2 mx-auto -bottom-px inset-x-10 bg-gradient-to-r from-transparent via-amber-500 to-transparent" />
+      <span className="group-hover/btn:opacity-100 blur-sm block transition duration-500 opacity-0 absolute h-px w-1/2 mx-auto -bottom-px inset-x-10 bg-gradient-to-r from-transparent via-[#2a3a4f] to-transparent" />
     </>
   );
 };

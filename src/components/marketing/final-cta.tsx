@@ -22,7 +22,7 @@ export function FinalCTA() {
         <div className="mx-auto max-w-3xl">
           <TimelineContent as="div" animationNum={0} timelineRef={sectionRef} customVariants={revealVariants}>
             {/* Gradient border wrapper */}
-            <div className="rounded-2xl bg-gradient-to-br from-brand to-amber-500 p-px shadow-lg">
+            <div className="rounded-2xl bg-gradient-to-br from-brand to-[#2a3a4f] p-px shadow-lg">
               {/* Inner card */}
               <div className="rounded-[calc(1rem-1px)] bg-surface p-8 text-center sm:p-12">
                 <h2 className="text-3xl font-bold tracking-[-0.015em] text-foreground sm:text-4xl lg:text-[2.75rem]">
@@ -40,7 +40,7 @@ export function FinalCTA() {
                 <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
                   <Link
                     href="/signup"
-                    className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-brand to-amber-500 px-6 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg hover:brightness-110"
+                    className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-brand to-[#2a3a4f] px-6 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg hover:brightness-110"
                   >
                     Start Your Free Trial
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />

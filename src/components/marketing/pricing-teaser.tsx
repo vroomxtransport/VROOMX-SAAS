@@ -74,7 +74,7 @@ export function PricingTeaser() {
               return (
                 <div
                   key={plan.name}
-                  className="relative rounded-2xl bg-gradient-to-br from-[#fb7232] to-[#f59e0b] p-px"
+                  className="relative rounded-2xl bg-gradient-to-br from-[#192334] to-[#2a3a4f] p-px"
                 >
                   <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand text-brand-foreground border-0 px-3 py-0.5 text-xs font-semibold shadow-sm">
                     Most Popular

@@ -74,8 +74,8 @@ export function OpenInvoices() {
             />
             <defs>
               <linearGradient id="invoiceGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#fb7232" />
-                <stop offset="100%" stopColor="#f59e0b" />
+                <stop offset="0%" stopColor="#192334" />
+                <stop offset="100%" stopColor="#2a3a4f" />
               </linearGradient>
             </defs>
           </svg>

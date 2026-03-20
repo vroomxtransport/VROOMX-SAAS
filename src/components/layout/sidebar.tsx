@@ -245,7 +245,7 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
                       className={cn(
                         'group flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-all duration-150 relative',
                         isActive
-                          ? 'bg-[var(--sidebar-active)] text-[var(--sidebar-text-active)] shadow-[inset_0_0_0_1px_rgba(251,114,50,0.15)]'
+                          ? 'bg-[var(--sidebar-active)] text-[var(--sidebar-text-active)] shadow-[inset_0_0_0_1px_rgba(25,35,52,0.15)]'
                           : 'text-[var(--sidebar-text)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-text-active)]',
                         isCollapsed && 'lg:justify-center lg:px-0 lg:py-2.5'
                       )}

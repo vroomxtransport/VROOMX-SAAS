@@ -179,7 +179,7 @@ export async function sendDriverAppInvitation(driverId: string) {
             Hi ${driver.first_name},<br/><br/>
             <strong>${carrierName}</strong> has invited you to use the VroomX Driver App to manage your loads, inspections, and trip updates.
           </p>
-          <a href="https://apps.apple.com/app/vroomx-driver/id0000000000" style="display: inline-block; background: #fb7232; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 14px;">
+          <a href="https://apps.apple.com/app/vroomx-driver/id0000000000" style="display: inline-block; background: #192334; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 14px;">
             Download the App
           </a>
           <p style="font-size: 13px; color: #999; margin-top: 32px; line-height: 1.5;">

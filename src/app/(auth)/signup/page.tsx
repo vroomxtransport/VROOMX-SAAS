@@ -198,7 +198,7 @@ function SignupForm() {
 
           <BoxReveal boxColor="var(--skeleton)" duration={0.3} width="100%" overflow="visible">
             <button
-              className="group/btn relative block w-full rounded-md h-10 font-medium text-white bg-gradient-to-br from-brand to-amber-500 shadow-md hover:shadow-lg transition-shadow outline-hidden hover:cursor-pointer disabled:opacity-50"
+              className="group/btn relative block w-full rounded-md h-10 font-medium text-white bg-gradient-to-br from-brand to-[#2a3a4f] shadow-md hover:shadow-lg transition-shadow outline-hidden hover:cursor-pointer disabled:opacity-50"
               type="submit"
               disabled={isPending}
             >
@@ -430,7 +430,7 @@ function SignupForm() {
             </div>
 
             <button
-              className="group/btn relative block w-full rounded-md h-10 font-medium text-white bg-gradient-to-br from-brand to-amber-500 shadow-md hover:shadow-lg transition-shadow outline-hidden hover:cursor-pointer disabled:opacity-50"
+              className="group/btn relative block w-full rounded-md h-10 font-medium text-white bg-gradient-to-br from-brand to-[#2a3a4f] shadow-md hover:shadow-lg transition-shadow outline-hidden hover:cursor-pointer disabled:opacity-50"
               type="submit"
               disabled={isPending}
             >

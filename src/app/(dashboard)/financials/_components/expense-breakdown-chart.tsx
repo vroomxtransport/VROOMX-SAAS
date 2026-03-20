@@ -4,7 +4,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import type { ExpenseBreakdownItem } from '@/lib/financial/kpi-calculations'
 
 const COLORS = [
-  '#fb7232', // orange (driver pay)
+  '#192334', // orange (driver pay)
   '#f43f5e', // rose (broker fees)
   '#8b5cf6', // violet (carrier pay)
   '#3b82f6', // blue (fuel)

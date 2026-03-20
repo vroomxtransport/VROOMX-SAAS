@@ -77,7 +77,7 @@ function GlassTooltip({ active, payload, label }: { active?: boolean; payload?: 
       <div className="space-y-1.5">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-1.5">
-            <div className="h-2 w-2 rounded-full bg-[#fb7232]" />
+            <div className="h-2 w-2 rounded-full bg-[#192334]" />
             <span className="text-xs text-muted-foreground">Current</span>
           </div>
           <span className="text-sm font-semibold tabular-nums text-foreground">
@@ -86,7 +86,7 @@ function GlassTooltip({ active, payload, label }: { active?: boolean; payload?: 
         </div>
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-1.5">
-            <div className="h-2 w-2 rounded-full bg-[#fb7232]/30" />
+            <div className="h-2 w-2 rounded-full bg-[#192334]/30" />
             <span className="text-xs text-muted-foreground">Previous</span>
           </div>
           <span className="text-sm font-medium tabular-nums text-muted-foreground">
@@ -105,14 +105,14 @@ function ActiveDot(props: { cx?: number; cy?: number }) {
   return (
     <g>
       {/* Outer pulse ring */}
-      <circle cx={cx} cy={cy} r={14} fill="#fb7232" opacity={0.08}>
+      <circle cx={cx} cy={cy} r={14} fill="#192334" opacity={0.08}>
         <animate attributeName="r" from="10" to="18" dur="1.5s" repeatCount="indefinite" />
         <animate attributeName="opacity" from="0.12" to="0" dur="1.5s" repeatCount="indefinite" />
       </circle>
       {/* Mid glow */}
-      <circle cx={cx} cy={cy} r={8} fill="#fb7232" opacity={0.15} />
+      <circle cx={cx} cy={cy} r={8} fill="#192334" opacity={0.15} />
       {/* Core dot */}
-      <circle cx={cx} cy={cy} r={5} fill="#fb7232" stroke="white" strokeWidth={2.5} />
+      <circle cx={cx} cy={cy} r={5} fill="#192334" stroke="white" strokeWidth={2.5} />
     </g>
   )
 }
@@ -121,7 +121,7 @@ function ActiveDot(props: { cx?: number; cy?: number }) {
 function SmallDot(props: { cx?: number; cy?: number }) {
   const { cx, cy } = props
   if (cx == null || cy == null) return null
-  return <circle cx={cx} cy={cy} r={2} fill="#fb7232" opacity={0.6} />
+  return <circle cx={cx} cy={cy} r={2} fill="#192334" opacity={0.6} />
 }
 
 export function RevenueChart() {
@@ -179,7 +179,7 @@ export function RevenueChart() {
               className={cn(
                 'px-3 py-1 text-xs font-medium rounded-md transition-all',
                 period === p
-                  ? 'bg-brand text-white shadow-[0_1px_4px_rgba(251,114,50,0.3)]'
+                  ? 'bg-brand text-white shadow-[0_1px_4px_rgba(25,35,52,0.3)]'
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
@@ -196,15 +196,15 @@ export function RevenueChart() {
             <defs>
               {/* Horizontal gradient stroke — orange to amber */}
               <linearGradient id="revStrokeGradient" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#fb7232" />
-                <stop offset="50%" stopColor="#f59e0b" />
-                <stop offset="100%" stopColor="#fb7232" />
+                <stop offset="0%" stopColor="#192334" />
+                <stop offset="50%" stopColor="#2a3a4f" />
+                <stop offset="100%" stopColor="#192334" />
               </linearGradient>
               {/* Rich 3-stop fill gradient */}
               <linearGradient id="revGradientMain" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#fb7232" stopOpacity={0.4} />
-                <stop offset="35%" stopColor="#f59e0b" stopOpacity={0.15} />
-                <stop offset="100%" stopColor="#fb7232" stopOpacity={0} />
+                <stop offset="0%" stopColor="#192334" stopOpacity={0.4} />
+                <stop offset="35%" stopColor="#2a3a4f" stopOpacity={0.15} />
+                <stop offset="100%" stopColor="#192334" stopOpacity={0} />
               </linearGradient>
               {/* Previous period gradient — neutral gray */}
               <linearGradient id="revGradientPrev" x1="0" y1="0" x2="0" y2="1">
@@ -214,7 +214,7 @@ export function RevenueChart() {
               {/* Colored glow filter */}
               <filter id="lineGlow" x="-20%" y="-20%" width="140%" height="140%">
                 <feGaussianBlur stdDeviation="4" result="blur" />
-                <feFlood floodColor="#fb7232" floodOpacity="0.3" result="color" />
+                <feFlood floodColor="#192334" floodOpacity="0.3" result="color" />
                 <feComposite in="color" in2="blur" operator="in" result="coloredBlur" />
                 <feMerge>
                   <feMergeNode in="coloredBlur" />

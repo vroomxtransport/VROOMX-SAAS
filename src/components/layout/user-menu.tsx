@@ -48,7 +48,7 @@ export function UserMenu({
       <DropdownMenuTrigger className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/30 transition-colors">
         <div className="relative">
           <Avatar className="h-8 w-8 shadow-sm">
-            <AvatarFallback className="bg-gradient-to-br from-brand to-amber-500 text-white text-xs font-bold">
+            <AvatarFallback className="bg-gradient-to-br from-brand to-[#2a3a4f] text-white text-xs font-bold">
               {initials}
             </AvatarFallback>
           </Avatar>

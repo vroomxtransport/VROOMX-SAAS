@@ -108,7 +108,7 @@ const PricingSwitch = ({
           {selected === "0" && (
             <motion.span
               layoutId="pricing-switch"
-              className="absolute top-0 left-0 h-12 w-full rounded-xl border-2 border-brand bg-gradient-to-t from-[#ea5e1a] via-brand to-[#f59e0b]"
+              className="absolute top-0 left-0 h-12 w-full rounded-xl border-2 border-brand bg-gradient-to-t from-[#0f1825] via-brand to-[#2a3a4f]"
               transition={{ type: "spring", stiffness: 500, damping: 30 }}
             />
           )}
@@ -127,7 +127,7 @@ const PricingSwitch = ({
           {selected === "1" && (
             <motion.span
               layoutId="pricing-switch"
-              className="absolute top-0 left-0 h-12 w-full rounded-xl border-2 border-brand bg-gradient-to-t from-[#ea5e1a] via-brand to-[#f59e0b]"
+              className="absolute top-0 left-0 h-12 w-full rounded-xl border-2 border-brand bg-gradient-to-t from-[#0f1825] via-brand to-[#2a3a4f]"
               transition={{ type: "spring", stiffness: 500, damping: 30 }}
             />
           )}
@@ -268,7 +268,7 @@ export default function PricingSection() {
                   className={cn(
                     "flex items-center justify-center w-full mb-4 h-12 text-sm font-semibold rounded-xl transition-all",
                     plan.popular
-                      ? "bg-gradient-to-t from-[#ea5e1a] to-brand border border-brand text-white hover:brightness-110"
+                      ? "bg-gradient-to-t from-[#0f1825] to-brand border border-brand text-white hover:brightness-110"
                       : "bg-[#1f1f1f] text-white hover:bg-[#333]"
                   )}
                 >

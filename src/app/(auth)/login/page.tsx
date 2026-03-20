@@ -124,7 +124,7 @@ function LoginForm() {
               </div>
 
               <button
-                className="group/btn relative block w-full rounded-md h-10 font-medium text-white bg-gradient-to-br from-brand to-amber-500 shadow-md hover:shadow-lg transition-shadow outline-hidden hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="group/btn relative block w-full rounded-md h-10 font-medium text-white bg-gradient-to-br from-brand to-[#2a3a4f] shadow-md hover:shadow-lg transition-shadow outline-hidden hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 type="submit"
                 disabled={isPending}
               >
@@ -158,7 +158,7 @@ function LoginForm() {
               )}
 
               <button
-                className="group/btn relative block w-full rounded-md h-10 font-medium text-white bg-gradient-to-br from-brand to-amber-500 shadow-md hover:shadow-lg transition-shadow outline-hidden hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="group/btn relative block w-full rounded-md h-10 font-medium text-white bg-gradient-to-br from-brand to-[#2a3a4f] shadow-md hover:shadow-lg transition-shadow outline-hidden hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 type="submit"
                 disabled={magicPending}
               >

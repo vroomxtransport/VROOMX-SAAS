@@ -84,8 +84,8 @@ export function RevenueExpensesChart({ data }: RevenueExpensesChartProps) {
           <AreaChart data={displayData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id="revenueGradientFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#fb7232" stopOpacity={0.4} />
-                <stop offset="100%" stopColor="#fb7232" stopOpacity={0.05} />
+                <stop offset="0%" stopColor="#192334" stopOpacity={0.4} />
+                <stop offset="100%" stopColor="#192334" stopOpacity={0.05} />
               </linearGradient>
               <linearGradient id="expensesGradientFill" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.4} />
@@ -110,7 +110,7 @@ export function RevenueExpensesChart({ data }: RevenueExpensesChartProps) {
               type="monotone"
               dataKey="revenue"
               name="Revenue"
-              stroke="#fb7232"
+              stroke="#192334"
               strokeWidth={2.5}
               strokeLinecap="round"
               fill="url(#revenueGradientFill)"
@@ -133,7 +133,7 @@ export function RevenueExpensesChart({ data }: RevenueExpensesChartProps) {
       <div className="flex gap-6 mt-3 pt-3 border-t border-border-subtle">
         <div>
           <div className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-[#fb7232]" />
+            <span className="h-2 w-2 rounded-full bg-[#192334]" />
             <p className="text-xs text-muted-foreground">Revenue</p>
           </div>
           <p className="text-base font-semibold tabular-nums text-foreground">
