@@ -2,7 +2,8 @@
 
 import { useFormContext, useFieldArray } from 'react-hook-form'
 import { useVinDecode } from '@/hooks/use-vin-decode'
-import { useEffect, useState } from 'react'
+import { useVehicleMakes, useVehicleModels, getVehicleType } from '@/hooks/use-vehicle-autocomplete'
+import { useEffect, useState, useRef } from 'react'
 import {
   FormControl,
   FormField,
@@ -18,6 +19,70 @@ import type { CreateOrderInput } from '@/lib/validations/order'
 
 const MAX_VEHICLES = 10
 
+interface AutocompleteInputProps {
+  value: string
+  onChange: (value: string) => void
+  onSelect: (value: string) => void
+  suggestions: string[]
+  isLoading?: boolean
+  placeholder?: string
+  disabled?: boolean
+}
+
+function AutocompleteInput({ value, onChange, onSelect, suggestions, isLoading, placeholder, disabled }: AutocompleteInputProps) {
+  const [open, setOpen] = useState(false)
+  const wrapperRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  return (
+    <div ref={wrapperRef} className="relative">
+      <Input
+        value={value}
+        onChange={(e) => {
+          onChange(e.target.value)
+          setOpen(true)
+        }}
+        onFocus={() => { if (suggestions.length > 0) setOpen(true) }}
+        placeholder={placeholder}
+        disabled={disabled}
+        autoComplete="off"
+      />
+      {open && suggestions.length > 0 && (
+        <div className="absolute z-50 top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto rounded-lg border border-border-subtle bg-surface shadow-lg">
+          {suggestions.map((s, i) => (
+            <button
+              key={i}
+              type="button"
+              className="w-full text-left px-3 py-2 text-sm hover:bg-accent/50 transition-colors truncate"
+              onMouseDown={(e) => {
+                e.preventDefault()
+                onSelect(s)
+                setOpen(false)
+              }}
+            >
+              {s}
+            </button>
+          ))}
+          {isLoading && (
+            <div className="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground">
+              <Loader2 className="h-3 w-3 animate-spin" /> Loading...
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function VehicleEntry({ index, onRemove, canRemove }: { index: number; onRemove: () => void; canRemove: boolean }) {
   const form = useFormContext<CreateOrderInput>()
   const [expanded, setExpanded] = useState(index === 0)
@@ -26,6 +91,10 @@ function VehicleEntry({ index, onRemove, canRemove }: { index: number; onRemove:
   const model = form.watch(`vehicles.${index}.model`) ?? ''
   const year = form.watch(`vehicles.${index}.year`)
   const { data: vinData, isPending: isDecoding, isError, error } = useVinDecode(vin)
+
+  // Make/model autocomplete
+  const { makes: makeSuggestions } = useVehicleMakes(make)
+  const { models: modelSuggestions } = useVehicleModels(make, model)
 
   // Auto-fill fields when VIN decode succeeds
   useEffect(() => {
@@ -37,13 +106,21 @@ function VehicleEntry({ index, onRemove, canRemove }: { index: number; onRemove:
     }
   }, [vinData, form, index])
 
+  // Auto-set vehicle type when model changes (manual entry)
+  const handleModelSelect = (selectedModel: string) => {
+    form.setValue(`vehicles.${index}.model`, selectedModel)
+    const vehicleType = getVehicleType(selectedModel)
+    if (vehicleType) {
+      form.setValue(`vehicles.${index}.type`, vehicleType)
+    }
+  }
+
   const summary = make && model
     ? `${year || ''} ${make} ${model}`.trim()
     : `Vehicle ${index + 1}`
 
   return (
     <div className="rounded-lg border border-border-subtle bg-surface/50">
-      {/* Collapsible header */}
       <div className="flex items-center gap-2 px-3 py-2">
         <button
           type="button"
@@ -73,7 +150,6 @@ function VehicleEntry({ index, onRemove, canRemove }: { index: number; onRemove:
         )}
       </div>
 
-      {/* Expanded form fields */}
       {expanded && (
         <div className="space-y-4 px-3 pb-3 border-t border-border-subtle pt-3">
           {/* VIN Input with decode status */}
@@ -121,7 +197,7 @@ function VehicleEntry({ index, onRemove, canRemove }: { index: number; onRemove:
             )}
           />
 
-          {/* Year, Make, Model */}
+          {/* Year, Make (autocomplete), Model (autocomplete) */}
           <div className="grid grid-cols-3 gap-3">
             <FormField
               control={form.control}
@@ -149,7 +225,13 @@ function VehicleEntry({ index, onRemove, canRemove }: { index: number; onRemove:
                 <FormItem>
                   <FormLabel>Make *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Toyota" {...field} />
+                    <AutocompleteInput
+                      value={field.value ?? ''}
+                      onChange={field.onChange}
+                      onSelect={field.onChange}
+                      suggestions={makeSuggestions.map((m) => m.name)}
+                      placeholder="Toyota"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -162,7 +244,13 @@ function VehicleEntry({ index, onRemove, canRemove }: { index: number; onRemove:
                 <FormItem>
                   <FormLabel>Model *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Camry" {...field} />
+                    <AutocompleteInput
+                      value={field.value ?? ''}
+                      onChange={field.onChange}
+                      onSelect={handleModelSelect}
+                      suggestions={modelSuggestions}
+                      placeholder="Camry"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -170,7 +258,7 @@ function VehicleEntry({ index, onRemove, canRemove }: { index: number; onRemove:
             />
           </div>
 
-          {/* Type, Color */}
+          {/* Type (auto-filled), Color */}
           <div className="grid grid-cols-2 gap-3">
             <FormField
               control={form.control}

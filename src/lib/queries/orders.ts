@@ -35,7 +35,7 @@ export async function fetchOrders(
 
   let query = supabase
     .from('orders')
-    .select('*, broker:brokers(id, name, email), driver:drivers(id, first_name, last_name), trip:trips(id, trip_number, status)', { count: 'exact' })
+    .select('vehicles, *, broker:brokers(id, name, email), driver:drivers(id, first_name, last_name), trip:trips(id, trip_number, status)', { count: 'exact' })
     .order(sortBy ?? 'created_at', { ascending: sortBy ? sortDir === 'asc' : false })
     .range(page * pageSize, (page + 1) * pageSize - 1)
 
@@ -86,7 +86,7 @@ export async function fetchOrder(
 ): Promise<OrderWithRelations> {
   const { data, error } = await supabase
     .from('orders')
-    .select('*, broker:brokers(id, name, email), driver:drivers(id, first_name, last_name), trip:trips(id, trip_number, status)')
+    .select('vehicles, *, broker:brokers(id, name, email), driver:drivers(id, first_name, last_name), trip:trips(id, trip_number, status)')
     .eq('id', id)
     .single()
 
