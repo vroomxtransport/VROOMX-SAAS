@@ -9,6 +9,7 @@ import {
   TouchSensor,
   useSensor,
   useSensors,
+  useDroppable,
   type DragStartEvent,
   type DragEndEvent,
 } from '@dnd-kit/core'
@@ -400,6 +401,9 @@ export function DispatchBoard() {
                   groupedTrips={groupedTrips}
                   collapsedSections={collapsedSections}
                   toggleSection={toggleSection}
+                  isDraggingTrip={activeDragType === 'trip'}
+                  isDraggingOrder={activeDragType === 'order'}
+                  activeId={activeId}
                 />
               </div>
             </div>
@@ -409,6 +413,9 @@ export function DispatchBoard() {
               groupedTrips={groupedTrips}
               collapsedSections={collapsedSections}
               toggleSection={toggleSection}
+              isDraggingTrip={activeDragType === 'trip'}
+              isDraggingOrder={activeDragType === 'order'}
+              activeId={activeId}
             />
           )}
 
@@ -452,13 +459,23 @@ export function DispatchBoard() {
 
 // ─── List View (extracted) ──────────────────────────────────────────────────
 
+const LIST_DROP_HIGHLIGHT_COLORS: Record<TripStatus, string> = {
+  planned: 'ring-blue-500/50 bg-blue-950/5',
+  in_progress: 'ring-amber-500/50 bg-amber-950/5',
+  at_terminal: 'ring-purple-500/50 bg-purple-950/5',
+  completed: 'ring-green-500/50 bg-green-950/5',
+}
+
 interface ListViewProps {
   groupedTrips: Record<TripStatus, TripWithRelations[]>
   collapsedSections: Record<string, boolean>
   toggleSection: (status: string) => void
+  isDraggingTrip?: boolean
+  isDraggingOrder?: boolean
+  activeId?: string | null
 }
 
-function ListView({ groupedTrips, collapsedSections, toggleSection }: ListViewProps) {
+function ListView({ groupedTrips, collapsedSections, toggleSection, isDraggingTrip, isDraggingOrder, activeId }: ListViewProps) {
   return (
     <>
       {/* Column header row */}
@@ -474,61 +491,108 @@ function ListView({ groupedTrips, collapsedSections, toggleSection }: ListViewPr
 
       {/* Status-grouped sections */}
       <div className="space-y-4">
-        {TRIP_STATUSES.map((sectionStatus) => {
-          const trips = groupedTrips[sectionStatus]
-          const isCollapsed = !!collapsedSections[sectionStatus]
-          const count = trips.length
-
-          return (
-            <div
-              key={sectionStatus}
-              className={cn(
-                'rounded-lg border-l-4',
-                SECTION_BORDER_COLORS[sectionStatus]
-              )}
-            >
-              {/* Section header */}
-              <button
-                type="button"
-                onClick={() => toggleSection(sectionStatus)}
-                className={cn(
-                  'flex w-full items-center justify-between rounded-t-lg px-4 py-2.5 text-left transition-colors hover:bg-accent/50',
-                  SECTION_BG_COLORS[sectionStatus]
-                )}
-              >
-                <div className="flex items-center gap-2">
-                  {isCollapsed ? (
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                  )}
-                  <span className="text-sm font-semibold text-foreground">
-                    {TRIP_STATUS_LABELS[sectionStatus]}
-                  </span>
-                  <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                    {count}
-                  </span>
-                </div>
-              </button>
-
-              {/* Section content */}
-              {!isCollapsed && (
-                <div className="space-y-1 p-2">
-                  {count === 0 ? (
-                    <p className="px-4 py-3 text-sm italic text-muted-foreground">
-                      No trips
-                    </p>
-                  ) : (
-                    trips.map((trip) => (
-                      <TripRow key={trip.id} trip={trip} />
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
-          )
-        })}
+        {TRIP_STATUSES.map((sectionStatus) => (
+          <ListSection
+            key={sectionStatus}
+            status={sectionStatus}
+            trips={groupedTrips[sectionStatus]}
+            isCollapsed={!!collapsedSections[sectionStatus]}
+            onToggle={() => toggleSection(sectionStatus)}
+            isDraggingTrip={isDraggingTrip}
+            isDraggingOrder={isDraggingOrder}
+            activeId={activeId}
+          />
+        ))}
       </div>
     </>
+  )
+}
+
+interface ListSectionProps {
+  status: TripStatus
+  trips: TripWithRelations[]
+  isCollapsed: boolean
+  onToggle: () => void
+  isDraggingTrip?: boolean
+  isDraggingOrder?: boolean
+  activeId?: string | null
+}
+
+function ListSection({ status, trips, isCollapsed, onToggle, isDraggingTrip, isDraggingOrder, activeId }: ListSectionProps) {
+  const count = trips.length
+
+  // Droppable: receive trips being dragged to change status
+  const { setNodeRef, isOver } = useDroppable({
+    id: `list-column-${status}`,
+    data: { type: 'column', status },
+    disabled: !isDraggingTrip,
+  })
+
+  return (
+    <div
+      className={cn(
+        'rounded-lg border-l-4 transition-all duration-150',
+        SECTION_BORDER_COLORS[status],
+        isDraggingTrip && 'ring-1 ring-dashed ring-muted-foreground/20',
+        isOver && isDraggingTrip && `ring-2 ${LIST_DROP_HIGHLIGHT_COLORS[status]}`,
+      )}
+    >
+      {/* Section header */}
+      <button
+        type="button"
+        onClick={onToggle}
+        className={cn(
+          'flex w-full items-center justify-between rounded-t-lg px-4 py-2.5 text-left transition-colors hover:bg-accent/50',
+          SECTION_BG_COLORS[status]
+        )}
+      >
+        <div className="flex items-center gap-2">
+          {isCollapsed ? (
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          )}
+          <span className="text-sm font-semibold text-foreground">
+            {TRIP_STATUS_LABELS[status]}
+          </span>
+          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+            {count}
+          </span>
+        </div>
+      </button>
+
+      {/* Section content — droppable zone */}
+      <div
+        ref={setNodeRef}
+        className={cn(
+          'min-h-[40px] transition-all duration-150',
+          !isCollapsed && 'space-y-1 p-2',
+        )}
+      >
+        {isOver && isDraggingTrip && (
+          <div className="flex items-center justify-center py-2">
+            <span className="text-xs font-medium text-muted-foreground animate-pulse">
+              Drop to move here
+            </span>
+          </div>
+        )}
+        {!isCollapsed && (
+          count === 0 && !isOver ? (
+            <p className="px-4 py-3 text-sm italic text-muted-foreground">
+              No trips
+            </p>
+          ) : (
+            trips.map((trip) => (
+              <TripRow
+                key={trip.id}
+                trip={trip}
+                isDraggingOrder={isDraggingOrder}
+                activeId={activeId}
+              />
+            ))
+          )
+        )}
+      </div>
+    </div>
   )
 }
