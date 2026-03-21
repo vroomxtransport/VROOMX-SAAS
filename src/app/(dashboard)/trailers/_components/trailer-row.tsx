@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Pencil, Container, Truck as TruckIcon } from 'lucide-react'
+import { Pencil, Caravan, Truck as TruckIcon } from 'lucide-react'
 import type { Trailer } from '@/types/database'
 import { TRAILER_TYPE_LABELS } from '@/types'
 import type { TrailerType } from '@/types'
@@ -54,7 +54,7 @@ export function TrailerRow({ trailer, onEdit }: TrailerRowProps) {
       className="flex w-full items-center gap-3 rounded-lg border border-border-subtle bg-surface px-3 py-2.5 text-left shadow-sm transition-colors card-hover hover:border-brand/30"
     >
       <div className="flex items-center gap-2 min-w-0 shrink-0 w-[100px]">
-        <Container className="h-4 w-4 shrink-0 text-muted-foreground/60" />
+        <Caravan className="h-4 w-4 shrink-0 text-muted-foreground/60" />
         <span className="text-sm font-semibold text-foreground truncate">
           {trailer.trailer_number}
         </span>

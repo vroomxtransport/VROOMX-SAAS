@@ -15,7 +15,7 @@ import { Pagination } from '@/components/shared/pagination'
 import { EmptyState } from '@/components/shared/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
-import { Plus, Container } from 'lucide-react'
+import { Plus, Caravan } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { fetchTrailers } from '@/lib/queries/trailers'
 import {
@@ -225,7 +225,7 @@ export function TrailerList() {
 
       {trailers.length === 0 ? (
         <EmptyState
-          icon={Container}
+          icon={Caravan}
           title="No trailers yet"
           description="Add your first trailer to manage your fleet"
           action={{

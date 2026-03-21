@@ -15,7 +15,7 @@ import { Pagination } from '@/components/shared/pagination'
 import { EmptyState } from '@/components/shared/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
-import { Plus, PackageOpen, Upload, FileUp } from 'lucide-react'
+import { Plus, Car, Upload, FileUp } from 'lucide-react'
 import { CSVImportDialog } from './csv-import-dialog'
 import { PDFImportDialog } from './pdf-import-dialog'
 import { PageHeader } from '@/components/shared/page-header'
@@ -232,7 +232,7 @@ export function OrderList() {
         </div>
       ) : data && data.orders.length === 0 ? (
         <EmptyState
-          icon={PackageOpen}
+          icon={Car}
           title="No orders yet"
           description="Create your first order to get started with vehicle transport management."
           action={{

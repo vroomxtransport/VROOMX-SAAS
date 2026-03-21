@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import {
-  PackageSearch,
+  Car,
   Route,
   Users,
   Truck,
@@ -12,7 +12,7 @@ import {
 import { cn } from '@/lib/utils'
 
 const LINKS = [
-  { label: 'New Order', href: '/orders', icon: PackageSearch, accent: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-950/30' },
+  { label: 'New Order', href: '/orders', icon: Car, accent: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-950/30' },
   { label: 'Trips', href: '/dispatch', icon: Route, accent: 'text-violet-600 dark:text-violet-400', bg: 'bg-violet-50 dark:bg-violet-950/30' },
   { label: 'Drivers', href: '/drivers', icon: Users, accent: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-950/30' },
   { label: 'Fleet', href: '/trucks', icon: Truck, accent: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-950/30' },

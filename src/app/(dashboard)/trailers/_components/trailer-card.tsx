@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Pencil, Container, Truck as TruckIcon } from 'lucide-react'
+import { Pencil, Caravan, Truck as TruckIcon } from 'lucide-react'
 import type { Trailer } from '@/types/database'
 import { TRAILER_TYPE_LABELS } from '@/types'
 import type { TrailerType, TrailerStatus } from '@/types'
@@ -55,7 +55,7 @@ export function TrailerCard({ trailer, onEdit }: TrailerCardProps) {
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <Container className="h-4 w-4 shrink-0 text-muted-foreground/60" />
+            <Caravan className="h-4 w-4 shrink-0 text-muted-foreground/60" />
             <h3 className="truncate text-sm font-semibold text-foreground">
               {trailer.trailer_number}
             </h3>

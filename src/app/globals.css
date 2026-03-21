@@ -78,9 +78,9 @@
   --font-mono: monospace;
   --font-serif: "ChronicleCondensed", "ChronicleTextG1Roman", "IBM Plex Serif", serif;
 
-  --background: #f7f7f5;
+  --background: #ffffff;
   --foreground: #1f1f1f;
-  --card: #ffffff;
+  --card: #f9fafb;
   --card-foreground: #1f1f1f;
   --popover: #ffffff;
   --popover-foreground: #1f1f1f;
@@ -94,15 +94,15 @@
   --accent-foreground: #1f1f1f;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: #0000001a;
-  --input: #0000001a;
+  --border: #e5e7eb;
+  --input: #e5e7eb;
   --ring: #192334;
 
-  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 0 1px 0 rgba(255, 255, 255, 0.5) inset;
-  --shadow: 0.4em 0.6em 1.5em 0 rgba(0, 0, 0, 0.08);
-  --shadow-md: 1.6em 2.3em 2.8em 0 rgba(0, 0, 0, 0.06);
-  --shadow-lg: 3.6em 5.1em 3.8em 0 rgba(0, 0, 0, 0.03);
-  --shadow-xl: 6.4em 9.1em 4.5em 0 rgba(0, 0, 0, 0.01);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow: 0 2px 4px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07), 0 8px 24px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.08), 0 16px 40px rgba(0, 0, 0, 0.06);
+  --shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.06);
   --shadow-2xl: 0px 9px 20px 0px rgba(0, 0, 0, 0.5);
 
   --chart-1: #192334;
@@ -124,10 +124,10 @@
   --brand: #192334;
   --brand-foreground: #ffffff;
   --brand-muted: #f9a06c;
-  --content-bg: #f7f7f5;
-  --surface: #ffffff;
-  --surface-raised: #fafafa;
-  --border-subtle: #e2e2df;
+  --content-bg: #ffffff;
+  --surface: #f9fafb;
+  --surface-raised: #f3f4f6;
+  --border-subtle: #d1d5db;
 
   /* Brand gradients & glows */
   --brand-gradient: linear-gradient(135deg, #192334, #2a3a4f);
@@ -176,7 +176,7 @@
 .force-light {
   --background: #ffffff;
   --foreground: #1f1f1f;
-  --card: #ffffff;
+  --card: #f9fafb;
   --card-foreground: #1f1f1f;
   --popover: #ffffff;
   --popover-foreground: #1f1f1f;
@@ -190,21 +190,21 @@
   --accent-foreground: #1f1f1f;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: #0000001a;
-  --input: #0000001a;
+  --border: #e5e7eb;
+  --input: #e5e7eb;
   --ring: #192334;
   --brand: #192334;
   --brand-foreground: #ffffff;
   --brand-muted: #f9a06c;
   --content-bg: #ffffff;
-  --surface: #ffffff;
-  --surface-raised: #f9f9f9;
-  --border-subtle: #e5e5e5;
-  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 0 1px 0 rgba(255, 255, 255, 0.5) inset;
-  --shadow: 0.4em 0.6em 1.5em 0 rgba(0, 0, 0, 0.08);
-  --shadow-md: 1.6em 2.3em 2.8em 0 rgba(0, 0, 0, 0.06);
-  --shadow-lg: 3.6em 5.1em 3.8em 0 rgba(0, 0, 0, 0.03);
-  --shadow-xl: 6.4em 9.1em 4.5em 0 rgba(0, 0, 0, 0.01);
+  --surface: #f9fafb;
+  --surface-raised: #f3f4f6;
+  --border-subtle: #d1d5db;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow: 0 2px 4px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07), 0 8px 24px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.08), 0 16px 40px rgba(0, 0, 0, 0.06);
+  --shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.06);
   --shadow-2xl: 0px 9px 20px 0px rgba(0, 0, 0, 0.5);
   background-color: var(--background);
   color: var(--foreground);
@@ -318,14 +318,14 @@
   .card-hover:hover {
     transform: translateY(-2px);
     box-shadow:
-      0 4px 16px rgba(25, 35, 52, 0.08),
-      0 1px 4px rgba(0, 0, 0, 0.06);
+      0 4px 16px rgba(25, 35, 52, 0.12),
+      0 2px 6px rgba(0, 0, 0, 0.08);
   }
 
   .glass-panel {
     background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(12px) saturate(1.5);
-    border: 1px solid rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.1);
   }
   .dark .glass-panel {
     background: rgba(17, 17, 17, 0.7);
@@ -467,8 +467,8 @@
   .glass-card {
     background: rgba(255, 255, 255, 0.6);
     backdrop-filter: blur(16px) saturate(1.8);
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(25, 35, 52, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(25, 35, 52, 0.05);
   }
   .dark .glass-card {
     background: rgba(17, 17, 17, 0.5);
@@ -553,17 +553,15 @@
     background: var(--surface);
     padding: 1.25rem;
     box-shadow:
-      0 1px 3px rgba(0, 0, 0, 0.08),
-      0 4px 16px rgba(0, 0, 0, 0.06),
-      0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+      0 1px 3px rgba(0, 0, 0, 0.1),
+      0 4px 16px rgba(0, 0, 0, 0.07);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .widget-card:hover {
-    transform: translateY(-1px);
+    transform: translateY(-2px);
     box-shadow:
-      0 2px 4px rgba(0, 0, 0, 0.04),
-      0 8px 24px rgba(25, 35, 52, 0.06),
-      0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+      0 4px 12px rgba(0, 0, 0, 0.1),
+      0 12px 32px rgba(25, 35, 52, 0.08);
   }
   .dark .widget-card {
     background: var(--surface);
@@ -586,11 +584,10 @@
     padding: 1.25rem;
     background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(20px) saturate(1.8);
-    border: 1px solid rgba(25, 35, 52, 0.12);
+    border: 1px solid rgba(25, 35, 52, 0.2);
     box-shadow:
-      0 1px 3px rgba(0, 0, 0, 0.08),
-      0 8px 24px rgba(25, 35, 52, 0.1),
-      0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+      0 2px 6px rgba(0, 0, 0, 0.1),
+      0 8px 24px rgba(25, 35, 52, 0.1);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .widget-card-primary::before {
@@ -604,11 +601,10 @@
     border-radius: 1px;
   }
   .widget-card-primary:hover {
-    transform: translateY(-1px);
+    transform: translateY(-2px);
     box-shadow:
-      0 4px 12px rgba(0, 0, 0, 0.04),
-      0 12px 32px rgba(25, 35, 52, 0.08),
-      0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+      0 6px 16px rgba(0, 0, 0, 0.1),
+      0 16px 40px rgba(25, 35, 52, 0.1);
   }
   .dark .widget-card-primary {
     background: rgba(17, 17, 17, 0.6);

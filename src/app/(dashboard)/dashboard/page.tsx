@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { StatCard } from '@/components/shared/stat-card'
-import { Truck, Users, Package, TrendingUp, ChevronRight, PackageSearch, DollarSign, CheckCircle2, Plus } from 'lucide-react'
+import { Truck, Users, Package, TrendingUp, ChevronRight, Car, DollarSign, CheckCircle2, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { LoadsPipeline } from './_components/loads-pipeline'
 import { RevenueChart } from './_components/revenue-chart'
@@ -196,7 +196,7 @@ export default async function DashboardPage({
     },
     {
       href: '/orders',
-      icon: PackageSearch,
+      icon: Car,
       title: 'Create Your First Order',
       description: 'Start managing vehicle transport loads',
       done: orderCount > 0,
