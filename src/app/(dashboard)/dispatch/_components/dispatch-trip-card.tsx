@@ -93,10 +93,15 @@ export function DispatchTripCard({ trip, isDraggingOrder, activeId }: DispatchTr
   return (
     <div
       ref={setRefs}
+      role="link"
+      tabIndex={0}
       onClick={(e) => {
         // Don't navigate if we just finished a drag
         if (isDragging) return
         router.push(`/trips/${trip.id}`)
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' && !isDragging) router.push(`/trips/${trip.id}`)
       }}
       className={cn(
         'rounded-lg border border-border-subtle bg-surface p-3 cursor-pointer card-hover hover:border-brand/30 border-l-[3px] relative group transition-all duration-150',
@@ -158,7 +163,7 @@ export function DispatchTripCard({ trip, isDraggingOrder, activeId }: DispatchTr
                 'h-full rounded-full transition-all duration-300',
                 capacityPercent >= 100 ? 'bg-red-500' : capacityPercent >= 75 ? 'bg-amber-500' : 'bg-green-500'
               )}
-              style={{ width: `${Math.min(capacityPercent, 100)}%` }}
+              style={{ width: `${Math.round(Math.min(capacityPercent, 100))}%` }}
             />
           </div>
           <span className="text-[10px] text-muted-foreground">

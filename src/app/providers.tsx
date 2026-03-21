@@ -8,8 +8,9 @@ import { usePathname, useSearchParams } from 'next/navigation'
 
 function PostHogInit() {
   useEffect(() => {
-    if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_POSTHOG_KEY) {
-      posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
+    const key = process.env.NEXT_PUBLIC_POSTHOG_KEY
+    if (typeof window !== 'undefined' && key && key.length > 10 && !key.endsWith('...')) {
+      posthog.init(key, {
         api_host: '/ingest',
         person_profiles: 'identified_only',
         capture_pageview: false,

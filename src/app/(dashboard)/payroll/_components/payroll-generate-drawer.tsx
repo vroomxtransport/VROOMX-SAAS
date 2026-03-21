@@ -127,7 +127,7 @@ export function PayrollGenerateDrawer({
           </SheetDescription>
         </SheetHeader>
 
-        <div className="mt-6 space-y-6">
+        <div className="mt-6 space-y-6 px-4">
           {/* Mode Toggle */}
           <div className="flex items-center justify-between rounded-lg border border-border p-3">
             <div className="flex items-center gap-2">

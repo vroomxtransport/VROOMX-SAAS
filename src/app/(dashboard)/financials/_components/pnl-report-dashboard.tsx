@@ -43,7 +43,11 @@ export function PnLReportDashboard() {
             <MonthlyPnLTable data={monthlyData} />
           )}
         </>
-      ) : null}
+      ) : (
+        <div className="rounded-lg border border-dashed border-border p-12 text-center">
+          <p className="text-sm text-muted-foreground">No financial data for this period. Create orders and trips to generate your P&L report.</p>
+        </div>
+      )}
     </div>
   )
 }
