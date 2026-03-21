@@ -6,6 +6,11 @@ import {
   fetchComplianceDocs,
   fetchComplianceDoc,
   fetchExpirationAlerts,
+  fetchComplianceOverview,
+  fetchComplianceChecklist,
+  fetchDriverComplianceScore,
+  fetchTruckComplianceScore,
+  fetchComplianceRequirements,
   type ComplianceDocFilters,
 } from '@/lib/queries/compliance'
 import { useEffect } from 'react'
@@ -87,4 +92,109 @@ export function useExpirationAlerts() {
   }, [supabase, queryClient])
 
   return query
+}
+
+export function useComplianceOverview() {
+  const supabase = createClient()
+  const queryClient = useQueryClient()
+
+  const query = useQuery({
+    queryKey: ['compliance-overview'],
+    queryFn: () => fetchComplianceOverview(supabase),
+    staleTime: 30_000,
+  })
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('compliance-overview-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'compliance_documents',
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['compliance-overview'] })
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [supabase, queryClient])
+
+  return query
+}
+
+export function useComplianceChecklist(
+  documentType: string,
+  entityType: string,
+  entityId?: string
+) {
+  const supabase = createClient()
+  const queryClient = useQueryClient()
+
+  const query = useQuery({
+    queryKey: ['compliance-checklist', documentType, entityType, entityId],
+    queryFn: () => fetchComplianceChecklist(supabase, documentType, entityType, entityId),
+    enabled: !!documentType && !!entityType,
+    staleTime: 30_000,
+  })
+
+  useEffect(() => {
+    const channel = supabase
+      .channel(`compliance-checklist-changes-${documentType}-${entityType}-${entityId ?? 'all'}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'compliance_documents',
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['compliance-checklist', documentType, entityType, entityId] })
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [supabase, queryClient, documentType, entityType, entityId])
+
+  return query
+}
+
+export function useDriverComplianceScore(driverId: string | undefined) {
+  const supabase = createClient()
+
+  return useQuery({
+    queryKey: ['driver-compliance-score', driverId],
+    queryFn: () => fetchDriverComplianceScore(supabase, driverId!),
+    enabled: !!driverId,
+    staleTime: 30_000,
+  })
+}
+
+export function useTruckComplianceScore(truckId: string | undefined) {
+  const supabase = createClient()
+
+  return useQuery({
+    queryKey: ['truck-compliance-score', truckId],
+    queryFn: () => fetchTruckComplianceScore(supabase, truckId!),
+    enabled: !!truckId,
+    staleTime: 30_000,
+  })
+}
+
+export function useComplianceRequirements(documentType?: string) {
+  const supabase = createClient()
+
+  return useQuery({
+    queryKey: ['compliance-requirements', documentType],
+    queryFn: () => fetchComplianceRequirements(supabase, documentType),
+    staleTime: 30_000,
+  })
 }

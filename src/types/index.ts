@@ -524,3 +524,126 @@ export const COMPLIANCE_DOC_STATUS_COLORS: Record<ComplianceDocStatus, string> =
   expiring_soon: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800',
   expired: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-800',
 }
+
+// ============================================================================
+// Compliance Sub-Categories (FMCSA)
+// ============================================================================
+
+// DQF sub-categories (49 CFR Part 391)
+export type DqfSubCategory =
+  | 'cdl_endorsements' | 'medical_certificate' | 'mvr'
+  | 'drug_alcohol_testing' | 'road_test_cert' | 'employment_application'
+  | 'employer_verification' | 'annual_review' | 'violations_incidents'
+
+// Vehicle sub-categories (49 CFR Part 396)
+export type VehicleSubCategory =
+  | 'registration_title' | 'annual_dot_inspection' | 'insurance'
+  | 'dvir' | 'maintenance_records' | 'permits'
+
+// Company sub-categories
+export type CompanySubCategory =
+  | 'operating_authority' | 'boc3' | 'ucr'
+  | 'insurance_certificates' | 'drug_alcohol_policy' | 'safety_rating'
+
+export type ComplianceSubCategory = DqfSubCategory | VehicleSubCategory | CompanySubCategory | 'other'
+
+export const DQF_SUB_CATEGORIES: readonly DqfSubCategory[] = [
+  'cdl_endorsements', 'medical_certificate', 'mvr', 'drug_alcohol_testing',
+  'road_test_cert', 'employment_application', 'employer_verification',
+  'annual_review', 'violations_incidents',
+] as const
+
+export const VEHICLE_SUB_CATEGORIES: readonly VehicleSubCategory[] = [
+  'registration_title', 'annual_dot_inspection', 'insurance',
+  'dvir', 'maintenance_records', 'permits',
+] as const
+
+export const COMPANY_SUB_CATEGORIES: readonly CompanySubCategory[] = [
+  'operating_authority', 'boc3', 'ucr',
+  'insurance_certificates', 'drug_alcohol_policy', 'safety_rating',
+] as const
+
+export const COMPLIANCE_SUB_CATEGORY_LABELS: Record<ComplianceSubCategory, string> = {
+  // DQF
+  cdl_endorsements: 'CDL & Endorsements',
+  medical_certificate: 'Medical Certificate (DOT Physical)',
+  mvr: 'Motor Vehicle Record (MVR)',
+  drug_alcohol_testing: 'Drug & Alcohol Testing',
+  road_test_cert: 'Road Test Certificate',
+  employment_application: 'Employment Application',
+  employer_verification: 'Previous Employer Verification',
+  annual_review: 'Annual Review of Driving Record',
+  violations_incidents: 'Violations & Incidents',
+  // Vehicle
+  registration_title: 'Registration & Title',
+  annual_dot_inspection: 'Annual DOT Inspection',
+  insurance: 'Insurance (Liability/Cargo)',
+  dvir: 'DVIR (Pre/Post Trip)',
+  maintenance_records: 'Maintenance Records',
+  permits: 'Permits (IRP/IFTA/OS&OW)',
+  // Company
+  operating_authority: 'Operating Authority (MC/DOT)',
+  boc3: 'BOC-3 Process Agent',
+  ucr: 'UCR Registration',
+  insurance_certificates: 'Insurance Certificates',
+  drug_alcohol_policy: 'Drug & Alcohol Policy',
+  safety_rating: 'FMCSA Safety Rating',
+  // Other
+  other: 'Other',
+}
+
+// ============================================================================
+// Safety Event Types
+// ============================================================================
+
+export type SafetyEventType = 'incident' | 'claim' | 'dot_inspection'
+export type SafetyEventSeverity = 'minor' | 'moderate' | 'severe' | 'critical'
+export type SafetyEventStatus = 'open' | 'under_review' | 'resolved' | 'closed'
+export type DotInspectionLevel = 'I' | 'II' | 'III' | 'IV' | 'V'
+
+export const SAFETY_EVENT_TYPES: readonly SafetyEventType[] = ['incident', 'claim', 'dot_inspection'] as const
+export const SAFETY_EVENT_SEVERITIES: readonly SafetyEventSeverity[] = ['minor', 'moderate', 'severe', 'critical'] as const
+export const SAFETY_EVENT_STATUSES: readonly SafetyEventStatus[] = ['open', 'under_review', 'resolved', 'closed'] as const
+export const DOT_INSPECTION_LEVELS: readonly DotInspectionLevel[] = ['I', 'II', 'III', 'IV', 'V'] as const
+
+export const SAFETY_EVENT_TYPE_LABELS: Record<SafetyEventType, string> = {
+  incident: 'Incident / Accident',
+  claim: 'Cargo Damage Claim',
+  dot_inspection: 'DOT Inspection',
+}
+
+export const SAFETY_EVENT_SEVERITY_LABELS: Record<SafetyEventSeverity, string> = {
+  minor: 'Minor',
+  moderate: 'Moderate',
+  severe: 'Severe',
+  critical: 'Critical',
+}
+
+export const SAFETY_EVENT_STATUS_LABELS: Record<SafetyEventStatus, string> = {
+  open: 'Open',
+  under_review: 'Under Review',
+  resolved: 'Resolved',
+  closed: 'Closed',
+}
+
+export const SAFETY_EVENT_SEVERITY_COLORS: Record<SafetyEventSeverity, string> = {
+  minor: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800',
+  moderate: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800',
+  severe: 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/30 dark:text-orange-400 dark:border-orange-800',
+  critical: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-800',
+}
+
+export const SAFETY_EVENT_STATUS_COLORS: Record<SafetyEventStatus, string> = {
+  open: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-800',
+  under_review: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800',
+  resolved: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950/30 dark:text-green-400 dark:border-green-800',
+  closed: 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950/30 dark:text-gray-400 dark:border-gray-800',
+}
+
+export const DOT_INSPECTION_LEVEL_LABELS: Record<DotInspectionLevel, string> = {
+  I: 'Level I - Full Inspection',
+  II: 'Level II - Walk-Around',
+  III: 'Level III - Driver Only',
+  IV: 'Level IV - Special',
+  V: 'Level V - Vehicle Only',
+}

@@ -730,6 +730,10 @@ export const complianceDocuments = pgTable('compliance_documents', {
   expiresAt: date('expires_at'),
   uploadedBy: uuid('uploaded_by'),
   notes: text('notes'),
+  subCategory: text('sub_category').notNull().default('other'),
+  status: text('status').notNull().default('valid'),
+  isRequired: boolean('is_required').notNull().default(false),
+  regulationReference: text('regulation_reference'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
@@ -737,6 +741,69 @@ export const complianceDocuments = pgTable('compliance_documents', {
   index('idx_compliance_documents_tenant_type').on(table.tenantId, table.documentType),
   index('idx_compliance_documents_tenant_entity').on(table.tenantId, table.entityType, table.entityId),
   index('idx_compliance_documents_expires').on(table.tenantId, table.expiresAt),
+  index('idx_compliance_sub').on(table.tenantId, table.documentType, table.subCategory),
+  index('idx_compliance_entity_sub').on(table.tenantId, table.entityType, table.entityId, table.subCategory),
+])
+
+/**
+ * Safety Events Table
+ * Tracks incidents, cargo damage claims, and DOT inspections.
+ */
+export const safetyEvents = pgTable('safety_events', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  eventType: text('event_type').notNull(),
+  severity: text('severity').notNull().default('minor'),
+  status: text('status').notNull().default('open'),
+  eventDate: date('event_date').notNull(),
+  driverId: uuid('driver_id').references(() => drivers.id, { onDelete: 'set null' }),
+  truckId: uuid('truck_id').references(() => trucks.id, { onDelete: 'set null' }),
+  orderId: uuid('order_id').references(() => orders.id, { onDelete: 'set null' }),
+  vehicleVin: text('vehicle_vin'),
+  title: text('title').notNull(),
+  description: text('description'),
+  location: text('location'),
+  locationState: text('location_state'),
+  photos: jsonb('photos'),
+  financialAmount: numeric('financial_amount', { precision: 12, scale: 2 }),
+  insuranceClaimNumber: text('insurance_claim_number'),
+  deductionAmount: numeric('deduction_amount', { precision: 12, scale: 2 }),
+  inspectionLevel: text('inspection_level'),
+  violationsCount: integer('violations_count').default(0),
+  outOfService: boolean('out_of_service').default(false),
+  resolutionNotes: text('resolution_notes'),
+  resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_safety_events_tenant').on(table.tenantId),
+  index('idx_safety_events_type').on(table.tenantId, table.eventType),
+  index('idx_safety_events_driver').on(table.tenantId, table.driverId),
+  index('idx_safety_events_truck').on(table.tenantId, table.truckId),
+  index('idx_safety_events_date').on(table.tenantId, table.eventDate),
+])
+
+/**
+ * Compliance Requirements Table
+ * Tenant-configurable set of required compliance document sub-categories.
+ */
+export const complianceRequirements = pgTable('compliance_requirements', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  documentType: text('document_type').notNull(),
+  subCategory: text('sub_category').notNull(),
+  displayName: text('display_name').notNull(),
+  description: text('description'),
+  regulationReference: text('regulation_reference'),
+  renewalPeriodMonths: integer('renewal_period_months'),
+  retentionMonths: integer('retention_months'),
+  isActive: boolean('is_active').notNull().default(true),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  unique().on(table.tenantId, table.documentType, table.subCategory),
+  index('idx_compliance_requirements_tenant').on(table.tenantId),
+  index('idx_compliance_requirements_type').on(table.tenantId, table.documentType),
 ])
 
 /**

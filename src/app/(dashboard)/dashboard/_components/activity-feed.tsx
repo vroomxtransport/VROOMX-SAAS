@@ -85,7 +85,7 @@ export function ActivityFeed() {
         </span>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-auto relative">
+      <div className="flex-1 min-h-0 overflow-hidden relative">
         <div className="absolute left-[15px] top-6 bottom-0 w-0.5 bg-gradient-to-b from-brand via-border-subtle/50 to-transparent" />
         <div className="space-y-0">
           {eventsWithGroups.map((event, idx) => {

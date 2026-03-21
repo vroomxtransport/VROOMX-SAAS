@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Select,
   SelectContent,
@@ -25,29 +26,55 @@ import { createClient } from '@/lib/supabase/client'
 import { useQueryClient } from '@tanstack/react-query'
 import { useDrivers } from '@/hooks/use-drivers'
 import { useTrucks } from '@/hooks/use-trucks'
-import { COMPLIANCE_DOC_TYPE_LABELS, COMPLIANCE_ENTITY_TYPE_LABELS } from '@/types'
-import type { ComplianceDocType, ComplianceEntityType } from '@/types'
+import {
+  COMPLIANCE_DOC_TYPE_LABELS,
+  COMPLIANCE_ENTITY_TYPE_LABELS,
+  COMPLIANCE_SUB_CATEGORY_LABELS,
+  DQF_SUB_CATEGORIES,
+  VEHICLE_SUB_CATEGORIES,
+  COMPANY_SUB_CATEGORIES,
+} from '@/types'
+import type { ComplianceDocType, ComplianceEntityType, ComplianceSubCategory } from '@/types'
 import type { ComplianceDocument } from '@/types/database'
 import { FileText } from 'lucide-react'
 
 const BUCKET = 'documents'
 
+// Map document type → available sub-categories
+const SUB_CATEGORIES_BY_DOC_TYPE: Record<string, readonly string[]> = {
+  dqf: DQF_SUB_CATEGORIES,
+  vehicle_qualification: VEHICLE_SUB_CATEGORIES,
+  company_document: COMPANY_SUB_CATEGORIES,
+}
+
 interface UploadDrawerProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   doc?: ComplianceDocument
+  /** Pre-fill overrides — used when opening from a checklist item */
+  prefill?: {
+    documentType?: string
+    entityType?: string
+    entityId?: string
+    subCategory?: string
+    regulationReference?: string
+    isRequired?: boolean
+  }
 }
 
-export function UploadDrawer({ open, onOpenChange, doc }: UploadDrawerProps) {
+export function UploadDrawer({ open, onOpenChange, doc, prefill }: UploadDrawerProps) {
   const isEdit = !!doc
   const queryClient = useQueryClient()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [submitting, setSubmitting] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
 
-  const [documentType, setDocumentType] = useState<string>(doc?.document_type ?? 'dqf')
-  const [entityType, setEntityType] = useState<string>(doc?.entity_type ?? 'driver')
-  const [entityId, setEntityId] = useState(doc?.entity_id ?? '')
+  const [documentType, setDocumentType] = useState<string>(doc?.document_type ?? prefill?.documentType ?? 'dqf')
+  const [entityType, setEntityType] = useState<string>(doc?.entity_type ?? prefill?.entityType ?? 'driver')
+  const [entityId, setEntityId] = useState(doc?.entity_id ?? prefill?.entityId ?? '')
+  const [subCategory, setSubCategory] = useState<string>(doc?.sub_category ?? prefill?.subCategory ?? '')
+  const [regulationReference, setRegulationReference] = useState<string>(doc?.regulation_reference ?? prefill?.regulationReference ?? '')
+  const [isRequired, setIsRequired] = useState<boolean>(doc?.is_required ?? prefill?.isRequired ?? false)
   const [name, setName] = useState(doc?.name ?? '')
   const [expiresAt, setExpiresAt] = useState(doc?.expires_at?.split('T')[0] ?? '')
   const [notes, setNotes] = useState(doc?.notes ?? '')
@@ -56,11 +83,17 @@ export function UploadDrawer({ open, onOpenChange, doc }: UploadDrawerProps) {
   const { data: drivers } = useDrivers()
   const { data: trucks } = useTrucks()
 
+  // Sub-categories available for the current document type
+  const availableSubCategories = SUB_CATEGORIES_BY_DOC_TYPE[documentType] ?? []
+
   useEffect(() => {
     if (open) {
-      setDocumentType(doc?.document_type ?? 'dqf')
-      setEntityType(doc?.entity_type ?? 'driver')
-      setEntityId(doc?.entity_id ?? '')
+      setDocumentType(doc?.document_type ?? prefill?.documentType ?? 'dqf')
+      setEntityType(doc?.entity_type ?? prefill?.entityType ?? 'driver')
+      setEntityId(doc?.entity_id ?? prefill?.entityId ?? '')
+      setSubCategory(doc?.sub_category ?? prefill?.subCategory ?? '')
+      setRegulationReference(doc?.regulation_reference ?? prefill?.regulationReference ?? '')
+      setIsRequired(doc?.is_required ?? prefill?.isRequired ?? false)
       setName(doc?.name ?? '')
       setExpiresAt(doc?.expires_at?.split('T')[0] ?? '')
       setNotes(doc?.notes ?? '')
@@ -70,7 +103,7 @@ export function UploadDrawer({ open, onOpenChange, doc }: UploadDrawerProps) {
         fileInputRef.current.value = ''
       }
     }
-  }, [open, doc])
+  }, [open, doc, prefill])
 
   const handleEntityTypeChange = (value: string) => {
     setEntityType(value)
@@ -127,6 +160,9 @@ export function UploadDrawer({ open, onOpenChange, doc }: UploadDrawerProps) {
       name,
       expiresAt,
       notes,
+      subCategory: subCategory || undefined,
+      regulationReference: regulationReference || undefined,
+      isRequired,
       ...(storagePath ? { fileName, storagePath, fileSize } : {}),
       // Preserve existing file data on edit
       ...(isEdit && doc?.file_name ? {
@@ -244,6 +280,25 @@ export function UploadDrawer({ open, onOpenChange, doc }: UploadDrawerProps) {
             </div>
           )}
 
+          {/* Sub-category */}
+          {availableSubCategories.length > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="subCategory">Category</Label>
+              <Select value={subCategory} onValueChange={setSubCategory}>
+                <SelectTrigger id="subCategory">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableSubCategories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {COMPLIANCE_SUB_CATEGORY_LABELS[cat as ComplianceSubCategory] ?? cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="name">Document Name</Label>
             <Input
@@ -252,6 +307,17 @@ export function UploadDrawer({ open, onOpenChange, doc }: UploadDrawerProps) {
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. CDL - John Doe"
               required
+            />
+          </div>
+
+          {/* Regulation reference */}
+          <div className="space-y-2">
+            <Label htmlFor="regulationReference">Regulation Reference (optional)</Label>
+            <Input
+              id="regulationReference"
+              value={regulationReference}
+              onChange={(e) => setRegulationReference(e.target.value)}
+              placeholder="e.g. 49 CFR 391.41"
             />
           </div>
 
@@ -297,6 +363,18 @@ export function UploadDrawer({ open, onOpenChange, doc }: UploadDrawerProps) {
               placeholder="Optional notes..."
               rows={3}
             />
+          </div>
+
+          {/* Required checkbox */}
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="isRequired"
+              checked={isRequired}
+              onCheckedChange={(checked) => setIsRequired(checked === true)}
+            />
+            <Label htmlFor="isRequired" className="cursor-pointer font-normal">
+              Mark as required document
+            </Label>
           </div>
 
           {uploadError && (

@@ -100,7 +100,7 @@ export function TopDrivers() {
       {drivers.length === 0 ? (
         <p className="text-sm text-muted-foreground py-4 text-center">No driver data this month</p>
       ) : (
-        <div className="flex-1 min-h-0 overflow-auto space-y-3">
+        <div className="flex-1 min-h-0 overflow-hidden space-y-3">
           {drivers.map((driver, i) => {
             const pct = topRevenue > 0 ? (driver.revenue / topRevenue) * 100 : 0
             const style = RANK_STYLES[i] ?? { badge: 'bg-muted text-muted-foreground', avatar: 'bg-muted text-muted-foreground', bar: 'bg-gradient-to-r from-blue-500/50 to-blue-400/50' }

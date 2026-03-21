@@ -113,7 +113,7 @@ export function FleetPulse({ trucks, drivers, capacity }: FleetPulseProps) {
           Live
         </span>
       </div>
-      <div className="flex-1 min-h-0 overflow-auto space-y-3">
+      <div className="flex-1 min-h-0 overflow-hidden space-y-3">
         <ProgressRow
           icon={Truck}
           label="Trucks"

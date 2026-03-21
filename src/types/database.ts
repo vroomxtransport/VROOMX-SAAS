@@ -400,8 +400,58 @@ export interface ComplianceDocument {
   expires_at: string | null
   uploaded_by: string | null
   notes: string | null
+  sub_category: string
+  status: string
+  is_required: boolean
+  regulation_reference: string | null
   created_at: string
   updated_at: string
+}
+
+export interface SafetyEvent {
+  id: string
+  tenant_id: string
+  event_type: 'incident' | 'claim' | 'dot_inspection'
+  severity: 'minor' | 'moderate' | 'severe' | 'critical'
+  status: 'open' | 'under_review' | 'resolved' | 'closed'
+  event_date: string
+  driver_id: string | null
+  truck_id: string | null
+  order_id: string | null
+  vehicle_vin: string | null
+  title: string
+  description: string | null
+  location: string | null
+  location_state: string | null
+  photos: Array<{ storagePath: string; fileName: string; fileSize: number }> | null
+  financial_amount: string | null  // numeric from DB = string
+  insurance_claim_number: string | null
+  deduction_amount: string | null  // numeric from DB = string
+  inspection_level: string | null
+  violations_count: number
+  out_of_service: boolean
+  resolution_notes: string | null
+  resolved_at: string | null
+  created_at: string
+  updated_at: string
+  // Optional joins
+  driver?: { id: string; first_name: string; last_name: string }
+  truck?: { id: string; unit_number: string; make: string; model: string }
+}
+
+export interface ComplianceRequirement {
+  id: string
+  tenant_id: string
+  document_type: string
+  sub_category: string
+  display_name: string
+  description: string | null
+  regulation_reference: string | null
+  renewal_period_months: number | null
+  retention_months: number | null
+  is_active: boolean
+  sort_order: number
+  created_at: string
 }
 
 export interface BusinessExpense {

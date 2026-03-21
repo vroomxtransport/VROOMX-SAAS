@@ -31,14 +31,14 @@ export interface WidgetLayout {
 // rowHeight=40px — fine granularity (40px steps) with reliable compaction.
 const DEFAULT_LAYOUT: WidgetLayout[] = [
   { id: 'statCards', visible: true, grid: { x: 0, y: 0, w: 12, h: 2, minW: 6, minH: 2 } },
-  { id: 'loadsPipeline', visible: true, grid: { x: 0, y: 2, w: 8, h: 8, minW: 4, minH: 4 } },
-  { id: 'fleetPulse', visible: true, grid: { x: 8, y: 2, w: 4, h: 8, minW: 3, minH: 4 } },
-  { id: 'revenueChart', visible: true, grid: { x: 0, y: 10, w: 8, h: 10, minW: 4, minH: 5 } },
-  { id: 'upcomingPickups', visible: true, grid: { x: 8, y: 10, w: 4, h: 10, minW: 3, minH: 5 } },
-  { id: 'activityFeed', visible: true, grid: { x: 0, y: 20, w: 6, h: 10, minW: 4, minH: 5 } },
-  { id: 'openInvoices', visible: true, grid: { x: 6, y: 20, w: 3, h: 6, minW: 3, minH: 3 } },
-  { id: 'topDrivers', visible: true, grid: { x: 9, y: 20, w: 3, h: 6, minW: 3, minH: 3 } },
-  { id: 'quickLinks', visible: true, grid: { x: 0, y: 30, w: 4, h: 5, minW: 3, minH: 3 } },
+  { id: 'loadsPipeline', visible: true, grid: { x: 0, y: 0, w: 8, h: 8, minW: 4, minH: 4 } },
+  { id: 'fleetPulse', visible: true, grid: { x: 8, y: 0, w: 4, h: 8, minW: 3, minH: 4 } },
+  { id: 'revenueChart', visible: true, grid: { x: 0, y: 8, w: 8, h: 10, minW: 4, minH: 5 } },
+  { id: 'upcomingPickups', visible: true, grid: { x: 8, y: 8, w: 4, h: 10, minW: 3, minH: 5 } },
+  { id: 'activityFeed', visible: true, grid: { x: 0, y: 18, w: 6, h: 10, minW: 4, minH: 5 } },
+  { id: 'openInvoices', visible: true, grid: { x: 6, y: 18, w: 3, h: 6, minW: 3, minH: 3 } },
+  { id: 'topDrivers', visible: true, grid: { x: 9, y: 18, w: 3, h: 6, minW: 3, minH: 3 } },
+  { id: 'quickLinks', visible: true, grid: { x: 0, y: 28, w: 4, h: 5, minW: 3, minH: 3 } },
 ]
 
 interface DashboardStore {

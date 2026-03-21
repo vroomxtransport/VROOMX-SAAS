@@ -10,6 +10,10 @@ export const complianceDocSchema = z.object({
   fileName: z.string().max(500).optional().or(z.literal('')),
   storagePath: z.string().max(500).optional().or(z.literal('')),
   fileSize: z.coerce.number().max(100_000_000).optional(),
+  subCategory: z.string().max(50).optional().or(z.literal('')),
+  regulationReference: z.string().max(200).optional().or(z.literal('')),
+  isRequired: z.boolean().optional(),
+  status: z.enum(['valid', 'expiring_soon', 'expired']).optional(),
 })
 
 export type ComplianceDocFormValues = z.infer<typeof complianceDocSchema>

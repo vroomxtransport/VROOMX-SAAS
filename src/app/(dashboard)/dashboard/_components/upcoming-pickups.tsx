@@ -61,7 +61,7 @@ export function UpcomingPickups({ pickups }: UpcomingPickupsProps) {
       {pickups.length === 0 ? (
         <p className="text-sm text-muted-foreground py-4">No upcoming pickups scheduled.</p>
       ) : (
-        <div className="flex-1 min-h-0 overflow-auto space-y-3">
+        <div className="flex-1 min-h-0 overflow-hidden space-y-3">
           {Object.entries(grouped).map(([dateLabel, items]) => (
             <div key={dateLabel}>
               <span

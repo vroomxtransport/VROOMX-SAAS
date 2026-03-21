@@ -18,6 +18,7 @@ export const PERMISSION_CATEGORIES = {
   fuel: ['fuel.view', 'fuel.create', 'fuel.update', 'fuel.delete'],
   maintenance: ['maintenance.view', 'maintenance.create', 'maintenance.update', 'maintenance.delete'],
   compliance: ['compliance.view', 'compliance.create', 'compliance.update', 'compliance.delete'],
+  safety_events: ['safety_events.view', 'safety_events.create', 'safety_events.update', 'safety_events.delete'],
   billing: ['billing.view', 'billing.manage'],
   payments: ['payments.view', 'payments.create'],
   invoices: ['invoices.view', 'invoices.send'],
@@ -45,6 +46,7 @@ export const CATEGORY_LABELS: Record<string, string> = {
   fuel: 'Fuel',
   maintenance: 'Maintenance',
   compliance: 'Compliance',
+  safety_events: 'Safety Events',
   billing: 'Billing',
   payments: 'Payments',
   invoices: 'Invoices',
@@ -74,7 +76,7 @@ export const BUILT_IN_ROLES: Record<string, string[]> = {
     'billing.*', 'payments.*', 'invoices.*',
   ],
   safety: [
-    'compliance.*',
+    'compliance.*', 'safety_events.*',
     'drivers.view', 'trucks.view', 'trailers.view', 'documents.view',
   ],
 }

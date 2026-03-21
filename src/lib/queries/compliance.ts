@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { ComplianceDocument } from '@/types/database'
+import type { ComplianceDocument, ComplianceRequirement } from '@/types/database'
 import { sanitizeSearch } from '@/lib/sanitize-search'
 
 export interface ComplianceDocFilters {
@@ -16,6 +16,26 @@ export interface ComplianceDocFilters {
 
 export interface ComplianceDocsResult {
   docs: ComplianceDocument[]
+  total: number
+}
+
+export interface ComplianceOverview {
+  total: number
+  valid: number
+  expiringSoon: number
+  expired: number
+  missing: number
+}
+
+export interface ComplianceChecklistItem {
+  requirement: ComplianceRequirement
+  document: ComplianceDocument | null
+  status: 'valid' | 'expiring_soon' | 'expired' | 'missing'
+}
+
+export interface ComplianceScore {
+  score: number
+  met: number
   total: number
 }
 
@@ -99,4 +119,182 @@ export async function fetchExpirationAlerts(
   if (error) throw error
 
   return (data ?? []) as ComplianceDocument[]
+}
+
+export async function fetchComplianceOverview(
+  supabase: SupabaseClient
+): Promise<ComplianceOverview> {
+  const { data, error } = await supabase
+    .from('compliance_documents')
+    .select('status')
+
+  if (error) throw error
+
+  const rows = (data ?? []) as Array<{ status: string }>
+  const total = rows.length
+  const valid = rows.filter(r => r.status === 'valid').length
+  const expiringSoon = rows.filter(r => r.status === 'expiring_soon').length
+  const expired = rows.filter(r => r.status === 'expired').length
+
+  // Fetch requirements count to determine "missing"
+  const { count: reqCount, error: reqError } = await supabase
+    .from('compliance_requirements')
+    .select('*', { count: 'exact', head: true })
+    .eq('is_active', true)
+
+  if (reqError) throw reqError
+
+  const totalRequired = reqCount ?? 0
+  const missing = Math.max(0, totalRequired - total)
+
+  return { total, valid, expiringSoon, expired, missing }
+}
+
+export async function fetchComplianceChecklist(
+  supabase: SupabaseClient,
+  documentType: string,
+  entityType: string,
+  entityId?: string
+): Promise<ComplianceChecklistItem[]> {
+  // Fetch all active requirements for this document type
+  const { data: requirements, error: reqError } = await supabase
+    .from('compliance_requirements')
+    .select('*')
+    .eq('document_type', documentType)
+    .eq('is_active', true)
+    .order('sort_order', { ascending: true })
+
+  if (reqError) throw reqError
+
+  if (!requirements || requirements.length === 0) return []
+
+  // Fetch documents for this entity
+  let docQuery = supabase
+    .from('compliance_documents')
+    .select('*')
+    .eq('document_type', documentType)
+    .eq('entity_type', entityType)
+
+  if (entityId) {
+    docQuery = docQuery.eq('entity_id', entityId)
+  }
+
+  const { data: documents, error: docError } = await docQuery
+
+  if (docError) throw docError
+
+  const docs = (documents ?? []) as ComplianceDocument[]
+  const reqs = (requirements ?? []) as ComplianceRequirement[]
+
+  // Map requirements to checklist items
+  return reqs.map(req => {
+    const matchingDoc = docs.find(d => d.sub_category === req.sub_category) ?? null
+
+    let status: ComplianceChecklistItem['status'] = 'missing'
+    if (matchingDoc) {
+      if (matchingDoc.status === 'valid') status = 'valid'
+      else if (matchingDoc.status === 'expiring_soon') status = 'expiring_soon'
+      else if (matchingDoc.status === 'expired') status = 'expired'
+      else status = 'valid' // default if status not set
+    }
+
+    return { requirement: req, document: matchingDoc, status }
+  })
+}
+
+export async function fetchDriverComplianceScore(
+  supabase: SupabaseClient,
+  driverId: string
+): Promise<ComplianceScore> {
+  // Fetch all active DQF requirements
+  const { data: requirements, error: reqError } = await supabase
+    .from('compliance_requirements')
+    .select('id, sub_category')
+    .eq('document_type', 'dqf')
+    .eq('is_active', true)
+
+  if (reqError) throw reqError
+
+  const reqs = (requirements ?? []) as Array<{ id: string; sub_category: string }>
+  const total = reqs.length
+
+  if (total === 0) return { score: 100, met: 0, total: 0 }
+
+  // Fetch valid/expiring docs for this driver
+  const { data: documents, error: docError } = await supabase
+    .from('compliance_documents')
+    .select('sub_category, status')
+    .eq('document_type', 'dqf')
+    .eq('entity_type', 'driver')
+    .eq('entity_id', driverId)
+    .in('status', ['valid', 'expiring_soon'])
+
+  if (docError) throw docError
+
+  const docs = (documents ?? []) as Array<{ sub_category: string; status: string }>
+  const docSubCategories = new Set(docs.map(d => d.sub_category))
+
+  const met = reqs.filter(r => docSubCategories.has(r.sub_category)).length
+  const score = total > 0 ? Math.round((met / total) * 100) : 100
+
+  return { score, met, total }
+}
+
+export async function fetchTruckComplianceScore(
+  supabase: SupabaseClient,
+  truckId: string
+): Promise<ComplianceScore> {
+  // Fetch all active vehicle requirements
+  const { data: requirements, error: reqError } = await supabase
+    .from('compliance_requirements')
+    .select('id, sub_category')
+    .eq('document_type', 'vehicle_qualification')
+    .eq('is_active', true)
+
+  if (reqError) throw reqError
+
+  const reqs = (requirements ?? []) as Array<{ id: string; sub_category: string }>
+  const total = reqs.length
+
+  if (total === 0) return { score: 100, met: 0, total: 0 }
+
+  // Fetch valid/expiring docs for this truck
+  const { data: documents, error: docError } = await supabase
+    .from('compliance_documents')
+    .select('sub_category, status')
+    .eq('document_type', 'vehicle_qualification')
+    .eq('entity_type', 'truck')
+    .eq('entity_id', truckId)
+    .in('status', ['valid', 'expiring_soon'])
+
+  if (docError) throw docError
+
+  const docs = (documents ?? []) as Array<{ sub_category: string; status: string }>
+  const docSubCategories = new Set(docs.map(d => d.sub_category))
+
+  const met = reqs.filter(r => docSubCategories.has(r.sub_category)).length
+  const score = total > 0 ? Math.round((met / total) * 100) : 100
+
+  return { score, met, total }
+}
+
+export async function fetchComplianceRequirements(
+  supabase: SupabaseClient,
+  documentType?: string
+): Promise<ComplianceRequirement[]> {
+  let query = supabase
+    .from('compliance_requirements')
+    .select('*')
+    .eq('is_active', true)
+    .order('sort_order', { ascending: true })
+
+  if (documentType) {
+    query = query.eq('document_type', documentType)
+  }
+
+  const { data, error } = await query
+
+  if (error) throw error
+
+  return (data ?? []) as ComplianceRequirement[]
 }

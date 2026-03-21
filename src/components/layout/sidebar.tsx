@@ -90,9 +90,9 @@ const NAV_CATEGORIES: NavCategory[] = [
     ],
   },
   {
-    label: 'Compliance',
+    label: 'Safety & Compliance',
     items: [
-      { name: 'Compliance', href: '/compliance', icon: ShieldCheck, minRole: 'admin' },
+      { name: 'Safety & Compliance', href: '/compliance', icon: ShieldCheck, minRole: 'admin' },
     ],
   },
   {

@@ -93,11 +93,11 @@ export function LoadsPipeline({ pipelineCounts, recentOrders }: LoadsPipelinePro
       </div>
 
       {/* Recent orders mini-table */}
-      <div className="flex-1 min-h-0 overflow-auto mt-4">
+      <div className="flex-1 min-h-0 overflow-hidden mt-4">
         <div className="border-l-2 border-brand/50 pl-3 mb-2">
           <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Recent Orders</h4>
         </div>
-        <div className="overflow-x-auto">
+        <div className="overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border-subtle">
