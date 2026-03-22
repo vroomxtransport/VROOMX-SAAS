@@ -105,7 +105,6 @@ export async function recordPayment(orderId: string, data: unknown) {
   // Fire-and-forget notification
   void createWebNotification({
     userId: auth.ctx.user.id,
-    tenantId,
     type: 'payment_received',
     title: 'Payment Recorded',
     body: `$${parsed.data.amount.toFixed(2)} payment recorded on order ${order.order_number}`,

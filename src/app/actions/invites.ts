@@ -92,7 +92,7 @@ export async function sendInvite(data: unknown) {
 
     if (inviteError) {
       // User already exists in auth — send invite email directly via Resend
-      console.log('[INVITE] Supabase invite note (sending via Resend):', inviteError.message)
+      // User already exists — fall through to Resend invite
       await getResend().emails.send({
         from: 'VroomX <noreply@vroomx.com>',
         to: parsed.data.email,

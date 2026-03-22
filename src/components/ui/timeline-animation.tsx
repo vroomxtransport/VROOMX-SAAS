@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useRef, type ElementType, type ComponentPropsWithoutRef } from 'react'
-import { motion, useInView, type Variants } from 'framer-motion'
+import { motion, useInView, type Variants } from 'motion/react'
 import { cn } from '@/lib/utils'
 
 interface TimelineContentProps<T extends ElementType = 'div'> {

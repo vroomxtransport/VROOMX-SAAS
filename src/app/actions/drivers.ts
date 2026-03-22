@@ -4,6 +4,7 @@ import { authorize, safeError } from '@/lib/authz'
 import { driverSchema } from '@/lib/validations/driver'
 import { checkTierLimit } from '@/lib/tier'
 import { getResend } from '@/lib/resend/client'
+import { logAuditEvent } from '@/lib/audit-log'
 import { revalidatePath } from 'next/cache'
 
 export async function createDriver(data: unknown) {
@@ -51,6 +52,17 @@ export async function createDriver(data: unknown) {
     return { error: safeError(error, 'createDriver') }
   }
 
+  logAuditEvent(supabase, {
+    tenantId,
+    entityType: 'driver',
+    entityId: driver.id,
+    action: 'created',
+    description: `Driver ${parsed.data.firstName} ${parsed.data.lastName} created`,
+    actorId: auth.ctx.user.id,
+    actorEmail: auth.ctx.user.email,
+    metadata: { driverType: parsed.data.driverType, payType: parsed.data.payType },
+  }).catch(() => {})
+
   revalidatePath('/drivers')
   return { success: true, data: driver }
 }
@@ -92,6 +104,16 @@ export async function updateDriver(id: string, data: unknown) {
     return { error: safeError(error, 'updateDriver') }
   }
 
+  logAuditEvent(supabase, {
+    tenantId,
+    entityType: 'driver',
+    entityId: id,
+    action: 'updated',
+    description: `Driver ${parsed.data.firstName} ${parsed.data.lastName} updated`,
+    actorId: auth.ctx.user.id,
+    actorEmail: auth.ctx.user.email,
+  }).catch(() => {})
+
   revalidatePath('/drivers')
   return { success: true, data: driver }
 }
@@ -110,6 +132,16 @@ export async function deleteDriver(id: string) {
   if (error) {
     return { error: safeError(error, 'deleteDriver') }
   }
+
+  logAuditEvent(supabase, {
+    tenantId,
+    entityType: 'driver',
+    entityId: id,
+    action: 'deleted',
+    description: 'Driver deleted',
+    actorId: auth.ctx.user.id,
+    actorEmail: auth.ctx.user.email,
+  }).catch(() => {})
 
   revalidatePath('/drivers')
   return { success: true }

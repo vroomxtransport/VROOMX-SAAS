@@ -44,7 +44,7 @@ describe('updateSession', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.spyOn(console, 'error').mockImplementation(() => {})
-    mockedRateLimit.mockReturnValue({ allowed: true, remaining: 9 })
+    mockedRateLimit.mockResolvedValue({ allowed: true, remaining: 9 })
     process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co'
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_test'
   })

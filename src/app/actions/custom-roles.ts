@@ -2,6 +2,7 @@
 
 import { authorize, safeError } from '@/lib/authz'
 import { ALL_PERMISSIONS } from '@/lib/permissions'
+import { logAuditEvent } from '@/lib/audit-log'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
@@ -47,6 +48,17 @@ export async function createCustomRole(data: unknown) {
     return { error: safeError(error, 'createCustomRole') }
   }
 
+  logAuditEvent(supabase, {
+    tenantId,
+    entityType: 'custom_role',
+    entityId: role.id,
+    action: 'created',
+    description: `Custom role "${name}" created`,
+    actorId: auth.ctx.user.id,
+    actorEmail: auth.ctx.user.email,
+    metadata: { permissions },
+  }).catch(() => {})
+
   revalidatePath('/settings')
   return { success: true, data: role }
 }
@@ -89,6 +101,17 @@ export async function updateCustomRole(id: string, data: unknown) {
     return { error: safeError(error, 'updateCustomRole') }
   }
 
+  logAuditEvent(supabase, {
+    tenantId,
+    entityType: 'custom_role',
+    entityId: id,
+    action: 'updated',
+    description: `Custom role "${name}" updated`,
+    actorId: auth.ctx.user.id,
+    actorEmail: auth.ctx.user.email,
+    metadata: { permissions },
+  }).catch(() => {})
+
   revalidatePath('/settings')
   return { success: true, data: role }
 }
@@ -119,6 +142,16 @@ export async function deleteCustomRole(id: string) {
   if (error) {
     return { error: safeError(error, 'deleteCustomRole') }
   }
+
+  logAuditEvent(supabase, {
+    tenantId,
+    entityType: 'custom_role',
+    entityId: id,
+    action: 'deleted',
+    description: 'Custom role deleted',
+    actorId: auth.ctx.user.id,
+    actorEmail: auth.ctx.user.email,
+  }).catch(() => {})
 
   revalidatePath('/settings')
   return { success: true }

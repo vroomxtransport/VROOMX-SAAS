@@ -48,7 +48,7 @@ export async function authorize(
   // Rate limit check (applied per-user + action key)
   if (opts.rateLimit) {
     const { key, limit, windowMs } = opts.rateLimit
-    const rl = rateLimit(`${user.id}:${key}`, { limit, windowMs })
+    const rl = await rateLimit(`${user.id}:${key}`, { limit, windowMs })
     if (!rl.allowed) {
       return { ok: false, error: 'Too many requests. Please try again shortly.' }
     }

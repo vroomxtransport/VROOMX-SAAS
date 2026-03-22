@@ -1,4 +1,9 @@
 import type { NextConfig } from 'next'
+import bundleAnalyzer from '@next/bundle-analyzer'
+
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === 'true',
+})
 
 const securityHeaders = [
   {
@@ -31,7 +36,7 @@ const securityHeaders = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://us.i.posthog.com https://js.stripe.com",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https://*.supabase.co https://randomuser.me https://cdn1.iconfinder.com",
+      "img-src 'self' data: blob: https://*.supabase.co https://cdnjs.cloudflare.com",
       "font-src 'self'",
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://us.i.posthog.com https://api.stripe.com https://api.eia.gov https://vpic.nhtsa.dot.gov https://nominatim.openstreetmap.org",
       "frame-src https://js.stripe.com https://hooks.stripe.com",
@@ -43,7 +48,6 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
-      { protocol: 'https', hostname: 'cdn1.iconfinder.com' },
       { protocol: 'https', hostname: '*.supabase.co' },
     ],
   },
@@ -65,14 +69,12 @@ const nextConfig: NextConfig = {
   },
 }
 
-export default nextConfig
+import { withSentryConfig } from '@sentry/nextjs'
 
-// Sentry temporarily disabled to isolate 500 error
-// import { withSentryConfig } from '@sentry/nextjs'
-// export default withSentryConfig(nextConfig, {
-//   org: process.env.SENTRY_ORG,
-//   project: process.env.SENTRY_PROJECT,
-//   silent: !process.env.CI,
-//   widenClientFileUpload: true,
-//   tunnelRoute: '/monitoring',
-// })
+export default withSentryConfig(withBundleAnalyzer(nextConfig), {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  silent: !process.env.CI,
+  widenClientFileUpload: true,
+  tunnelRoute: '/monitoring',
+})

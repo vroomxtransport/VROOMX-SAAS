@@ -30,7 +30,7 @@ export async function globalSearch(data: unknown) {
 
   const auth = await authorize('*')
   if (!auth.ok) return { error: auth.error }
-  const { supabase } = auth.ctx
+  const { supabase, tenantId } = auth.ctx
 
   const sanitized = sanitizeSearch(parsed.data.query)
   if (!sanitized) return { error: 'Invalid search query' }
@@ -53,6 +53,7 @@ export async function globalSearch(data: unknown) {
         supabase
           .from('orders')
           .select('id, vehicle_make, vehicle_model, vehicle_vin, vehicle_year, pickup_city, delivery_city, status')
+          .eq('tenant_id', tenantId)
           .or(`vehicle_make.ilike.${pattern},vehicle_model.ilike.${pattern},vehicle_vin.ilike.${pattern},pickup_city.ilike.${pattern},delivery_city.ilike.${pattern}`)
           .limit(5)
           .then(({ data, error }) => {
@@ -73,6 +74,7 @@ export async function globalSearch(data: unknown) {
         supabase
           .from('drivers')
           .select('id, first_name, last_name, email, driver_status')
+          .eq('tenant_id', tenantId)
           .or(`first_name.ilike.${pattern},last_name.ilike.${pattern},email.ilike.${pattern}`)
           .limit(5)
           .then(({ data, error }) => {
@@ -93,6 +95,7 @@ export async function globalSearch(data: unknown) {
         supabase
           .from('trucks')
           .select('id, unit_number, make, model, vin, truck_status')
+          .eq('tenant_id', tenantId)
           .or(`unit_number.ilike.${pattern},make.ilike.${pattern},model.ilike.${pattern},vin.ilike.${pattern}`)
           .limit(5)
           .then(({ data, error }) => {
@@ -113,6 +116,7 @@ export async function globalSearch(data: unknown) {
         supabase
           .from('trips')
           .select('id, trip_number, status, origin_summary, destination_summary')
+          .eq('tenant_id', tenantId)
           .or(`trip_number.ilike.${pattern},origin_summary.ilike.${pattern},destination_summary.ilike.${pattern}`)
           .limit(5)
           .then(({ data, error }) => {

@@ -923,6 +923,31 @@ export const dispatcherPayrollPeriods = pgTable('dispatcher_payroll_periods', {
 ])
 
 // ============================================================================
+// Audit Logs
+// ============================================================================
+
+/**
+ * Audit Logs Table
+ * Entity-agnostic audit trail for all mutations across the TMS.
+ * Covers trips, drivers, trucks, compliance, roles, expenses, etc.
+ */
+export const auditLogs = pgTable('audit_logs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  entityType: text('entity_type').notNull(),
+  entityId: uuid('entity_id').notNull(),
+  action: text('action').notNull(),
+  description: text('description').notNull(),
+  actorId: uuid('actor_id').notNull(),
+  actorEmail: text('actor_email'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_audit_logs_tenant_entity').on(table.tenantId, table.entityType, table.entityId),
+  index('idx_audit_logs_tenant_created').on(table.tenantId, table.createdAt),
+])
+
+// ============================================================================
 // Type Exports
 // ============================================================================
 
@@ -1005,3 +1030,33 @@ export type DrizzleDispatcherPayConfig = typeof dispatcherPayConfigs.$inferSelec
 export type NewDispatcherPayConfig = typeof dispatcherPayConfigs.$inferInsert
 export type DrizzleDispatcherPayrollPeriod = typeof dispatcherPayrollPeriods.$inferSelect
 export type NewDispatcherPayrollPeriod = typeof dispatcherPayrollPeriods.$inferInsert
+
+// Audit Logs
+export type DrizzleAuditLog = typeof auditLogs.$inferSelect
+export type NewAuditLog = typeof auditLogs.$inferInsert
+
+// ============================================================================
+// Platform Audit Logs (Admin Panel — NO RLS, service-role only)
+// ============================================================================
+
+/**
+ * Platform Audit Logs Table
+ * Cross-tenant admin action trail. No tenant_id column, no RLS.
+ * Only accessed via service-role client from authorizeAdmin().
+ */
+export const platformAuditLogs = pgTable('platform_audit_logs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  actorEmail: text('actor_email').notNull(),
+  action: text('action').notNull(),
+  targetTenantId: uuid('target_tenant_id').references(() => tenants.id, { onDelete: 'set null' }),
+  description: text('description').notNull(),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_platform_audit_created').on(table.createdAt),
+  index('idx_platform_audit_tenant').on(table.targetTenantId, table.createdAt),
+])
+
+// Platform Audit Logs
+export type DrizzlePlatformAuditLog = typeof platformAuditLogs.$inferSelect
+export type NewPlatformAuditLog = typeof platformAuditLogs.$inferInsert

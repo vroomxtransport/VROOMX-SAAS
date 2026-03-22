@@ -49,11 +49,11 @@ function LoginForm() {
         <button
           className="g-button group/btn w-full rounded-md h-10 font-medium outline-hidden hover:cursor-pointer relative bg-transparent"
           type="button"
-          onClick={() => console.log('Google login clicked')}
+          onClick={() => {}}
         >
           <span className="flex items-center justify-center w-full h-full gap-3 text-sm">
             <Image
-              src="https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-512.png"
+              src="/images/google-logo.svg"
               width={26}
               height={26}
               alt="Google"

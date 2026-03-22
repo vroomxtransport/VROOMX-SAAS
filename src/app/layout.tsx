@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 import { Providers } from "./providers";
+import { OrganizationJsonLd } from "@/components/shared/json-ld";
+import { WebVitals } from "@/components/web-vitals";
 
 function safeUrl(url: string | undefined, fallback: string): URL {
   try {
@@ -47,6 +49,9 @@ export const metadata: Metadata = {
     follow: true,
     googleBot: { index: true, follow: true },
   },
+  ...(process.env.GOOGLE_SITE_VERIFICATION
+    ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } }
+    : {}),
   openGraph: {
     title: 'VroomX - Transportation Management System',
     description:
@@ -72,7 +77,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Providers>{children}</Providers>
+        <OrganizationJsonLd />
+        <Providers>
+          <WebVitals />
+          {children}
+        </Providers>
         <Toaster position="top-right" richColors />
       </body>
     </html>

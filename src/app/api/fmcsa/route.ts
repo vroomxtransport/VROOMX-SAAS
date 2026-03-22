@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Rate limit: 10 lookups per minute per user
-  const { allowed } = rateLimit(`fmcsa:${user.id}`, { limit: 10, windowMs: 60_000 })
+  const { allowed } = await rateLimit(`fmcsa:${user.id}`, { limit: 10, windowMs: 60_000 })
   if (!allowed) {
     return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
   }

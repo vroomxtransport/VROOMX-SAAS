@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef } from 'react'
-import { useInView } from 'framer-motion'
+import { useInView } from 'motion/react'
 import NumberFlow from '@number-flow/react'
 import { Zap, TrendingUp, DollarSign } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'

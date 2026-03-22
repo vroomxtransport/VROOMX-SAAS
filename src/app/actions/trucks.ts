@@ -3,6 +3,7 @@
 import { authorize, safeError } from '@/lib/authz'
 import { truckSchema } from '@/lib/validations/truck'
 import { checkTierLimit } from '@/lib/tier'
+import { logAuditEvent } from '@/lib/audit-log'
 import { revalidatePath } from 'next/cache'
 
 export async function createTruck(data: unknown) {
@@ -45,6 +46,17 @@ export async function createTruck(data: unknown) {
     return { error: safeError(error, 'createTruck') }
   }
 
+  logAuditEvent(supabase, {
+    tenantId,
+    entityType: 'truck',
+    entityId: truck.id,
+    action: 'created',
+    description: `Truck ${parsed.data.unitNumber} created`,
+    actorId: auth.ctx.user.id,
+    actorEmail: auth.ctx.user.email,
+    metadata: { truckType: parsed.data.truckType, unitNumber: parsed.data.unitNumber },
+  }).catch(() => {})
+
   revalidatePath('/trucks')
   return { success: true, data: truck }
 }
@@ -81,6 +93,16 @@ export async function updateTruck(id: string, data: unknown) {
     return { error: safeError(error, 'updateTruck') }
   }
 
+  logAuditEvent(supabase, {
+    tenantId,
+    entityType: 'truck',
+    entityId: id,
+    action: 'updated',
+    description: `Truck ${parsed.data.unitNumber} updated`,
+    actorId: auth.ctx.user.id,
+    actorEmail: auth.ctx.user.email,
+  }).catch(() => {})
+
   revalidatePath('/trucks')
   return { success: true, data: truck }
 }
@@ -99,6 +121,16 @@ export async function deleteTruck(id: string) {
   if (error) {
     return { error: safeError(error, 'deleteTruck') }
   }
+
+  logAuditEvent(supabase, {
+    tenantId,
+    entityType: 'truck',
+    entityId: id,
+    action: 'deleted',
+    description: 'Truck deleted',
+    actorId: auth.ctx.user.id,
+    actorEmail: auth.ctx.user.email,
+  }).catch(() => {})
 
   revalidatePath('/trucks')
   return { success: true }

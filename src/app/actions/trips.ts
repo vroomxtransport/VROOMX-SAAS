@@ -3,6 +3,7 @@
 import { authorize, safeError } from '@/lib/authz'
 import { tripSchema } from '@/lib/validations/trip'
 import { logOrderActivity } from '@/lib/activity-log'
+import { logAuditEvent } from '@/lib/audit-log'
 import { createWebNotification } from '@/app/actions/notifications'
 import { revalidatePath } from 'next/cache'
 import { calculateTripFinancials } from '@/lib/financial/trip-calculations'
@@ -48,6 +49,17 @@ export async function createTrip(data: unknown) {
   if (error) {
     return { error: safeError(error, 'createTrip') }
   }
+
+  logAuditEvent(supabase, {
+    tenantId,
+    entityType: 'trip',
+    entityId: trip.id,
+    action: 'created',
+    description: `Trip ${trip.trip_number} created`,
+    actorId: auth.ctx.user.id,
+    actorEmail: auth.ctx.user.email,
+    metadata: { driverId: v.driver_id, truckId: v.truck_id },
+  }).catch(() => {})
 
   revalidatePath('/dispatch')
   return { success: true, data: trip }
@@ -137,6 +149,16 @@ export async function updateTripStatus(id: string, newStatus: TripStatus) {
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId } = auth.ctx
 
+  // Fetch current status before update for audit trail
+  const { data: currentTrip } = await supabase
+    .from('trips')
+    .select('status')
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
+    .single()
+
+  const previousStatus = currentTrip?.status ?? 'unknown'
+
   // Update trip status
   const { data: trip, error } = await supabase
     .from('trips')
@@ -149,6 +171,17 @@ export async function updateTripStatus(id: string, newStatus: TripStatus) {
   if (error) {
     return { error: safeError(error, 'updateTripStatus') }
   }
+
+  logAuditEvent(supabase, {
+    tenantId,
+    entityType: 'trip',
+    entityId: id,
+    action: 'status_changed',
+    description: `Trip ${trip.trip_number} status changed from ${previousStatus} to ${newStatus}`,
+    actorId: auth.ctx.user.id,
+    actorEmail: auth.ctx.user.email,
+    metadata: { from: previousStatus, to: newStatus },
+  }).catch(() => {})
 
   // Auto-sync order statuses based on trip status change
   const orderStatus = TRIP_TO_ORDER_STATUS[newStatus]
@@ -220,7 +253,6 @@ export async function updateTripStatus(id: string, newStatus: TripStatus) {
   // Fire-and-forget notification
   void createWebNotification({
     userId: auth.ctx.user.id,
-    tenantId,
     type: 'trip_status',
     title: `Trip ${trip.trip_number} → ${newStatus}`,
     body: `Trip status changed to ${newStatus}`,
@@ -313,6 +345,17 @@ export async function assignOrderToTrip(orderId: string, tripId: string) {
     metadata: { tripId, tripNumber: tripInfo?.trip_number },
   }).catch(() => {})
 
+  logAuditEvent(supabase, {
+    tenantId,
+    entityType: 'trip',
+    entityId: tripId,
+    action: 'order_assigned',
+    description: `Order assigned to trip ${tripInfo?.trip_number ?? tripId}`,
+    actorId: auth.ctx.user.id,
+    actorEmail: auth.ctx.user.email,
+    metadata: { orderId },
+  }).catch(() => {})
+
   revalidatePath('/dispatch')
   revalidatePath(`/trips/${tripId}`)
   if (oldTripId && oldTripId !== tripId) {
@@ -377,6 +420,17 @@ export async function unassignOrderFromTrip(orderId: string) {
     actorId: auth.ctx.user.id,
     actorEmail: auth.ctx.user.email,
     metadata: { tripId: oldTripId, tripNumber: tripInfo?.trip_number },
+  }).catch(() => {})
+
+  logAuditEvent(supabase, {
+    tenantId,
+    entityType: 'trip',
+    entityId: oldTripId,
+    action: 'order_unassigned',
+    description: `Order unassigned from trip ${tripInfo?.trip_number ?? oldTripId}`,
+    actorId: auth.ctx.user.id,
+    actorEmail: auth.ctx.user.email,
+    metadata: { orderId },
   }).catch(() => {})
 
   // Remove unassigned order's stops from route_sequence

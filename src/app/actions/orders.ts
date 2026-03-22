@@ -5,6 +5,7 @@ import { createOrderSchema } from '@/lib/validations/order'
 import { geocodeAndSaveOrder } from '@/lib/geocoding-helpers'
 import { logOrderActivity } from '@/lib/activity-log'
 import { createWebNotification } from '@/app/actions/notifications'
+import { recalculateTripFinancials } from '@/app/actions/trips'
 import { revalidatePath } from 'next/cache'
 import type { OrderStatus } from '@/types'
 
@@ -208,6 +209,13 @@ export async function updateOrder(id: string, data: unknown) {
     }).catch((err) => console.error('[geocoding] updateOrder fire-and-forget failed:', err))
   }
 
+  // Recalculate trip financials if order is assigned and financial fields changed
+  const financialFields = ['revenue', 'carrier_pay', 'broker_fee', 'local_fee', 'driver_pay_rate_override', 'distance_miles']
+  const hasFinancialChange = Object.keys(updateData).some(k => financialFields.includes(k))
+  if (order.trip_id && hasFinancialChange) {
+    void recalculateTripFinancials(order.trip_id).catch(() => {})
+  }
+
   // Fire-and-forget activity log
   const changedFields = Object.keys(updateData)
   logOrderActivity(supabase, {
@@ -229,6 +237,16 @@ export async function deleteOrder(id: string) {
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId } = auth.ctx
 
+  // Capture trip_id before delete for financial recalculation
+  const { data: existing } = await supabase
+    .from('orders')
+    .select('trip_id')
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
+    .single()
+
+  const tripId = existing?.trip_id
+
   // Log activity BEFORE delete (the order row will be cascade-deleted)
   logOrderActivity(supabase, {
     tenantId,
@@ -247,6 +265,11 @@ export async function deleteOrder(id: string) {
 
   if (error) {
     return { error: safeError(error, 'deleteOrder') }
+  }
+
+  // Recalculate trip financials if order was assigned to a trip
+  if (tripId) {
+    void recalculateTripFinancials(tripId).catch(() => {})
   }
 
   revalidatePath('/orders')
@@ -323,7 +346,6 @@ export async function updateOrderStatus(
   // Fire-and-forget notification
   void createWebNotification({
     userId: auth.ctx.user.id,
-    tenantId,
     type: 'order_status',
     title: `Order ${order.order_number} → ${newStatus}`,
     body: `Order status changed to ${newStatus}`,

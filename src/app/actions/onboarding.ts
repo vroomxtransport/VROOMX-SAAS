@@ -1,27 +1,20 @@
 'use server'
 
-import { authorize } from '@/lib/authz'
-import { createClient } from '@/lib/supabase/server'
+import { authorize, safeError } from '@/lib/authz'
 import { revalidatePath } from 'next/cache'
 import { generateSampleData } from '@/lib/seed-data'
 
 export async function dismissOnboarding() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Not authenticated' }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) return { error: 'No tenant found' }
+  const auth = await authorize('*')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
 
   const { error } = await supabase
     .from('tenants')
     .update({ onboarding_completed_at: new Date().toISOString() })
     .eq('id', tenantId)
 
-  if (error) {
-    console.error('Failed to dismiss onboarding:', error)
-    return { error: 'Failed to dismiss onboarding' }
-  }
+  if (error) return { error: safeError(error, 'dismissOnboarding') }
 
   revalidatePath('/dashboard')
   return { success: true }

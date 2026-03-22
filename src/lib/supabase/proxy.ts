@@ -4,6 +4,7 @@ import { rateLimit } from '@/lib/rate-limit'
 
 const AUTH_PATHS = ['/login', '/signup']
 const DASHBOARD_PATH_PREFIX = '/dashboard'
+const ADMIN_PATH_PREFIX = '/admin'
 const AUTH_REFRESH_FAILURE_MESSAGE = 'Authentication is temporarily unavailable. Please try again.'
 
 function handleAuthRefreshFailure(
@@ -41,7 +42,7 @@ export async function updateSession(request: NextRequest) {
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
       ?? request.headers.get('x-real-ip')
       ?? 'unknown'
-    const { allowed } = rateLimit(`auth:${ip}`, { limit: 10, windowMs: 60_000 })
+    const { allowed } = await rateLimit(`auth:${ip}`, { limit: 10, windowMs: 60_000 })
     if (!allowed) {
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
@@ -91,18 +92,31 @@ export async function updateSession(request: NextRequest) {
   // Redirect unauthenticated users from protected routes to login
   if (
     !user &&
-    request.nextUrl.pathname.startsWith(DASHBOARD_PATH_PREFIX)
+    (request.nextUrl.pathname.startsWith(DASHBOARD_PATH_PREFIX) ||
+     request.nextUrl.pathname.startsWith(ADMIN_PATH_PREFIX))
   ) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  // Redirect authenticated users without tenant to onboarding
+  // Admin panel: require platform admin email
+  if (user && request.nextUrl.pathname.startsWith(ADMIN_PATH_PREFIX)) {
+    const adminEmails = (process.env.PLATFORM_ADMIN_EMAILS ?? '')
+      .split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
+    if (!user.email || !adminEmails.includes(user.email.toLowerCase())) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/dashboard'
+      return NextResponse.redirect(url)
+    }
+  }
+
+  // Redirect authenticated users without tenant to onboarding (skip for admin routes)
   if (
     user &&
     !user.app_metadata?.tenant_id &&
-    request.nextUrl.pathname.startsWith(DASHBOARD_PATH_PREFIX)
+    request.nextUrl.pathname.startsWith(DASHBOARD_PATH_PREFIX) &&
+    !request.nextUrl.pathname.startsWith(ADMIN_PATH_PREFIX)
   ) {
     const url = request.nextUrl.clone()
     url.pathname = '/onboarding'

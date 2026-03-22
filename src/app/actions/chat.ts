@@ -63,7 +63,6 @@ export async function sendMessage(channelId: string, data: unknown) {
         for (const member of members) {
           createWebNotification({
             userId: member.user_id,
-            tenantId,
             type: 'chat_message',
             title: `New message in #${channelName}`,
             body: parsed.data.content?.slice(0, 100) || 'Sent an attachment',

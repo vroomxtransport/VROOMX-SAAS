@@ -43,7 +43,6 @@ export async function markAllNotificationsRead() {
 }
 
 export async function createWebNotification(input: {
-  tenantId: string
   userId: string
   type: string
   title: string
@@ -52,10 +51,10 @@ export async function createWebNotification(input: {
 }) {
   const auth = await authorize('*')
   if (!auth.ok) return { error: auth.error }
-  const { supabase } = auth.ctx
+  const { supabase, tenantId } = auth.ctx
 
   const { error } = await supabase.from('web_notifications').insert({
-    tenant_id: input.tenantId,
+    tenant_id: tenantId,
     user_id: input.userId,
     type: input.type,
     title: input.title,

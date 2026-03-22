@@ -65,7 +65,7 @@ export async function POST(req: Request) {
         await handlePaymentFailedWithGrace(event.data.object as Stripe.Invoice)
         break
       default:
-        console.log(`Unhandled Stripe event type: ${event.type}`)
+        // Unhandled event type — no action needed
     }
 
     // 4. Mark event as processed
