@@ -57,5 +57,5 @@ src/components/marketing/breadcrumbs.tsx
 src/components/marketing/comparison-verdict.tsx
 src/components/marketing/feature-walkthrough.tsx
 src/components/marketing/related-pages.tsx
-src/components/shared/json-ld.tsx
+
 src/lib/content/
