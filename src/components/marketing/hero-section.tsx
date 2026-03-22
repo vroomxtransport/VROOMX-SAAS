@@ -82,14 +82,14 @@ export function HeroSection() {
               >
                 <span className="whitespace-nowrap">They built it for brokers.</span>
                 <br />
-                <span className="bg-gradient-to-r from-brand via-[#2a3a4f] to-[#334a60] bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-white via-white/90 to-white/70 bg-clip-text text-transparent">
                   We built it for you.
                 </span>
               </motion.h1>
 
               {/* Positioning line */}
               <motion.p
-                className="mt-3 text-sm font-medium text-brand"
+                className="mt-3 text-sm font-medium text-white/70"
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.55 }}
