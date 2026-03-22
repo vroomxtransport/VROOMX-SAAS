@@ -6,41 +6,78 @@ import { FinancialIntelligence } from '@/components/marketing/financial-intellig
 import { Feature197 } from '@/components/ui/accordion-feature-section'
 import { DriverAppSection } from '@/components/marketing/driver-app-section'
 import { Testimonials } from '@/components/marketing/testimonials'
-import { ComparisonTable } from '@/components/marketing/comparison-table'
 import PricingSection from '@/components/ui/pricing'
 import { FAQSection } from '@/components/marketing/faq-section'
 import { FinalCTA } from '@/components/marketing/final-cta'
+import { SoftwareApplicationJsonLd, FAQPageJsonLd } from '@/components/shared/json-ld'
+
+const pageFaqs = [
+  {
+    question: 'How is VroomX TMS different from other auto-transport platforms?',
+    answer:
+      'Most platforms are load boards with an invoice button. VroomX TMS is a full carrier operating system: dispatch, trip planning, 4 driver pay models with per-order overrides, automated invoicing, factoring integration, compliance tracking, break-even analysis, and per-truck profitability. VroomX shows you Clean Gross and calculates your real driver cost per load — starting at $49/month.',
+  },
+  {
+    question: 'Is VroomX TMS overkill for a small carrier?',
+    answer:
+      'No. Our Starter plan is $49/month for up to 5 trucks. You get the same Clean Gross visibility as a 50-truck fleet at a price that makes sense for your size. Most of our customers started with one truck.',
+  },
+  {
+    question: 'How long is the free trial?',
+    answer:
+      '14 days, full access, no credit card. Just sign up and start dispatching. If it\'s not for you, walk away.',
+  },
+  {
+    question: 'How does Clean Gross work?',
+    answer:
+      'Clean Gross is calculated per order as revenue minus broker fees minus local fees. This gives you the true carrier earnings before driver pay and overhead. VroomX TMS calculates this automatically for every order and aggregates it at the trip level.',
+  },
+  {
+    question: 'What driver pay models do you support?',
+    answer:
+      'VroomX TMS supports four settlement models: percentage of carrier pay (company drivers), dispatch fee percentage (owner-operators), flat per-car rates, and per-mile rates. Settlements are auto-calculated when you build trips, and you can override rates on any individual load.',
+  },
+  {
+    question: 'Can I migrate from another TMS or spreadsheets?',
+    answer:
+      'Yes. VroomX TMS supports CSV import for orders, brokers, drivers, and trucks. Most carriers complete their full migration in under an hour.',
+  },
+]
 
 export const metadata: Metadata = {
-  title: 'VroomX TMS — They Built It for Brokers. We Built It for You.',
+  title: 'Auto Transport TMS for Carriers | VroomX',
   description:
-    'VroomX TMS is the first auto-transport platform built for carriers, not brokers. See Clean Gross, automated settlements, per-truck profitability, and compliance tracking. From $9.99/mo.',
+    'The first TMS built for auto-transport carriers, not brokers. See Clean Gross on every load, automate driver settlements, and track per-truck profitability. Plans from $49/mo. 14-day free trial.',
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
-    title: 'VroomX TMS — They Built It for Brokers. We Built It for You.',
+    title: 'Auto Transport TMS for Carriers | VroomX',
     description:
-      'The carrier-first TMS with real financials. Clean Gross, driver settlements, and net profit on every load. No per-seat fees. From $9.99/mo.',
+      'The first TMS built for auto-transport carriers, not brokers. See Clean Gross on every load, automate driver settlements, and track per-truck profitability. Plans from $49/mo. 14-day free trial.',
     type: 'website',
     siteName: 'VroomX',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'VroomX TMS — They Built It for Brokers. We Built It for You.',
+    title: 'Auto Transport TMS for Carriers | VroomX',
     description:
-      'The carrier-first TMS with real financials. Clean Gross, driver settlements, and net profit on every load. No per-seat fees. From $9.99/mo.',
+      'The first TMS built for auto-transport carriers, not brokers. See Clean Gross on every load, automate driver settlements, and track per-truck profitability. Plans from $49/mo.',
   },
 }
 
 export default function LandingPage() {
   return (
     <>
+      <SoftwareApplicationJsonLd />
+      <FAQPageJsonLd faqs={pageFaqs} />
       <HeroSection />
       <MetricsBanner />
       <Feature197 />
+      <FinancialIntelligence />
       <DriverAppSection />
       <PainAgitationSection />
-      <FinancialIntelligence />
       <Testimonials />
-      <ComparisonTable />
       <section className="border-t border-border">
         <PricingSection />
       </section>

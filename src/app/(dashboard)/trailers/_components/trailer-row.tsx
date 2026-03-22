@@ -45,9 +45,7 @@ export function TrailerRow({ trailer, onEdit }: TrailerRowProps) {
     .filter(Boolean)
     .join(' ')
 
-  const truncatedVin = trailer.vin
-    ? `${trailer.vin.slice(0, 8)}...${trailer.vin.slice(-4)}`
-    : null
+  const truncatedVin = trailer.vin || null
 
   return (
     <div

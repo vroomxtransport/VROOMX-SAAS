@@ -43,9 +43,7 @@ export function TruckCard({ truck, onClick, onEdit }: TruckCardProps) {
     .filter(Boolean)
     .join(' ')
 
-  const truncatedVin = truck.vin
-    ? `${truck.vin.slice(0, 8)}...${truck.vin.slice(-4)}`
-    : null
+  const truncatedVin = truck.vin || null
 
   return (
     <EntityCard onClick={onClick}>

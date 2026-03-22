@@ -98,8 +98,8 @@ export function ActivityFeed() {
                     <div className="flex-1 h-px bg-border-subtle/60" />
                   </div>
                 )}
-                <div className="group relative flex items-start gap-3 rounded-xl py-2 px-1 transition-colors hover:bg-muted/40">
-                  <div className="relative z-10 flex items-center justify-center">
+                <div className="group relative flex items-start gap-3 rounded-xl py-2 pl-0 pr-1 transition-colors hover:bg-muted/40">
+                  <div className="relative z-10 flex w-[30px] shrink-0 items-center justify-center">
                     <span
                       className={cn(
                         'h-[9px] w-[9px] rounded-full ring-4 ring-surface',
