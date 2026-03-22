@@ -299,6 +299,49 @@ function VehicleEntry({ index, onRemove, canRemove }: { index: number; onRemove:
               )}
             />
           </div>
+
+          {/* Lot #, Buyer #, Auction Pin# */}
+          <div className="grid grid-cols-3 gap-3">
+            <FormField
+              control={form.control}
+              name={`vehicles.${index}.lotNumber`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Lot #</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Lot number" {...field} value={field.value ?? ''} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name={`vehicles.${index}.buyerNumber`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Buyer #</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Buyer number" {...field} value={field.value ?? ''} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name={`vehicles.${index}.auctionPin`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Auction Pin #</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Auction pin" {...field} value={field.value ?? ''} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
       )}
     </div>
@@ -347,9 +390,12 @@ export function VehicleStep() {
               model: result.model || '',
               type: result.vehicleType || getVehicleType(result.model || ''),
               color: '',
+              lotNumber: '',
+              buyerNumber: '',
+              auctionPin: '',
             }
           } catch {
-            return { vin, year: new Date().getFullYear(), make: '', model: '', type: '', color: '' }
+            return { vin, year: new Date().getFullYear(), make: '', model: '', type: '', color: '', lotNumber: '', buyerNumber: '', auctionPin: '' }
           }
         })
       )
@@ -395,6 +441,9 @@ export function VehicleStep() {
               model: '',
               type: '',
               color: '',
+              lotNumber: '',
+              buyerNumber: '',
+              auctionPin: '',
             })}
             disabled={fields.length >= MAX_VEHICLES}
             className="gap-1.5"

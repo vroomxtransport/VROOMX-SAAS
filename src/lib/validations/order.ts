@@ -14,6 +14,9 @@ export const orderVehicleItemSchema = z.object({
   model: z.string().min(1, 'Model is required').max(200),
   type: z.string().max(200).optional().or(z.literal('')),
   color: z.string().max(200).optional().or(z.literal('')),
+  lotNumber: z.string().max(100).optional().or(z.literal('')),
+  buyerNumber: z.string().max(100).optional().or(z.literal('')),
+  auctionPin: z.string().max(100).optional().or(z.literal('')),
 })
 
 // Step 1: Vehicles (array of 1-10)

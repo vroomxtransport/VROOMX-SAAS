@@ -41,13 +41,16 @@ interface OrderFormProps {
 function mapOrderToFormValues(order: OrderWithRelations): CreateOrderInput {
   // Build vehicles array from JSONB or fall back to flat columns
   const vehicles = order.vehicles && Array.isArray(order.vehicles) && order.vehicles.length > 0
-    ? order.vehicles.map((v: { vin?: string | null; year?: number; make?: string; model?: string; type?: string | null; color?: string | null }) => ({
+    ? order.vehicles.map((v: { vin?: string | null; year?: number; make?: string; model?: string; type?: string | null; color?: string | null; lotNumber?: string | null; buyerNumber?: string | null; auctionPin?: string | null }) => ({
         vin: v.vin ?? '',
         year: v.year ?? new Date().getFullYear(),
         make: v.make ?? '',
         model: v.model ?? '',
         type: v.type ?? '',
         color: v.color ?? '',
+        lotNumber: v.lotNumber ?? '',
+        buyerNumber: v.buyerNumber ?? '',
+        auctionPin: v.auctionPin ?? '',
       }))
     : [{
         vin: order.vehicle_vin ?? '',
@@ -56,6 +59,9 @@ function mapOrderToFormValues(order: OrderWithRelations): CreateOrderInput {
         model: order.vehicle_model ?? '',
         type: order.vehicle_type ?? '',
         color: order.vehicle_color ?? '',
+        lotNumber: '',
+        buyerNumber: '',
+        auctionPin: '',
       }]
 
   return {
@@ -113,6 +119,9 @@ export function OrderForm({ order, onSuccess, onCancel, onStepChange, onDirtyCha
         model: '',
         type: '',
         color: '',
+        lotNumber: '',
+        buyerNumber: '',
+        auctionPin: '',
       }],
       pickupCustomerType: '',
       pickupLocation: '',

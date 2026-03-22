@@ -109,6 +109,9 @@ export interface OrderVehicle {
   model: string
   type: string | null
   color: string | null
+  lotNumber: string | null
+  buyerNumber: string | null
+  auctionPin: string | null
 }
 
 export interface Order {
