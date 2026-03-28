@@ -53,7 +53,7 @@ export function Pagination({ page, pageSize, total, onPageChange }: PaginationPr
 
   return (
     <div className="flex items-center justify-between border-t border-border-subtle px-1 py-2">
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm" style={{ color: 'var(--foreground)', opacity: 0.65 }}>
         Showing <span className="font-medium text-foreground">{start}</span> to{' '}
         <span className="font-medium text-foreground">{end}</span> of{' '}
         <span className="font-medium text-foreground">{total}</span> results

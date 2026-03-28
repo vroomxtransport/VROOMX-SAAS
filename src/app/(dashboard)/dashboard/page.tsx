@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { StatCard } from '@/components/shared/stat-card'
-import { Truck, Users, Package, TrendingUp, ChevronRight, Car, DollarSign, CheckCircle2, Plus } from 'lucide-react'
+import { Truck, IdCard, Car, Activity, ChevronRight, BadgeDollarSign, CheckCircle2, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { LoadsPipeline } from './_components/loads-pipeline'
 import { RevenueChart } from './_components/revenue-chart'
@@ -182,7 +182,7 @@ export default async function DashboardPage({
   const onboardingSteps = [
     {
       href: '/drivers',
-      icon: Users,
+      icon: IdCard,
       title: 'Add Your First Driver',
       description: 'Set up a driver with pay configuration',
       done: driverCount > 0,
@@ -225,18 +225,14 @@ export default async function DashboardPage({
       )}
 
       {/* Hero Header */}
-      <div className="relative overflow-hidden rounded-2xl border border-border-subtle bg-surface p-5 lg:p-6">
-        {/* Background layers */}
-        <div className="pointer-events-none absolute inset-0 hero-grid-bg opacity-40" />
-        <div className="pointer-events-none absolute inset-0 hero-radial-glow opacity-60" />
-
-        <div className="relative flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+      <div className="rounded-2xl border border-border bg-card p-5 lg:p-6">
+        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
           <div>
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               <span className="text-brand font-semibold">{dayOfWeek}</span>, {fullDate}
             </p>
             <h1 className="mt-1.5 text-xl font-bold tracking-tight lg:text-2xl">
-              Welcome back, <span className="bg-gradient-to-r from-[#192334] to-[#2a3a4f] bg-clip-text text-transparent">{userName}</span>!
+              Welcome back, {userName}!
             </h1>
             {orderCount > 0 ? (
               <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -263,7 +259,7 @@ export default async function DashboardPage({
             )}
           </div>
           <div className="flex gap-2 shrink-0">
-            <Button asChild size="sm" className="bg-gradient-to-r from-[#192334] to-[#2a3a4f] text-white border-0 hover:brightness-110 shadow-[0_2px_12px_rgba(25,35,52,0.25)]">
+            <Button asChild size="sm" className="!text-white">
               <Link href="/orders">
                 <Plus className="h-4 w-4" />
                 New Order
@@ -287,7 +283,7 @@ export default async function DashboardPage({
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--brand)] to-[#2a3a4f]">
-                  <Package className="h-4.5 w-4.5 text-white" />
+                  <Car className="h-4.5 w-4.5 text-white" />
                 </div>
                 <CardTitle>Get Started with VroomX</CardTitle>
               </div>
@@ -344,10 +340,10 @@ export default async function DashboardPage({
       <DashboardWidgets
         statCards={
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-            <StatCard label="Active Loads" value={activeLoads || 47} icon={Package} accent="blue" trend={{ value: 12, label: 'vs last month' }} />
+            <StatCard label="Active Loads" value={activeLoads || 47} icon={Car} accent="blue" trend={{ value: 12, label: 'vs last month' }} />
             <StatCard label="In-Transit" value={inTransit || 23} icon={Truck} accent="amber" trend={{ value: 8, label: 'vs last month' }} />
-            <StatCard label="Revenue MTD" value={monthlyRevenue > 0 ? `$${monthlyRevenue.toLocaleString('en-US', { minimumFractionDigits: 0 })}` : '$128,450'} icon={TrendingUp} accent="emerald" trend={{ value: 18, label: 'vs last month' }} />
-            <StatCard label="Avg $/Mile" value={avgPerMile !== '0.00' ? `$${avgPerMile}` : '$2.47'} icon={DollarSign} accent="violet" trend={{ value: -3, label: 'vs last month' }} />
+            <StatCard label="Revenue MTD" value={monthlyRevenue > 0 ? `$${monthlyRevenue.toLocaleString('en-US', { minimumFractionDigits: 0 })}` : '$128,450'} icon={Activity} accent="emerald" trend={{ value: 18, label: 'vs last month' }} />
+            <StatCard label="Avg $/Mile" value={avgPerMile !== '0.00' ? `$${avgPerMile}` : '$2.47'} icon={BadgeDollarSign} accent="violet" trend={{ value: -3, label: 'vs last month' }} />
           </div>
         }
         loadsPipeline={

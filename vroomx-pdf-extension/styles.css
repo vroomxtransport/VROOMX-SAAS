@@ -1,0 +1,12 @@
+/**
+ * VroomX TMS – PDF Import Extension
+ * Shared stylesheet (review page resets)
+ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+a { color: inherit; }
+button, input, select, textarea { font-family: inherit; }
+img, svg { display: block; }

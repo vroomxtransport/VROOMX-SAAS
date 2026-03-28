@@ -275,9 +275,9 @@
   --sidebar-hover: #1a1a1a;
   --sidebar-active: #222222;
   --sidebar-active-glow: transparent;
-  --sidebar-text: #737373;
+  --sidebar-text: #d4d4d0;
   --sidebar-text-active: #f5f5f5;
-  --sidebar-category: #525252;
+  --sidebar-category: #b0b0ac;
 
   /* Card accents (dark) */
   --accent-blue: #60a5fa;
@@ -582,46 +582,17 @@
     position: relative;
     border-radius: 1rem;
     padding: 1.25rem;
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(20px) saturate(1.8);
-    border: 1px solid rgba(25, 35, 52, 0.2);
-    box-shadow:
-      0 2px 6px rgba(0, 0, 0, 0.1),
-      0 8px 24px rgba(25, 35, 52, 0.1);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  .widget-card-primary::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 1.5rem;
-    right: 1.5rem;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(25, 35, 52, 0.3), transparent);
-    border-radius: 1px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
   .widget-card-primary:hover {
     transform: translateY(-2px);
-    box-shadow:
-      0 6px 16px rgba(0, 0, 0, 0.1),
-      0 16px 40px rgba(25, 35, 52, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   }
   .dark .widget-card-primary {
-    background: rgba(17, 17, 17, 0.6);
-    border-color: rgba(25, 35, 52, 0.12);
-    box-shadow:
-      0 1px 2px rgba(0, 0, 0, 0.3),
-      0 8px 24px rgba(25, 35, 52, 0.08),
-      0 0 0 1px rgba(255, 255, 255, 0.04) inset;
-  }
-  .dark .widget-card-primary::before {
-    background: linear-gradient(90deg, transparent, rgba(25, 35, 52, 0.4), transparent);
-  }
-  .dark .widget-card-primary:hover {
-    box-shadow:
-      0 4px 12px rgba(0, 0, 0, 0.3),
-      0 12px 32px rgba(25, 35, 52, 0.12),
-      0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+    background: var(--card);
+    border-color: var(--border);
   }
 
   .widget-header {
