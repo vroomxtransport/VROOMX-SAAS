@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
-import { Pencil, ArrowRight, Calendar, UserPlus, UserCog, UserMinus, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
+import { Pencil, ArrowRight, Calendar, UserPlus, UserCog, UserMinus, Trash2, MapPinned, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { useDrivers } from '@/hooks/use-drivers'
 import { useQueryClient } from '@tanstack/react-query'
 import { updateOrder, deleteOrder } from '@/app/actions/orders'
@@ -126,6 +126,25 @@ function ActionsCell({ order, onEdit, onRowClick }: { order: OrderWithRelations;
               </Button>
             </TooltipTrigger>
             <TooltipContent>Unassign</TooltipContent>
+          </Tooltip>
+        )}
+
+        {(order.pickup_city || order.delivery_city) && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                onClick={() => {
+                  const origin = [order.pickup_location, order.pickup_city, order.pickup_state, order.pickup_zip].filter(Boolean).join(', ')
+                  const dest = [order.delivery_location, order.delivery_city, order.delivery_state, order.delivery_zip].filter(Boolean).join(', ')
+                  window.open(`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(dest)}`, '_blank', 'noopener')
+                }}
+              >
+                <MapPinned className="h-3.5 w-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>View Route</TooltipContent>
           </Tooltip>
         )}
 
