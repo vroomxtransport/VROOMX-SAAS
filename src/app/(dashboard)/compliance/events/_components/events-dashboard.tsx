@@ -23,7 +23,6 @@ import { EventDrawer } from './event-drawer'
 import { ResolveDialog } from './resolve-dialog'
 import { deleteSafetyEvent } from '@/app/actions/safety-events'
 import {
-  SAFETY_EVENT_TYPE_LABELS,
   SAFETY_EVENT_SEVERITY_LABELS,
   SAFETY_EVENT_STATUS_LABELS,
   SAFETY_EVENT_TYPES,

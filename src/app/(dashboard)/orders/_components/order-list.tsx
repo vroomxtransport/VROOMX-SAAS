@@ -4,11 +4,11 @@ import { useState, useCallback, useMemo } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { useOrders } from '@/hooks/use-orders'
 import { OrderCard } from './order-card'
-import { OrderRow } from './order-row'
+import { OrdersDataTable } from './orders-data-table'
 import { OrderDrawer } from './order-drawer'
 import { OrderFilters } from './order-filters'
 import { ViewToggle } from '@/components/shared/view-toggle'
-import { SortHeader } from '@/components/shared/sort-header'
+// SortHeader no longer needed — TanStack Table handles sorting
 import { CsvExportButton } from '@/components/shared/csv-export-button'
 import { useViewMode, useViewStore } from '@/stores/view-store'
 import { Pagination } from '@/components/shared/pagination'
@@ -257,53 +257,13 @@ export function OrderList() {
               ))}
             </div>
           ) : (
-            <div className="space-y-2">
-              {/* Sort headers for list view */}
-              <div className="flex items-center gap-3 px-3 py-1.5">
-                <div className="w-[90px]">
-                  <SortHeader
-                    label="Order #"
-                    field="order_number"
-                    currentSort={sort}
-                    onSort={handleSort}
-                  />
-                </div>
-                <div className="shrink-0 w-[80px]">
-                  <span className="text-xs font-medium text-muted-foreground">Status</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className="text-xs font-medium text-muted-foreground">Vehicle</span>
-                </div>
-                <div className="hidden md:block w-[240px]">
-                  <span className="text-xs font-medium text-muted-foreground">Route</span>
-                </div>
-                <div className="hidden lg:block w-[120px]">
-                  <span className="text-xs font-medium text-muted-foreground">Driver</span>
-                </div>
-                <div className="w-[70px] text-right">
-                  <SortHeader
-                    label="Revenue"
-                    field="revenue"
-                    currentSort={sort}
-                    onSort={handleSort}
-                    className="justify-end"
-                  />
-                </div>
-                <div className="w-[32px]" />
-              </div>
-
-              {data?.orders.map((order) => (
-                <OrderRow
-                  key={order.id}
-                  order={order}
-                  onClick={() => handleCardClick(order)}
-                  onEdit={(e) => {
-                    e.stopPropagation()
-                    handleEditOrder(order)
-                  }}
-                />
-              ))}
-            </div>
+            <OrdersDataTable
+              orders={data?.orders ?? []}
+              sort={sort}
+              onSort={handleSort}
+              onRowClick={handleCardClick}
+              onEdit={handleEditOrder}
+            />
           )}
 
           {data && (

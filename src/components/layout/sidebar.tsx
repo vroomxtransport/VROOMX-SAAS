@@ -7,29 +7,29 @@ import { useSidebarStore } from '@/stores/sidebar-store'
 import { hasMinRole } from '@/lib/tier'
 import type { TenantRole } from '@/types'
 import {
-  LayoutDashboard,
+  Gauge,
   Car,
-  Route,
+  Milestone,
   Truck,
-  UserCog,
-  Handshake,
-  Receipt,
-  Settings,
+  IdCard,
+  Building2,
+  FileText,
+  SlidersHorizontal,
   X,
   PanelLeftClose,
   PanelLeftOpen,
-  Map,
-  ClipboardCheck,
-  Navigation,
-  Wrench,
-  Fuel,
-  Users,
-  TrendingUp,
-  MessageSquare,
-  ShieldCheck,
-  DollarSign,
+  MapPinned,
+  ListTodo,
+  MapPin,
+  Hammer,
+  Droplets,
+  Radio,
+  Activity,
+  MessagesSquare,
+  ShieldAlert,
+  CircleDollarSign,
   Caravan,
-  Banknote,
+  Wallet,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -57,17 +57,17 @@ const NAV_CATEGORIES: NavCategory[] = [
   {
     label: 'Main',
     items: [
-      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-      { name: 'Tasks', href: '/tasks', icon: ClipboardCheck },
-      { name: 'Live Map', href: '/live-map', icon: Map },
-      { name: 'Team Chat', href: '/team-chat', icon: MessageSquare },
+      { name: 'Dashboard', href: '/dashboard', icon: Gauge },
+      { name: 'Tasks', href: '/tasks', icon: ListTodo },
+      { name: 'Live Map', href: '/live-map', icon: MapPinned },
+      { name: 'Team Chat', href: '/team-chat', icon: MessagesSquare },
     ],
   },
   {
     label: 'Operations',
     items: [
       { name: 'Orders', href: '/orders', icon: Car },
-      { name: 'Trips', href: '/dispatch', icon: Route },
+      { name: 'Trips', href: '/dispatch', icon: Milestone },
     ],
   },
   {
@@ -75,38 +75,38 @@ const NAV_CATEGORIES: NavCategory[] = [
     items: [
       { name: 'Trucks', href: '/trucks', icon: Truck },
       { name: 'Trailers', href: '/trailers', icon: Caravan },
-      { name: 'Drivers', href: '/drivers', icon: UserCog, minRole: 'dispatcher' },
-      { name: 'Local Drives', href: '/local-drives', icon: Navigation, minRole: 'dispatcher' },
-      { name: 'Maintenance', href: '/maintenance', icon: Wrench, minRole: 'dispatcher' },
-      { name: 'Fuel Tracking', href: '/fuel-tracking', icon: Fuel, minRole: 'dispatcher' },
+      { name: 'Drivers', href: '/drivers', icon: IdCard, minRole: 'dispatcher' },
+      { name: 'Local Drives', href: '/local-drives', icon: MapPin, minRole: 'dispatcher' },
+      { name: 'Maintenance', href: '/maintenance', icon: Hammer, minRole: 'dispatcher' },
+      { name: 'Fuel Tracking', href: '/fuel-tracking', icon: Droplets, minRole: 'dispatcher' },
     ],
   },
   {
     label: 'People',
     items: [
-      { name: 'Dispatchers', href: '/dispatchers', icon: Users, minRole: 'admin' },
-      { name: 'Performance', href: '/dispatcher-performance', icon: TrendingUp, minRole: 'admin' },
-      { name: 'Payroll', href: '/payroll', icon: Banknote, minRole: 'admin' },
+      { name: 'Dispatchers', href: '/dispatchers', icon: Radio, minRole: 'admin' },
+      { name: 'Performance', href: '/dispatcher-performance', icon: Activity, minRole: 'admin' },
     ],
   },
   {
     label: 'Safety & Compliance',
     items: [
-      { name: 'Safety & Compliance', href: '/compliance', icon: ShieldCheck, minRole: 'admin' },
+      { name: 'Safety & Compliance', href: '/compliance', icon: ShieldAlert, minRole: 'admin' },
     ],
   },
   {
     label: 'Finance',
     items: [
-      { name: 'Financials', href: '/financials', icon: DollarSign, minRole: 'admin' },
-      { name: 'Billing', href: '/billing', icon: Receipt, minRole: 'admin' },
-      { name: 'Brokers', href: '/brokers', icon: Handshake, minRole: 'dispatcher' },
+      { name: 'Financials', href: '/financials', icon: CircleDollarSign, minRole: 'admin' },
+      { name: 'Billing', href: '/billing', icon: FileText, minRole: 'admin' },
+      { name: 'Payroll', href: '/payroll', icon: Wallet, minRole: 'admin' },
+      { name: 'Brokers', href: '/brokers', icon: Building2, minRole: 'dispatcher' },
     ],
   },
   {
     label: 'System',
     items: [
-      { name: 'Settings', href: '/settings', icon: Settings, minRole: 'admin' },
+      { name: 'Settings', href: '/settings', icon: SlidersHorizontal, minRole: 'admin' },
     ],
   },
 ]
@@ -175,7 +175,7 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
           </Link>
           <button
             onClick={close}
-            className="lg:hidden shrink-0 rounded-md p-1 text-[var(--sidebar-text)] hover:bg-[var(--sidebar-hover)] transition-colors"
+            className="lg:hidden shrink-0 rounded-md p-1 text-[#c8c8c4] hover:bg-[var(--sidebar-hover)] transition-colors"
             aria-label="Close sidebar"
           >
             <X className="h-5 w-5" />
@@ -197,7 +197,7 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
           <button
             onClick={toggleCollapse}
             className={cn(
-              'flex items-center gap-2 rounded-md p-1.5 text-[var(--sidebar-text)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-text-active)] transition-colors',
+              'flex items-center gap-2 rounded-md p-1.5 text-[#c8c8c4] hover:bg-[var(--sidebar-hover)] hover:text-white transition-colors',
               isCollapsed && 'lg:mx-auto'
             )}
             aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -242,11 +242,12 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
                     <Link
                       href={item.href}
                       onClick={() => close()}
+                      style={{ color: isActive ? '#ffffff' : '#c8c8c4' }}
                       className={cn(
                         'group flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-all duration-150 relative',
                         isActive
-                          ? 'bg-[var(--sidebar-active)] text-[var(--sidebar-text-active)] shadow-[inset_0_0_0_1px_rgba(25,35,52,0.15)]'
-                          : 'text-[var(--sidebar-text)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-text-active)]',
+                          ? 'bg-[var(--sidebar-active)] shadow-[inset_0_0_0_1px_rgba(25,35,52,0.15)]'
+                          : 'hover:bg-[var(--sidebar-hover)] hover:!text-white',
                         isCollapsed && 'lg:justify-center lg:px-0 lg:py-2.5'
                       )}
                     >
@@ -257,7 +258,7 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
                       <Icon
                         className={cn(
                           'h-5 w-5 shrink-0 transition-colors',
-                          isActive ? 'text-[var(--brand)]' : 'group-hover:text-[var(--sidebar-text-active)]'
+                          isActive ? 'text-[var(--brand)]' : 'group-hover:text-white'
                         )}
                       />
                       <span

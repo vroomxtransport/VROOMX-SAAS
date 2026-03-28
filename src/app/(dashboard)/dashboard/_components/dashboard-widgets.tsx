@@ -109,7 +109,7 @@ export function DashboardWidgets(props: DashboardWidgetsProps) {
                     <GripVertical className="h-4 w-4 text-muted-foreground" />
                   </div>
                 )}
-                <div className="h-full w-full overflow-hidden">
+                <div className="h-full w-full">
                   {props[widgetContent[widget.id as Exclude<WidgetId, 'statCards'>]]}
                 </div>
               </div>

@@ -34,7 +34,7 @@ import {
   VEHICLE_SUB_CATEGORIES,
   COMPANY_SUB_CATEGORIES,
 } from '@/types'
-import type { ComplianceDocType, ComplianceEntityType, ComplianceSubCategory } from '@/types'
+import type { ComplianceEntityType, ComplianceSubCategory } from '@/types'
 import type { ComplianceDocument } from '@/types/database'
 import { FileText } from 'lucide-react'
 
