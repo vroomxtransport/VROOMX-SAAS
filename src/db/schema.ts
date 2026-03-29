@@ -1274,6 +1274,76 @@ export type NewQuickBooksEntityMap = typeof quickbooksEntityMap.$inferInsert
 export type DrizzleQuickBooksWebhookEvent = typeof quickbooksWebhookEvents.$inferSelect
 export type NewQuickBooksWebhookEvent = typeof quickbooksWebhookEvents.$inferInsert
 
+// ============================================================================
+// Fuel Card Integration Tables
+// ============================================================================
+
+/**
+ * Fuel Card Integrations Table
+ * One per tenant — stores API credentials and sync state for fuel card providers.
+ * UNIQUE on tenant_id (one integration per tenant).
+ */
+export const fuelcardIntegrations = pgTable('fuelcard_integrations', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }).unique(),
+  provider: text('provider').notNull().default('msfuelcard'),
+  apiKeyEncrypted: text('api_key_encrypted').notNull(),
+  accountNumber: text('account_number'),
+  companyName: text('company_name'),
+  syncStatus: text('sync_status').notNull().default('active'),
+  lastSyncAt: timestamp('last_sync_at', { withTimezone: true }),
+  lastError: text('last_error'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_fuelcard_integrations_tenant').on(table.tenantId),
+])
+
+/**
+ * Fuel Card Transactions Table
+ * Raw transaction data synced from the fuel card API.
+ * UNIQUE on (tenant_id, provider, external_transaction_id) for dedup.
+ */
+export const fuelcardTransactions = pgTable('fuelcard_transactions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  provider: text('provider').notNull().default('msfuelcard'),
+  externalTransactionId: text('external_transaction_id').notNull(),
+  transactionDate: timestamp('transaction_date', { withTimezone: true }).notNull(),
+  cardNumber: text('card_number').notNull(),
+  driverNameOnCard: text('driver_name_on_card'),
+  vehicleUnitOnCard: text('vehicle_unit_on_card'),
+  productType: text('product_type').notNull(),
+  gallons: numeric('gallons', { precision: 12, scale: 2 }).notNull().default('0'),
+  pricePerGallon: numeric('price_per_gallon', { precision: 12, scale: 4 }).notNull().default('0'),
+  totalAmount: numeric('total_amount', { precision: 12, scale: 2 }).notNull().default('0'),
+  odometer: integer('odometer'),
+  locationName: text('location_name'),
+  city: text('city'),
+  state: text('state'),
+  latitude: doublePrecision('latitude'),
+  longitude: doublePrecision('longitude'),
+  matchedTruckId: uuid('matched_truck_id').references(() => trucks.id, { onDelete: 'set null' }),
+  matchedDriverId: uuid('matched_driver_id').references(() => drivers.id, { onDelete: 'set null' }),
+  matchStatus: text('match_status').notNull().default('unmatched'),
+  anomalyFlagged: boolean('anomaly_flagged').notNull().default(false),
+  anomalyReason: text('anomaly_reason'),
+  fuelEntryId: uuid('fuel_entry_id').references(() => fuelEntries.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_fuelcard_txn_tenant_date').on(table.tenantId, table.transactionDate),
+  index('idx_fuelcard_txn_tenant_truck').on(table.tenantId, table.matchedTruckId),
+  index('idx_fuelcard_txn_tenant_driver').on(table.tenantId, table.matchedDriverId),
+  unique('uq_fuelcard_txn_dedup').on(table.tenantId, table.provider, table.externalTransactionId),
+])
+
+// Fuel Card Integration Types
+export type DrizzleFuelCardIntegration = typeof fuelcardIntegrations.$inferSelect
+export type NewFuelCardIntegration = typeof fuelcardIntegrations.$inferInsert
+export type DrizzleFuelCardTransaction = typeof fuelcardTransactions.$inferSelect
+export type NewFuelCardTransaction = typeof fuelcardTransactions.$inferInsert
+
 // Samsara Integration Types
 export type DrizzleSamsaraIntegration = typeof samsaraIntegrations.$inferSelect
 export type NewSamsaraIntegration = typeof samsaraIntegrations.$inferInsert

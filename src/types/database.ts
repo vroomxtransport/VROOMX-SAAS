@@ -490,6 +490,20 @@ export interface DriverLocation {
   driver?: Driver
 }
 
+export interface SamsaraVehicleLocation {
+  id: string
+  tenant_id: string
+  samsara_vehicle_id: string
+  samsara_name: string | null
+  truck_id: string | null
+  last_latitude: number | null
+  last_longitude: number | null
+  last_speed: number | null
+  last_heading: number | null
+  last_location_time: string | null
+  truck?: { id: string; unit_number: string } | null
+}
+
 export interface OrderActivityLog {
   id: string
   tenant_id: string
@@ -674,4 +688,54 @@ export interface EldLog {
   location_description: string | null
   created_at: string
   driver?: Driver
+}
+
+// ============================================================================
+// Fuel Card Integration Interfaces
+// ============================================================================
+
+export interface FuelCardIntegration {
+  id: string
+  tenant_id: string
+  provider: string
+  api_key_encrypted: string
+  account_number: string | null
+  company_name: string | null
+  sync_status: 'active' | 'paused' | 'error' | 'disconnected'
+  last_sync_at: string | null
+  last_error: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface FuelCardTransaction {
+  id: string
+  tenant_id: string
+  provider: string
+  external_transaction_id: string
+  transaction_date: string
+  card_number: string
+  driver_name_on_card: string | null
+  vehicle_unit_on_card: string | null
+  product_type: string
+  gallons: string          // numeric from DB = string
+  price_per_gallon: string // numeric from DB = string
+  total_amount: string     // numeric from DB = string
+  odometer: number | null
+  location_name: string | null
+  city: string | null
+  state: string | null
+  latitude: number | null
+  longitude: number | null
+  matched_truck_id: string | null
+  matched_driver_id: string | null
+  match_status: 'matched' | 'unmatched' | 'manual'
+  anomaly_flagged: boolean
+  anomaly_reason: string | null
+  fuel_entry_id: string | null
+  created_at: string
+  updated_at: string
+  // Optional joins
+  truck?: { id: string; unit_number: string }
+  driver?: { id: string; first_name: string; last_name: string }
 }

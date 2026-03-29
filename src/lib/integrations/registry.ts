@@ -6,6 +6,7 @@ export type IntegrationCategory =
   | 'telematics'
   | 'eld_compliance'
   | 'accounting'
+  | 'fuel_cards'
   | 'load_boards'
   | 'maintenance'
   | 'communication'
@@ -49,6 +50,7 @@ export const CATEGORY_LABELS: Record<IntegrationCategory, string> = {
   telematics: 'Telematics',
   eld_compliance: 'ELD & Compliance',
   accounting: 'Accounting',
+  fuel_cards: 'Fuel Cards',
   load_boards: 'Load Boards',
   maintenance: 'Maintenance',
   communication: 'Communication',
@@ -137,6 +139,33 @@ const INTEGRATIONS: IntegrationDefinition[] = [
       { title: 'Invoices sync automatically', description: 'New invoices and payments push to QuickBooks in real time.' },
     ],
     externalUrl: 'https://quickbooks.intuit.com',
+  },
+  {
+    slug: 'multi-service-fuel-card',
+    name: 'Multi Service Fuel Card',
+    description:
+      'Auto-sync fuel transactions, track spending, and detect anomalies.',
+    longDescription:
+      'Connect your Multi Service Fuel Card account to automatically import fuel transactions. VroomX matches transactions to your trucks and drivers, calculates cost-per-mile, and flags suspicious activity.',
+    logo: '/images/integrations/multi-service-fuel-card.jpeg',
+    brandColor: '#FFD100',
+    category: 'fuel_cards',
+    status: 'available',
+    tags: ['new'],
+    features: [
+      'Auto-sync fuel transactions',
+      'Match to trucks by unit number',
+      'Cost-per-mile calculation',
+      'Anomaly detection & flagging',
+      'IFTA data aggregation',
+      'Transaction audit trail',
+    ],
+    steps: [
+      { title: 'Enter API Key', description: 'Get your API key from Multi Service Fuel Card account portal' },
+      { title: 'Test Connection', description: 'Verify the connection works and see your account info' },
+      { title: 'Auto Sync', description: 'Transactions sync hourly and auto-match to your fleet' },
+    ],
+    externalUrl: 'https://www.msfuelcard.com',
   },
   {
     slug: 'central-dispatch',
@@ -272,6 +301,136 @@ const INTEGRATIONS: IntegrationDefinition[] = [
       { title: 'Stay in the loop', description: 'Your team gets instant updates without switching apps.' },
     ],
     externalUrl: 'https://slack.com',
+  },
+  {
+    slug: 'wex-efs',
+    name: 'WEX/EFS',
+    description: 'The largest fuel card network with 12,000+ truck stops nationwide.',
+    longDescription:
+      'Connect your WEX or EFS fuel card to automatically sync fuel transactions, track spending per truck, and streamline IFTA reporting. The largest acceptance network in the industry.',
+    logo: '/images/integrations/wex-efs.svg',
+    brandColor: '#00529B',
+    category: 'fuel_cards' as IntegrationCategory,
+    status: 'coming_soon' as IntegrationStatus,
+    tags: ['popular'] as IntegrationTag[],
+    features: [
+      'Auto-sync fuel transactions',
+      'Largest truck stop network (12,000+)',
+      'IFTA data aggregation',
+      'Spending controls & limits',
+      'Real-time fraud alerts',
+      'Cost-per-mile analytics',
+    ],
+    steps: [
+      { title: 'Enter credentials', description: 'Get your API credentials from the WEX fleet portal.' },
+      { title: 'Link your cards', description: 'VroomX auto-maps cards to your trucks by unit number.' },
+      { title: 'Auto sync', description: 'Transactions import hourly with automatic matching.' },
+    ],
+    externalUrl: 'https://www.wexinc.com',
+  },
+  {
+    slug: 'comdata',
+    name: 'Comdata',
+    description: 'Fleet fuel cards with advanced spending controls and nationwide coverage.',
+    longDescription:
+      'Integrate your Comdata fleet cards with VroomX for automatic transaction sync, driver spending controls, and detailed fuel analytics across your fleet.',
+    logo: '/images/integrations/comdata.svg',
+    brandColor: '#003DA5',
+    category: 'fuel_cards' as IntegrationCategory,
+    status: 'coming_soon' as IntegrationStatus,
+    tags: ['popular'] as IntegrationTag[],
+    features: [
+      'Auto-sync fuel transactions',
+      'Driver spending controls',
+      'Location-based restrictions',
+      'Odometer tracking',
+      'IFTA-ready data',
+      'Fraud prevention alerts',
+    ],
+    steps: [
+      { title: 'Connect account', description: 'Enter your Comdata account credentials.' },
+      { title: 'Map your fleet', description: 'Cards are matched to trucks automatically.' },
+      { title: 'Monitor spending', description: 'Track fuel costs per truck and per mile.' },
+    ],
+    externalUrl: 'https://www.comdata.com',
+  },
+  {
+    slug: 'fleetcor-fuelman',
+    name: 'FLEETCOR / Fuelman',
+    description: 'Enterprise fleet fuel management with enhanced authorization controls.',
+    longDescription:
+      'Connect FLEETCOR or Fuelman fleet cards for enterprise-grade fuel transaction management. Enhanced authorization controls, detailed analytics, and automatic VroomX reconciliation.',
+    logo: '/images/integrations/fleetcor.svg',
+    brandColor: '#E31937',
+    category: 'fuel_cards' as IntegrationCategory,
+    status: 'coming_soon' as IntegrationStatus,
+    tags: [] as IntegrationTag[],
+    features: [
+      'Auto-sync fuel transactions',
+      'Enhanced authorization controls',
+      'Multi-card fleet management',
+      'Purchase category tracking',
+      'Exception reporting',
+      'Tax-exempt fuel purchases',
+    ],
+    steps: [
+      { title: 'Connect account', description: 'Link your FLEETCOR or Fuelman account.' },
+      { title: 'Configure controls', description: 'Set spending limits and product restrictions.' },
+      { title: 'Auto reconcile', description: 'Transactions match to trucks and trips automatically.' },
+    ],
+    externalUrl: 'https://www.fleetcor.com',
+  },
+  {
+    slug: 'atob',
+    name: 'AtoB',
+    description: 'Modern fintech fuel card with GPS verification and instant savings.',
+    longDescription:
+      'AtoB is a next-generation fuel card built for modern fleets. GPS-verified transactions, instant discount visibility, and real-time sync with VroomX for effortless fuel management.',
+    logo: '/images/integrations/atob.svg',
+    brandColor: '#000000',
+    category: 'fuel_cards' as IntegrationCategory,
+    status: 'coming_soon' as IntegrationStatus,
+    tags: ['new'] as IntegrationTag[],
+    features: [
+      'Real-time transaction sync',
+      'GPS-verified purchases',
+      'Instant fuel discounts',
+      'No setup or annual fees',
+      'Smart fraud prevention',
+      'Per-gallon savings tracking',
+    ],
+    steps: [
+      { title: 'Connect AtoB', description: 'Link your AtoB account via API key.' },
+      { title: 'GPS verification', description: 'Transactions verified against truck location.' },
+      { title: 'Track savings', description: 'See per-gallon savings and cost-per-mile in VroomX.' },
+    ],
+    externalUrl: 'https://www.atob.com',
+  },
+  {
+    slug: 'rts-financial',
+    name: 'RTS Financial',
+    description: 'Fuel card + factoring combo built for trucking owner-operators.',
+    longDescription:
+      'RTS Financial offers fuel cards combined with freight factoring, purpose-built for trucking. Connect to VroomX for automatic fuel transaction sync alongside your factoring data.',
+    logo: '/images/integrations/rts-financial.svg',
+    brandColor: '#1B365D',
+    category: 'fuel_cards' as IntegrationCategory,
+    status: 'coming_soon' as IntegrationStatus,
+    tags: [] as IntegrationTag[],
+    features: [
+      'Fuel card + factoring integration',
+      'Auto-sync fuel transactions',
+      'Owner-operator focused',
+      'Fuel advance against loads',
+      'Nationwide truck stop network',
+      'Combined financial reporting',
+    ],
+    steps: [
+      { title: 'Connect RTS', description: 'Enter your RTS Financial account details.' },
+      { title: 'Sync transactions', description: 'Fuel purchases import automatically.' },
+      { title: 'Track everything', description: 'Fuel costs and factoring data in one place.' },
+    ],
+    externalUrl: 'https://www.rtsinc.com',
   },
 ]
 
