@@ -30,6 +30,7 @@ import {
   CircleDollarSign,
   Caravan,
   Wallet,
+  Plug,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -106,6 +107,7 @@ const NAV_CATEGORIES: NavCategory[] = [
   {
     label: 'System',
     items: [
+      { name: 'Integrations', href: '/integrations', icon: Plug },
       { name: 'Settings', href: '/settings', icon: SlidersHorizontal, minRole: 'admin' },
     ],
   },

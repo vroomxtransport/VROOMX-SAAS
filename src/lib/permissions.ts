@@ -29,6 +29,7 @@ export const PERMISSION_CATEGORIES = {
   business_expenses: ['business_expenses.view', 'business_expenses.create', 'business_expenses.update', 'business_expenses.delete'],
   dispatcher_payroll: ['dispatcher_payroll.view', 'dispatcher_payroll.create', 'dispatcher_payroll.update', 'dispatcher_payroll.approve'],
   settings: ['settings.view', 'settings.manage'],
+  integrations: ['integrations.view', 'integrations.manage'],
 } as const
 
 // Flat list of all permissions
@@ -57,6 +58,7 @@ export const CATEGORY_LABELS: Record<string, string> = {
   business_expenses: 'Business Expenses',
   dispatcher_payroll: 'Dispatcher Payroll',
   settings: 'Settings',
+  integrations: 'Integrations',
 }
 
 // Built-in roles and their permission sets
@@ -69,6 +71,7 @@ export const BUILT_IN_ROLES: Record<string, string[]> = {
     'brokers.*', 'local_drives.*', 'fuel.*', 'maintenance.*',
     'tasks.*', 'chat.*', 'documents.*', 'trip_expenses.*',
     'business_expenses.*', 'dispatcher_payroll.view',
+    'integrations.view',
   ],
   billing: [
     'orders.view', 'orders.update',

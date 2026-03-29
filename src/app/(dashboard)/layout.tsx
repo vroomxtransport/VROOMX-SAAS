@@ -84,12 +84,12 @@ export default async function DashboardLayout({
         <main className="flex-1 overflow-y-auto">
           {/* Suspension overlay */}
           {tenant.is_suspended && (
-            <div className="mx-4 mb-4 mt-4 rounded-xl border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/30 p-4 lg:mx-8">
+            <div className="mx-4 mb-4 mt-4 rounded-xl border border-red-200 bg-red-50 p-4 lg:mx-8">
               <div className="flex items-center gap-3">
                 <AlertTriangle className="h-5 w-5 text-red-600 shrink-0" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-red-900 dark:text-red-400">Account Suspended</p>
-                  <p className="text-sm text-red-700 dark:text-red-400">
+                  <p className="text-sm font-medium text-red-900">Account Suspended</p>
+                  <p className="text-sm text-red-700">
                     Your account has been suspended due to a failed payment. Please update your payment method to restore access.
                     You can view existing data but cannot create new resources.
                   </p>
@@ -105,12 +105,12 @@ export default async function DashboardLayout({
 
           {/* Grace period warning */}
           {!tenant.is_suspended && tenant.grace_period_ends_at && (
-            <div className="mx-4 mb-4 mt-4 rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30 p-4 lg:mx-8">
+            <div className="mx-4 mb-4 mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 lg:mx-8">
               <div className="flex items-center gap-3">
                 <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-amber-900 dark:text-amber-400">Payment Issue</p>
-                  <p className="text-sm text-amber-700 dark:text-amber-400">
+                  <p className="text-sm font-medium text-amber-900">Payment Issue</p>
+                  <p className="text-sm text-amber-700">
                     Your recent payment failed. Please update your payment method by{' '}
                     {new Date(tenant.grace_period_ends_at).toLocaleDateString()} to avoid service interruption.
                   </p>

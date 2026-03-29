@@ -28,8 +28,8 @@ function getInitials(name: string): string {
 
 const RANK_STYLES = [
   { badge: 'bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-amber-500/30 shadow-sm', avatar: 'bg-gradient-to-br from-brand to-[#2a3a4f] text-white', bar: 'bg-gradient-to-r from-brand to-[#2a3a4f]' },
-  { badge: 'bg-gradient-to-br from-slate-300 to-slate-500 text-white shadow-sm', avatar: 'bg-violet-100 text-violet-700 dark:bg-violet-950/30 dark:text-violet-400', bar: 'bg-gradient-to-r from-violet-500 to-violet-400' },
-  { badge: 'bg-gradient-to-br from-amber-600 to-amber-800 text-white shadow-sm', avatar: 'bg-blue-100 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400', bar: 'bg-gradient-to-r from-blue-500 to-blue-400' },
+  { badge: 'bg-gradient-to-br from-slate-300 to-slate-500 text-white shadow-sm', avatar: 'bg-violet-100 text-violet-700', bar: 'bg-gradient-to-r from-violet-500 to-violet-400' },
+  { badge: 'bg-gradient-to-br from-amber-600 to-amber-800 text-white shadow-sm', avatar: 'bg-blue-100 text-blue-700', bar: 'bg-gradient-to-r from-blue-500 to-blue-400' },
 ]
 
 export function TopDrivers() {

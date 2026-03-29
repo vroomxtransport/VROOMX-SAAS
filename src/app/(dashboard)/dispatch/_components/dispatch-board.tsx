@@ -50,10 +50,10 @@ const SECTION_BORDER_COLORS: Record<TripStatus, string> = {
 }
 
 const SECTION_BG_COLORS: Record<TripStatus, string> = {
-  planned: 'bg-blue-50/50 dark:bg-blue-950/20',
-  in_progress: 'bg-amber-50/50 dark:bg-amber-950/20',
-  at_terminal: 'bg-purple-50/50 dark:bg-purple-950/20',
-  completed: 'bg-green-50/50 dark:bg-green-950/20',
+  planned: 'bg-blue-50/50',
+  in_progress: 'bg-amber-50/50',
+  at_terminal: 'bg-purple-50/50',
+  completed: 'bg-green-50/50',
 }
 
 export function DispatchBoard() {
@@ -363,7 +363,7 @@ export function DispatchBoard() {
           ))}
         </div>
       ) : isError ? (
-        <div className="rounded-md bg-red-50 dark:bg-red-950/20 p-4 text-sm text-red-700 dark:text-red-400">
+        <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
           Failed to load trips: {error?.message ?? 'Unknown error'}
         </div>
       ) : data && data.trips.length === 0 ? (

@@ -159,7 +159,7 @@ export function TripAnalyticsDashboard({ initialTrips }: TripAnalyticsDashboardP
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b bg-muted/30 dark:bg-muted/10">
+              <tr className="border-b bg-muted/30">
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">Trip</th>
                 <th className="px-3 py-3 text-left font-medium text-muted-foreground">Driver</th>
                 <th className="px-3 py-3 text-left font-medium text-muted-foreground">Truck</th>
@@ -235,7 +235,7 @@ export function TripAnalyticsDashboard({ initialTrips }: TripAnalyticsDashboardP
                     <td className="px-3 py-3 text-right font-medium tabular-nums">{fmt$(t.revenue)}</td>
                     <td className={cn(
                       'px-3 py-3 text-right font-medium tabular-nums',
-                      t.netProfit >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'
+                      t.netProfit >= 0 ? 'text-green-700' : 'text-red-700'
                     )}>
                       {fmt$(t.netProfit)}
                     </td>
@@ -243,10 +243,10 @@ export function TripAnalyticsDashboard({ initialTrips }: TripAnalyticsDashboardP
                       {t.totalMiles > 0 ? t.totalMiles.toLocaleString() : 'N/A'}
                     </td>
                     <td className="px-3 py-3 text-right tabular-nums">{fmtPerMile(t.rpm)}</td>
-                    <td className="px-3 py-3 text-right tabular-nums text-amber-700 dark:text-amber-400">{fmtPerMile(t.cpm)}</td>
+                    <td className="px-3 py-3 text-right tabular-nums text-amber-700">{fmtPerMile(t.cpm)}</td>
                     <td className={cn(
                       'px-3 py-3 text-right tabular-nums',
-                      t.ppm !== null && t.ppm >= 0 ? 'text-green-700 dark:text-green-400' : t.ppm !== null ? 'text-red-700 dark:text-red-400' : 'text-muted-foreground'
+                      t.ppm !== null && t.ppm >= 0 ? 'text-green-700' : t.ppm !== null ? 'text-red-700' : 'text-muted-foreground'
                     )}>
                       {fmtPerMile(t.ppm)}
                     </td>
@@ -269,19 +269,19 @@ export function TripAnalyticsDashboard({ initialTrips }: TripAnalyticsDashboardP
 // --- Summary Card ---
 
 const ACCENT_STYLES = {
-  blue: 'border-blue-200/50 bg-blue-500/5 dark:border-blue-800/50 dark:bg-blue-500/10',
-  emerald: 'border-emerald-200/50 bg-emerald-500/5 dark:border-emerald-800/50 dark:bg-emerald-500/10',
-  amber: 'border-amber-200/50 bg-amber-500/5 dark:border-amber-800/50 dark:bg-amber-500/10',
-  violet: 'border-violet-200/50 bg-violet-500/5 dark:border-violet-800/50 dark:bg-violet-500/10',
-  rose: 'border-rose-200/50 bg-rose-500/5 dark:border-rose-800/50 dark:bg-rose-500/10',
+  blue: 'border-blue-200/50 bg-blue-500/5',
+  emerald: 'border-emerald-200/50 bg-emerald-500/5',
+  amber: 'border-amber-200/50 bg-amber-500/5',
+  violet: 'border-violet-200/50 bg-violet-500/5',
+  rose: 'border-rose-200/50 bg-rose-500/5',
 }
 
 const ICON_STYLES = {
-  blue: 'text-blue-600 bg-blue-100 dark:bg-blue-900/50 dark:text-blue-400',
-  emerald: 'text-emerald-600 bg-emerald-100 dark:bg-emerald-900/50 dark:text-emerald-400',
-  amber: 'text-amber-600 bg-amber-100 dark:bg-amber-900/50 dark:text-amber-400',
-  violet: 'text-violet-600 bg-violet-100 dark:bg-violet-900/50 dark:text-violet-400',
-  rose: 'text-rose-600 bg-rose-100 dark:bg-rose-900/50 dark:text-rose-400',
+  blue: 'text-blue-600 bg-blue-100',
+  emerald: 'text-emerald-600 bg-emerald-100',
+  amber: 'text-amber-600 bg-amber-100',
+  violet: 'text-violet-600 bg-violet-100',
+  rose: 'text-rose-600 bg-rose-100',
 }
 
 function SummaryCard({ label, value, description, icon: Icon, accent }: {

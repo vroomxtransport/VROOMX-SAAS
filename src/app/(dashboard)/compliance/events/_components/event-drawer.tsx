@@ -360,8 +360,8 @@ export function EventDrawer({ open, onClose, event, defaultEventType }: EventDra
 
           {/* ── CLAIM-SPECIFIC FIELDS ── */}
           {eventType === 'claim' && (
-            <div className="space-y-4 rounded-lg border border-amber-200 bg-amber-50/50 p-4 dark:border-amber-800/50 dark:bg-amber-950/20">
-              <p className="text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+            <div className="space-y-4 rounded-lg border border-amber-200 bg-amber-50/50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-amber-700">
                 Cargo Damage Claim Details
               </p>
 
@@ -427,8 +427,8 @@ export function EventDrawer({ open, onClose, event, defaultEventType }: EventDra
 
           {/* ── INCIDENT-SPECIFIC FIELDS ── */}
           {eventType === 'incident' && (
-            <div className="space-y-4 rounded-lg border border-red-200 bg-red-50/50 p-4 dark:border-red-800/50 dark:bg-red-950/20">
-              <p className="text-xs font-semibold uppercase tracking-wider text-red-700 dark:text-red-400">
+            <div className="space-y-4 rounded-lg border border-red-200 bg-red-50/50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-red-700">
                 Incident Details
               </p>
               <div className="grid grid-cols-2 gap-4">
@@ -461,8 +461,8 @@ export function EventDrawer({ open, onClose, event, defaultEventType }: EventDra
 
           {/* ── DOT INSPECTION FIELDS ── */}
           {eventType === 'dot_inspection' && (
-            <div className="space-y-4 rounded-lg border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-800/50 dark:bg-blue-950/20">
-              <p className="text-xs font-semibold uppercase tracking-wider text-blue-700 dark:text-blue-400">
+            <div className="space-y-4 rounded-lg border border-blue-200 bg-blue-50/50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-blue-700">
                 DOT Inspection Details
               </p>
 
@@ -539,8 +539,8 @@ export function EventDrawer({ open, onClose, event, defaultEventType }: EventDra
 
           {/* Resolution notes (edit mode) */}
           {isEdit && (
-            <div className="space-y-2 rounded-lg border border-green-200 bg-green-50/50 p-4 dark:border-green-800/50 dark:bg-green-950/20">
-              <p className="text-xs font-semibold uppercase tracking-wider text-green-700 dark:text-green-400">
+            <div className="space-y-2 rounded-lg border border-green-200 bg-green-50/50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-green-700">
                 Resolution
               </p>
               <Label htmlFor="resolutionNotes">Resolution Notes</Label>

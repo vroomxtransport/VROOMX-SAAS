@@ -33,27 +33,27 @@ const PLAN_COLORS: Record<string, string> = {
 const STATUS_COLORS: Record<string, { bg: string; text: string; bar: string }> = {
   active: {
     bg: 'bg-emerald-500/10',
-    text: 'text-emerald-700 dark:text-emerald-400',
+    text: 'text-emerald-700',
     bar: '#10b981',
   },
   trialing: {
     bg: 'bg-blue-500/10',
-    text: 'text-blue-700 dark:text-blue-400',
+    text: 'text-blue-700',
     bar: '#3b82f6',
   },
   past_due: {
     bg: 'bg-amber-500/10',
-    text: 'text-amber-700 dark:text-amber-400',
+    text: 'text-amber-700',
     bar: '#f59e0b',
   },
   canceled: {
     bg: 'bg-red-500/10',
-    text: 'text-red-700 dark:text-red-400',
+    text: 'text-red-700',
     bar: '#ef4444',
   },
   unpaid: {
     bg: 'bg-rose-500/10',
-    text: 'text-rose-700 dark:text-rose-400',
+    text: 'text-rose-700',
     bar: '#f43f5e',
   },
 }
@@ -166,7 +166,7 @@ function PlanDistributionChart({ planDistribution }: { planDistribution: Record<
                     <span>{planDist.active} active</span>
                     <span>{planDist.trialing} trialing</span>
                     {planDist.pastDue > 0 && (
-                      <span className="text-amber-600 dark:text-amber-400">{planDist.pastDue} past due</span>
+                      <span className="text-amber-600">{planDist.pastDue} past due</span>
                     )}
                     {planDist.canceled > 0 && (
                       <span className="text-red-500">{planDist.canceled} canceled</span>

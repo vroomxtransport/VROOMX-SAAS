@@ -133,7 +133,7 @@ export function PDFImportDialog({ open, onOpenChange }: PDFImportDialogProps) {
         </div>
 
         {error && (
-          <div className="rounded-md bg-red-50 dark:bg-red-950/30 p-3 text-sm text-red-700 dark:text-red-400 flex items-start gap-2">
+          <div className="rounded-md bg-red-50 p-3 text-sm text-red-700 flex items-start gap-2">
             <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
             {error}
           </div>
@@ -189,7 +189,7 @@ export function PDFImportDialog({ open, onOpenChange }: PDFImportDialogProps) {
                 className={`rounded-lg border p-3 space-y-2 ${
                   order.valid
                     ? 'border-border bg-background'
-                    : 'border-amber-300 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20'
+                    : 'border-amber-300 bg-amber-50/50'
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -223,7 +223,7 @@ export function PDFImportDialog({ open, onOpenChange }: PDFImportDialogProps) {
                 </div>
 
                 {order.errors.length > 0 && (
-                  <div className="text-xs text-amber-700 dark:text-amber-400">
+                  <div className="text-xs text-amber-700">
                     {order.errors.map((err, i) => (
                       <p key={i}>{err}</p>
                     ))}
@@ -255,32 +255,32 @@ export function PDFImportDialog({ open, onOpenChange }: PDFImportDialogProps) {
         {step === 'result' && importResult && (
           <div className="flex-1 space-y-4">
             {importResult.created.length > 0 && (
-              <div className="rounded-lg border border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/20 p-4">
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-                  <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
+                  <p className="text-sm font-medium text-emerald-700">
                     {importResult.created.length} order{importResult.created.length !== 1 ? 's' : ''} imported
                   </p>
                 </div>
                 <ul className="space-y-1">
                   {importResult.created.map((name, i) => (
-                    <li key={i} className="text-xs text-emerald-600 dark:text-emerald-400">{name}</li>
+                    <li key={i} className="text-xs text-emerald-600">{name}</li>
                   ))}
                 </ul>
               </div>
             )}
 
             {importResult.errors.length > 0 && (
-              <div className="rounded-lg border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/20 p-4">
+              <div className="rounded-lg border border-red-200 bg-red-50 p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <AlertCircle className="h-5 w-5 text-red-600" />
-                  <p className="text-sm font-medium text-red-700 dark:text-red-400">
+                  <p className="text-sm font-medium text-red-700">
                     {importResult.errors.length} error{importResult.errors.length !== 1 ? 's' : ''}
                   </p>
                 </div>
                 <ul className="space-y-1">
                   {importResult.errors.map((err, i) => (
-                    <li key={i} className="text-xs text-red-600 dark:text-red-400">{err}</li>
+                    <li key={i} className="text-xs text-red-600">{err}</li>
                   ))}
                 </ul>
               </div>

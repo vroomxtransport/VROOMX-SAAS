@@ -17,9 +17,9 @@ const PAGE_SIZE = 50
 
 // ── Plan badge colours ─────────────────────────────────────────────────────────
 const PLAN_COLORS: Record<string, string> = {
-  starter: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800/40 dark:text-slate-300 dark:border-slate-700',
-  pro: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800',
-  enterprise: 'bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800',
+  starter: 'bg-slate-100 text-slate-700 border-slate-200',
+  pro: 'bg-blue-50 text-blue-700 border-blue-200',
+  enterprise: 'bg-violet-50 text-violet-700 border-violet-200',
 }
 
 const PLAN_LABELS: Record<string, string> = {
@@ -30,12 +30,12 @@ const PLAN_LABELS: Record<string, string> = {
 
 // ── Subscription status badge colours ─────────────────────────────────────────
 const STATUS_COLORS: Record<string, string> = {
-  active: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800',
-  trialing: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800',
-  past_due: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800',
-  canceled: 'bg-gray-50 text-gray-500 border-gray-200 dark:bg-gray-800/30 dark:text-gray-400 dark:border-gray-700',
-  suspended: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800',
-  unpaid: 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-800',
+  active: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  trialing: 'bg-blue-50 text-blue-700 border-blue-200',
+  past_due: 'bg-amber-50 text-amber-700 border-amber-200',
+  canceled: 'bg-gray-50 text-gray-500 border-gray-200',
+  suspended: 'bg-red-50 text-red-700 border-red-200',
+  unpaid: 'bg-orange-50 text-orange-700 border-orange-200',
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -234,7 +234,7 @@ export function TenantList() {
       {isLoading ? (
         <TableSkeleton />
       ) : error ? (
-        <div className="rounded-md bg-red-50 dark:bg-red-950/30 p-4 text-sm text-red-700 dark:text-red-400">
+        <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
           {error}
         </div>
       ) : tenants.length === 0 ? (

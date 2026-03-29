@@ -182,12 +182,12 @@ export function EventCard({ event, onEdit, onDelete, onResolve }: EventCardProps
       {event.event_type === 'dot_inspection' && (
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
           {event.inspection_level && (
-            <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800">
+            <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
               {DOT_INSPECTION_LEVEL_LABELS[event.inspection_level as DotInspectionLevel]}
             </Badge>
           )}
           {event.violations_count > 0 && (
-            <span className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
+            <span className="flex items-center gap-1 text-xs text-amber-600">
               <AlertTriangle className="h-3 w-3 shrink-0" />
               {event.violations_count} violation{event.violations_count !== 1 ? 's' : ''}
             </span>
@@ -214,7 +214,7 @@ export function EventCard({ event, onEdit, onDelete, onResolve }: EventCardProps
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 gap-1 text-xs text-green-700 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-950/30"
+            className="h-7 gap-1 text-xs text-green-700 hover:text-green-700 hover:bg-green-50"
             onClick={onResolve}
           >
             <CheckCircle2 className="h-3.5 w-3.5" />

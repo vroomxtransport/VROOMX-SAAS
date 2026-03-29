@@ -23,11 +23,11 @@ const EVENT_COLORS: Record<EventType, string> = {
 }
 
 const EVENT_ICON_BG: Record<EventType, string> = {
-  order: 'bg-blue-50 dark:bg-blue-950/30',
-  trip: 'bg-amber-50 dark:bg-amber-950/30',
-  invoice: 'bg-emerald-50 dark:bg-emerald-950/30',
-  driver: 'bg-violet-50 dark:bg-violet-950/30',
-  maintenance: 'bg-red-50 dark:bg-red-950/30',
+  order: 'bg-blue-50',
+  trip: 'bg-amber-50',
+  invoice: 'bg-emerald-50',
+  driver: 'bg-violet-50',
+  maintenance: 'bg-red-50',
 }
 
 const EVENT_ICON_COLORS: Record<EventType, string> = {
@@ -76,7 +76,7 @@ export function ActivityFeed() {
           <span className="widget-accent-dot bg-blue-500" />
           Recent Activity
         </span>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 dark:bg-blue-950/30 px-2.5 py-1 text-[11px] font-semibold text-blue-600 dark:text-blue-400">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-600">
           <span className="relative flex h-1.5 w-1.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-500 opacity-75" />
             <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-blue-500" />

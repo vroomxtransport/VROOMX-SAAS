@@ -124,13 +124,13 @@ function SortableStop({ stop, index }: { stop: SequenceStop; index: number }) {
           </span>
           <span className={`text-[10px] font-semibold uppercase px-1 py-0.5 rounded ${
             isPickup
-              ? 'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400'
-              : 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400'
+              ? 'bg-green-100 text-green-700'
+              : 'bg-red-100 text-red-700'
           }`}>
             {isPickup ? 'Pickup' : 'Delivery'}
           </span>
           {!stop.hasCoords && (
-            <span className="text-[10px] text-amber-600 dark:text-amber-400">No coords</span>
+            <span className="text-[10px] text-amber-600">No coords</span>
           )}
         </div>
         <p className="text-xs text-muted-foreground truncate">
@@ -247,9 +247,9 @@ export function TripRouteSequence({
 
       {/* Warnings */}
       {warnings.length > 0 && (
-        <div className="flex items-start gap-2 rounded-md bg-amber-50 dark:bg-amber-950/30 px-3 py-2">
+        <div className="flex items-start gap-2 rounded-md bg-amber-50 px-3 py-2">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-          <div className="text-xs text-amber-700 dark:text-amber-400">
+          <div className="text-xs text-amber-700">
             {warnings.map((w, i) => (
               <p key={i}>{w}</p>
             ))}

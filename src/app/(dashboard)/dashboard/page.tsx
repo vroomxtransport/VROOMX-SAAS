@@ -217,8 +217,8 @@ export default async function DashboardPage({
   return (
     <div className="space-y-4">
       {showSetupBanner && (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-4 dark:border-emerald-800 dark:bg-emerald-950/30">
-          <p className="text-sm font-medium text-emerald-900 dark:text-emerald-200">
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-4">
+          <p className="text-sm font-medium text-emerald-900">
             Account setup complete! Start by adding your first resources below.
           </p>
         </div>
@@ -314,7 +314,7 @@ export default async function DashboardPage({
                     href={step.href}
                     className="flex items-center gap-4 py-4 first:pt-0 last:pb-0 transition-colors hover:bg-accent/50 -mx-2 px-2 rounded-lg group"
                   >
-                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors ${step.done ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-[var(--accent-blue-bg)]'}`}>
+                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors ${step.done ? 'bg-emerald-100' : 'bg-[var(--accent-blue-bg)]'}`}>
                       {step.done ? (
                         <CheckCircle2 className="h-5 w-5 text-emerald-600" />
                       ) : (

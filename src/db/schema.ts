@@ -1060,3 +1060,141 @@ export const platformAuditLogs = pgTable('platform_audit_logs', {
 // Platform Audit Logs
 export type DrizzlePlatformAuditLog = typeof platformAuditLogs.$inferSelect
 export type NewPlatformAuditLog = typeof platformAuditLogs.$inferInsert
+
+// ============================================================================
+// Samsara ELD/Telematics Integration Tables
+// ============================================================================
+
+/**
+ * Samsara Integrations Table
+ * One row per tenant — stores OAuth tokens and sync configuration.
+ * Tokens are stored encrypted; access_token_encrypted and refresh_token_encrypted
+ * must be encrypted/decrypted at the application layer.
+ */
+export const samsaraIntegrations = pgTable('samsara_integrations', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  samsaraOrgId: text('samsara_org_id'),
+  accessTokenEncrypted: text('access_token_encrypted').notNull(),
+  refreshTokenEncrypted: text('refresh_token_encrypted').notNull(),
+  tokenExpiresAt: timestamp('token_expires_at', { withTimezone: true }).notNull(),
+  webhookSecret: text('webhook_secret'),
+  syncStatus: text('sync_status').notNull().default('active'),
+  lastSyncAt: timestamp('last_sync_at', { withTimezone: true }),
+  lastError: text('last_error'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  unique('uq_samsara_integrations_tenant').on(table.tenantId),
+  index('idx_samsara_integrations_tenant').on(table.tenantId),
+])
+
+/**
+ * Samsara Vehicle Mappings Table
+ * Links Samsara vehicle IDs to VroomX truck records.
+ * Caches last known location from Samsara for quick map display.
+ */
+export const samsaraVehicles = pgTable('samsara_vehicles', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  samsaraVehicleId: text('samsara_vehicle_id').notNull(),
+  truckId: uuid('truck_id').references(() => trucks.id, { onDelete: 'set null' }),
+  samsaraName: text('samsara_name'),
+  samsaraVin: text('samsara_vin'),
+  lastLatitude: doublePrecision('last_latitude'),
+  lastLongitude: doublePrecision('last_longitude'),
+  lastSpeed: doublePrecision('last_speed'),
+  lastHeading: doublePrecision('last_heading'),
+  lastLocationTime: timestamp('last_location_time', { withTimezone: true }),
+  lastOdometerMeters: doublePrecision('last_odometer_meters'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  unique('uq_samsara_vehicles_tenant_samsara').on(table.tenantId, table.samsaraVehicleId),
+  index('idx_samsara_vehicles_tenant').on(table.tenantId),
+  index('idx_samsara_vehicles_truck').on(table.tenantId, table.truckId),
+])
+
+/**
+ * Samsara Driver Mappings Table
+ * Links Samsara driver IDs to VroomX driver records.
+ */
+export const samsaraDrivers = pgTable('samsara_drivers', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  samsaraDriverId: text('samsara_driver_id').notNull(),
+  driverId: uuid('driver_id').references(() => drivers.id, { onDelete: 'set null' }),
+  samsaraName: text('samsara_name'),
+  samsaraEmail: text('samsara_email'),
+  samsaraPhone: text('samsara_phone'),
+  samsaraLicenseNumber: text('samsara_license_number'),
+  samsaraLicenseState: text('samsara_license_state'),
+  samsaraStatus: text('samsara_status'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  unique('uq_samsara_drivers_tenant_samsara').on(table.tenantId, table.samsaraDriverId),
+  index('idx_samsara_drivers_tenant').on(table.tenantId),
+  index('idx_samsara_drivers_driver').on(table.tenantId, table.driverId),
+])
+
+/**
+ * Samsara Webhook Events Table
+ * Idempotency + audit trail for webhook deliveries from Samsara.
+ * Append-only — no updates or deletes.
+ */
+export const samsaraWebhookEvents = pgTable('samsara_webhook_events', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  eventId: text('event_id').notNull().unique(),
+  eventType: text('event_type').notNull(),
+  payload: jsonb('payload').notNull(),
+  processedAt: timestamp('processed_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_samsara_webhook_events_tenant').on(table.tenantId),
+  index('idx_samsara_webhook_events_type').on(table.tenantId, table.eventType),
+])
+
+/**
+ * ELD Logs Table
+ * HOS duty status snapshots from Samsara — append-only time-series data.
+ * Each row represents a duty status period with remaining hours.
+ */
+export const eldLogs = pgTable('eld_logs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  driverId: uuid('driver_id').references(() => drivers.id, { onDelete: 'set null' }),
+  samsaraDriverId: text('samsara_driver_id').notNull(),
+  dutyStatus: text('duty_status').notNull(),
+  startedAt: timestamp('started_at', { withTimezone: true }).notNull(),
+  endedAt: timestamp('ended_at', { withTimezone: true }),
+  durationMs: integer('duration_ms'),
+  vehicleId: text('vehicle_id'),
+  vehicleName: text('vehicle_name'),
+  drivingTimeRemainingMs: integer('driving_time_remaining_ms'),
+  shiftTimeRemainingMs: integer('shift_time_remaining_ms'),
+  cycleTimeRemainingMs: integer('cycle_time_remaining_ms'),
+  timeUntilBreakMs: integer('time_until_break_ms'),
+  locationLatitude: doublePrecision('location_latitude'),
+  locationLongitude: doublePrecision('location_longitude'),
+  locationDescription: text('location_description'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_eld_logs_tenant').on(table.tenantId),
+  index('idx_eld_logs_driver').on(table.tenantId, table.driverId),
+  index('idx_eld_logs_samsara_driver').on(table.tenantId, table.samsaraDriverId),
+  index('idx_eld_logs_started').on(table.tenantId, table.startedAt),
+  index('idx_eld_logs_duty_status').on(table.tenantId, table.dutyStatus, table.startedAt),
+])
+
+// Samsara Integration Types
+export type DrizzleSamsaraIntegration = typeof samsaraIntegrations.$inferSelect
+export type NewSamsaraIntegration = typeof samsaraIntegrations.$inferInsert
+export type DrizzleSamsaraVehicle = typeof samsaraVehicles.$inferSelect
+export type NewSamsaraVehicle = typeof samsaraVehicles.$inferInsert
+export type DrizzleSamsaraDriver = typeof samsaraDrivers.$inferSelect
+export type NewSamsaraDriver = typeof samsaraDrivers.$inferInsert
+export type DrizzleSamsaraWebhookEvent = typeof samsaraWebhookEvents.$inferSelect
+export type NewSamsaraWebhookEvent = typeof samsaraWebhookEvents.$inferInsert
+export type DrizzleEldLog = typeof eldLogs.$inferSelect
+export type NewEldLog = typeof eldLogs.$inferInsert

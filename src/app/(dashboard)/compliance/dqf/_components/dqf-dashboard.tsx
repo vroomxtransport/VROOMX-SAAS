@@ -61,7 +61,7 @@ function ProgressBar({ complete, total }: ProgressBarProps) {
         </p>
       )}
       {allDone && (
-        <p className="mt-2 text-xs text-green-600 dark:text-green-400 font-medium">
+        <p className="mt-2 text-xs text-green-600 font-medium">
           All required documents are on file
         </p>
       )}

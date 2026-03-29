@@ -13,21 +13,21 @@ function getScoreColor(score: number): { stroke: string; text: string; bg: strin
   if (score >= 80) {
     return {
       stroke: 'var(--accent-emerald)',
-      text: 'text-emerald-600 dark:text-emerald-400',
-      bg: 'bg-emerald-50 dark:bg-emerald-950/40',
+      text: 'text-emerald-600',
+      bg: 'bg-emerald-50',
     }
   }
   if (score >= 50) {
     return {
       stroke: 'var(--accent-amber)',
-      text: 'text-amber-600 dark:text-amber-400',
-      bg: 'bg-amber-50 dark:bg-amber-950/40',
+      text: 'text-amber-600',
+      bg: 'bg-amber-50',
     }
   }
   return {
     stroke: '#ef4444',
-    text: 'text-red-600 dark:text-red-400',
-    bg: 'bg-red-50 dark:bg-red-950/40',
+    text: 'text-red-600',
+    bg: 'bg-red-50',
   }
 }
 

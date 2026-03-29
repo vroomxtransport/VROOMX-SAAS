@@ -5,7 +5,7 @@ import { Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { Breadcrumbs } from './breadcrumbs'
 import { CommandSearch } from './command-search'
 import { UserMenu } from './user-menu'
-import { ThemeToggle } from '@/components/shared/theme-toggle'
+
 import { NotificationDropdown } from './notification-dropdown'
 import type { TenantRole, SubscriptionStatus } from '@/types'
 
@@ -71,9 +71,6 @@ export function Header({
       <div className="flex items-center gap-1">
         {/* Notifications */}
         <NotificationDropdown userId={userId} />
-
-        {/* Theme toggle */}
-        <ThemeToggle />
 
         {/* Divider */}
         <div className="h-4 w-px bg-border mx-1" />

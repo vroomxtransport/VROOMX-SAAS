@@ -98,19 +98,19 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
 
       {/* Summary cards */}
       <div className="mb-4 grid grid-cols-3 gap-3">
-        <div className="rounded-md bg-green-50 dark:bg-green-950/30 p-3 text-center">
+        <div className="rounded-md bg-green-50 p-3 text-center">
           <p className="text-xs font-medium text-green-600">Total Earnings</p>
-          <p className="mt-1 text-lg font-bold text-green-800 dark:text-green-400">
+          <p className="mt-1 text-lg font-bold text-green-800">
             {formatCurrency(totalEarnings)}
           </p>
         </div>
-        <div className="rounded-md bg-blue-50 dark:bg-blue-950/30 p-3 text-center">
+        <div className="rounded-md bg-blue-50 p-3 text-center">
           <p className="text-xs font-medium text-blue-600">Completed Trips</p>
-          <p className="mt-1 text-lg font-bold text-blue-800 dark:text-blue-400">{totalTrips}</p>
+          <p className="mt-1 text-lg font-bold text-blue-800">{totalTrips}</p>
         </div>
-        <div className="rounded-md bg-purple-50 dark:bg-purple-950/30 p-3 text-center">
+        <div className="rounded-md bg-purple-50 p-3 text-center">
           <p className="text-xs font-medium text-purple-600">Avg Per Trip</p>
-          <p className="mt-1 text-lg font-bold text-purple-800 dark:text-purple-400">
+          <p className="mt-1 text-lg font-bold text-purple-800">
             {formatCurrency(avgPerTrip)}
           </p>
         </div>

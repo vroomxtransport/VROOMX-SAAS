@@ -12,12 +12,12 @@ import { cn } from '@/lib/utils'
 // ---------------------------------------------------------------------------
 
 const STATUS_BADGE_STYLES: Record<string, string> = {
-  active: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
-  trialing: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20',
-  past_due: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20',
-  canceled: 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20',
-  unpaid: 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/20',
-  suspended: 'bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20',
+  active: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20',
+  trialing: 'bg-blue-500/10 text-blue-700 border-blue-500/20',
+  past_due: 'bg-amber-500/10 text-amber-700 border-amber-500/20',
+  canceled: 'bg-red-500/10 text-red-700 border-red-500/20',
+  unpaid: 'bg-rose-500/10 text-rose-700 border-rose-500/20',
+  suspended: 'bg-orange-500/10 text-orange-700 border-orange-500/20',
 }
 
 const REASON_LABELS: Record<string, string> = {
@@ -131,7 +131,7 @@ export default async function AdminSubscriptionsPage() {
         <section className="space-y-3">
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-semibold text-foreground">At-Risk Tenants</h2>
-            <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-400">
+            <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
               {atRiskCount}
             </span>
           </div>
@@ -199,7 +199,7 @@ export default async function AdminSubscriptionsPage() {
                                 className={cn(
                                   'text-xs font-medium',
                                   urgent
-                                    ? 'text-red-600 dark:text-red-400'
+                                    ? 'text-red-600'
                                     : 'text-muted-foreground'
                                 )}
                               >
@@ -234,7 +234,7 @@ export default async function AdminSubscriptionsPage() {
           <div className="flex items-center justify-center rounded-xl border border-border-subtle bg-surface py-10">
             <div className="text-center">
               <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/10">
-                <AlertTriangle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                <AlertTriangle className="h-5 w-5 text-emerald-600" />
               </div>
               <p className="text-sm font-medium text-foreground">No at-risk tenants</p>
               <p className="mt-0.5 text-xs text-muted-foreground">All subscriptions are in good standing</p>

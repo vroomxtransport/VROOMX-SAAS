@@ -5,3 +5,16 @@ export const factoringFeeRateSchema = z.object({
 })
 
 export type FactoringFeeRateFormValues = z.infer<typeof factoringFeeRateSchema>
+
+export const companyProfileSchema = z.object({
+  name: z.string().min(1, 'Company name is required').max(200),
+  dotNumber: z.string().max(20).optional().or(z.literal('')),
+  mcNumber: z.string().max(20).optional().or(z.literal('')),
+  address: z.string().max(500).optional().or(z.literal('')),
+  city: z.string().max(100).optional().or(z.literal('')),
+  state: z.string().max(2).optional().or(z.literal('')),
+  zip: z.string().max(10).optional().or(z.literal('')),
+  phone: z.string().max(20).optional().or(z.literal('')),
+})
+
+export type CompanyProfileFormValues = z.infer<typeof companyProfileSchema>

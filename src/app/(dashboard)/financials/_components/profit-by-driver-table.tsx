@@ -19,22 +19,22 @@ interface ProfitByDriverTableProps {
 function marginBadge(margin: number) {
   if (margin >= 20) {
     return {
-      bg: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400',
+      bg: 'bg-emerald-100 text-emerald-700',
     }
   }
   if (margin >= 10) {
     return {
-      bg: 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400',
+      bg: 'bg-amber-100 text-amber-700',
     }
   }
   return {
-    bg: 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400',
+    bg: 'bg-red-100 text-red-700',
   }
 }
 
 const PAY_TYPE_STYLES: Record<string, string> = {
-  company: 'bg-blue-100 text-blue-700 ring-1 ring-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:ring-blue-800/40',
-  owner_operator: 'bg-purple-100 text-purple-700 ring-1 ring-purple-200 dark:bg-purple-950/40 dark:text-purple-400 dark:ring-purple-800/40',
+  company: 'bg-blue-100 text-blue-700 ring-1 ring-blue-200',
+  owner_operator: 'bg-purple-100 text-purple-700 ring-1 ring-purple-200',
 }
 
 export function ProfitByDriverTable({ data }: ProfitByDriverTableProps) {
@@ -187,7 +187,7 @@ export function ProfitByDriverTable({ data }: ProfitByDriverTableProps) {
                 const revenueBarWidth = Math.min((driver.revenue / maxRevenue) * 100, 100)
                 const badge = marginBadge(driver.profitMargin)
                 const payTypeStyle = PAY_TYPE_STYLES[driver.driverType] ??
-                  'bg-gray-100 text-gray-700 ring-1 ring-gray-200 dark:bg-gray-800/40 dark:text-gray-400 dark:ring-gray-700/40'
+                  'bg-gray-100 text-gray-700 ring-1 ring-gray-200'
 
                 return (
                   <tr key={driver.driverId} className="border-b border-border-subtle/50 last:border-0 hover:bg-muted/30 transition-colors">

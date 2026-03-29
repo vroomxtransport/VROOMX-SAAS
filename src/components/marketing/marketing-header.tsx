@@ -9,8 +9,8 @@ import { MenuToggle } from '@/components/ui/menu-toggle'
 import { cn } from '@/lib/utils'
 
 const links = [
-  { label: 'Features', href: '#features' },
-  { label: 'Product', href: '#product' },
+  { label: 'Features', href: '/features' },
+  { label: 'Compare', href: '/compare/vroomx-vs-super-dispatch' },
   { label: 'Pricing', href: '#pricing' },
   { label: 'FAQ', href: '#faq' },
 ]

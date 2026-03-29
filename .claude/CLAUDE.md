@@ -115,4 +115,12 @@ When a task matches one of these, behave as that specialist first, then cross-ch
 - Financial numeric fields: DB stores as string, Zod uses z.coerce.number(), actions convert with String()
 - DATABASE_URL has `@` in password — parse with regex, not URL constructor
 
+## Pre-Commit Verification Checklist (ALWAYS do before push)
+1. **New DB columns**: Verify `.select()` in relevant queries includes the column (Supabase `*` with embedded relations may omit JSONB)
+2. **New external API calls**: Verify the domain is in CSP `connect-src` in `next.config.ts`
+3. **New storage buckets**: Verify bucket exists in DB + has RLS policies (INSERT/SELECT/DELETE)
+4. **Provider/layout changes**: Trace which components use hooks — ensure they're inside the provider boundary
+5. **TypeScript**: Run `npx tsc --noEmit` — Netlify build is stricter than local dev
+6. **DB migrations**: After running, verify with SELECT that columns/tables/policies actually exist
+
 When suggesting changes, first state which rules apply. If security risk → warn loudly and suggest alternatives.

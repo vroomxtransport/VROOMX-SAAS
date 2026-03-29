@@ -151,7 +151,7 @@ export function OrderCard({ order, onClick, onEdit }: OrderCardProps) {
           </span>
           {order.payment_type === 'SPLIT' && order.cod_amount && order.billing_amount && (
             <div className="mt-0.5 flex items-center gap-1.5 text-xs">
-              <span className="text-emerald-600 dark:text-emerald-400">
+              <span className="text-emerald-600">
                 COD {formatCurrency(order.cod_amount)}
               </span>
               <span className="text-muted-foreground">/</span>

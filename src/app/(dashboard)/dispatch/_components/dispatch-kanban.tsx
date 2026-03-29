@@ -22,17 +22,17 @@ const SECTION_BORDER_COLORS: Record<TripStatus, string> = {
 }
 
 const SECTION_BG_COLORS: Record<TripStatus, string> = {
-  planned: 'bg-blue-50/50 dark:bg-blue-950/20',
-  in_progress: 'bg-amber-50/50 dark:bg-amber-950/20',
-  at_terminal: 'bg-purple-50/50 dark:bg-purple-950/20',
-  completed: 'bg-green-50/50 dark:bg-green-950/20',
+  planned: 'bg-blue-50/50',
+  in_progress: 'bg-amber-50/50',
+  at_terminal: 'bg-purple-50/50',
+  completed: 'bg-green-50/50',
 }
 
 const COUNT_BADGE_COLORS: Record<TripStatus, string> = {
-  planned: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-  in_progress: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
-  at_terminal: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
-  completed: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+  planned: 'bg-blue-100 text-blue-700',
+  in_progress: 'bg-amber-100 text-amber-700',
+  at_terminal: 'bg-purple-100 text-purple-700',
+  completed: 'bg-green-100 text-green-700',
 }
 
 const DROP_HIGHLIGHT_COLORS: Record<TripStatus, string> = {

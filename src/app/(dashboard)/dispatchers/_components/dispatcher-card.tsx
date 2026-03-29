@@ -74,7 +74,7 @@ export function DispatcherCard({ dispatcher, payConfig, onConfigurePay }: Dispat
               }}
             >
               <Banknote className="mr-1 h-3 w-3 text-emerald-500" />
-              <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+              <span className="text-emerald-600 font-medium">
                 {DISPATCHER_PAY_TYPE_LABELS[payConfig.pay_type as DispatcherPayType]}
                 {' — '}
                 {payConfig.pay_type === 'performance_revenue'

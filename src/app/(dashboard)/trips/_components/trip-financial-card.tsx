@@ -37,17 +37,17 @@ function formatCurrency(value: string | number): string {
 type Accent = 'emerald' | 'muted' | 'violet' | 'rose'
 
 const ACCENT_STYLES: Record<Accent, string> = {
-  emerald: 'border-emerald-200/50 bg-emerald-500/5 dark:border-emerald-800/50 dark:bg-emerald-500/10',
-  muted: 'border-border bg-muted/40 dark:bg-muted/20',
-  violet: 'border-violet-200/50 bg-violet-500/5 dark:border-violet-800/50 dark:bg-violet-500/10',
-  rose: 'border-rose-200/50 bg-rose-500/5 dark:border-rose-800/50 dark:bg-rose-500/10',
+  emerald: 'border-emerald-200/50 bg-emerald-500/5',
+  muted: 'border-border bg-muted/40',
+  violet: 'border-violet-200/50 bg-violet-500/5',
+  rose: 'border-rose-200/50 bg-rose-500/5',
 }
 
 const ICON_STYLES: Record<Accent, string> = {
-  emerald: 'text-emerald-600 bg-emerald-100 dark:bg-emerald-900/50 dark:text-emerald-400',
-  muted: 'text-muted-foreground bg-muted dark:bg-muted/60',
-  violet: 'text-violet-600 bg-violet-100 dark:bg-violet-900/50 dark:text-violet-400',
-  rose: 'text-rose-600 bg-rose-100 dark:bg-rose-900/50 dark:text-rose-400',
+  emerald: 'text-emerald-600 bg-emerald-100',
+  muted: 'text-muted-foreground bg-muted',
+  violet: 'text-violet-600 bg-violet-100',
+  rose: 'text-rose-600 bg-rose-100',
 }
 
 // --- Sub-components ---
@@ -93,9 +93,9 @@ function WaterfallLine({ label, value, valueStr, bold, indent, highlight, bottom
   return (
     <div className={cn(
       'flex items-center justify-between px-4 py-2',
-      highlight && 'bg-muted/30 dark:bg-muted/10',
-      bottomLine === 'positive' && 'bg-green-50/50 dark:bg-green-950/20',
-      bottomLine === 'negative' && 'bg-red-50/50 dark:bg-red-950/20',
+      highlight && 'bg-muted/30',
+      bottomLine === 'positive' && 'bg-green-50/50',
+      bottomLine === 'negative' && 'bg-red-50/50',
     )}>
       <span className={cn(
         indent && 'pl-4',
@@ -107,9 +107,9 @@ function WaterfallLine({ label, value, valueStr, bold, indent, highlight, bottom
       <span className={cn(
         'tabular-nums',
         bold ? 'font-semibold text-foreground' : 'text-muted-foreground',
-        bottomLine === 'positive' && 'font-bold text-green-700 dark:text-green-400',
-        bottomLine === 'negative' && 'font-bold text-red-700 dark:text-red-400',
-        !bottomLine && value !== undefined && value < 0 && 'text-red-600 dark:text-red-400',
+        bottomLine === 'positive' && 'font-bold text-green-700',
+        bottomLine === 'negative' && 'font-bold text-red-700',
+        !bottomLine && value !== undefined && value < 0 && 'text-red-600',
       )}>
         {displayValue}
       </span>
@@ -123,7 +123,7 @@ function MetricPill({ label, value, description }: {
   description: string
 }) {
   return (
-    <div className="rounded-lg bg-muted/40 dark:bg-muted/20 px-3 py-2.5">
+    <div className="rounded-lg bg-muted/40 px-3 py-2.5">
       <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
       <p className="mt-0.5 text-sm font-bold tabular-nums text-foreground">{value}</p>
       <p className="text-[10px] text-muted-foreground/70">{description}</p>
@@ -288,7 +288,7 @@ export function TripFinancialCard({ trip }: TripFinancialCardProps) {
 
       {/* Section 2: P&L Waterfall */}
       <div className="border-t">
-        <div className="px-4 py-2 bg-muted/30 dark:bg-muted/10">
+        <div className="px-4 py-2 bg-muted/30">
           <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">P&L Breakdown</span>
         </div>
         <div className="divide-y divide-border/50 text-sm">

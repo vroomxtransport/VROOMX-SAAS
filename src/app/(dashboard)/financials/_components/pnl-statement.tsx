@@ -88,8 +88,8 @@ export function PnLStatement({ pnl }: Props) {
         <div className={cn(
           'flex items-center justify-between rounded-xl p-4 mt-4',
           pnl.netProfitBeforeTax >= 0
-            ? 'bg-emerald-50 border border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-300'
-            : 'bg-red-50 border border-red-200 text-red-800 dark:bg-red-950/30 dark:border-red-800 dark:text-red-300'
+            ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+            : 'bg-red-50 border border-red-200 text-red-800'
         )}>
           <span className="font-bold">NET PROFIT BEFORE TAX</span>
           <span className="font-bold tabular-nums text-lg">
@@ -132,7 +132,7 @@ function SubtotalRow({ label, value }: { label: string; value: number }) {
       <span className="text-foreground">{label}</span>
       <span className={cn(
         'tabular-nums text-foreground',
-        value < 0 && 'text-red-600 dark:text-red-400',
+        value < 0 && 'text-red-600',
       )}>
         {fmt(value)}
       </span>
@@ -166,7 +166,7 @@ function LineItem({ label, value, valueStr, bold, indent, muted }: {
         'tabular-nums',
         bold ? 'font-semibold text-foreground' : 'text-muted-foreground',
         muted && 'text-xs',
-        value !== undefined && value < 0 && 'text-red-600 dark:text-red-400',
+        value !== undefined && value < 0 && 'text-red-600',
       )}>
         {valueStr ?? (value !== undefined ? fmt(value) : '')}
       </span>

@@ -38,7 +38,7 @@ const DEFAULT_LAYOUT: WidgetLayout[] = [
   { id: 'activityFeed', visible: true, grid: { x: 0, y: 18, w: 6, h: 10, minW: 4, minH: 5 } },
   { id: 'openInvoices', visible: true, grid: { x: 6, y: 18, w: 3, h: 6, minW: 3, minH: 3 } },
   { id: 'topDrivers', visible: true, grid: { x: 9, y: 18, w: 3, h: 6, minW: 3, minH: 3 } },
-  { id: 'quickLinks', visible: true, grid: { x: 0, y: 28, w: 4, h: 5, minW: 3, minH: 3 } },
+  { id: 'quickLinks', visible: true, grid: { x: 0, y: 28, w: 4, h: 8, minW: 3, minH: 6 } },
 ]
 
 interface DashboardStore {

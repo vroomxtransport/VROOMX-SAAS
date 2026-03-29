@@ -256,7 +256,7 @@ export function ReadyToInvoice({ factoringFeeRate = 0 }: ReadyToInvoiceProps) {
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-semibold text-foreground">Ready to Invoice</h2>
-          <span className="rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 px-2.5 py-0.5 text-xs font-medium">
+          <span className="rounded-full bg-amber-100 text-amber-700 px-2.5 py-0.5 text-xs font-medium">
             {totalCount}
           </span>
         </div>
@@ -332,7 +332,7 @@ export function ReadyToInvoice({ factoringFeeRate = 0 }: ReadyToInvoiceProps) {
                 key={order.id}
                 className={cn(
                   'flex items-center gap-4 px-4 py-3 border-b border-border-subtle last:border-b-0 transition-colors',
-                  isSelected && 'bg-blue-50/50 dark:bg-blue-950/10'
+                  isSelected && 'bg-blue-50/50'
                 )}
               >
                 <div className="w-6 shrink-0">
@@ -363,7 +363,7 @@ export function ReadyToInvoice({ factoringFeeRate = 0 }: ReadyToInvoiceProps) {
                   </div>
                   {order.paymentType === 'SPLIT' && order.codAmount != null && (
                     <div className="text-xs text-muted-foreground">
-                      Split: COD <span className="text-emerald-600 dark:text-emerald-400">{formatCurrency(order.codAmount)}</span> collected
+                      Split: COD <span className="text-emerald-600">{formatCurrency(order.codAmount)}</span> collected
                     </div>
                   )}
                 </div>

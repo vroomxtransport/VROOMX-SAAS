@@ -94,8 +94,8 @@ export function BatchActions({ selectedOrderIds, onClear }: BatchActionsProps) {
   }, [selectedOrderIds, paymentDate, onClear, router])
 
   return (
-    <div className="flex items-center gap-3 rounded-lg border bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800 px-4 py-2.5">
-      <span className="text-sm font-medium text-blue-800 dark:text-blue-400">
+    <div className="flex items-center gap-3 rounded-lg border bg-blue-50 border-blue-200 px-4 py-2.5">
+      <span className="text-sm font-medium text-blue-800">
         {selectedOrderIds.length} order
         {selectedOrderIds.length !== 1 ? 's' : ''} selected
       </span>

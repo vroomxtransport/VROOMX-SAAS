@@ -38,7 +38,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https://*.supabase.co https://cdnjs.cloudflare.com",
       "font-src 'self'",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://us.i.posthog.com https://api.stripe.com https://api.eia.gov https://vpic.nhtsa.dot.gov https://nominatim.openstreetmap.org",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://us.i.posthog.com https://api.stripe.com https://api.eia.gov https://vpic.nhtsa.dot.gov https://nominatim.openstreetmap.org https://api.samsara.com",
       "frame-src https://js.stripe.com https://hooks.stripe.com",
       "frame-ancestors 'none'",
     ].join('; '),

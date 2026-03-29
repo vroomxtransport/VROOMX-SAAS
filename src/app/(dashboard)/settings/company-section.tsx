@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { updateFactoringFeeRate } from '@/app/actions/tenant-settings'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
-import { Building2, Loader2 } from 'lucide-react'
+import { CircleDollarSign, Loader2, Info } from 'lucide-react'
 
 interface CompanySectionProps {
   factoringFeeRate: string
@@ -33,47 +33,83 @@ export function CompanySection({ factoringFeeRate }: CompanySectionProps) {
     }
   }
 
+  const exampleLoad = 5000
+  const parsedRate = useMemo(() => {
+    const n = parseFloat(rate)
+    return isNaN(n) || n < 0 ? 0 : n
+  }, [rate])
+  const exampleFee = useMemo(() => ((parsedRate / 100) * exampleLoad).toFixed(2), [parsedRate])
+  const exampleNet = useMemo(() => (exampleLoad - parseFloat(exampleFee)).toFixed(2), [exampleFee])
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Building2 className="h-5 w-5" />
-          Company Settings
-        </CardTitle>
-        <CardDescription>
-          Configure company-wide financial settings like factoring fees.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-end gap-3 max-w-sm">
-          <div className="flex-1 space-y-1.5">
-            <Label htmlFor="factoring-fee-rate">Factoring Fee Rate (%)</Label>
-            <Input
-              id="factoring-fee-rate"
-              type="number"
-              step="0.01"
-              min="0"
-              max="100"
-              value={rate}
-              onChange={(e) => setRate(e.target.value)}
-              placeholder="e.g. 3.00"
-            />
+    <Card className="widget-card !p-0 border-0 shadow-none">
+      <CardHeader className="pb-4 border-b border-border-subtle">
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg bg-muted p-2">
+            <CircleDollarSign className="h-5 w-5 text-muted-foreground" />
           </div>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              'Save'
-            )}
-          </Button>
+          <div>
+            <CardTitle className="text-base font-semibold">Order &amp; Financial Defaults</CardTitle>
+            <CardDescription className="text-sm">
+              Configure default financial settings for orders and billing
+            </CardDescription>
+          </div>
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">
-          Applied when factoring an order. Set to 0 to hide the Factor button in billing.
-        </p>
+      </CardHeader>
+
+      <CardContent className="pt-6 space-y-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="space-y-1.5">
+            <Label htmlFor="factoring-fee-rate" className="font-medium">
+              Factoring Fee Rate
+            </Label>
+            <div className="relative flex items-center">
+              <Input
+                id="factoring-fee-rate"
+                type="number"
+                step="0.01"
+                min="0"
+                max="100"
+                value={rate}
+                onChange={(e) => setRate(e.target.value)}
+                placeholder="e.g. 3.00"
+                className="pr-8"
+              />
+              <span className="pointer-events-none absolute right-3 text-sm text-muted-foreground select-none">
+                %
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Applied when factoring an order. Set to 0 to hide the Factor button in billing.
+            </p>
+          </div>
+        </div>
+
+        {/* Live example calculation card */}
+        <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
+          <p className="text-sm text-blue-700">
+            <span className="font-medium">Example:</span> On a{' '}
+            <span className="font-medium">$5,000</span> load with{' '}
+            <span className="font-medium">{parsedRate.toFixed(2)}%</span> factoring fee &rarr;{' '}
+            Fee: <span className="font-medium">${exampleFee}</span> &middot; Net:{' '}
+            <span className="font-medium">${exampleNet}</span>
+          </p>
+        </div>
       </CardContent>
+
+      <CardFooter className="flex justify-end pt-4 border-t border-border-subtle">
+        <Button onClick={handleSave} disabled={saving}>
+          {saving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            'Save Changes'
+          )}
+        </Button>
+      </CardFooter>
     </Card>
   )
 }

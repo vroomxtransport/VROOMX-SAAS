@@ -59,7 +59,7 @@ function ProgressBar({ complete, total }: ProgressBarProps) {
         </p>
       )}
       {allDone && (
-        <p className="mt-2 text-xs text-green-600 dark:text-green-400 font-medium">
+        <p className="mt-2 text-xs text-green-600 font-medium">
           All required vehicle documents are on file
         </p>
       )}
@@ -89,7 +89,7 @@ function SpecialInfoBanner({ subCategory, document }: InfoBannerProps) {
     const days = daysUntil(document.expires_at)
     if (days > 0 && days <= 60) {
       return (
-        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-400">
+        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span>Annual DOT inspection due in <strong>{days} days</strong></span>
         </div>
@@ -99,7 +99,7 @@ function SpecialInfoBanner({ subCategory, document }: InfoBannerProps) {
 
   if (subCategory === 'insurance') {
     return (
-      <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-400">
+      <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
         <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
         <span>FMCSA minimum: <strong>$1M liability</strong> / <strong>$5k per vehicle cargo</strong></span>
       </div>

@@ -25,10 +25,10 @@ interface Props {
 type AccentColor = 'blue' | 'emerald' | 'amber' | 'violet'
 
 const accentStyles: Record<AccentColor, { iconBg: string; iconText: string; dot: string }> = {
-  blue: { iconBg: 'bg-blue-100 dark:bg-blue-950/40', iconText: 'text-blue-600 dark:text-blue-400', dot: 'bg-blue-500' },
-  emerald: { iconBg: 'bg-emerald-100 dark:bg-emerald-950/40', iconText: 'text-emerald-600 dark:text-emerald-400', dot: 'bg-emerald-500' },
-  amber: { iconBg: 'bg-amber-100 dark:bg-amber-950/40', iconText: 'text-amber-600 dark:text-amber-400', dot: 'bg-amber-500' },
-  violet: { iconBg: 'bg-violet-100 dark:bg-violet-950/40', iconText: 'text-violet-600 dark:text-violet-400', dot: 'bg-violet-500' },
+  blue: { iconBg: 'bg-blue-100', iconText: 'text-blue-600', dot: 'bg-blue-500' },
+  emerald: { iconBg: 'bg-emerald-100', iconText: 'text-emerald-600', dot: 'bg-emerald-500' },
+  amber: { iconBg: 'bg-amber-100', iconText: 'text-amber-600', dot: 'bg-amber-500' },
+  violet: { iconBg: 'bg-violet-100', iconText: 'text-violet-600', dot: 'bg-violet-500' },
 }
 
 export function UnitMetricsTable({ metrics }: Props) {

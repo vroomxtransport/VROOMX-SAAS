@@ -327,7 +327,7 @@ export function OrdersDataTable({ orders, sort, onSort, onRowClick, onEdit }: Or
             </span>
             {o.payment_type === 'SPLIT' && o.cod_amount && o.billing_amount && (
               <div className="text-xs text-muted-foreground tabular-nums">
-                <span className="text-emerald-600 dark:text-emerald-400">COD {formatCurrency(o.cod_amount)}</span>
+                <span className="text-emerald-600">COD {formatCurrency(o.cod_amount)}</span>
                 {' / '}
                 <span className="text-brand">Bill {formatCurrency(o.billing_amount)}</span>
               </div>

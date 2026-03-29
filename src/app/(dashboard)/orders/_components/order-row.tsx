@@ -154,7 +154,7 @@ export function OrderRow({ order, onClick, onEdit }: OrderRowProps) {
         </div>
         {order.payment_type === 'SPLIT' && order.cod_amount && order.billing_amount && (
           <div className="text-xs text-muted-foreground tabular-nums">
-            <span className="text-emerald-600 dark:text-emerald-400">COD {formatCurrency(order.cod_amount)}</span>
+            <span className="text-emerald-600">COD {formatCurrency(order.cod_amount)}</span>
             {' / '}
             <span className="text-brand">Bill {formatCurrency(order.billing_amount)}</span>
           </div>

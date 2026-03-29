@@ -132,9 +132,9 @@ export function TripOrders({ tripId, truckType }: TripOrdersProps) {
 
       {/* Capacity Warning */}
       {isOverCapacity && (
-        <div className="flex items-center gap-2 border-b bg-amber-50 dark:bg-amber-950/30 px-4 py-2.5">
+        <div className="flex items-center gap-2 border-b bg-amber-50 px-4 py-2.5">
           <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
-          <p className="text-sm font-medium text-amber-700 dark:text-amber-400">
+          <p className="text-sm font-medium text-amber-700">
             Capacity exceeded: {orders.length} orders on a {truckType ? TRUCK_CAPACITY[truckType] : '?'}-car hauler
           </p>
         </div>

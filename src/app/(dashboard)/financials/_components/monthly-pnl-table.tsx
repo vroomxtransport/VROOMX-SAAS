@@ -138,7 +138,7 @@ export function MonthlyPnLTable({ data }: Props) {
                   groupBoundaries.has(rowIdx) && 'border-t-2 border-t-border',
                   row.isGroupHeader && 'bg-muted/30',
                   row.isSubtotal && !row.highlight && 'bg-muted/50',
-                  row.key === 'netProfitBeforeTax' && 'bg-emerald-50/50 dark:bg-emerald-950/10',
+                  row.key === 'netProfitBeforeTax' && 'bg-emerald-50/50',
                 )}
               >
                 <td className={cn(
@@ -147,7 +147,7 @@ export function MonthlyPnLTable({ data }: Props) {
                   row.indent && 'pl-6',
                   row.isGroupHeader && 'bg-muted/30',
                   row.isSubtotal && !row.highlight && 'bg-muted/50',
-                  row.key === 'netProfitBeforeTax' && 'bg-emerald-50/50 dark:bg-emerald-950/10',
+                  row.key === 'netProfitBeforeTax' && 'bg-emerald-50/50',
                   !row.isGroupHeader && !row.isSubtotal && row.key !== 'netProfitBeforeTax' && 'bg-card',
                 )}>
                   {row.label}
@@ -165,10 +165,10 @@ export function MonthlyPnLTable({ data }: Props) {
                         row.bold ? 'font-semibold text-foreground' : 'text-muted-foreground',
                         col.isSubtotal && !col.isYTD && 'bg-muted/20 font-semibold',
                         col.isYTD && 'bg-brand/5 font-bold',
-                        isNegative && !isNetProfit && 'text-red-600 dark:text-red-400',
+                        isNegative && !isNetProfit && 'text-red-600',
                         isZero && 'text-muted-foreground',
-                        isNetProfit && val < 0 && 'text-red-600 dark:text-red-400',
-                        isNetProfit && val > 0 && 'text-green-600 dark:text-green-400',
+                        isNetProfit && val < 0 && 'text-red-600',
+                        isNetProfit && val > 0 && 'text-green-600',
                       )}
                     >
                       {fmt(val)}

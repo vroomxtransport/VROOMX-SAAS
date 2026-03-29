@@ -23,11 +23,11 @@ function formatCurrency(value: number): string {
 }
 
 const BUCKET_STYLES = {
-  current: 'text-green-700 bg-green-50 dark:bg-green-950/30 dark:text-green-400',
-  '1_30': 'text-yellow-700 bg-yellow-50 dark:bg-yellow-950/30 dark:text-yellow-400',
-  '31_60': 'text-orange-700 bg-orange-50 dark:bg-orange-950/30 dark:text-orange-400',
-  '61_90': 'text-red-700 bg-red-50 dark:bg-red-950/30 dark:text-red-400',
-  '90_plus': 'text-red-900 bg-red-100 dark:bg-red-950/30 dark:text-red-400',
+  current: 'text-green-700 bg-green-50',
+  '1_30': 'text-yellow-700 bg-yellow-50',
+  '31_60': 'text-orange-700 bg-orange-50',
+  '61_90': 'text-red-700 bg-red-50',
+  '90_plus': 'text-red-900 bg-red-100',
 } as const
 
 interface AgingTableProps {

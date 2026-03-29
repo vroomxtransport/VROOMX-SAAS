@@ -263,7 +263,7 @@ export function NewTripDialog({ open, onOpenChange }: NewTripDialogProps) {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {serverError && (
-            <div className="rounded-md bg-red-50 dark:bg-red-950/30 p-3 text-sm text-red-700 dark:text-red-400">
+            <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
               {serverError}
             </div>
           )}

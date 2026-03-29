@@ -86,13 +86,13 @@ export function ProblemSolution() {
         <div className="relative mt-16 grid gap-8 lg:grid-cols-2 lg:gap-16">
           {/* Problems */}
           <TimelineContent as="div" animationNum={2} timelineRef={sectionRef} customVariants={revealVariants}>
-            <div className="rounded-2xl border border-red-200/50 bg-gradient-to-br from-red-50/40 to-transparent p-8 dark:border-red-500/10 dark:from-red-950/20">
+            <div className="rounded-2xl border border-red-200/50 bg-gradient-to-br from-red-50/40 to-transparent p-8">
               <div className="flex items-center gap-3 mb-8">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/10">
                   <X className="h-5 w-5 text-red-500" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-red-600 dark:text-red-400">The Problem</h3>
+                  <h3 className="text-lg font-bold text-red-600">The Problem</h3>
                   <p className="text-xs text-red-500/60">What you deal with every day</p>
                 </div>
               </div>
@@ -123,7 +123,7 @@ export function ProblemSolution() {
 
           {/* Solutions */}
           <TimelineContent as="div" animationNum={3} timelineRef={sectionRef} customVariants={revealVariants}>
-            <div className="rounded-2xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50/40 to-transparent p-8 dark:border-emerald-500/10 dark:from-emerald-950/20 relative">
+            <div className="rounded-2xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50/40 to-transparent p-8 relative">
               {/* Subtle glow */}
               <div className="absolute -inset-px rounded-2xl bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none" />
               <div className="relative">
@@ -132,7 +132,7 @@ export function ProblemSolution() {
                     <CheckCircle className="h-5 w-5 text-emerald-500" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-emerald-600 dark:text-emerald-400">The VroomX Way</h3>
+                    <h3 className="text-lg font-bold text-emerald-600">The VroomX Way</h3>
                     <p className="text-xs text-emerald-500/60">How it should work</p>
                   </div>
                 </div>

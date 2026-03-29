@@ -9,15 +9,16 @@ import {
   Receipt,
   BarChart3,
 } from 'lucide-react'
+
 import { cn } from '@/lib/utils'
 
 const LINKS = [
-  { label: 'New Order', href: '/orders', icon: Car, accent: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-950/30' },
-  { label: 'Trips', href: '/dispatch', icon: Route, accent: 'text-violet-600 dark:text-violet-400', bg: 'bg-violet-50 dark:bg-violet-950/30' },
-  { label: 'Drivers', href: '/drivers', icon: Users, accent: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-950/30' },
-  { label: 'Fleet', href: '/trucks', icon: Truck, accent: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-950/30' },
-  { label: 'Billing', href: '/billing', icon: Receipt, accent: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-50 dark:bg-rose-950/30' },
-  { label: 'Reports', href: '/financials/reports', icon: BarChart3, accent: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-950/30' },
+  { label: 'New Order', href: '/orders', icon: Car, accent: 'text-blue-600', bg: 'bg-blue-50' },
+  { label: 'Trips', href: '/dispatch', icon: Route, accent: 'text-violet-600', bg: 'bg-violet-50' },
+  { label: 'Drivers', href: '/drivers', icon: Users, accent: 'text-emerald-600', bg: 'bg-emerald-50' },
+  { label: 'Fleet', href: '/trucks', icon: Truck, accent: 'text-amber-600', bg: 'bg-amber-50' },
+  { label: 'Billing', href: '/billing', icon: Receipt, accent: 'text-rose-600', bg: 'bg-rose-50' },
+  { label: 'Reports', href: '/financials/reports', icon: BarChart3, accent: 'text-indigo-600', bg: 'bg-indigo-50' },
 ]
 
 export function QuickLinks() {
@@ -29,17 +30,17 @@ export function QuickLinks() {
           Quick Links
         </span>
       </div>
-      <div className="flex-1 min-h-0 grid grid-cols-3 gap-2.5">
+      <div className="flex-1 min-h-0 grid grid-cols-3 gap-1.5">
         {LINKS.map(({ label, href, icon: Icon, accent, bg }) => (
           <Link
             key={href}
             href={href}
-            className="group flex flex-col items-center gap-2 rounded-xl border border-border-subtle bg-surface p-3.5 transition-all hover:-translate-y-0.5 hover:shadow-md hover:border-transparent hover:bg-surface-raised"
+            className="group flex flex-col items-center gap-1 rounded-md border border-border-subtle bg-surface px-1.5 py-2 transition-all hover:-translate-y-0.5 hover:shadow-sm hover:bg-surface-raised"
           >
-            <div className={cn('flex h-10 w-10 items-center justify-center rounded-xl transition-transform group-hover:scale-110', bg)}>
-              <Icon className={cn('h-5 w-5', accent)} />
+            <div className={cn('flex h-8 w-8 items-center justify-center rounded-lg transition-transform group-hover:scale-110', bg)}>
+              <Icon className={cn('h-4 w-4', accent)} />
             </div>
-            <span className="text-xs font-medium text-foreground">{label}</span>
+            <span className="text-[11px] font-medium text-foreground">{label}</span>
           </Link>
         ))}
       </div>

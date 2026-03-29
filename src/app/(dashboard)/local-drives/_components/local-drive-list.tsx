@@ -29,10 +29,10 @@ import type { LocalDrive } from '@/types/database'
 const PAGE_SIZE = 12
 
 const STATUS_PILL_COLORS: Record<LocalDriveStatus, string> = {
-  pending: 'bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-400',
-  in_progress: 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-400',
-  completed: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400',
-  cancelled: 'bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-400',
+  pending: 'bg-blue-100 text-blue-800',
+  in_progress: 'bg-amber-100 text-amber-800',
+  completed: 'bg-emerald-100 text-emerald-800',
+  cancelled: 'bg-red-100 text-red-800',
 }
 
 const CSV_HEADERS = [

@@ -3,23 +3,27 @@ import Link from 'next/link'
 import { Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { PricingJsonLd } from '@/components/shared/json-ld'
 
 export const metadata: Metadata = {
-  title: 'Pricing',
+  title: 'Auto Transport TMS Pricing — Plans from $49/mo',
   description:
-    'Simple, transparent pricing for auto-transport carriers. Choose from Starter, Pro, or Enterprise plans. 14-day free trial on all plans.',
+    'VroomX TMS pricing: Starter $49/mo (5 trucks), Pro $149/mo (20 trucks), Enterprise $299/mo (unlimited). 14-day free trial, no credit card required. No per-seat fees.',
+  alternates: {
+    canonical: '/pricing',
+  },
   openGraph: {
-    title: 'Pricing | VroomX',
+    title: 'Auto Transport TMS Pricing — Plans from $49/mo | VroomX',
     description:
-      'Simple, transparent pricing for auto-transport carriers. Start free, upgrade anytime.',
+      'VroomX TMS pricing: Starter $49/mo (5 trucks), Pro $149/mo (20 trucks), Enterprise $299/mo (unlimited). 14-day free trial, no credit card required. No per-seat fees.',
     type: 'website',
     siteName: 'VroomX',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Pricing | VroomX',
+    title: 'Auto Transport TMS Pricing — Plans from $49/mo | VroomX',
     description:
-      'Simple, transparent pricing for auto-transport carriers.',
+      'VroomX TMS: Starter $49/mo, Pro $149/mo, Enterprise $299/mo. 14-day free trial, no credit card required.',
   },
 }
 
@@ -111,6 +115,7 @@ const faqs = [
 export default function PricingPage() {
   return (
     <>
+      <PricingJsonLd />
       {/* Hero */}
       <section className="py-24 sm:py-32">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

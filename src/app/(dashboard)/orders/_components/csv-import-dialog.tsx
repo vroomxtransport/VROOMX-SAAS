@@ -416,7 +416,7 @@ export function CSVImportDialog({ open, onOpenChange }: CSVImportDialogProps) {
           {/* ============ STEP 1: Upload ============ */}
           {step === 'upload' && (
             <div className="flex flex-col items-center justify-center gap-4 py-8">
-              <div className="rounded-full bg-blue-50 dark:bg-blue-950/30 p-4">
+              <div className="rounded-full bg-blue-50 p-4">
                 <Upload className="h-8 w-8 text-blue-600" />
               </div>
               <div className="text-center">
@@ -521,7 +521,7 @@ export function CSVImportDialog({ open, onOpenChange }: CSVImportDialogProps) {
                 <Badge variant="secondary" className="text-xs">
                   {csvData.length} total rows
                 </Badge>
-                <Badge variant="secondary" className="text-xs bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400">
+                <Badge variant="secondary" className="text-xs bg-green-50 text-green-700">
                   {validRowCount} valid
                 </Badge>
                 {invalidRowCount > 0 && (
@@ -554,7 +554,7 @@ export function CSVImportDialog({ open, onOpenChange }: CSVImportDialogProps) {
                       return (
                         <TableRow
                           key={idx}
-                          className={hasErrors ? 'bg-red-50 dark:bg-red-950/30' : ''}
+                          className={hasErrors ? 'bg-red-50' : ''}
                         >
                           <TableCell className="text-xs text-muted-foreground/60">
                             {idx + 1}
@@ -616,7 +616,7 @@ export function CSVImportDialog({ open, onOpenChange }: CSVImportDialogProps) {
                 </>
               ) : importResult ? (
                 <>
-                  <div className="rounded-full bg-green-50 dark:bg-green-950/30 p-4">
+                  <div className="rounded-full bg-green-50 p-4">
                     <CheckCircle2 className="h-8 w-8 text-green-600" />
                   </div>
                   <div className="text-center space-y-1">
@@ -654,7 +654,7 @@ export function CSVImportDialog({ open, onOpenChange }: CSVImportDialogProps) {
                             {importResult.errors.map((err, i) => (
                               <div
                                 key={i}
-                                className="text-xs text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950/30 rounded px-2 py-1"
+                                className="text-xs text-red-700 bg-red-50 rounded px-2 py-1"
                               >
                                 <span className="font-medium">Row {err.row}:</span>{' '}
                                 {err.message}

@@ -53,10 +53,10 @@ function ProgressRow({
 
   const countColor =
     pct > 90
-      ? 'text-red-500 dark:text-red-400'
+      ? 'text-red-500'
       : pct >= 70
-        ? 'text-amber-500 dark:text-amber-400'
-        : 'text-emerald-600 dark:text-emerald-400'
+        ? 'text-amber-500'
+        : 'text-emerald-600'
 
   const glowColor = glowColors[color]
 
@@ -105,7 +105,7 @@ export function FleetPulse({ trucks, drivers, capacity }: FleetPulseProps) {
           <span className="widget-accent-dot bg-emerald-500" />
           Fleet Pulse
         </span>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/30 px-2.5 py-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-600">
           <span className="relative flex h-1.5 w-1.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
             <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />

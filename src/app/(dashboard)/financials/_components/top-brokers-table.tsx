@@ -160,7 +160,7 @@ export function TopBrokersTable({ data }: TopBrokersTableProps) {
                         className={cn(
                           'inline-flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold',
                           isTopThree
-                            ? 'bg-brand/10 text-brand dark:bg-brand/20'
+                            ? 'bg-brand/10 text-brand'
                             : 'text-muted-foreground'
                         )}
                       >

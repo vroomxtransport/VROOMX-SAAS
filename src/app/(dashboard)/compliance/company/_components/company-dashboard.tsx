@@ -58,7 +58,7 @@ function ProgressBar({ complete, total }: ProgressBarProps) {
         </p>
       )}
       {allDone && (
-        <p className="mt-2 text-xs text-green-600 dark:text-green-400 font-medium">
+        <p className="mt-2 text-xs text-green-600 font-medium">
           All required company documents are on file
         </p>
       )}
@@ -77,7 +77,7 @@ interface InfoBannerProps {
 function SpecialInfoBanner({ subCategory }: InfoBannerProps) {
   if (subCategory === 'ucr') {
     return (
-      <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-400">
+      <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
         <Calendar className="mt-0.5 h-3.5 w-3.5 shrink-0" />
         <span>UCR annual registration — <strong>deadline: December 31</strong></span>
       </div>
@@ -86,7 +86,7 @@ function SpecialInfoBanner({ subCategory }: InfoBannerProps) {
 
   if (subCategory === 'boc3') {
     return (
-      <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-400">
+      <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
         <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
         <span>BOC-3 Process Agent — <strong>verify process agent annually</strong></span>
       </div>
@@ -95,7 +95,7 @@ function SpecialInfoBanner({ subCategory }: InfoBannerProps) {
 
   if (subCategory === 'operating_authority') {
     return (
-      <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-400">
+      <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
         <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
         <span>Upload your MC# letter and USDOT certificate for easy reference</span>
       </div>

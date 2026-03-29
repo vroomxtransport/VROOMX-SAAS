@@ -141,7 +141,7 @@ export function PayrollPeriodDetailDrawer({
 
               <div className="flex items-center justify-between border-t border-border pt-2">
                 <span className="text-sm font-bold">Total Pay</span>
-                <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                <span className="text-lg font-bold text-emerald-600">
                   {formatCurrency(period.total_amount)}
                 </span>
               </div>
@@ -202,7 +202,7 @@ export function PayrollPeriodDetailDrawer({
                             <td className="px-3 py-2 text-right text-muted-foreground">
                               {formatCurrency(cleanGross)}
                             </td>
-                            <td className="px-3 py-2 text-right font-medium text-emerald-600 dark:text-emerald-400">
+                            <td className="px-3 py-2 text-right font-medium text-emerald-600">
                               {formatCurrency(commission)}
                             </td>
                           </tr>

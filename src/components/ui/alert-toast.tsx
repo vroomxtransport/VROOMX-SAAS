@@ -29,22 +29,22 @@ const alertToastVariants = cva(
       {
         variant: "success",
         styleVariant: "default",
-        className: "text-success-foreground border-green-200 dark:border-green-700",
+        className: "text-success-foreground border-green-200",
       },
       {
         variant: "warning",
         styleVariant: "default",
-        className: "text-warning-foreground border-yellow-200 dark:border-yellow-700",
+        className: "text-warning-foreground border-yellow-200",
       },
       {
         variant: "info",
         styleVariant: "default",
-        className: "text-info-foreground border-blue-200 dark:border-blue-700",
+        className: "text-info-foreground border-blue-200",
       },
       {
         variant: "error",
         styleVariant: "default",
-        className: "text-destructive-foreground border-red-200 dark:border-red-700",
+        className: "text-destructive-foreground border-red-200",
       },
       {
         variant: "success",

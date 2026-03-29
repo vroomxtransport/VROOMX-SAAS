@@ -22,9 +22,9 @@ import {
 
 // ── Plan / status display helpers ──────────────────────────────────────────────
 const PLAN_COLORS: Record<string, string> = {
-  starter: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800/40 dark:text-slate-300 dark:border-slate-700',
-  pro: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800',
-  enterprise: 'bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800',
+  starter: 'bg-slate-100 text-slate-700 border-slate-200',
+  pro: 'bg-blue-50 text-blue-700 border-blue-200',
+  enterprise: 'bg-violet-50 text-violet-700 border-violet-200',
 }
 const PLAN_LABELS: Record<string, string> = {
   starter: 'Starter',
@@ -33,12 +33,12 @@ const PLAN_LABELS: Record<string, string> = {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  active: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800',
-  trialing: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800',
-  past_due: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800',
-  canceled: 'bg-gray-50 text-gray-500 border-gray-200 dark:bg-gray-800/30 dark:text-gray-400 dark:border-gray-700',
-  suspended: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800',
-  unpaid: 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-800',
+  active: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  trialing: 'bg-blue-50 text-blue-700 border-blue-200',
+  past_due: 'bg-amber-50 text-amber-700 border-amber-200',
+  canceled: 'bg-gray-50 text-gray-500 border-gray-200',
+  suspended: 'bg-red-50 text-red-700 border-red-200',
+  unpaid: 'bg-orange-50 text-orange-700 border-orange-200',
 }
 const STATUS_LABELS: Record<string, string> = {
   active: 'Active',
@@ -212,7 +212,7 @@ function SubscriptionCard({ tenant }: { tenant: TenantRecord }) {
               {tenant.grace_period_ends_at && (
                 <div className="flex items-center justify-between">
                   <dt className="text-sm text-muted-foreground">Grace period ends</dt>
-                  <dd className="text-sm font-medium text-amber-600 dark:text-amber-400">
+                  <dd className="text-sm font-medium text-amber-600">
                     {formatDate(tenant.grace_period_ends_at)}
                   </dd>
                 </div>
@@ -225,7 +225,7 @@ function SubscriptionCard({ tenant }: { tenant: TenantRecord }) {
                       href={`https://dashboard.stripe.com/customers/${tenant.stripe_customer_id}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline dark:text-blue-400"
+                      className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
                     >
                       {tenant.stripe_customer_id.slice(0, 16)}…
                       <ExternalLink className="h-3 w-3" />

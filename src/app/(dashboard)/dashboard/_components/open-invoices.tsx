@@ -90,7 +90,7 @@ export function OpenInvoices() {
       </div>
 
       <div className="space-y-2">
-        <div className="flex items-center justify-between rounded-xl border-l-2 border-l-blue-500 bg-muted/30 dark:bg-muted/10 px-3 py-2.5">
+        <div className="flex items-center justify-between rounded-xl border-l-2 border-l-blue-500 bg-muted/30 px-3 py-2.5">
           <div className="flex items-center gap-2">
             <FileText className="h-3.5 w-3.5 text-blue-500" />
             <span className="text-sm text-muted-foreground">Ready to invoice</span>
@@ -104,7 +104,7 @@ export function OpenInvoices() {
         </div>
 
         {outstanding > 0 && (
-          <div className="flex items-center justify-between rounded-xl border-l-2 border-l-amber-500 bg-muted/30 dark:bg-muted/10 px-3 py-2.5">
+          <div className="flex items-center justify-between rounded-xl border-l-2 border-l-amber-500 bg-muted/30 px-3 py-2.5">
             <div className="flex items-center gap-2">
               <AlertTriangle className={cn('h-3.5 w-3.5', outstanding > 5000 ? 'text-red-500' : 'text-amber-500')} />
               <span className="text-sm text-muted-foreground">Total owed</span>

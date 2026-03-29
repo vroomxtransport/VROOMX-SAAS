@@ -36,7 +36,7 @@ const FILTER_CONFIG: EnhancedFilterConfig[] = [
     label: 'Status',
     type: 'status-pills',
     options: [
-      { value: 'active', label: 'Active', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400' },
+      { value: 'active', label: 'Active', color: 'bg-emerald-100 text-emerald-800' },
       { value: 'inactive', label: 'Inactive', color: 'bg-muted text-muted-foreground' },
     ],
   },

@@ -549,3 +549,78 @@ export interface WebNotification {
   read_at: string | null
   created_at: string
 }
+
+// ============================================================================
+// Samsara ELD/Telematics Integration Interfaces
+// ============================================================================
+
+export interface SamsaraIntegration {
+  id: string
+  tenant_id: string
+  samsara_org_id: string | null
+  access_token_encrypted: string
+  refresh_token_encrypted: string
+  token_expires_at: string
+  webhook_secret: string | null
+  sync_status: 'active' | 'paused' | 'error' | 'disconnected'
+  last_sync_at: string | null
+  last_error: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface SamsaraVehicleMapping {
+  id: string
+  tenant_id: string
+  samsara_vehicle_id: string
+  truck_id: string | null
+  samsara_name: string | null
+  samsara_vin: string | null
+  last_latitude: number | null
+  last_longitude: number | null
+  last_speed: number | null
+  last_heading: number | null
+  last_location_time: string | null
+  last_odometer_meters: number | null
+  created_at: string
+  updated_at: string
+  truck?: Truck
+}
+
+export interface SamsaraDriverMapping {
+  id: string
+  tenant_id: string
+  samsara_driver_id: string
+  driver_id: string | null
+  samsara_name: string | null
+  samsara_email: string | null
+  samsara_phone: string | null
+  samsara_license_number: string | null
+  samsara_license_state: string | null
+  samsara_status: string | null
+  created_at: string
+  updated_at: string
+  driver?: Driver
+}
+
+export interface EldLog {
+  id: string
+  tenant_id: string
+  driver_id: string | null
+  samsara_driver_id: string
+  duty_status: 'off_duty' | 'sleeper_berth' | 'driving' | 'on_duty_not_driving'
+  started_at: string
+  ended_at: string | null
+  duration_ms: number | null
+  vehicle_id: string | null
+  vehicle_name: string | null
+  driving_time_remaining_ms: number | null
+  shift_time_remaining_ms: number | null
+  cycle_time_remaining_ms: number | null
+  time_until_break_ms: number | null
+  location_latitude: number | null
+  location_longitude: number | null
+  location_description: string | null
+  created_at: string
+  driver?: Driver
+}

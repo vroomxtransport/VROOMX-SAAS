@@ -34,7 +34,7 @@ export function MemberList({ members, currentUserId, onSetStatus, onClose }: Mem
           <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Members
           </h3>
-          <span className="rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+          <span className="rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600">
             {members.length}
           </span>
         </div>
@@ -59,7 +59,7 @@ export function MemberList({ members, currentUserId, onSetStatus, onClose }: Mem
             className={cn(
               'flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors',
               currentStatus === 'online'
-                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/30'
+                ? 'bg-emerald-500/10 text-emerald-600 ring-1 ring-emerald-500/30'
                 : 'text-muted-foreground hover:bg-accent/50'
             )}
           >
@@ -71,7 +71,7 @@ export function MemberList({ members, currentUserId, onSetStatus, onClose }: Mem
             className={cn(
               'flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors',
               currentStatus === 'busy'
-                ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 ring-1 ring-amber-500/30'
+                ? 'bg-amber-500/10 text-amber-600 ring-1 ring-amber-500/30'
                 : 'text-muted-foreground hover:bg-accent/50'
             )}
           >

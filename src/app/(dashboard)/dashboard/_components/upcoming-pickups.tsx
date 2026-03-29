@@ -32,7 +32,7 @@ function getDatePillClass(dateLabel: string): string {
     return 'bg-brand/10 text-brand'
   }
   if (dateLabel === 'Tomorrow') {
-    return 'bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400'
+    return 'bg-amber-100 text-amber-700'
   }
   return 'bg-muted text-muted-foreground'
 }
