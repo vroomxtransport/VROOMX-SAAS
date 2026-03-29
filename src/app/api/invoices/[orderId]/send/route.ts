@@ -1,6 +1,7 @@
 import { renderToBuffer } from '@react-pdf/renderer'
 import { createClient } from '@/lib/supabase/server'
 import { getResend } from '@/lib/resend/client'
+import { getSignedUrl } from '@/lib/storage'
 import { logOrderActivity } from '@/lib/activity-log'
 import { InvoiceDocument } from '@/lib/pdf/invoice-template'
 import { InvoiceEmail } from '@/components/email/invoice-email'
@@ -46,10 +47,10 @@ export async function POST(
     )
   }
 
-  // Fetch tenant for company info
+  // Fetch tenant for company info (include branding fields)
   const { data: tenant, error: tenantError } = await supabase
     .from('tenants')
-    .select('name, address, city, state, zip, phone')
+    .select('name, address, city, state, zip, phone, logo_storage_path, invoice_header_text, invoice_footer_text')
     .single()
 
   if (tenantError || !tenant) {
@@ -59,11 +60,18 @@ export async function POST(
     )
   }
 
+  // Resolve logo signed URL if one is stored (valid for 30 min — long enough for PDF gen + email send)
+  let logoUrl: string | null = null
+  if (tenant.logo_storage_path) {
+    const { url } = await getSignedUrl(supabase, 'branding', tenant.logo_storage_path, 1800)
+    logoUrl = url || null
+  }
+
   // Generate PDF buffer
   let pdfBuffer: Buffer
   try {
     const buffer = await renderToBuffer(
-      InvoiceDocument({ order, tenant })
+      InvoiceDocument({ order, tenant, logoUrl })
     )
     pdfBuffer = Buffer.from(buffer)
   } catch (err) {

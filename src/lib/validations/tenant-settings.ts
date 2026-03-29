@@ -18,3 +18,20 @@ export const companyProfileSchema = z.object({
 })
 
 export type CompanyProfileFormValues = z.infer<typeof companyProfileSchema>
+
+export const brandingSchema = z.object({
+  brandColorPrimary: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, 'Invalid hex color')
+    .optional()
+    .or(z.literal('')),
+  brandColorSecondary: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, 'Invalid hex color')
+    .optional()
+    .or(z.literal('')),
+  invoiceHeaderText: z.string().max(500).optional().or(z.literal('')),
+  invoiceFooterText: z.string().max(500).optional().or(z.literal('')),
+})
+
+export type BrandingFormValues = z.infer<typeof brandingSchema>

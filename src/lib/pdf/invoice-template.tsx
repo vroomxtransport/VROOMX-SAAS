@@ -3,6 +3,7 @@ import {
   Page,
   Text,
   View,
+  Image,
   StyleSheet,
 } from '@react-pdf/renderer'
 
@@ -82,6 +83,17 @@ const styles = StyleSheet.create({
     borderColor: '#e5e7eb',
     paddingTop: 10,
   },
+  logo: {
+    maxWidth: 120,
+    maxHeight: 60,
+    objectFit: 'contain',
+    marginBottom: 8,
+  },
+  headerText: {
+    marginTop: 4,
+    color: '#4b5563',
+    fontSize: 9,
+  },
 })
 
 interface InvoiceDocumentProps {
@@ -109,7 +121,11 @@ interface InvoiceDocumentProps {
     state: string | null
     zip: string | null
     phone: string | null
+    invoice_header_text?: string | null
+    invoice_footer_text?: string | null
   }
+  /** Pre-signed URL for the company logo stored in the branding bucket */
+  logoUrl?: string | null
 }
 
 function formatCurrency(value: string): string {
@@ -119,7 +135,7 @@ function formatCurrency(value: string): string {
   })}`
 }
 
-export function InvoiceDocument({ order, tenant }: InvoiceDocumentProps) {
+export function InvoiceDocument({ order, tenant, logoUrl }: InvoiceDocumentProps) {
   const invoiceNumber = `INV-${order.id}`
 
   const vehicleDescription = [order.vehicle_year, order.vehicle_make, order.vehicle_model]
@@ -144,7 +160,13 @@ export function InvoiceDocument({ order, tenant }: InvoiceDocumentProps) {
         {/* Company Header + Invoice Info */}
         <View style={styles.header}>
           <View>
+            {logoUrl && (
+              <Image src={logoUrl} style={styles.logo} />
+            )}
             <Text style={styles.companyName}>{tenant.name}</Text>
+            {tenant.invoice_header_text && (
+              <Text style={styles.headerText}>{tenant.invoice_header_text}</Text>
+            )}
             {tenant.address && (
               <Text style={styles.companyDetail}>{tenant.address}</Text>
             )}
@@ -224,7 +246,11 @@ export function InvoiceDocument({ order, tenant }: InvoiceDocumentProps) {
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text>Thank you for your business</Text>
+          <Text>
+            {tenant.invoice_footer_text
+              ? tenant.invoice_footer_text
+              : 'Thank you for your business'}
+          </Text>
         </View>
       </Page>
     </Document>

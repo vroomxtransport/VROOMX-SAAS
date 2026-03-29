@@ -67,6 +67,12 @@ export const tenants = pgTable('tenants', {
   // Factoring
   factoringFeeRate: numeric('factoring_fee_rate', { precision: 5, scale: 2 }).default('0'),
   onboardingCompletedAt: timestamp('onboarding_completed_at', { withTimezone: true }),
+  // Branding (Phase: branding module)
+  logoStoragePath: text('logo_storage_path'),
+  brandColorPrimary: text('brand_color_primary').default('#1a2b3f'),
+  brandColorSecondary: text('brand_color_secondary'),
+  invoiceHeaderText: text('invoice_header_text'),
+  invoiceFooterText: text('invoice_footer_text'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })

@@ -1,5 +1,6 @@
 import { renderToBuffer } from '@react-pdf/renderer'
 import { createClient } from '@/lib/supabase/server'
+import { getSignedUrl } from '@/lib/storage'
 import { InvoiceDocument } from '@/lib/pdf/invoice-template'
 
 export async function GET(
@@ -35,10 +36,10 @@ export async function GET(
     return Response.json({ error: 'Order not found' }, { status: 404 })
   }
 
-  // Fetch tenant for company info
+  // Fetch tenant for company info (include branding fields)
   const { data: tenant, error: tenantError } = await supabase
     .from('tenants')
-    .select('name, address, city, state, zip, phone')
+    .select('name, address, city, state, zip, phone, logo_storage_path, invoice_header_text, invoice_footer_text')
     .single()
 
   if (tenantError || !tenant) {
@@ -48,13 +49,20 @@ export async function GET(
     )
   }
 
+  // Resolve logo signed URL if one is stored
+  let logoUrl: string | null = null
+  if (tenant.logo_storage_path) {
+    const { url } = await getSignedUrl(supabase, 'branding', tenant.logo_storage_path, 3600)
+    logoUrl = url || null
+  }
+
   // Normalize broker relation (Supabase may return array)
   const brokerRaw = order.broker as unknown as { name: string; email: string | null } | { name: string; email: string | null }[] | null
   const broker = Array.isArray(brokerRaw) ? brokerRaw[0] ?? null : brokerRaw
 
   try {
     const pdfBuffer = await renderToBuffer(
-      InvoiceDocument({ order: { ...order, broker }, tenant })
+      InvoiceDocument({ order: { ...order, broker }, tenant, logoUrl })
     )
 
     return new Response(new Uint8Array(pdfBuffer), {

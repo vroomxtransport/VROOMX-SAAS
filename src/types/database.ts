@@ -18,6 +18,11 @@ export interface Tenant {
   is_suspended: boolean
   factoring_fee_rate: string
   onboarding_completed_at: string | null
+  logo_storage_path: string | null
+  brand_color_primary: string | null
+  brand_color_secondary: string | null
+  invoice_header_text: string | null
+  invoice_footer_text: string | null
   created_at: string
   updated_at: string
 }
