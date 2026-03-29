@@ -4,6 +4,7 @@ import { authorize, safeError } from '@/lib/authz'
 import { recordPaymentSchema } from '@/lib/validations/payment'
 import { logOrderActivity } from '@/lib/activity-log'
 import { createWebNotification } from '@/app/actions/notifications'
+import { syncPaymentToQB } from '@/lib/quickbooks/sync'
 import { revalidatePath } from 'next/cache'
 
 export async function recordPayment(orderId: string, data: unknown) {
@@ -90,6 +91,9 @@ export async function recordPayment(orderId: string, data: unknown) {
   if (updateError) {
     return { error: safeError(updateError, 'recordPayment') }
   }
+
+  // Fire-and-forget: sync payment to QuickBooks
+  void syncPaymentToQB(supabase, tenantId, orderId, parsed.data.amount, parsed.data.paymentDate).catch(() => {})
 
   // Fire-and-forget activity log
   logOrderActivity(supabase, {

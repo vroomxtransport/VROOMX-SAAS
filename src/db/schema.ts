@@ -1193,6 +1193,87 @@ export const eldLogs = pgTable('eld_logs', {
   index('idx_eld_logs_duty_status').on(table.tenantId, table.dutyStatus, table.startedAt),
 ])
 
+// ============================================================================
+// QuickBooks Online Integration Tables
+// ============================================================================
+
+/**
+ * QuickBooks Integrations Table
+ * One per tenant — stores OAuth tokens, realm ID, and sync status.
+ * UNIQUE on tenant_id: each tenant can connect one QB company.
+ */
+export const quickbooksIntegrations = pgTable('quickbooks_integrations', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }).unique(),
+  realmId: text('realm_id').notNull(),
+  accessTokenEncrypted: text('access_token_encrypted').notNull(),
+  refreshTokenEncrypted: text('refresh_token_encrypted').notNull(),
+  tokenExpiresAt: timestamp('token_expires_at', { withTimezone: true }).notNull(),
+  refreshTokenExpiresAt: timestamp('refresh_token_expires_at', { withTimezone: true }).notNull(),
+  companyName: text('company_name'),
+  syncStatus: text('sync_status').notNull().default('active'),
+  lastSyncAt: timestamp('last_sync_at', { withTimezone: true }),
+  lastError: text('last_error'),
+  webhookVerifierToken: text('webhook_verifier_token'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_qb_integrations_tenant').on(table.tenantId),
+  index('idx_qb_integrations_realm').on(table.realmId),
+])
+
+/**
+ * QuickBooks Entity Map Table
+ * Maps VroomX entities (brokers, orders, drivers, etc.) to QB entities.
+ * UNIQUE on (tenant_id, entity_type, vroomx_id).
+ */
+export const quickbooksEntityMap = pgTable('quickbooks_entity_map', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  entityType: text('entity_type').notNull(),
+  vroomxId: uuid('vroomx_id').notNull(),
+  qbId: text('qb_id').notNull(),
+  qbSyncToken: text('qb_sync_token'),
+  lastSyncedAt: timestamp('last_synced_at', { withTimezone: true }).notNull().defaultNow(),
+  syncError: text('sync_error'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_qb_entity_map_tenant').on(table.tenantId),
+  index('idx_qb_entity_map_lookup').on(table.tenantId, table.entityType, table.vroomxId),
+  index('idx_qb_entity_map_qb_id').on(table.tenantId, table.entityType, table.qbId),
+  unique('uq_qb_entity_map').on(table.tenantId, table.entityType, table.vroomxId),
+])
+
+/**
+ * QuickBooks Webhook Events Table
+ * Idempotency log for QB webhook processing.
+ * UNIQUE on event_id to prevent duplicate processing.
+ */
+export const quickbooksWebhookEvents = pgTable('quickbooks_webhook_events', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  eventId: text('event_id').notNull().unique(),
+  realmId: text('realm_id').notNull(),
+  entityType: text('entity_type').notNull(),
+  entityId: text('entity_id').notNull(),
+  operation: text('operation').notNull(),
+  payload: jsonb('payload').notNull(),
+  processedAt: timestamp('processed_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_qb_webhook_events_tenant').on(table.tenantId),
+  index('idx_qb_webhook_events_realm').on(table.realmId),
+  index('idx_qb_webhook_events_entity').on(table.tenantId, table.entityType, table.entityId),
+])
+
+// QuickBooks Integration Types
+export type DrizzleQuickBooksIntegration = typeof quickbooksIntegrations.$inferSelect
+export type NewQuickBooksIntegration = typeof quickbooksIntegrations.$inferInsert
+export type DrizzleQuickBooksEntityMap = typeof quickbooksEntityMap.$inferSelect
+export type NewQuickBooksEntityMap = typeof quickbooksEntityMap.$inferInsert
+export type DrizzleQuickBooksWebhookEvent = typeof quickbooksWebhookEvents.$inferSelect
+export type NewQuickBooksWebhookEvent = typeof quickbooksWebhookEvents.$inferInsert
+
 // Samsara Integration Types
 export type DrizzleSamsaraIntegration = typeof samsaraIntegrations.$inferSelect
 export type NewSamsaraIntegration = typeof samsaraIntegrations.$inferInsert

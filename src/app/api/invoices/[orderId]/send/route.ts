@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getResend } from '@/lib/resend/client'
 import { getSignedUrl } from '@/lib/storage'
 import { logOrderActivity } from '@/lib/activity-log'
+import { syncInvoiceToQB } from '@/lib/quickbooks/sync'
 import { InvoiceDocument } from '@/lib/pdf/invoice-template'
 import { InvoiceEmail } from '@/components/email/invoice-email'
 
@@ -142,6 +143,9 @@ export async function POST(
         // but log the status update failure
       }
     }
+
+    // Fire-and-forget: sync invoice to QuickBooks
+    void syncInvoiceToQB(supabase, tenantId, orderId).catch(() => {})
 
     // Fire-and-forget activity log
     logOrderActivity(supabase, {

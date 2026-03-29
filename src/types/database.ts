@@ -556,6 +556,52 @@ export interface WebNotification {
 }
 
 // ============================================================================
+// QuickBooks Online Integration Interfaces
+// ============================================================================
+
+export interface QuickBooksIntegration {
+  id: string
+  tenant_id: string
+  realm_id: string
+  access_token_encrypted: string
+  refresh_token_encrypted: string
+  token_expires_at: string
+  refresh_token_expires_at: string
+  company_name: string | null
+  sync_status: 'active' | 'paused' | 'error' | 'disconnected'
+  last_sync_at: string | null
+  last_error: string | null
+  webhook_verifier_token: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface QuickBooksEntityMap {
+  id: string
+  tenant_id: string
+  entity_type: 'broker_customer' | 'driver_vendor' | 'order_invoice' | 'payment' | 'expense'
+  vroomx_id: string
+  qb_id: string
+  qb_sync_token: string | null
+  last_synced_at: string
+  sync_error: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface QuickBooksWebhookEvent {
+  id: string
+  tenant_id: string
+  event_id: string
+  realm_id: string
+  entity_type: string
+  entity_id: string
+  operation: string
+  payload: Record<string, unknown>
+  processed_at: string
+}
+
+// ============================================================================
 // Samsara ELD/Telematics Integration Interfaces
 // ============================================================================
 

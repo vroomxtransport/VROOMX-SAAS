@@ -2,6 +2,7 @@
 
 import { authorize, safeError } from '@/lib/authz'
 import { tripExpenseSchema } from '@/lib/validations/trip-expense'
+import { syncExpenseToQB } from '@/lib/quickbooks/sync'
 import { revalidatePath } from 'next/cache'
 import { recalculateTripFinancials } from '@/app/actions/trips'
 
@@ -37,6 +38,9 @@ export async function createTripExpense(tripId: string, data: unknown) {
 
   // Recalculate trip financials after adding expense
   await recalculateTripFinancials(tripId)
+
+  // Fire-and-forget: sync expense to QuickBooks
+  void syncExpenseToQB(supabase, tenantId, expense.id, 'trip').catch(() => {})
 
   revalidatePath(`/trips/${tripId}`)
   revalidatePath('/dispatch')
