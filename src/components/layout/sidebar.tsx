@@ -255,12 +255,12 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
                     >
                       {/* Active indicator pill */}
                       {isActive && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-[var(--brand)]" />
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-[var(--brand-muted)]" />
                       )}
                       <Icon
                         className={cn(
                           'h-5 w-5 shrink-0 transition-colors',
-                          isActive ? 'text-[var(--brand)]' : 'group-hover:text-white'
+                          isActive ? 'text-[var(--brand-muted)]' : 'group-hover:text-white'
                         )}
                       />
                       <span
