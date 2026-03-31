@@ -6,6 +6,7 @@ import { useDriver } from '@/hooks/use-drivers'
 import { deleteDriver, updateDriverStatus } from '@/app/actions/drivers'
 import { DriverDrawer } from '../_components/driver-drawer'
 import { DriverEarnings } from './_components/driver-earnings'
+import { LocalDriverEarnings } from './_components/local-driver-earnings'
 import { DriverDocuments } from './_components/driver-documents'
 import { DriverComplianceDocs } from './_components/driver-compliance-docs'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
@@ -45,6 +46,10 @@ function formatPayDisplay(payType: DriverPayType, payRate: number): string {
       return `${payRate}% Dispatch Fee`
     case 'per_mile':
       return `$${payRate.toFixed(2)} per mile`
+    case 'per_car':
+      return `$${payRate.toFixed(2)} per car`
+    case 'daily_salary':
+      return `$${payRate.toFixed(2)} per day`
     default:
       return `${payRate}`
   }
@@ -270,7 +275,11 @@ export default function DriverDetailPage({ params }: DriverDetailPageProps) {
 
       {/* Earnings -- full width below the grid */}
       <div className="mt-6">
-        <DriverEarnings driverId={id} />
+        {driver.driver_type === 'local_driver' ? (
+          <LocalDriverEarnings driverId={id} />
+        ) : (
+          <DriverEarnings driverId={id} />
+        )}
       </div>
 
       {/* Notes */}

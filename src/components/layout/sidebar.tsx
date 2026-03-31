@@ -32,6 +32,7 @@ import {
   Wallet,
   Plug,
   Route,
+  Navigation,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -102,6 +103,7 @@ const NAV_CATEGORIES: NavCategory[] = [
       { name: 'Financials', href: '/financials', icon: CircleDollarSign, minRole: 'admin' },
       { name: 'Billing', href: '/billing', icon: FileText, minRole: 'admin' },
       { name: 'Payroll', href: '/payroll', icon: Wallet, minRole: 'admin' },
+      { name: 'Local Driver Pay', href: '/local-driver-payroll', icon: Navigation, minRole: 'admin' },
       { name: 'Brokers', href: '/brokers', icon: Building2, minRole: 'dispatcher' },
     ],
   },

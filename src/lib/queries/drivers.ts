@@ -77,14 +77,14 @@ export async function fetchDrivers(
  */
 export async function fetchDriverOptions(
   supabase: SupabaseClient
-): Promise<{ id: string; first_name: string; last_name: string }[]> {
+): Promise<{ id: string; first_name: string; last_name: string; driver_type: string }[]> {
   const { data, error } = await supabase
     .from('drivers')
-    .select('id, first_name, last_name')
+    .select('id, first_name, last_name, driver_type')
     .order('first_name')
 
   if (error) throw error
-  return (data ?? []) as { id: string; first_name: string; last_name: string }[]
+  return (data ?? []) as { id: string; first_name: string; last_name: string; driver_type: string }[]
 }
 
 export async function fetchDriver(

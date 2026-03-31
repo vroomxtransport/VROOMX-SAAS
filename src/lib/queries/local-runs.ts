@@ -25,7 +25,7 @@ export async function fetchLocalRuns(
 
   let query = supabase
     .from('local_runs')
-    .select('*, terminal:terminals(id, name), driver:drivers(id, first_name, last_name), truck:trucks(id, unit_number)', { count: 'exact' })
+    .select('*, terminal:terminals(id, name), driver:drivers(id, first_name, last_name), truck:trucks(id, unit_number), local_drives(id)', { count: 'exact' })
     .range(page * pageSize, (page + 1) * pageSize - 1)
 
   if (status) query = query.eq('status', status)
