@@ -27,11 +27,11 @@ export interface SamsaraDriver {
 export interface SamsaraLocation {
   id: string
   name: string
-  location: {
+  gps: {
     latitude: number
     longitude: number
-    heading: number
-    speed: number
+    headingDegrees: number
+    speedMilesPerHour: number
     reverseGeo?: { formattedLocation: string }
     time: string
   }

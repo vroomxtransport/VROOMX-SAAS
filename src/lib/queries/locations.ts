@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { DriverLocation } from '@/types/database'
+import type { DriverLocation, SamsaraVehicleLocation } from '@/types/database'
 
 export async function fetchLatestLocations(supabase: SupabaseClient): Promise<DriverLocation[]> {
   const { data, error } = await supabase
@@ -19,4 +19,23 @@ export async function fetchLatestLocations(supabase: SupabaseClient): Promise<Dr
     }
   }
   return unique
+}
+
+export async function fetchSamsaraVehicleLocations(
+  supabase: SupabaseClient
+): Promise<SamsaraVehicleLocation[]> {
+  const { data, error } = await supabase
+    .from('samsara_vehicles')
+    .select(
+      'id, tenant_id, samsara_vehicle_id, samsara_name, truck_id, last_latitude, last_longitude, last_speed, last_heading, last_location_time, truck:trucks(id, unit_number)'
+    )
+    .not('last_latitude', 'is', null)
+    .not('last_longitude', 'is', null)
+    .order('last_location_time', { ascending: false })
+
+  if (error) throw error
+  return (data ?? []).map((row) => ({
+    ...row,
+    truck: Array.isArray(row.truck) ? row.truck[0] ?? null : row.truck ?? null,
+  })) as SamsaraVehicleLocation[]
 }
