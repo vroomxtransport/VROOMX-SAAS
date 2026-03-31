@@ -103,7 +103,7 @@ function KanbanColumn({ status, trips, isDraggingTrip, isDraggingOrder, activeId
       <div
         ref={setNodeRef}
         className={cn(
-          'space-y-2 p-2 min-h-[200px] overflow-y-auto max-h-[calc(100vh-380px)] rounded-b-lg border border-t-0 border-border-subtle bg-muted/30 transition-all duration-150',
+          'space-y-2 p-2 min-h-[200px] overflow-y-auto max-h-[calc(100vh-380px)] rounded-b-lg border border-t-0 border-border-subtle bg-muted/50 transition-all duration-150',
           isDraggingTrip && 'ring-1 ring-dashed ring-muted-foreground/20',
           isOver && isDraggingTrip && `ring-2 ${DROP_HIGHLIGHT_COLORS[status]}`,
         )}

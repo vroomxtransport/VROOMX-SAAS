@@ -192,7 +192,7 @@ export function PayrollPeriodDetailDrawer({
                         const commission = cleanGross * (rate / 100)
 
                         return (
-                          <tr key={order.id} className="hover:bg-muted/30">
+                          <tr key={order.id} className="bg-card hover:bg-muted/30">
                             <td className="px-3 py-2 font-medium">
                               {order.order_number || order.id.substring(0, 8)}
                             </td>

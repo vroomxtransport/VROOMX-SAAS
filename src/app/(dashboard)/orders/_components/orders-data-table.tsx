@@ -398,7 +398,7 @@ export function OrdersDataTable({ orders, sort, onSort, onRowClick, onEdit }: Or
             <tr
               key={row.id}
               onClick={() => onRowClick(row.original)}
-              className="border-b border-border/50 transition-colors hover:bg-muted/20 cursor-pointer"
+              className="border-b border-border/50 transition-colors bg-card hover:bg-muted/30 cursor-pointer"
             >
               {row.getVisibleCells().map((cell) => (
                 <td

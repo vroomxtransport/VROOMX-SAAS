@@ -154,7 +154,7 @@ export function TopBrokersTable({ data }: TopBrokersTableProps) {
                 const isTopThree = rank <= 3
 
                 return (
-                  <tr key={broker.brokerName} className="border-b border-border-subtle/50 last:border-0 hover:bg-muted/30 transition-colors">
+                  <tr key={broker.brokerName} className="border-b border-border-subtle/50 last:border-0 bg-card hover:bg-muted/30 transition-colors">
                     <td className="py-2 pr-2">
                       <span
                         className={cn(

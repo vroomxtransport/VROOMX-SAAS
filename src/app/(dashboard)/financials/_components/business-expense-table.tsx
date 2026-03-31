@@ -55,7 +55,7 @@ export function BusinessExpenseTable({ expenses, onEdit }: Props) {
           </thead>
           <tbody>
             {expenses.map((expense) => (
-              <tr key={expense.id} className="border-b border-border last:border-0 hover:bg-muted/30">
+              <tr key={expense.id} className="border-b border-border last:border-0 bg-card hover:bg-muted/30">
                 <td className="px-4 py-3 font-medium text-foreground">{expense.name}</td>
                 <td className="px-4 py-3 text-muted-foreground">
                   {BUSINESS_EXPENSE_CATEGORY_LABELS[expense.category] ?? expense.category}

@@ -276,7 +276,7 @@ export function LocalRunDetail({ runId, onEdit, onDelete, onStatusChange }: Loca
                 : null
 
               return (
-                <div key={drive.id} className="flex items-center justify-between rounded-md border border-dashed px-3 py-2 hover:bg-muted/30">
+                <div key={drive.id} className="flex items-center justify-between rounded-md border border-dashed px-3 py-2 bg-card hover:bg-muted/30">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="text-sm truncate">{formatRoute(drive)}</span>

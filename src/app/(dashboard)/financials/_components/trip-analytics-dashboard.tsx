@@ -220,7 +220,7 @@ export function TripAnalyticsDashboard({ initialTrips }: TripAnalyticsDashboardP
                 </tr>
               ) : (
                 sorted.map((t) => (
-                  <tr key={t.tripId} className="hover:bg-muted/20 transition-colors">
+                  <tr key={t.tripId} className="bg-card hover:bg-muted/20 transition-colors">
                     <td className="px-4 py-3">
                       <Link
                         href={`/trips/${t.tripId}`}

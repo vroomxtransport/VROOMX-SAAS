@@ -255,7 +255,7 @@ export function BrokerList() {
                     handleCardClick(broker.id)
                   }
                 }}
-                className="grid grid-cols-[1fr_1fr_140px_140px_100px_48px] gap-2 items-center border-b border-border px-4 py-3 cursor-pointer transition-colors hover:bg-muted/30 last:border-b-0"
+                className="grid grid-cols-[1fr_1fr_140px_140px_100px_48px] gap-2 items-center border-b border-border px-4 py-3 cursor-pointer transition-colors bg-card hover:bg-muted/30 last:border-b-0"
               >
                 <div className="truncate text-sm font-medium text-foreground">
                   {broker.name}

@@ -190,7 +190,7 @@ export function ProfitByDriverTable({ data }: ProfitByDriverTableProps) {
                   'bg-gray-100 text-gray-700 ring-1 ring-gray-200'
 
                 return (
-                  <tr key={driver.driverId} className="border-b border-border-subtle/50 last:border-0 hover:bg-muted/30 transition-colors">
+                  <tr key={driver.driverId} className="border-b border-border-subtle/50 last:border-0 bg-card hover:bg-muted/30 transition-colors">
                     <td className="py-2 pr-3">
                       <Link href="/drivers" className="font-medium text-brand hover:underline transition-colors">
                         {driver.name}

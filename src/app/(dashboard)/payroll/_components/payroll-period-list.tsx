@@ -196,7 +196,7 @@ export function PayrollPeriodList() {
               </thead>
               <tbody className="divide-y divide-border">
                 {periods.map((period) => (
-                  <tr key={period.id} className="hover:bg-muted/30 transition-colors">
+                  <tr key={period.id} className="bg-card hover:bg-muted/30 transition-colors">
                     <td className="px-4 py-3 text-sm font-medium text-foreground">
                       {dispatcherMap.get(period.user_id) ?? period.user_id.substring(0, 8)}
                     </td>
