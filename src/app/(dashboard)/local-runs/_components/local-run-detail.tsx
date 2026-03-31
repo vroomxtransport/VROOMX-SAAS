@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import Link from 'next/link'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { useLocalRun } from '@/hooks/use-local-runs'
@@ -207,22 +208,32 @@ export function LocalRunDetail({ runId, onEdit, onDelete, onStatusChange }: Loca
                 ? `#${(drive.order as { order_number: string }).order_number ?? ''} · ${(drive.order as { vehicle_make: string }).vehicle_make ?? ''} ${(drive.order as { vehicle_model: string }).vehicle_model ?? ''}`.trim()
                 : null
 
+              const driveContent = (
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium truncate">{formatRoute(drive)}</span>
+                    <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${LOCAL_DRIVE_STATUS_COLORS[drive.status as LocalDriveStatus]}`}>
+                      {LOCAL_DRIVE_STATUS_LABELS[drive.status as LocalDriveStatus]}
+                    </Badge>
+                  </div>
+                  {orderInfo && <p className="text-xs text-muted-foreground truncate">{orderInfo}</p>}
+                </div>
+              )
+
               return (
                 <div key={drive.id} className="flex items-center justify-between rounded-md border px-3 py-2 bg-surface hover:bg-muted/30">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium truncate">{formatRoute(drive)}</span>
-                      <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${LOCAL_DRIVE_STATUS_COLORS[drive.status as LocalDriveStatus]}`}>
-                        {LOCAL_DRIVE_STATUS_LABELS[drive.status as LocalDriveStatus]}
-                      </Badge>
-                    </div>
-                    {orderInfo && <p className="text-xs text-muted-foreground truncate">{orderInfo}</p>}
-                  </div>
+                  {drive.order_id ? (
+                    <Link href={`/orders/${drive.order_id}`} className="min-w-0 flex-1 cursor-pointer hover:opacity-80 transition-opacity">
+                      {driveContent}
+                    </Link>
+                  ) : (
+                    driveContent
+                  )}
                   <Button
                     variant="ghost"
                     size="sm"
                     className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-destructive shrink-0 ml-2"
-                    onClick={() => setRemovingDriveId(drive.id)}
+                    onClick={(e) => { e.stopPropagation(); setRemovingDriveId(drive.id) }}
                   >
                     <X className="h-3.5 w-3.5" />
                   </Button>
