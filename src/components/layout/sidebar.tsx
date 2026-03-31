@@ -219,13 +219,13 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-3">
+        <nav className={cn("flex-1 overflow-y-auto py-2", isCollapsed ? "lg:space-y-1 lg:py-1 lg:px-1 px-2" : "space-y-3 px-2")}>
           {filteredCategories.map((category, catIndex) => (
             <div key={category.label}>
               {/* Category label or divider */}
               {isCollapsed ? (
                 catIndex > 0 && (
-                  <div className="hidden lg:block mx-3 mb-2 border-t border-[var(--sidebar-border-color)]" />
+                  <div className="hidden lg:block mx-3 my-1 border-t border-[var(--sidebar-border-color)]" />
                 )
               ) : (
                 <div className="mb-1.5 px-3 pt-1">
@@ -253,7 +253,7 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
                         isActive
                           ? 'bg-[var(--sidebar-active)] shadow-[inset_0_0_0_1px_rgba(25,35,52,0.15)]'
                           : 'hover:bg-[var(--sidebar-hover)] hover:!text-white',
-                        isCollapsed && 'lg:justify-center lg:px-0 lg:py-2.5'
+                        isCollapsed && 'lg:justify-center lg:px-0 lg:py-1.5 lg:mx-auto lg:w-10'
                       )}
                     >
                       {/* Active indicator pill */}
@@ -262,7 +262,8 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
                       )}
                       <Icon
                         className={cn(
-                          'h-5 w-5 shrink-0 transition-colors',
+                          'shrink-0 transition-colors',
+                          isCollapsed ? 'h-[18px] w-[18px]' : 'h-5 w-5',
                           isActive ? 'text-[var(--brand-muted)]' : 'group-hover:text-white'
                         )}
                       />
