@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 export const truckSchema = z.object({
   unitNumber: z.string().min(1, 'Unit number is required').max(200),
-  truckType: z.enum(['7_car', '8_car', '9_car', 'flatbed', 'enclosed']).default('7_car'),
+  truckType: z.enum(['7_car', '8_car', '9_car', 'flatbed', 'enclosed', '2_car', '3_car']).default('7_car'),
   truckStatus: z.enum(['active', 'inactive', 'maintenance']).default('active'),
   year: z.coerce.number().min(1900).max(2030).optional(),
   make: z.string().max(200).optional().or(z.literal('')),

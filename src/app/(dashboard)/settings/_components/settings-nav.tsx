@@ -15,6 +15,7 @@ import {
   Webhook,
   ScrollText,
   AlertTriangle,
+  Warehouse,
 } from 'lucide-react'
 import type { TenantRole } from '@/types'
 
@@ -54,6 +55,7 @@ const SETTINGS_NAV: NavGroup[] = [
   {
     label: 'Operations',
     items: [
+      { name: 'Terminals', href: '/settings/terminals', icon: Warehouse },
       { name: 'Notifications', href: '/settings/notifications', icon: Bell },
       { name: 'Order Defaults', href: '/settings/order-defaults', icon: FileText },
     ],

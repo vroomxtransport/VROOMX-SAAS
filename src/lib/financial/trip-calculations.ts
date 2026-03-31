@@ -169,6 +169,11 @@ function calculateDriverPay(
       return totalMiles * driver.payRate
     }
 
+    case 'daily_salary': {
+      // Daily salary is tracked per local_run, not per trip — local drivers aren't trip drivers
+      return 0
+    }
+
     default: {
       return 0
     }

@@ -76,7 +76,7 @@ export interface Driver {
   license_number: string | null
   driver_type: 'company' | 'owner_operator' | 'local_driver'
   driver_status: 'active' | 'inactive'
-  pay_type: 'percentage_of_carrier_pay' | 'dispatch_fee_percent' | 'per_mile' | 'per_car'
+  pay_type: 'percentage_of_carrier_pay' | 'dispatch_fee_percent' | 'per_mile' | 'per_car' | 'daily_salary'
   pay_rate: string
   auth_user_id: string | null
   pin_hash: string | null
@@ -89,7 +89,7 @@ export interface Truck {
   id: string
   tenant_id: string
   unit_number: string
-  truck_type: '7_car' | '8_car' | '9_car' | 'flatbed' | 'enclosed'
+  truck_type: '7_car' | '8_car' | '9_car' | 'flatbed' | 'enclosed' | '2_car' | '3_car'
   truck_status: 'active' | 'inactive' | 'maintenance'
   year: number | null
   make: string | null
@@ -190,6 +190,7 @@ export interface Trip {
   total_local_fees: string
   driver_pay: string
   total_expenses: string
+  local_operations_expense: string
   net_profit: string
   order_count: number
   total_miles: string
@@ -334,6 +335,46 @@ export interface ChatChannelRead {
   last_read_at: string
 }
 
+export interface Terminal {
+  id: string
+  tenant_id: string
+  name: string
+  address: string | null
+  city: string | null
+  state: string | null
+  zip: string | null
+  latitude: number | null
+  longitude: number | null
+  service_radius_miles: number
+  is_active: boolean
+  auto_create_local_drives: boolean
+  auto_create_states: string[] | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface LocalRun {
+  id: string
+  tenant_id: string
+  terminal_id: string | null
+  driver_id: string | null
+  truck_id: string | null
+  type: 'pickup_to_terminal' | 'delivery_from_terminal' | 'standalone'
+  status: 'planned' | 'in_progress' | 'completed' | 'cancelled'
+  scheduled_date: string | null
+  completed_date: string | null
+  total_expense: string
+  notes: string | null
+  created_at: string
+  updated_at: string
+  // Optional joins
+  terminal?: Terminal
+  driver?: Driver
+  truck?: Truck
+  local_drives?: LocalDrive[]
+}
+
 export interface LocalDrive {
   id: string
   tenant_id: string
@@ -341,6 +382,10 @@ export interface LocalDrive {
   driver_id: string | null
   truck_id: string | null
   status: 'pending' | 'in_progress' | 'completed' | 'cancelled'
+  type: 'pickup_to_terminal' | 'delivery_from_terminal' | 'standalone'
+  terminal_id: string | null
+  local_run_id: string | null
+  trip_id: string | null
   pickup_location: string | null
   pickup_city: string | null
   pickup_state: string | null
@@ -350,10 +395,13 @@ export interface LocalDrive {
   scheduled_date: string | null
   completed_date: string | null
   revenue: string
+  expense_amount: string
+  inspection_visibility: string
   notes: string | null
   driver?: Driver
   truck?: Truck
   order?: Order
+  terminal?: Terminal
   created_at: string
   updated_at: string
 }

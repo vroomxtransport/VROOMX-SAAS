@@ -4,8 +4,11 @@ import { sanitizeSearch } from '@/lib/sanitize-search'
 
 export interface LocalDriveFilters {
   status?: string
+  type?: string
+  terminalId?: string
   search?: string
   driverId?: string
+  tripId?: string
   dateFrom?: string
   dateTo?: string
   sortBy?: string
@@ -23,19 +26,31 @@ export async function fetchLocalDrives(
   supabase: SupabaseClient,
   filters: LocalDriveFilters = {}
 ): Promise<LocalDrivesResult> {
-  const { status, search, driverId, dateFrom, dateTo, sortBy, sortDir, page = 0, pageSize = 20 } = filters
+  const { status, type, terminalId, search, driverId, tripId, dateFrom, dateTo, sortBy, sortDir, page = 0, pageSize = 20 } = filters
 
   let query = supabase
     .from('local_drives')
-    .select('*, driver:drivers(id, first_name, last_name), truck:trucks(id, unit_number), order:orders(id, order_number, vehicle_make, vehicle_model, vehicle_vin)', { count: 'exact' })
+    .select('*, driver:drivers(id, first_name, last_name), truck:trucks(id, unit_number), order:orders(id, order_number, vehicle_make, vehicle_model, vehicle_vin), terminal:terminals(id, name)', { count: 'exact' })
     .range(page * pageSize, (page + 1) * pageSize - 1)
 
   if (status) {
     query = query.eq('status', status)
   }
 
+  if (type) {
+    query = query.eq('type', type)
+  }
+
+  if (terminalId) {
+    query = query.eq('terminal_id', terminalId)
+  }
+
   if (driverId) {
     query = query.eq('driver_id', driverId)
+  }
+
+  if (tripId) {
+    query = query.eq('trip_id', tripId)
   }
 
   if (dateFrom) {
@@ -76,7 +91,7 @@ export async function fetchLocalDrive(
 ): Promise<LocalDrive> {
   const { data, error } = await supabase
     .from('local_drives')
-    .select('*, driver:drivers(id, first_name, last_name), truck:trucks(id, unit_number), order:orders(id, order_number, vehicle_make, vehicle_model, vehicle_vin)')
+    .select('*, driver:drivers(id, first_name, last_name), truck:trucks(id, unit_number), order:orders(id, order_number, vehicle_make, vehicle_model, vehicle_vin), terminal:terminals(id, name)')
     .eq('id', id)
     .single()
 

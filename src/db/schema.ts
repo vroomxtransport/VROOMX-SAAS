@@ -16,12 +16,12 @@ export const driverTypeEnum = pgEnum('driver_type', ['company', 'owner_operator'
 
 export const driverStatusEnum = pgEnum('driver_status', ['active', 'inactive'])
 
-export const truckTypeEnum = pgEnum('truck_type', ['7_car', '8_car', '9_car', 'flatbed', 'enclosed'])
+export const truckTypeEnum = pgEnum('truck_type', ['7_car', '8_car', '9_car', 'flatbed', 'enclosed', '2_car', '3_car'])
 
 export const truckStatusEnum = pgEnum('truck_status', ['active', 'inactive', 'maintenance'])
 
 export const driverPayTypeEnum = pgEnum('driver_pay_type', [
-  'percentage_of_carrier_pay', 'dispatch_fee_percent', 'per_mile', 'per_car',
+  'percentage_of_carrier_pay', 'dispatch_fee_percent', 'per_mile', 'per_car', 'daily_salary',
 ])
 
 export const paymentTermsEnum = pgEnum('payment_terms', ['NET15', 'NET30', 'NET45', 'NET60'])
@@ -328,6 +328,7 @@ export const trips = pgTable('trips', {
   totalLocalFees: numeric('total_local_fees', { precision: 12, scale: 2 }).default('0'),
   driverPay: numeric('driver_pay', { precision: 12, scale: 2 }).default('0'),
   totalExpenses: numeric('total_expenses', { precision: 12, scale: 2 }).default('0'),
+  localOperationsExpense: numeric('local_operations_expense', { precision: 12, scale: 2 }).default('0'),
   netProfit: numeric('net_profit', { precision: 12, scale: 2 }).default('0'),
   orderCount: integer('order_count').default(0),
   totalMiles: numeric('total_miles', { precision: 12, scale: 1 }).default('0'),
@@ -555,6 +556,8 @@ export const businessExpenses = pgTable('business_expenses', {
 export const taskStatusEnum = pgEnum('task_status', ['pending', 'in_progress', 'completed'])
 export const taskPriorityEnum = pgEnum('task_priority', ['low', 'medium', 'high', 'urgent'])
 export const localDriveStatusEnum = pgEnum('local_drive_status', ['pending', 'in_progress', 'completed', 'cancelled'])
+export const localDriveTypeEnum = pgEnum('local_drive_type', ['pickup_to_terminal', 'delivery_from_terminal', 'standalone'])
+export const localRunStatusEnum = pgEnum('local_run_status', ['planned', 'in_progress', 'completed', 'cancelled'])
 export const maintenanceTypeEnum = pgEnum('maintenance_type', ['preventive', 'repair', 'inspection', 'tire', 'oil_change', 'other'])
 export const maintenanceStatusEnum = pgEnum('maintenance_status', ['scheduled', 'in_progress', 'completed'])
 export const complianceDocTypeEnum = pgEnum('compliance_doc_type', ['dqf', 'vehicle_qualification', 'company_document'])
@@ -640,6 +643,56 @@ export const chatChannelReads = pgTable('chat_channel_reads', {
 ])
 
 /**
+ * Terminals Table
+ * Physical hub locations for local pickup/delivery operations.
+ */
+export const terminals = pgTable('terminals', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  address: text('address'),
+  city: text('city'),
+  state: text('state'),
+  zip: text('zip'),
+  latitude: doublePrecision('latitude'),
+  longitude: doublePrecision('longitude'),
+  serviceRadiusMiles: integer('service_radius_miles').default(200),
+  isActive: boolean('is_active').notNull().default(true),
+  autoCreateLocalDrives: boolean('auto_create_local_drives').notNull().default(true),
+  autoCreateStates: text('auto_create_states').array(),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_terminals_tenant_id').on(table.tenantId),
+])
+
+/**
+ * Local Runs Table
+ * Groups multiple local_drives into one run (one driver, one truck, one date).
+ */
+export const localRuns = pgTable('local_runs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  terminalId: uuid('terminal_id').references(() => terminals.id),
+  driverId: uuid('driver_id').references(() => drivers.id),
+  truckId: uuid('truck_id').references(() => trucks.id),
+  type: localDriveTypeEnum('type').notNull(),
+  status: localRunStatusEnum('status').notNull().default('planned'),
+  scheduledDate: date('scheduled_date'),
+  completedDate: timestamp('completed_date', { withTimezone: true }),
+  totalExpense: numeric('total_expense', { precision: 12, scale: 2 }).default('0'),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_local_runs_tenant_id').on(table.tenantId),
+  index('idx_local_runs_tenant_status').on(table.tenantId, table.status),
+  index('idx_local_runs_tenant_terminal').on(table.tenantId, table.terminalId),
+  index('idx_local_runs_tenant_driver').on(table.tenantId, table.driverId),
+])
+
+/**
  * Local Drives Table
  * Short-distance, non-trip vehicle transports.
  */
@@ -650,6 +703,10 @@ export const localDrives = pgTable('local_drives', {
   driverId: uuid('driver_id').references(() => drivers.id),
   truckId: uuid('truck_id').references(() => trucks.id),
   status: localDriveStatusEnum('status').notNull().default('pending'),
+  type: localDriveTypeEnum('type').notNull().default('standalone'),
+  terminalId: uuid('terminal_id').references(() => terminals.id),
+  localRunId: uuid('local_run_id').references(() => localRuns.id),
+  tripId: uuid('trip_id').references(() => trips.id),
   pickupLocation: text('pickup_location'),
   pickupCity: text('pickup_city'),
   pickupState: text('pickup_state'),
@@ -659,6 +716,8 @@ export const localDrives = pgTable('local_drives', {
   scheduledDate: date('scheduled_date'),
   completedDate: timestamp('completed_date', { withTimezone: true }),
   revenue: numeric('revenue', { precision: 12, scale: 2 }).default('0'),
+  expenseAmount: numeric('expense_amount', { precision: 12, scale: 2 }).default('0'),
+  inspectionVisibility: text('inspection_visibility').default('internal'),
   notes: text('notes'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -667,6 +726,9 @@ export const localDrives = pgTable('local_drives', {
   index('idx_local_drives_tenant_status').on(table.tenantId, table.status),
   index('idx_local_drives_tenant_driver').on(table.tenantId, table.driverId),
   index('idx_local_drives_tenant_order').on(table.tenantId, table.orderId),
+  index('idx_local_drives_tenant_terminal').on(table.tenantId, table.terminalId),
+  index('idx_local_drives_tenant_run').on(table.tenantId, table.localRunId),
+  index('idx_local_drives_tenant_trip').on(table.tenantId, table.tripId),
 ])
 
 /**
@@ -1008,6 +1070,10 @@ export type DrizzleChatChannel = typeof chatChannels.$inferSelect
 export type NewChatChannel = typeof chatChannels.$inferInsert
 export type DrizzleChatMessage = typeof chatMessages.$inferSelect
 export type NewChatMessage = typeof chatMessages.$inferInsert
+export type DrizzleTerminal = typeof terminals.$inferSelect
+export type NewTerminal = typeof terminals.$inferInsert
+export type DrizzleLocalRun = typeof localRuns.$inferSelect
+export type NewLocalRun = typeof localRuns.$inferInsert
 export type DrizzleLocalDrive = typeof localDrives.$inferSelect
 export type NewLocalDrive = typeof localDrives.$inferInsert
 export type DrizzleFuelEntry = typeof fuelEntries.$inferSelect

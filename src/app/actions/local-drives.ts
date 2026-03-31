@@ -14,21 +14,61 @@ export async function createLocalDrive(data: unknown) {
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId } = auth.ctx
 
+  const v = parsed.data
+
+  // Auto-fill locations based on type + order + terminal
+  let pickupLocation = v.pickupLocation || null
+  let pickupCity = v.pickupCity || null
+  let pickupState = v.pickupState || null
+  let deliveryLocation = v.deliveryLocation || null
+  let deliveryCity = v.deliveryCity || null
+  let deliveryState = v.deliveryState || null
+
+  if (v.orderId && v.terminalId) {
+    // Fetch order and terminal for auto-fill
+    const [{ data: order }, { data: terminal }] = await Promise.all([
+      supabase.from('orders').select('pickup_location, pickup_city, pickup_state, delivery_location, delivery_city, delivery_state').eq('id', v.orderId).eq('tenant_id', tenantId).single(),
+      supabase.from('terminals').select('name, address, city, state').eq('id', v.terminalId).eq('tenant_id', tenantId).single(),
+    ])
+
+    if (v.type === 'pickup_to_terminal' && order && terminal) {
+      pickupLocation = pickupLocation || order.pickup_location
+      pickupCity = pickupCity || order.pickup_city
+      pickupState = pickupState || order.pickup_state
+      deliveryLocation = deliveryLocation || terminal.address || terminal.name
+      deliveryCity = deliveryCity || terminal.city
+      deliveryState = deliveryState || terminal.state
+    } else if (v.type === 'delivery_from_terminal' && order && terminal) {
+      pickupLocation = pickupLocation || terminal.address || terminal.name
+      pickupCity = pickupCity || terminal.city
+      pickupState = pickupState || terminal.state
+      deliveryLocation = deliveryLocation || order.delivery_location
+      deliveryCity = deliveryCity || order.delivery_city
+      deliveryState = deliveryState || order.delivery_state
+    }
+  }
+
   const { data: localDrive, error } = await supabase
     .from('local_drives')
     .insert({
       tenant_id: tenantId,
-      driver_id: parsed.data.driverId || null,
-      truck_id: parsed.data.truckId || null,
-      pickup_location: parsed.data.pickupLocation || null,
-      pickup_city: parsed.data.pickupCity || null,
-      pickup_state: parsed.data.pickupState || null,
-      delivery_location: parsed.data.deliveryLocation || null,
-      delivery_city: parsed.data.deliveryCity || null,
-      delivery_state: parsed.data.deliveryState || null,
-      scheduled_date: parsed.data.scheduledDate || null,
-      revenue: String(parsed.data.revenue),
-      notes: parsed.data.notes || null,
+      order_id: v.orderId || null,
+      driver_id: v.driverId || null,
+      truck_id: v.truckId || null,
+      type: v.type,
+      terminal_id: v.terminalId || null,
+      local_run_id: v.localRunId || null,
+      trip_id: v.tripId || null,
+      pickup_location: pickupLocation,
+      pickup_city: pickupCity,
+      pickup_state: pickupState,
+      delivery_location: deliveryLocation,
+      delivery_city: deliveryCity,
+      delivery_state: deliveryState,
+      scheduled_date: v.scheduledDate || null,
+      revenue: String(v.revenue),
+      expense_amount: String(v.expenseAmount),
+      notes: v.notes || null,
     })
     .select()
     .single()
@@ -51,20 +91,28 @@ export async function updateLocalDrive(id: string, data: unknown) {
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId } = auth.ctx
 
+  const v = parsed.data
+
   const { data: localDrive, error } = await supabase
     .from('local_drives')
     .update({
-      driver_id: parsed.data.driverId || null,
-      truck_id: parsed.data.truckId || null,
-      pickup_location: parsed.data.pickupLocation || null,
-      pickup_city: parsed.data.pickupCity || null,
-      pickup_state: parsed.data.pickupState || null,
-      delivery_location: parsed.data.deliveryLocation || null,
-      delivery_city: parsed.data.deliveryCity || null,
-      delivery_state: parsed.data.deliveryState || null,
-      scheduled_date: parsed.data.scheduledDate || null,
-      revenue: String(parsed.data.revenue),
-      notes: parsed.data.notes || null,
+      order_id: v.orderId || null,
+      driver_id: v.driverId || null,
+      truck_id: v.truckId || null,
+      type: v.type,
+      terminal_id: v.terminalId || null,
+      local_run_id: v.localRunId || null,
+      trip_id: v.tripId || null,
+      pickup_location: v.pickupLocation || null,
+      pickup_city: v.pickupCity || null,
+      pickup_state: v.pickupState || null,
+      delivery_location: v.deliveryLocation || null,
+      delivery_city: v.deliveryCity || null,
+      delivery_state: v.deliveryState || null,
+      scheduled_date: v.scheduledDate || null,
+      revenue: String(v.revenue),
+      expense_amount: String(v.expenseAmount),
+      notes: v.notes || null,
     })
     .eq('id', id)
     .eq('tenant_id', tenantId)

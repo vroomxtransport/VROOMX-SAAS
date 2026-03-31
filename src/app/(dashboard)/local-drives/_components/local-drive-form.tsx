@@ -6,6 +6,7 @@ import { localDriveSchema, type LocalDriveFormInput } from '@/lib/validations/lo
 import { createLocalDrive, updateLocalDrive } from '@/app/actions/local-drives'
 import { useDrivers } from '@/hooks/use-drivers'
 import { useTrucks } from '@/hooks/use-trucks'
+import { useTerminals } from '@/hooks/use-terminals'
 import { useDraftStore } from '@/stores/draft-store'
 import {
   Form,
@@ -26,6 +27,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useEffect, useState, useCallback } from 'react'
+import { LOCAL_DRIVE_TYPE_LABELS } from '@/types'
+import type { LocalDriveType } from '@/types'
 import type { LocalDrive } from '@/types/database'
 
 interface LocalDriveFormProps {
@@ -44,11 +47,14 @@ export function LocalDriveForm({ localDrive, onSuccess, onCancel }: LocalDriveFo
 
   const { data: driversData } = useDrivers({ status: 'active', pageSize: 100 })
   const { data: trucksData } = useTrucks({ status: 'active', pageSize: 100 })
+  const { data: terminalsData } = useTerminals({ activeOnly: true })
 
   const defaultValues: LocalDriveFormInput = localDrive
     ? {
         driverId: localDrive.driver_id ?? '',
         truckId: localDrive.truck_id ?? '',
+        type: localDrive.type ?? 'standalone',
+        terminalId: localDrive.terminal_id ?? '',
         pickupLocation: localDrive.pickup_location ?? '',
         pickupCity: localDrive.pickup_city ?? '',
         pickupState: localDrive.pickup_state ?? '',
@@ -57,11 +63,14 @@ export function LocalDriveForm({ localDrive, onSuccess, onCancel }: LocalDriveFo
         deliveryState: localDrive.delivery_state ?? '',
         scheduledDate: localDrive.scheduled_date ?? '',
         revenue: typeof localDrive.revenue === 'string' ? parseFloat(localDrive.revenue) : 0,
+        expenseAmount: typeof localDrive.expense_amount === 'string' ? parseFloat(localDrive.expense_amount) : 0,
         notes: localDrive.notes ?? '',
       }
     : {
         driverId: '',
         truckId: '',
+        type: 'standalone',
+        terminalId: '',
         pickupLocation: '',
         pickupCity: '',
         pickupState: '',
@@ -70,6 +79,7 @@ export function LocalDriveForm({ localDrive, onSuccess, onCancel }: LocalDriveFo
         deliveryState: '',
         scheduledDate: '',
         revenue: 0,
+        expenseAmount: 0,
         notes: '',
       }
 
@@ -136,6 +146,7 @@ export function LocalDriveForm({ localDrive, onSuccess, onCancel }: LocalDriveFo
 
   const drivers = driversData?.drivers ?? []
   const trucks = trucksData?.trucks ?? []
+  const terminals = terminalsData ?? []
 
   return (
     <Form {...form}>
@@ -145,6 +156,60 @@ export function LocalDriveForm({ localDrive, onSuccess, onCancel }: LocalDriveFo
             {serverError}
           </div>
         )}
+
+        {/* Type & Terminal */}
+        <div>
+          <h4 className="mb-3 text-sm font-medium text-foreground">Operation Type</h4>
+          <div className="grid grid-cols-2 gap-3">
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Type</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value || 'standalone'}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {(Object.entries(LOCAL_DRIVE_TYPE_LABELS) as [LocalDriveType, string][]).map(([v, l]) => (
+                        <SelectItem key={v} value={v}>{l}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {terminals.length > 0 && (
+              <FormField
+                control={form.control}
+                name="terminalId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Terminal</FormLabel>
+                    <Select onValueChange={(v) => field.onChange(v === 'none' ? '' : v)} defaultValue={field.value || 'none'}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select terminal" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
+                        {terminals.map((t) => (
+                          <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+          </div>
+        </div>
 
         {/* Assignment */}
         <div>
@@ -295,10 +360,10 @@ export function LocalDriveForm({ localDrive, onSuccess, onCancel }: LocalDriveFo
           </div>
         </div>
 
-        {/* Schedule & Revenue */}
+        {/* Schedule & Financials */}
         <div>
-          <h4 className="mb-3 text-sm font-medium text-foreground">Schedule & Revenue</h4>
-          <div className="grid grid-cols-2 gap-3">
+          <h4 className="mb-3 text-sm font-medium text-foreground">Schedule & Financials</h4>
+          <div className="grid grid-cols-3 gap-3">
             <FormField
               control={form.control}
               name="scheduledDate"
@@ -318,6 +383,29 @@ export function LocalDriveForm({ localDrive, onSuccess, onCancel }: LocalDriveFo
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Revenue ($)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0.00"
+                      value={typeof field.value === 'number' ? field.value : 0}
+                      onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      ref={field.ref}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="expenseAmount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Expense ($)</FormLabel>
                   <FormControl>
                     <Input
                       type="number"

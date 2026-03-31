@@ -198,54 +198,134 @@ export async function updateTripStatus(id: string, newStatus: TripStatus) {
   }
 
   // Auto-create pending local deliveries for qualifying orders
-  // Criteria: broker_fee > 0 AND delivery_state in PA, NJ, NY
   if (newStatus === 'at_terminal') {
-    const LOCAL_DELIVERY_STATES = ['PA', 'NJ', 'NY']
-
-    const { data: qualifyingOrders } = await supabase
-      .from('orders')
-      .select('id, delivery_location, delivery_city, delivery_state, broker_fee')
-      .eq('trip_id', id)
+    // Fetch tenant's active terminals with auto_create enabled
+    const { data: terminals } = await supabase
+      .from('terminals')
+      .select('id, name, address, city, state, auto_create_states')
       .eq('tenant_id', tenantId)
-      .gt('broker_fee', '0')
-      .in('delivery_state', LOCAL_DELIVERY_STATES)
+      .eq('is_active', true)
+      .eq('auto_create_local_drives', true)
 
-    if (qualifyingOrders && qualifyingOrders.length > 0) {
-      // Prevent duplicates — check which orders already have a local drive
-      const orderIds = qualifyingOrders.map((o) => o.id)
-      const { data: existingDrives } = await supabase
-        .from('local_drives')
-        .select('order_id')
+    if (terminals && terminals.length > 0) {
+      // Fetch all trip orders
+      const { data: tripOrders } = await supabase
+        .from('orders')
+        .select('id, delivery_location, delivery_city, delivery_state, broker_fee')
+        .eq('trip_id', id)
         .eq('tenant_id', tenantId)
-        .in('order_id', orderIds)
 
-      const existingOrderIds = new Set(existingDrives?.map((d) => d.order_id) ?? [])
-
-      const newDrives = qualifyingOrders
-        .filter((o) => !existingOrderIds.has(o.id))
-        .map((order) => ({
-          tenant_id: tenantId,
-          order_id: order.id,
-          status: 'pending' as const,
-          pickup_location: 'Terminal',
-          delivery_location: order.delivery_location,
-          delivery_city: order.delivery_city,
-          delivery_state: order.delivery_state,
-          revenue: order.broker_fee,
-          notes: `Auto-created from trip at-terminal. Delivery to ${order.delivery_city}, ${order.delivery_state}`,
-        }))
-
-      if (newDrives.length > 0) {
-        const { error: driveError } = await supabase
+      if (tripOrders && tripOrders.length > 0) {
+        // Check existing local drives to prevent duplicates
+        const orderIds = tripOrders.map((o) => o.id)
+        const { data: existingDrives } = await supabase
           .from('local_drives')
-          .insert(newDrives)
+          .select('order_id')
+          .eq('tenant_id', tenantId)
+          .in('order_id', orderIds)
 
-        if (driveError) {
-          // Log but don't fail the trip status update
-          safeError(driveError, 'updateTripStatus.createLocalDrives')
+        const existingOrderIds = new Set(existingDrives?.map((d) => d.order_id) ?? [])
+
+        const newDrives: Array<Record<string, unknown>> = []
+
+        for (const terminal of terminals) {
+          const autoStates = terminal.auto_create_states as string[] | null
+
+          const qualifying = tripOrders.filter((o) => {
+            if (existingOrderIds.has(o.id)) return false
+            // If terminal has auto_create_states, filter by delivery state
+            if (autoStates && autoStates.length > 0) {
+              return autoStates.includes(o.delivery_state ?? '')
+            }
+            // No state filter — all orders qualify
+            return true
+          })
+
+          for (const order of qualifying) {
+            newDrives.push({
+              tenant_id: tenantId,
+              order_id: order.id,
+              trip_id: id,
+              terminal_id: terminal.id,
+              type: 'delivery_from_terminal',
+              status: 'pending',
+              pickup_location: terminal.address || terminal.name,
+              pickup_city: terminal.city,
+              pickup_state: terminal.state,
+              delivery_location: order.delivery_location,
+              delivery_city: order.delivery_city,
+              delivery_state: order.delivery_state,
+              inspection_visibility: 'internal',
+              revenue: order.broker_fee,
+              notes: `Auto-created from trip at-terminal via ${terminal.name}. Delivery to ${order.delivery_city}, ${order.delivery_state}`,
+            })
+            // Mark as handled to prevent duplicate across multiple terminals
+            existingOrderIds.add(order.id)
+          }
         }
 
-        revalidatePath('/local-drives')
+        if (newDrives.length > 0) {
+          const { error: driveError } = await supabase
+            .from('local_drives')
+            .insert(newDrives)
+
+          if (driveError) {
+            safeError(driveError, 'updateTripStatus.createLocalDrives')
+          }
+
+          revalidatePath('/local-drives')
+        }
+      }
+    } else {
+      // Fallback: no terminals configured — use legacy hardcoded behavior
+      const LOCAL_DELIVERY_STATES = ['PA', 'NJ', 'NY']
+
+      const { data: qualifyingOrders } = await supabase
+        .from('orders')
+        .select('id, delivery_location, delivery_city, delivery_state, broker_fee')
+        .eq('trip_id', id)
+        .eq('tenant_id', tenantId)
+        .gt('broker_fee', '0')
+        .in('delivery_state', LOCAL_DELIVERY_STATES)
+
+      if (qualifyingOrders && qualifyingOrders.length > 0) {
+        const orderIds = qualifyingOrders.map((o) => o.id)
+        const { data: existingDrives } = await supabase
+          .from('local_drives')
+          .select('order_id')
+          .eq('tenant_id', tenantId)
+          .in('order_id', orderIds)
+
+        const existingOrderIds = new Set(existingDrives?.map((d) => d.order_id) ?? [])
+
+        const newDrives = qualifyingOrders
+          .filter((o) => !existingOrderIds.has(o.id))
+          .map((order) => ({
+            tenant_id: tenantId,
+            order_id: order.id,
+            trip_id: id,
+            type: 'delivery_from_terminal' as const,
+            status: 'pending' as const,
+            pickup_location: 'Terminal',
+            delivery_location: order.delivery_location,
+            delivery_city: order.delivery_city,
+            delivery_state: order.delivery_state,
+            inspection_visibility: 'internal',
+            revenue: order.broker_fee,
+            notes: `Auto-created from trip at-terminal. Delivery to ${order.delivery_city}, ${order.delivery_state}`,
+          }))
+
+        if (newDrives.length > 0) {
+          const { error: driveError } = await supabase
+            .from('local_drives')
+            .insert(newDrives)
+
+          if (driveError) {
+            safeError(driveError, 'updateTripStatus.createLocalDrives')
+          }
+
+          revalidatePath('/local-drives')
+        }
       }
     }
   }
@@ -499,6 +579,18 @@ export async function recalculateTripFinancials(tripId: string) {
     return { error: safeError(expensesError, 'recalculateTripFinancials.expenses') }
   }
 
+  // Fetch local operations expense (sum of local_drives linked to this trip)
+  const { data: localDrives } = await supabase
+    .from('local_drives')
+    .select('expense_amount')
+    .eq('trip_id', tripId)
+    .eq('tenant_id', tenantId)
+
+  const localOpsExpense = (localDrives ?? []).reduce(
+    (sum, d) => sum + parseFloat((d as { expense_amount: string }).expense_amount || '0'),
+    0
+  )
+
   // Parse order data: financial fields + route fields
   const rawOrders = (orders ?? []).map((o) => ({
     revenue: parseFloat(o.revenue || '0'),
@@ -573,6 +665,9 @@ export async function recalculateTripFinancials(tripId: string) {
     destinationSummary = deliveryStates.length > 0 ? deliveryStates.join(', ') : null
   }
 
+  // Adjust net profit to include local operations expense
+  const adjustedNetProfit = financials.netProfit - localOpsExpense
+
   // Update trip with denormalized financial values and route summary
   const { error: updateError } = await supabase
     .from('trips')
@@ -582,7 +677,8 @@ export async function recalculateTripFinancials(tripId: string) {
       total_local_fees: String(financials.localFees),
       driver_pay: String(financials.driverPay),
       total_expenses: String(financials.expenses),
-      net_profit: String(financials.netProfit),
+      local_operations_expense: String(localOpsExpense),
+      net_profit: String(adjustedNetProfit),
       order_count: rawOrders.length,
       total_miles: String(financials.totalMiles),
       origin_summary: originSummary,

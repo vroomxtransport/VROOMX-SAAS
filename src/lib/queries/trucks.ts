@@ -56,6 +56,21 @@ export async function fetchTrucks(
   }
 }
 
+/**
+ * Lightweight query for dropdowns — only id + unit_number, no pagination.
+ */
+export async function fetchTruckOptions(
+  supabase: SupabaseClient
+): Promise<{ id: string; unit_number: string }[]> {
+  const { data, error } = await supabase
+    .from('trucks')
+    .select('id, unit_number')
+    .order('unit_number')
+
+  if (error) throw error
+  return (data ?? []) as { id: string; unit_number: string }[]
+}
+
 export async function fetchTruck(
   supabase: SupabaseClient,
   id: string

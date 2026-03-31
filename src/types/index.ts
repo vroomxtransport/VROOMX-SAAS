@@ -65,11 +65,11 @@ export type DriverType = 'company' | 'owner_operator' | 'local_driver'
 
 export type DriverStatus = 'active' | 'inactive'
 
-export type TruckType = '7_car' | '8_car' | '9_car' | 'flatbed' | 'enclosed'
+export type TruckType = '7_car' | '8_car' | '9_car' | 'flatbed' | 'enclosed' | '2_car' | '3_car'
 
 export type TruckStatus = 'active' | 'inactive' | 'maintenance'
 
-export type DriverPayType = 'percentage_of_carrier_pay' | 'dispatch_fee_percent' | 'per_mile' | 'per_car'
+export type DriverPayType = 'percentage_of_carrier_pay' | 'dispatch_fee_percent' | 'per_mile' | 'per_car' | 'daily_salary'
 
 export type PaymentTerms = 'NET15' | 'NET30' | 'NET45' | 'NET60'
 
@@ -94,7 +94,7 @@ export const DRIVER_STATUSES: readonly DriverStatus[] = [
 ] as const
 
 export const TRUCK_TYPES: readonly TruckType[] = [
-  '7_car', '8_car', '9_car', 'flatbed', 'enclosed',
+  '7_car', '8_car', '9_car', 'flatbed', 'enclosed', '2_car', '3_car',
 ] as const
 
 export const TRUCK_STATUSES: readonly TruckStatus[] = [
@@ -102,7 +102,7 @@ export const TRUCK_STATUSES: readonly TruckStatus[] = [
 ] as const
 
 export const DRIVER_PAY_TYPES: readonly DriverPayType[] = [
-  'percentage_of_carrier_pay', 'dispatch_fee_percent', 'per_mile', 'per_car',
+  'percentage_of_carrier_pay', 'dispatch_fee_percent', 'per_mile', 'per_car', 'daily_salary',
 ] as const
 
 export const PAYMENT_TERMS_OPTIONS: readonly PaymentTerms[] = [
@@ -143,6 +143,8 @@ export const DRIVER_STATUS_LABELS: Record<DriverStatus, string> = {
 }
 
 export const TRUCK_TYPE_LABELS: Record<TruckType, string> = {
+  '2_car': '2-Car Hauler',
+  '3_car': '3-Car Hauler',
   '7_car': '7-Car Hauler',
   '8_car': '8-Car Hauler',
   '9_car': '9-Car Hauler',
@@ -172,6 +174,7 @@ export const DRIVER_PAY_TYPE_LABELS: Record<DriverPayType, string> = {
   dispatch_fee_percent: 'Dispatch Fee %',
   per_mile: 'Per Mile',
   per_car: 'Per Car',
+  daily_salary: 'Daily Salary',
 }
 
 export const PAYMENT_TERMS_LABELS: Record<PaymentTerms, string> = {
@@ -242,6 +245,8 @@ export const TRIP_STATUS_COLORS: Record<TripStatus, string> = {
 
 // Truck capacity lookup (derived from truck_type)
 export const TRUCK_CAPACITY: Record<TruckType, number> = {
+  '2_car': 2,
+  '3_car': 3,
   '7_car': 7,
   '8_car': 8,
   '9_car': 9,
@@ -460,6 +465,42 @@ export const LOCAL_DRIVE_STATUS_LABELS: Record<LocalDriveStatus, string> = {
 export const LOCAL_DRIVE_STATUS_COLORS: Record<LocalDriveStatus, string> = {
   pending: 'bg-gray-50 text-gray-700 border-gray-200',
   in_progress: 'bg-blue-50 text-blue-700 border-blue-200',
+  completed: 'bg-green-50 text-green-700 border-green-200',
+  cancelled: 'bg-red-50 text-red-700 border-red-200',
+}
+
+// Local Drive Type (direction)
+export type LocalDriveType = 'pickup_to_terminal' | 'delivery_from_terminal' | 'standalone'
+
+export const LOCAL_DRIVE_TYPES: readonly LocalDriveType[] = ['pickup_to_terminal', 'delivery_from_terminal', 'standalone'] as const
+
+export const LOCAL_DRIVE_TYPE_LABELS: Record<LocalDriveType, string> = {
+  pickup_to_terminal: 'Pickup → Terminal',
+  delivery_from_terminal: 'Terminal → Delivery',
+  standalone: 'Standalone',
+}
+
+export const LOCAL_DRIVE_TYPE_COLORS: Record<LocalDriveType, string> = {
+  pickup_to_terminal: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+  delivery_from_terminal: 'bg-cyan-50 text-cyan-700 border-cyan-200',
+  standalone: 'bg-gray-50 text-gray-700 border-gray-200',
+}
+
+// Local Run Status
+export type LocalRunStatus = 'planned' | 'in_progress' | 'completed' | 'cancelled'
+
+export const LOCAL_RUN_STATUSES: readonly LocalRunStatus[] = ['planned', 'in_progress', 'completed', 'cancelled'] as const
+
+export const LOCAL_RUN_STATUS_LABELS: Record<LocalRunStatus, string> = {
+  planned: 'Planned',
+  in_progress: 'In Progress',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+}
+
+export const LOCAL_RUN_STATUS_COLORS: Record<LocalRunStatus, string> = {
+  planned: 'bg-blue-50 text-blue-700 border-blue-200',
+  in_progress: 'bg-amber-50 text-amber-700 border-amber-200',
   completed: 'bg-green-50 text-green-700 border-green-200',
   cancelled: 'bg-red-50 text-red-700 border-red-200',
 }

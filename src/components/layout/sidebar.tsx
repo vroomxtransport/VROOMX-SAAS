@@ -31,6 +31,7 @@ import {
   Caravan,
   Wallet,
   Plug,
+  Route,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -77,7 +78,7 @@ const NAV_CATEGORIES: NavCategory[] = [
       { name: 'Trucks', href: '/trucks', icon: Truck },
       { name: 'Trailers', href: '/trailers', icon: Caravan },
       { name: 'Drivers', href: '/drivers', icon: IdCard, minRole: 'dispatcher' },
-      { name: 'Local Drives', href: '/local-drives', icon: MapPin, minRole: 'dispatcher' },
+      { name: 'Local Runs', href: '/local-runs', icon: Route, minRole: 'dispatcher' },
       { name: 'Maintenance', href: '/maintenance', icon: Hammer, minRole: 'dispatcher' },
       { name: 'Fuel Tracking', href: '/fuel-tracking', icon: Droplets, minRole: 'dispatcher' },
     ],

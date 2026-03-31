@@ -3,9 +3,9 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Pencil, MapPin, Calendar, DollarSign, Car } from 'lucide-react'
-import { LOCAL_DRIVE_STATUS_LABELS, LOCAL_DRIVE_STATUS_COLORS } from '@/types'
+import { LOCAL_DRIVE_STATUS_LABELS, LOCAL_DRIVE_STATUS_COLORS, LOCAL_DRIVE_TYPE_LABELS, LOCAL_DRIVE_TYPE_COLORS } from '@/types'
 import type { LocalDrive } from '@/types/database'
-import type { LocalDriveStatus } from '@/types'
+import type { LocalDriveStatus, LocalDriveType } from '@/types'
 import { cn } from '@/lib/utils'
 
 interface LocalDriveRowProps {
@@ -70,6 +70,11 @@ export function LocalDriveRow({ localDrive, onClick, onEdit }: LocalDriveRowProp
       </div>
 
       <div className="flex items-center gap-1.5 shrink-0">
+        {localDrive.type !== 'standalone' && (
+          <Badge variant="outline" className={cn('gap-1 text-xs', LOCAL_DRIVE_TYPE_COLORS[localDrive.type as LocalDriveType])}>
+            {LOCAL_DRIVE_TYPE_LABELS[localDrive.type as LocalDriveType]}
+          </Badge>
+        )}
         <Badge variant="outline" className={cn('gap-1.5', colorClasses)}>
           {statusLabel}
         </Badge>
