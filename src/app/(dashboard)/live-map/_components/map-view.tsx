@@ -2,11 +2,16 @@
 
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
-import { useDriverLocations } from '@/hooks/use-driver-locations'
-import { DriverPanel } from './driver-panel'
-import { useCallback, useState } from 'react'
-import type { DriverLocation } from '@/types/database'
+import { MapContainer, TileLayer, useMap } from 'react-leaflet'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useFleetData } from '../_lib/use-fleet-data'
+import type { FleetFilters, FleetUnit, MapStyle } from '../_lib/types'
+import { DEFAULT_FILTERS, MAP_STYLES } from '../_lib/types'
+import { FleetPanel } from './fleet-panel'
+import { MarkerClusterGroup } from './marker-cluster-group'
+import { MapToolbar } from './map-toolbar'
+import { MapLegend } from './map-legend'
+import { MapStatsBar } from './map-stats-bar'
 
 // Fix default marker icon for Next.js/webpack compatibility
 delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: string })._getIconUrl
@@ -19,87 +24,123 @@ L.Icon.Default.mergeOptions({
     'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 })
 
-function FlyToDriver({ location }: { location: DriverLocation | null }) {
+interface FlyTarget {
+  latitude: number
+  longitude: number
+}
+
+function FlyToMarker({ target }: { target: FlyTarget | null }) {
   const map = useMap()
-
-  if (location) {
-    map.flyTo([location.latitude, location.longitude], 12, { duration: 1 })
-  }
-
+  useEffect(() => {
+    if (target) {
+      map.flyTo([target.latitude, target.longitude], 12, { duration: 1 })
+    }
+  }, [map, target])
   return null
 }
 
 export function MapView() {
-  const { data: locations = [], isLoading } = useDriverLocations()
-  const [selectedLocation, setSelectedLocation] =
-    useState<DriverLocation | null>(null)
+  const [filters, setFilters] = useState<FleetFilters>(DEFAULT_FILTERS)
+  const [mapStyle, setMapStyle] = useState<MapStyle>('street')
+  const [clusterEnabled, setClusterEnabled] = useState(true)
+  const [legendVisible, setLegendVisible] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [selectedUnit, setSelectedUnit] = useState<FleetUnit | null>(null)
+  const [panelCollapsed, setPanelCollapsed] = useState(false)
+  const [flyTarget, setFlyTarget] = useState<FlyTarget | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
-  const handleSelectDriver = useCallback((loc: DriverLocation) => {
-    setSelectedLocation(loc)
-    // Reset after fly animation so subsequent clicks on same driver still work
-    setTimeout(() => setSelectedLocation(null), 1500)
+  const { units, stats, isLoading } = useFleetData(filters)
+
+  // Fly to selected unit
+  const handleSelectUnit = useCallback((unit: FleetUnit) => {
+    setSelectedUnit(unit)
+    setFlyTarget({ latitude: unit.latitude, longitude: unit.longitude })
+    setTimeout(() => setFlyTarget(null), 1500)
+  }, [])
+
+  // Fullscreen via browser API
+  const handleFullscreenToggle = useCallback(() => {
+    if (!containerRef.current) return
+    if (!document.fullscreenElement) {
+      containerRef.current.requestFullscreen().catch(() => {})
+      setIsFullscreen(true)
+    } else {
+      document.exitFullscreen().catch(() => {})
+      setIsFullscreen(false)
+    }
+  }, [])
+
+  // Listen for Escape to exit fullscreen
+  useEffect(() => {
+    const handler = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+    document.addEventListener('fullscreenchange', handler)
+    return () => document.removeEventListener('fullscreenchange', handler)
   }, [])
 
   if (isLoading) {
     return (
       <div className="flex h-[calc(100vh-3.5rem)] items-center justify-center">
-        <p className="text-muted-foreground">Loading driver locations...</p>
+        <p className="text-muted-foreground">Loading fleet locations...</p>
       </div>
     )
   }
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)]">
-      {/* Side panel */}
-      <div className="w-80 shrink-0 overflow-y-auto border-r border-border-subtle bg-background">
-        <DriverPanel
-          locations={locations}
-          onSelectDriver={handleSelectDriver}
-        />
-      </div>
+    <div ref={containerRef} className="flex h-[calc(100vh-3.5rem)] bg-background">
+      {/* Side Panel */}
+      <FleetPanel
+        units={units}
+        stats={stats}
+        filters={filters}
+        onFiltersChange={setFilters}
+        selectedUnit={selectedUnit}
+        onSelectUnit={handleSelectUnit}
+        collapsed={panelCollapsed}
+        onToggleCollapse={() => setPanelCollapsed((p) => !p)}
+      />
 
-      {/* Map */}
-      <div className="flex-1">
+      {/* Map Area */}
+      <div className="relative flex-1">
         <MapContainer
           center={[39.8283, -98.5795]}
           zoom={4}
           className="h-full w-full"
+          style={{ zIndex: 0 }}
         >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          {MAP_STYLES.filter((s) => s.key === mapStyle).map((s) => (
+            <TileLayer
+              key={s.key}
+              attribution={s.attribution}
+              url={s.url}
+            />
+          ))}
+          <FlyToMarker target={flyTarget} />
+          <MarkerClusterGroup
+            units={units}
+            enabled={clusterEnabled}
+            onSelectUnit={handleSelectUnit}
           />
-
-          <FlyToDriver location={selectedLocation} />
-
-          {locations.map((loc) => {
-            const driverName = loc.driver
-              ? `${loc.driver.first_name} ${loc.driver.last_name}`
-              : 'Unknown Driver'
-
-            return (
-              <Marker
-                key={loc.id}
-                position={[loc.latitude, loc.longitude]}
-              >
-                <Popup>
-                  <div className="text-sm">
-                    <p className="font-semibold">{driverName}</p>
-                    {loc.speed != null && (
-                      <p className="text-muted-foreground">
-                        {Math.round(loc.speed)} mph
-                      </p>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      Last updated:{' '}
-                      {new Date(loc.updated_at).toLocaleTimeString()}
-                    </p>
-                  </div>
-                </Popup>
-              </Marker>
-            )
-          })}
         </MapContainer>
+
+        {/* Overlays — above the map's stacking context */}
+        <MapToolbar
+          filters={filters}
+          onFiltersChange={setFilters}
+          mapStyle={mapStyle}
+          onMapStyleChange={setMapStyle}
+          clusterEnabled={clusterEnabled}
+          onClusterToggle={() => setClusterEnabled((e) => !e)}
+          legendVisible={legendVisible}
+          onLegendToggle={() => setLegendVisible((v) => !v)}
+          isFullscreen={isFullscreen}
+          onFullscreenToggle={handleFullscreenToggle}
+          panelCollapsed={panelCollapsed}
+        />
+        {legendVisible && <MapLegend stats={stats} />}
+        <MapStatsBar stats={stats} />
       </div>
     </div>
   )

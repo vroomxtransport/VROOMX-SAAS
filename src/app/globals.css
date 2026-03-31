@@ -251,6 +251,17 @@
   }
 }
 
+/* Marketing page color tokens */
+.marketing-page {
+  --brand-action: #F97316;
+  --brand-action-hover: #EA580C;
+  --marketing-dark-bg: #0C1220;
+  --marketing-dark-surface: #141E2E;
+  --marketing-dark-border: rgba(255,255,255,0.08);
+  --marketing-dark-text: rgba(255,255,255,0.9);
+  --marketing-dark-text-muted: rgba(255,255,255,0.5);
+}
+
 @keyframes accordion-down {
   from { height: 0; }
   to { height: var(--radix-accordion-content-height); }
@@ -616,6 +627,44 @@
   border-bottom: 2px solid var(--muted-foreground) !important;
   border-radius: 0 0 2px 0 !important;
   opacity: 0.5 !important;
+}
+
+/* Fleet map - strip Leaflet popup defaults for custom React card */
+.leaflet-popup.fleet-popup .leaflet-popup-content-wrapper {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  border-radius: 0;
+}
+.leaflet-popup.fleet-popup .leaflet-popup-tip-container {
+  display: none;
+}
+.leaflet-popup.fleet-popup .leaflet-popup-content {
+  margin: 0;
+  width: auto !important;
+}
+
+/* Glass-style cluster markers — fully override MarkerCluster.css defaults */
+.marker-cluster-small,
+.marker-cluster-medium,
+.marker-cluster-large {
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(8px);
+  border: 2px solid rgba(0, 0, 0, 0.1) !important;
+  border-radius: 50% !important;
+}
+.marker-cluster-small div,
+.marker-cluster-medium div,
+.marker-cluster-large div {
+  background: transparent !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  font-size: inherit !important;
+  font-weight: 700 !important;
+  color: #1e293b !important;
+  text-align: center !important;
+  line-height: 1 !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
