@@ -105,8 +105,109 @@ export async function createOrder(data: unknown) {
     actorEmail: auth.ctx.user.email,
   }).catch(() => {})
 
+  // Auto-create local drives if pickup/delivery states match a terminal
+  void autoCreateLocalDrives(supabase, tenantId, order).catch(() => {})
+
   revalidatePath('/orders')
   return { success: true, data: order }
+}
+
+/**
+ * Auto-create local drives (both directions) when an order's pickup or delivery
+ * state matches an active terminal's auto_create_states configuration.
+ * Fire-and-forget — errors are logged but don't block order creation.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function autoCreateLocalDrives(
+  supabase: any,
+  tenantId: string,
+  order: {
+    id: string
+    pickup_location: string | null; pickup_city: string | null; pickup_state: string | null
+    delivery_location: string | null; delivery_city: string | null; delivery_state: string | null
+  }
+) {
+  if (!order.pickup_state && !order.delivery_state) return
+
+  // Fetch active terminals with auto-create enabled
+  const { data: terminals } = await supabase
+    .from('terminals')
+    .select('id, name, address, city, state, auto_create_states')
+    .eq('tenant_id', tenantId)
+    .eq('is_active', true)
+    .eq('auto_create_local_drives', true)
+
+  if (!terminals || terminals.length === 0) return
+
+  type TerminalRow = { id: string; name: string; address: string | null; city: string | null; state: string | null; auto_create_states: string[] | null }
+
+  const findMatchingTerminal = (stateCode: string | null) => {
+    if (!stateCode) return null
+    return (terminals as TerminalRow[]).find((t) => {
+      const states = t.auto_create_states
+      if (!states || states.length === 0) return true
+      return states.includes(stateCode)
+    }) ?? null
+  }
+
+  // Check existing drives to avoid duplicates
+  const { data: existingDrives } = await supabase
+    .from('local_drives')
+    .select('type')
+    .eq('tenant_id', tenantId)
+    .eq('order_id', order.id)
+
+  const existingTypes = new Set((existingDrives ?? []).map((d: { type: string }) => d.type))
+
+  const drivesToInsert: Record<string, unknown>[] = []
+
+  // Pickup direction: order pickup → terminal
+  if (order.pickup_state && !existingTypes.has('pickup_to_terminal')) {
+    const terminal = findMatchingTerminal(order.pickup_state)
+    if (terminal) {
+      drivesToInsert.push({
+        tenant_id: tenantId,
+        order_id: order.id,
+        terminal_id: terminal.id,
+        type: 'pickup_to_terminal',
+        status: 'pending',
+        pickup_location: order.pickup_location,
+        pickup_city: order.pickup_city,
+        pickup_state: order.pickup_state,
+        delivery_location: terminal.address || terminal.name,
+        delivery_city: terminal.city,
+        delivery_state: terminal.state,
+        inspection_visibility: 'internal',
+        notes: `Auto-created pickup to ${terminal.name}`,
+      })
+    }
+  }
+
+  // Delivery direction: terminal → order delivery
+  if (order.delivery_state && !existingTypes.has('delivery_from_terminal')) {
+    const terminal = findMatchingTerminal(order.delivery_state)
+    if (terminal) {
+      drivesToInsert.push({
+        tenant_id: tenantId,
+        order_id: order.id,
+        terminal_id: terminal.id,
+        type: 'delivery_from_terminal',
+        status: 'pending',
+        pickup_location: terminal.address || terminal.name,
+        pickup_city: terminal.city,
+        pickup_state: terminal.state,
+        delivery_location: order.delivery_location,
+        delivery_city: order.delivery_city,
+        delivery_state: order.delivery_state,
+        inspection_visibility: 'internal',
+        notes: `Auto-created delivery from ${terminal.name}`,
+      })
+    }
+  }
+
+  if (drivesToInsert.length > 0) {
+    await supabase.from('local_drives').insert(drivesToInsert)
+  }
 }
 
 export async function updateOrder(id: string, data: unknown) {

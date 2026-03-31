@@ -9,6 +9,7 @@ export interface LocalDriveFilters {
   search?: string
   driverId?: string
   tripId?: string
+  unassignedOnly?: boolean
   dateFrom?: string
   dateTo?: string
   sortBy?: string
@@ -51,6 +52,10 @@ export async function fetchLocalDrives(
 
   if (tripId) {
     query = query.eq('trip_id', tripId)
+  }
+
+  if (filters.unassignedOnly) {
+    query = query.is('local_run_id', null)
   }
 
   if (dateFrom) {

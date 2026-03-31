@@ -6,6 +6,7 @@ import { useLocalRuns } from '@/hooks/use-local-runs'
 import { useTerminals } from '@/hooks/use-terminals'
 import { deleteLocalRun, updateLocalRunStatus } from '@/app/actions/local-runs'
 import { LocalRunForm } from './local-run-form'
+import { LocalRunDetail } from './local-run-detail'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -63,6 +64,8 @@ export function LocalRunList() {
 
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editingRun, setEditingRun] = useState<LocalRun | undefined>(undefined)
+  const [detailOpen, setDetailOpen] = useState(false)
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null)
 
   const setFilter = useCallback((key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString())
@@ -85,6 +88,11 @@ export function LocalRunList() {
   const handleAdd = () => {
     setEditingRun(undefined)
     setDrawerOpen(true)
+  }
+
+  const handleRowClick = (run: LocalRun) => {
+    setSelectedRunId(run.id)
+    setDetailOpen(true)
   }
 
   const handleEdit = (run: LocalRun) => {
@@ -176,7 +184,7 @@ export function LocalRunList() {
               const truckUnit = (run.truck as { unit_number: string } | null)?.unit_number
 
               return (
-                <div key={run.id} className="widget-card flex items-center gap-4 !p-3 cursor-pointer hover:bg-accent/30 transition-colors" onClick={() => handleEdit(run)}>
+                <div key={run.id} className="widget-card flex items-center gap-4 !p-3 cursor-pointer hover:bg-accent/30 transition-colors" onClick={() => handleRowClick(run)}>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-medium text-sm">{terminalName}</span>
@@ -248,6 +256,17 @@ export function LocalRunList() {
               localRun={editingRun}
               onSuccess={() => { setDrawerOpen(false); setEditingRun(undefined) }}
             />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={detailOpen} onOpenChange={setDetailOpen}>
+        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto p-6">
+          <SheetHeader>
+            <SheetTitle>Local Run Details</SheetTitle>
+          </SheetHeader>
+          <div className="mt-6">
+            {selectedRunId && <LocalRunDetail runId={selectedRunId} />}
           </div>
         </SheetContent>
       </Sheet>
