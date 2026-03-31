@@ -180,7 +180,7 @@ export function PricingStep() {
                   type="number"
                   step="0.1"
                   min="0"
-                  placeholder="0"
+                  placeholder="Auto-calculated on save"
                   {...field}
                   value={field.value as number ?? ''}
                   onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
@@ -188,6 +188,7 @@ export function PricingStep() {
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">mi</span>
               </div>
             </FormControl>
+            <p className="text-xs text-muted-foreground">Leave blank to auto-calculate from addresses after save</p>
             <FormMessage />
           </FormItem>
         )}

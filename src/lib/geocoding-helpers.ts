@@ -1,4 +1,5 @@
 import { geocodeAddress } from '@/lib/geocoding'
+import { calculateDrivingDistance } from '@/lib/distance'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 interface AddressFields {
@@ -54,6 +55,34 @@ export async function geocodeAndSaveOrder(
   }
 
   if (Object.keys(updateData).length === 0) return
+
+  // Auto-calculate driving distance if both pickup and delivery coordinates are available
+  const pickupLat = updateData.pickup_latitude
+  const pickupLon = updateData.pickup_longitude
+  const deliveryLat = updateData.delivery_latitude
+  const deliveryLon = updateData.delivery_longitude
+
+  if (pickupLat && pickupLon && deliveryLat && deliveryLon) {
+    try {
+      const distance = await calculateDrivingDistance(pickupLat, pickupLon, deliveryLat, deliveryLon)
+      if (distance) {
+        // Only set if distance_miles is not already manually entered
+        const { data: existing } = await supabase
+          .from('orders')
+          .select('distance_miles')
+          .eq('id', orderId)
+          .eq('tenant_id', tenantId)
+          .single()
+
+        const currentMiles = existing?.distance_miles ? parseFloat(existing.distance_miles) : 0
+        if (!currentMiles || currentMiles === 0) {
+          ;(updateData as Record<string, unknown>).distance_miles = String(distance.miles)
+        }
+      }
+    } catch (err) {
+      console.error(`[geocoding] Distance calculation failed for order ${orderId}:`, err)
+    }
+  }
 
   const { error } = await supabase
     .from('orders')
