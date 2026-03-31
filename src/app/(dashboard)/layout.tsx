@@ -4,6 +4,7 @@ import { Sidebar } from '@/components/layout/sidebar'
 import { Header } from '@/components/layout/header'
 import { SidebarLayoutWrapper } from '@/components/layout/sidebar-layout-wrapper'
 import { QueryProvider } from '@/components/providers/query-provider'
+import { SamsaraSyncProvider } from '@/components/providers/samsara-sync-provider'
 import { AlertTriangle } from 'lucide-react'
 import type { TenantRole, SubscriptionStatus } from '@/types'
 
@@ -67,6 +68,7 @@ export default async function DashboardLayout({
 
   return (
     <QueryProvider>
+    <SamsaraSyncProvider />
     <div className="flex h-screen overflow-hidden bg-content-bg">
       <Sidebar userRole={userRole} tenantName={tenant.name} userId={user.id} />
 
