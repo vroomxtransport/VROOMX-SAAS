@@ -48,7 +48,7 @@ export function SamsaraVehicleMapping({ vehicles, trucks }: SamsaraVehicleMappin
     setMappings((prev) => ({ ...prev, [samsaraVehicleId]: vroomxTruckId }))
 
     try {
-      const result = await mapSamsaraVehicle({ samsaraVehicleId, vroomxTruckId })
+      const result = await mapSamsaraVehicle({ samsaraVehicleId, truckId: vroomxTruckId })
       if ('error' in result && result.error) {
         toast.error(typeof result.error === 'string' ? result.error : 'Failed to save mapping')
         setMappings((prev) => ({

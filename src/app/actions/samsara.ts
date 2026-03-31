@@ -741,45 +741,45 @@ export async function syncLocations() {
     if ('error' in clientResult) return { error: clientResult.error }
     const { client } = clientResult
 
-    // Get mapped vehicles (ones with a truck_id)
-    const { data: mappedVehicles } = await supabase
+    // Get ALL synced vehicles (for GPS caching on map)
+    const { data: allVehicles } = await supabase
       .from('samsara_vehicles')
       .select('samsara_vehicle_id, truck_id')
       .eq('tenant_id', tenantId)
-      .not('truck_id', 'is', null)
 
-    if (!mappedVehicles || mappedVehicles.length === 0) {
+    if (!allVehicles || allVehicles.length === 0) {
       return { success: true, data: { updated: 0 } }
     }
 
-    // Build lookup: samsara vehicle id -> truck_id
-    const vehicleToTruck = new Map<string, string>()
-    for (const v of mappedVehicles) {
+    // Build lookup: samsara vehicle id -> truck_id (null if unmapped)
+    const vehicleToTruck = new Map<string, string | null>()
+    for (const v of allVehicles) {
       vehicleToTruck.set(v.samsara_vehicle_id, v.truck_id)
     }
 
     // Fetch locations from Samsara
     const locations = await client.getVehicleLocations()
 
-    // Cache location on samsara_vehicles records for map display
+    // Cache location on ALL samsara_vehicles records for map display
     for (const loc of locations) {
-      if (vehicleToTruck.has(loc.id)) {
+      if (vehicleToTruck.has(loc.id) && loc.gps) {
         await supabase
           .from('samsara_vehicles')
           .update({
-            last_latitude: loc.location.latitude,
-            last_longitude: loc.location.longitude,
-            last_speed: loc.location.speed,
-            last_heading: loc.location.heading,
-            last_location_time: loc.location.time,
+            last_latitude: loc.gps.latitude,
+            last_longitude: loc.gps.longitude,
+            last_speed: loc.gps.speedMilesPerHour ?? null,
+            last_heading: loc.gps.headingDegrees ?? null,
+            last_location_time: loc.gps.time,
           })
           .eq('tenant_id', tenantId)
           .eq('samsara_vehicle_id', loc.id)
       }
     }
 
-    // Find driver assigned to each truck via active trips
-    const truckIds = [...new Set(mappedVehicles.map((v) => v.truck_id))]
+    // Find driver assigned to each mapped truck via active trips
+    const mappedVehicles = allVehicles.filter((v) => v.truck_id != null)
+    const truckIds = [...new Set(mappedVehicles.map((v) => v.truck_id as string))]
     const { data: activeTrips } = await supabase
       .from('trips')
       .select('truck_id, driver_id')
@@ -805,16 +805,18 @@ export async function syncLocations() {
       const driverId = truckToDriver.get(truckId)
       if (!driverId) continue
 
+      if (!loc.gps) continue
+
       const { error: locError } = await supabase
         .from('driver_locations')
         .upsert(
           {
             tenant_id: tenantId,
             driver_id: driverId,
-            latitude: loc.location.latitude,
-            longitude: loc.location.longitude,
-            speed: loc.location.speed ?? null,
-            heading: loc.location.heading ?? null,
+            latitude: loc.gps.latitude,
+            longitude: loc.gps.longitude,
+            speed: loc.gps.speedMilesPerHour ?? null,
+            heading: loc.gps.headingDegrees ?? null,
             updated_at: new Date().toISOString(),
           },
           { onConflict: 'tenant_id,driver_id' }
@@ -881,28 +883,24 @@ export async function syncHOS() {
       const driverId = samsaraToDriver.get(hos.driverId)
       if (!driverId) continue
 
-      // Upsert ELD log record (eld_logs table must exist via migration)
+      // Insert ELD log record (append-only table — no upsert)
       const { error: hosError } = await supabase
         .from('eld_logs')
-        .upsert(
-          {
-            tenant_id: tenantId,
-            driver_id: driverId,
-            source: 'samsara',
-            duty_status: hos.currentDutyStatus,
-            time_until_break: hos.timeUntilBreak,
-            driving_time_remaining: hos.drivingTimeRemaining,
-            shift_time_remaining: hos.shiftTimeRemaining,
-            cycle_time_remaining: hos.cycleTimeRemaining,
-            samsara_vehicle_id: hos.vehicleId ?? null,
-            recorded_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'tenant_id,driver_id' }
-        )
+        .insert({
+          tenant_id: tenantId,
+          driver_id: driverId,
+          samsara_driver_id: hos.driverId,
+          duty_status: hos.currentDutyStatus,
+          started_at: new Date().toISOString(),
+          time_until_break_ms: hos.timeUntilBreak ?? null,
+          driving_time_remaining_ms: hos.drivingTimeRemaining ?? null,
+          shift_time_remaining_ms: hos.shiftTimeRemaining ?? null,
+          cycle_time_remaining_ms: hos.cycleTimeRemaining ?? null,
+          vehicle_id: hos.vehicleId ?? null,
+        })
 
       if (hosError) {
-        console.error('[syncHOS] Upsert failed for driver:', driverId, hosError.message)
+        console.error('[syncHOS] Insert failed for driver:', driverId, hosError.message)
         continue
       }
 
@@ -1055,27 +1053,48 @@ export async function triggerFullSync() {
       hos: { updated: 0 },
       safetyEvents: { inserted: 0 },
     }
+    const warnings: string[] = []
 
-    // Run syncs sequentially
+    // Run syncs sequentially — continue on individual failures
     const vehicleResult = await syncVehicles()
-    if ('error' in vehicleResult) return { error: vehicleResult.error }
-    if (vehicleResult.data) results.vehicles = vehicleResult.data
+    if ('error' in vehicleResult) {
+      warnings.push(`Vehicles: ${vehicleResult.error}`)
+    } else if (vehicleResult.data) {
+      results.vehicles = vehicleResult.data
+    }
 
     const driverResult = await syncDrivers()
-    if ('error' in driverResult) return { error: driverResult.error }
-    if (driverResult.data) results.drivers = driverResult.data
+    if ('error' in driverResult) {
+      warnings.push(`Drivers: ${driverResult.error}`)
+    } else if (driverResult.data) {
+      results.drivers = driverResult.data
+    }
 
     const locationResult = await syncLocations()
-    if ('error' in locationResult) return { error: locationResult.error }
-    if (locationResult.data) results.locations = locationResult.data
+    if ('error' in locationResult) {
+      warnings.push(`Locations: ${locationResult.error}`)
+    } else if (locationResult.data) {
+      results.locations = locationResult.data
+    }
 
     const hosResult = await syncHOS()
-    if ('error' in hosResult) return { error: hosResult.error }
-    if (hosResult.data) results.hos = hosResult.data
+    if ('error' in hosResult) {
+      warnings.push(`HOS: ${hosResult.error}`)
+    } else if (hosResult.data) {
+      results.hos = hosResult.data
+    }
 
     const safetyResult = await syncSafetyEvents()
-    if ('error' in safetyResult) return { error: safetyResult.error }
-    if (safetyResult.data) results.safetyEvents = safetyResult.data
+    if ('error' in safetyResult) {
+      warnings.push(`Safety Events: ${safetyResult.error}`)
+    } else if (safetyResult.data) {
+      results.safetyEvents = safetyResult.data
+    }
+
+    // If ALL syncs failed, return error
+    if (warnings.length === 5) {
+      return { error: 'All sync operations failed. Please check your API key and try again.' }
+    }
 
     // Final sync timestamp
     await supabase
@@ -1092,14 +1111,14 @@ export async function triggerFullSync() {
       entityType: 'integration',
       entityId: 'samsara',
       action: 'full_sync',
-      description: `Full Samsara sync completed: ${results.vehicles.synced} vehicles, ${results.drivers.synced} drivers`,
+      description: `Full Samsara sync completed: ${results.vehicles.synced} vehicles, ${results.drivers.synced} drivers${warnings.length ? ` (${warnings.length} warnings)` : ''}`,
       actorId: auth.ctx.user.id,
       actorEmail: auth.ctx.user.email,
-      metadata: results,
+      metadata: { ...results, warnings },
     }).catch(() => {})
 
     revalidatePath('/settings/integrations')
-    return { success: true, data: results }
+    return { success: true, data: results, warnings }
   } catch (err) {
     // Mark integration as error on failure
     try {

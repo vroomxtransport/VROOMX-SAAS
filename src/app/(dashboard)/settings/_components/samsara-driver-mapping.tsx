@@ -49,7 +49,7 @@ export function SamsaraDriverMapping({ drivers, vroomxDrivers }: SamsaraDriverMa
     setMappings((prev) => ({ ...prev, [samsaraDriverId]: vroomxDriverId }))
 
     try {
-      const result = await mapSamsaraDriver({ samsaraDriverId, vroomxDriverId })
+      const result = await mapSamsaraDriver({ samsaraDriverId, driverId: vroomxDriverId })
       if ('error' in result && result.error) {
         toast.error(typeof result.error === 'string' ? result.error : 'Failed to save mapping')
         setMappings((prev) => ({

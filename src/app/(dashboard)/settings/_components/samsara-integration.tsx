@@ -105,12 +105,24 @@ function ConnectDialog({ onConnected }: ConnectDialogProps) {
       const result = await connectSamsara({ apiKey: apiKey.trim() })
       if ('error' in result && result.error) {
         toast.error(typeof result.error === 'string' ? result.error : 'Failed to connect')
-      } else {
-        toast.success('Samsara account connected successfully')
-        setOpen(false)
-        setApiKey('')
-        onConnected()
+        return
       }
+
+      toast.success('Connected! Importing your fleet data…')
+      setOpen(false)
+      setApiKey('')
+
+      // Auto-sync immediately after connecting
+      const syncResult = await triggerFullSync()
+      if ('error' in syncResult && syncResult.error) {
+        toast.error(typeof syncResult.error === 'string' ? syncResult.error : 'Sync failed')
+      } else if ('warnings' in syncResult && (syncResult.warnings as string[])?.length) {
+        toast.success('Fleet data imported with some warnings')
+      } else {
+        toast.success('Fleet data imported successfully')
+      }
+
+      onConnected()
     } catch {
       toast.error('Failed to connect to Samsara')
     } finally {
@@ -291,9 +303,11 @@ export function SamsaraIntegration() {
       const result = await triggerFullSync()
       if ('error' in result && result.error) {
         toast.error(typeof result.error === 'string' ? result.error : 'Sync failed')
+      } else if ('warnings' in result && (result.warnings as string[])?.length) {
+        toast.success('Sync completed with some warnings')
+        await load()
       } else {
-        toast.success('Sync started — vehicle and driver data will update shortly')
-        // Reload status after triggering sync
+        toast.success('Sync completed — fleet data updated')
         await load()
       }
     } catch {
