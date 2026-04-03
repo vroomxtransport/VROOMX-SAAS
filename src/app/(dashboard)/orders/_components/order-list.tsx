@@ -24,8 +24,6 @@ import { fetchOrders } from '@/lib/queries/orders'
 import type { OrderWithRelations } from '@/lib/queries/orders'
 import type { DateRange, SortConfig } from '@/types/filters'
 
-const PAGE_SIZE = 20
-
 export function OrderList() {
   const router = useRouter()
   const pathname = usePathname()
@@ -37,6 +35,7 @@ export function OrderList() {
   const [csvImportOpen, setCsvImportOpen] = useState(false)
   const [pdfImportOpen, setPdfImportOpen] = useState(false)
   const [editingOrder, setEditingOrder] = useState<OrderWithRelations | undefined>(undefined)
+  const [pageSize, setPageSize] = useState(25)
 
   // Local state for complex filter values (multi-select, date-range) that can't be serialized to simple URL params
   const [paymentStatuses, setPaymentStatuses] = useState<string[]>([])
@@ -61,7 +60,7 @@ export function OrderList() {
     sortBy: sort?.field,
     sortDir: sort?.direction,
     page,
-    pageSize: PAGE_SIZE,
+    pageSize,
   })
 
   // Build activeFilters for EnhancedFilterBar
@@ -114,6 +113,16 @@ export function OrderList() {
     (newPage: number) => {
       const params = new URLSearchParams(searchParams.toString())
       params.set('page', String(newPage))
+      router.push(`${pathname}?${params.toString()}`)
+    },
+    [searchParams, router, pathname]
+  )
+
+  const handlePageSizeChange = useCallback(
+    (size: number) => {
+      setPageSize(size)
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('page', '0')
       router.push(`${pathname}?${params.toString()}`)
     },
     [searchParams, router, pathname]
@@ -269,9 +278,10 @@ export function OrderList() {
           {data && (
             <Pagination
               page={page}
-              pageSize={PAGE_SIZE}
+              pageSize={pageSize}
               total={data.total}
               onPageChange={setPage}
+              onPageSizeChange={handlePageSizeChange}
             />
           )}
         </>

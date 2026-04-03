@@ -25,8 +25,6 @@ import { fetchFuelEntries } from '@/lib/queries/fuel'
 import type { FuelEntry } from '@/types/database'
 import type { EnhancedFilterConfig, SortConfig, DateRange } from '@/types/filters'
 
-const PAGE_SIZE = 12
-
 const CSV_HEADERS = [
   'date',
   'truck',
@@ -45,6 +43,8 @@ export function FuelList() {
   const searchParams = useSearchParams()
   const viewMode = useViewMode('fuel')
   const setView = useViewStore((s) => s.setView)
+
+  const [pageSize, setPageSize] = useState(25)
 
   // Fetch trucks and drivers for filter selects
   const { data: trucksData } = useTrucks({ pageSize: 100 })
@@ -141,7 +141,7 @@ export function FuelList() {
     sortBy: currentSort?.field,
     sortDir: currentSort?.direction,
     page: currentPage,
-    pageSize: PAGE_SIZE,
+    pageSize,
   })
 
   // Drawer state
@@ -201,6 +201,16 @@ export function FuelList() {
       } else {
         params.set('page', String(page))
       }
+      router.push(`/fuel-tracking?${params.toString()}`)
+    },
+    [searchParams, router]
+  )
+
+  const handlePageSizeChange = useCallback(
+    (size: number) => {
+      setPageSize(size)
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('page', '0')
       router.push(`/fuel-tracking?${params.toString()}`)
     },
     [searchParams, router]
@@ -390,9 +400,10 @@ export function FuelList() {
           <div className="mt-6">
             <Pagination
               page={currentPage}
-              pageSize={PAGE_SIZE}
+              pageSize={pageSize}
               total={total}
               onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
             />
           </div>
         </>

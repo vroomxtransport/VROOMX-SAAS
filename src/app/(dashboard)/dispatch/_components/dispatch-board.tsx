@@ -39,8 +39,6 @@ import type { DateRange } from '@/types/filters'
 import { updateTripStatus, assignOrderToTrip } from '@/app/actions/trips'
 import { cn } from '@/lib/utils'
 
-const PAGE_SIZE = 50
-
 // Section accent colors (left border) — used by list view
 const SECTION_BORDER_COLORS: Record<TripStatus, string> = {
   planned: 'border-l-blue-500',
@@ -63,6 +61,7 @@ export function DispatchBoard() {
   const queryClient = useQueryClient()
 
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [pageSize, setPageSize] = useState(25)
   const [viewMode, setViewMode] = useState<'board' | 'list'>('board')
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
     completed: true, // Completed starts collapsed
@@ -106,7 +105,7 @@ export function DispatchBoard() {
     startDate: startDate || undefined,
     endDate: endDate || undefined,
     page,
-    pageSize: PAGE_SIZE,
+    pageSize,
   })
 
   // Build activeFilters record for EnhancedFilterBar
@@ -153,6 +152,16 @@ export function DispatchBoard() {
     (newPage: number) => {
       const params = new URLSearchParams(searchParams.toString())
       params.set('page', String(newPage))
+      router.push(`${pathname}?${params.toString()}`)
+    },
+    [searchParams, router, pathname]
+  )
+
+  const handlePageSizeChange = useCallback(
+    (size: number) => {
+      setPageSize(size)
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('page', '0')
       router.push(`${pathname}?${params.toString()}`)
     },
     [searchParams, router, pathname]
@@ -423,9 +432,10 @@ export function DispatchBoard() {
           {data && (
             <Pagination
               page={page}
-              pageSize={PAGE_SIZE}
+              pageSize={pageSize}
               total={data.total}
               onPageChange={setPage}
+              onPageSizeChange={handlePageSizeChange}
             />
           )}
 

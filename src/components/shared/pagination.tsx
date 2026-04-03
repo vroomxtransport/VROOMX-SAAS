@@ -1,14 +1,19 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
+
+const DEFAULT_PAGE_SIZE_OPTIONS = [25, 50, 100, 200]
 
 interface PaginationProps {
   page: number
   pageSize: number
   total: number
   onPageChange: (page: number) => void
+  onPageSizeChange?: (size: number) => void
+  pageSizeOptions?: number[]
 }
 
 function getPageNumbers(currentPage: number, totalPages: number): (number | 'ellipsis')[] {
@@ -38,7 +43,14 @@ function getPageNumbers(currentPage: number, totalPages: number): (number | 'ell
   return pages
 }
 
-export function Pagination({ page, pageSize, total, onPageChange }: PaginationProps) {
+export function Pagination({
+  page,
+  pageSize,
+  total,
+  onPageChange,
+  onPageSizeChange,
+  pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
+}: PaginationProps) {
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
   const start = page * pageSize + 1
   const end = Math.min((page + 1) * pageSize, total)
@@ -53,12 +65,6 @@ export function Pagination({ page, pageSize, total, onPageChange }: PaginationPr
 
   return (
     <div className="flex items-center justify-between border-t border-border-subtle px-1 py-2">
-      <p className="text-sm" style={{ color: 'var(--foreground)', opacity: 0.65 }}>
-        Showing <span className="font-medium text-foreground">{start}</span> to{' '}
-        <span className="font-medium text-foreground">{end}</span> of{' '}
-        <span className="font-medium text-foreground">{total}</span> results
-      </p>
-
       <div className="flex items-center gap-1">
         <Button
           variant="outline"
@@ -102,6 +108,34 @@ export function Pagination({ page, pageSize, total, onPageChange }: PaginationPr
           Next
           <ChevronRight className="ml-1 h-4 w-4" />
         </Button>
+      </div>
+
+      <div className="flex items-center gap-4">
+        {onPageSizeChange && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Rows per page:</span>
+            <Select
+              value={String(pageSize)}
+              onValueChange={(v) => onPageSizeChange(Number(v))}
+            >
+              <SelectTrigger className="h-8 w-[70px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent position="popper" sideOffset={4}>
+                {pageSizeOptions.map((size) => (
+                  <SelectItem key={size} value={String(size)}>
+                    {size}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        <p className="text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">{start}</span>–<span className="font-medium text-foreground">{end}</span> of{' '}
+          <span className="font-medium text-foreground">{total}</span>
+        </p>
       </div>
     </div>
   )

@@ -29,8 +29,6 @@ import type { EnhancedFilterConfig, FilterOption, DateRange, SortConfig } from '
 import type { MaintenanceRecord } from '@/types/database'
 import type { MaintenanceType, MaintenanceStatus } from '@/types'
 
-const PAGE_SIZE = 12
-
 // Status pill color mapping (active state)
 const STATUS_PILL_COLORS: Record<string, string> = {
   scheduled: 'bg-blue-100 text-blue-800',
@@ -44,6 +42,8 @@ export function MaintenanceList() {
   const searchParams = useSearchParams()
   const viewMode = useViewMode('maintenance')
   const setView = useViewStore((s) => s.setView)
+
+  const [pageSize, setPageSize] = useState(25)
 
   // Load trucks for filter dropdown
   const { data: trucksData } = useTrucks({ pageSize: 200 })
@@ -165,7 +165,7 @@ export function MaintenanceList() {
     sortBy: currentSort?.field,
     sortDir: currentSort?.direction,
     page: currentPage,
-    pageSize: PAGE_SIZE,
+    pageSize,
   })
 
   // Drawer state
@@ -226,6 +226,16 @@ export function MaintenanceList() {
       } else {
         params.set('page', String(page))
       }
+      router.push(`/maintenance?${params.toString()}`)
+    },
+    [searchParams, router]
+  )
+
+  const handlePageSizeChange = useCallback(
+    (size: number) => {
+      setPageSize(size)
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('page', '0')
       router.push(`/maintenance?${params.toString()}`)
     },
     [searchParams, router]
@@ -422,9 +432,10 @@ export function MaintenanceList() {
           <div className="mt-6">
             <Pagination
               page={currentPage}
-              pageSize={PAGE_SIZE}
+              pageSize={pageSize}
               total={total}
               onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
             />
           </div>
         </>

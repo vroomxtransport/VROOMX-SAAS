@@ -13,8 +13,6 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Building2, ExternalLink } from 'lucide-react'
 import type { EnhancedFilterConfig, SortConfig, DateRange } from '@/types/filters'
 
-const PAGE_SIZE = 50
-
 // ── Plan badge colours ─────────────────────────────────────────────────────────
 const PLAN_COLORS: Record<string, string> = {
   starter: 'bg-slate-100 text-slate-700 border-slate-200',
@@ -137,6 +135,8 @@ export function TenantList() {
 
   const sort: SortConfig = { field: sortBy, direction: sortDir }
 
+  const [pageSize, setPageSize] = useState(25)
+
   // Data state
   const [data, setData] = useState<{ tenants: TenantRow[]; total: number } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -154,7 +154,7 @@ export function TenantList() {
       sortBy,
       sortDir,
       page: page + 1, // action uses 1-based pages
-      pageSize: PAGE_SIZE,
+      pageSize,
     }).then((result) => {
       if (cancelled) return
       if ('error' in result) {
@@ -167,7 +167,7 @@ export function TenantList() {
     })
 
     return () => { cancelled = true }
-  }, [search, plan, status, sortBy, sortDir, page])
+  }, [search, plan, status, sortBy, sortDir, page, pageSize])
 
   // ── URL param helpers ──────────────────────────────────────────────────────
   const setFilter = useCallback(
@@ -194,6 +194,16 @@ export function TenantList() {
         params.delete('sortBy')
         params.delete('sortDir')
       }
+      params.set('page', '0')
+      router.push(`${pathname}?${params.toString()}`)
+    },
+    [searchParams, router, pathname]
+  )
+
+  const handlePageSizeChange = useCallback(
+    (size: number) => {
+      setPageSize(size)
+      const params = new URLSearchParams(searchParams.toString())
       params.set('page', '0')
       router.push(`${pathname}?${params.toString()}`)
     },
@@ -335,9 +345,10 @@ export function TenantList() {
 
           <Pagination
             page={page}
-            pageSize={PAGE_SIZE}
+            pageSize={pageSize}
             total={total}
             onPageChange={setPage}
+            onPageSizeChange={handlePageSizeChange}
           />
         </>
       )}

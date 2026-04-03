@@ -22,8 +22,6 @@ import { PAYMENT_TERMS_LABELS } from '@/types'
 import type { Broker } from '@/types/database'
 import type { EnhancedFilterConfig, SortConfig, DateRange } from '@/types/filters'
 
-const PAGE_SIZE = 20
-
 const CSV_HEADERS = ['name', 'email', 'phone', 'address', 'city', 'state', 'zip', 'payment_terms', 'factoring_company']
 
 const filterConfig: EnhancedFilterConfig[] = [
@@ -40,6 +38,7 @@ export function BrokerList() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
+  const [pageSize, setPageSize] = useState(25)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editingBroker, setEditingBroker] = useState<Broker | undefined>(undefined)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
@@ -57,7 +56,7 @@ export function BrokerList() {
   const { data, isPending, isError, error } = useBrokers({
     search,
     page,
-    pageSize: PAGE_SIZE,
+    pageSize,
     sortBy,
     sortDir,
   })
@@ -100,6 +99,16 @@ export function BrokerList() {
     (newPage: number) => {
       const params = new URLSearchParams(searchParams.toString())
       params.set('page', String(newPage))
+      router.push(`${pathname}?${params.toString()}`)
+    },
+    [searchParams, router, pathname]
+  )
+
+  const handlePageSizeChange = useCallback(
+    (size: number) => {
+      setPageSize(size)
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('page', '0')
       router.push(`${pathname}?${params.toString()}`)
     },
     [searchParams, router, pathname]
@@ -218,9 +227,10 @@ export function BrokerList() {
 
           <Pagination
             page={page}
-            pageSize={PAGE_SIZE}
+            pageSize={pageSize}
             total={total}
             onPageChange={setPage}
+            onPageSizeChange={handlePageSizeChange}
           />
         </>
       ) : (
@@ -314,9 +324,10 @@ export function BrokerList() {
 
           <Pagination
             page={page}
-            pageSize={PAGE_SIZE}
+            pageSize={pageSize}
             total={total}
             onPageChange={setPage}
+            onPageSizeChange={handlePageSizeChange}
           />
         </>
       )}

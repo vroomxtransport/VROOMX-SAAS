@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { useComplianceDocs } from '@/hooks/use-compliance'
 import { deleteComplianceDoc } from '@/app/actions/compliance'
@@ -18,8 +18,6 @@ import { createClient } from '@/lib/supabase/client'
 import { fetchComplianceDocs } from '@/lib/queries/compliance'
 import type { ComplianceDocument } from '@/types/database'
 import type { EnhancedFilterConfig, DateRange, SortConfig } from '@/types/filters'
-
-const PAGE_SIZE = 12
 
 const FILTER_CONFIG: EnhancedFilterConfig[] = [
   {
@@ -55,6 +53,7 @@ export function DocumentList({ documentType, onEdit, onAdd }: DocumentListProps)
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const [pageSize, setPageSize] = useState(25)
 
   // Parse URL search params
   const search = searchParams.get('q') ?? undefined
@@ -78,7 +77,7 @@ export function DocumentList({ documentType, onEdit, onAdd }: DocumentListProps)
     sortBy,
     sortDir,
     page,
-    pageSize: PAGE_SIZE,
+    pageSize,
   })
 
   // Build activeFilters for EnhancedFilterBar
@@ -133,6 +132,16 @@ export function DocumentList({ documentType, onEdit, onAdd }: DocumentListProps)
     (newPage: number) => {
       const params = new URLSearchParams(searchParams.toString())
       params.set('page', String(newPage))
+      router.push(`${pathname}?${params.toString()}`)
+    },
+    [searchParams, router, pathname]
+  )
+
+  const handlePageSizeChange = useCallback(
+    (size: number) => {
+      setPageSize(size)
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('page', '0')
       router.push(`${pathname}?${params.toString()}`)
     },
     [searchParams, router, pathname]
@@ -249,9 +258,10 @@ export function DocumentList({ documentType, onEdit, onAdd }: DocumentListProps)
           <div className="mt-6">
             <Pagination
               page={page}
-              pageSize={PAGE_SIZE}
+              pageSize={pageSize}
               total={total}
               onPageChange={setPage}
+              onPageSizeChange={handlePageSizeChange}
             />
           </div>
         </>

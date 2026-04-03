@@ -28,8 +28,6 @@ import type { Driver } from '@/types/database'
 import type { DriverType, DriverPayType } from '@/types'
 import type { EnhancedFilterConfig, SortConfig, DateRange } from '@/types/filters'
 
-const PAGE_SIZE = 12
-
 const FILTER_CONFIG: EnhancedFilterConfig[] = [
   {
     key: 'status',
@@ -75,6 +73,7 @@ export function DriverList() {
   const setView = useViewStore((s) => s.setView)
 
   // Local state for complex filter values (multi-select cannot serialize to simple URL params)
+  const [pageSize, setPageSize] = useState(25)
   const [payTypes, setPayTypes] = useState<string[]>([])
   const [sort, setSort] = useState<SortConfig | undefined>(undefined)
 
@@ -92,7 +91,7 @@ export function DriverList() {
     sortBy: sort?.field,
     sortDir: sort?.direction,
     page: currentPage,
-    pageSize: PAGE_SIZE,
+    pageSize,
   })
 
   // Drawer state
@@ -143,6 +142,16 @@ export function DriverList() {
       } else {
         params.set('page', String(page))
       }
+      router.push(`${pathname}?${params.toString()}`)
+    },
+    [searchParams, router, pathname]
+  )
+
+  const handlePageSizeChange = useCallback(
+    (size: number) => {
+      setPageSize(size)
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('page', '0')
       router.push(`${pathname}?${params.toString()}`)
     },
     [searchParams, router, pathname]
@@ -322,9 +331,10 @@ export function DriverList() {
           <div className="mt-6">
             <Pagination
               page={currentPage}
-              pageSize={PAGE_SIZE}
+              pageSize={pageSize}
               total={total}
               onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
             />
           </div>
         </>

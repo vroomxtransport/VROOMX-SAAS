@@ -68,8 +68,6 @@ const ACTION_STYLES: Record<string, string> = {
   unassigned: 'bg-slate-500/10 text-slate-600 border-slate-500/20',
 }
 
-const PAGE_SIZE = 50
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -157,6 +155,7 @@ export function AuditLogTable({ initialLogs, initialTotal, tenants }: AuditLogTa
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
+  const [pageSize, setPageSize] = useState(25)
 
   // Derive filter state from URL
   const getParam = useCallback(
@@ -216,7 +215,7 @@ export function AuditLogTable({ initialLogs, initialTotal, tenants }: AuditLogTa
           startDate: dateRange?.from,
           endDate: dateRange?.to,
           page: 1,
-          pageSize: PAGE_SIZE,
+          pageSize,
         })
 
         if ('error' in result) {
@@ -261,7 +260,7 @@ export function AuditLogTable({ initialLogs, initialTotal, tenants }: AuditLogTa
           startDate: params.get('startDate') ?? undefined,
           endDate: params.get('endDate') ?? undefined,
           page: page + 1,
-          pageSize: PAGE_SIZE,
+          pageSize,
         })
 
         if ('error' in result) {
@@ -275,6 +274,16 @@ export function AuditLogTable({ initialLogs, initialTotal, tenants }: AuditLogTa
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [pathname, searchParams]
+  )
+
+  const handlePageSizeChange = useCallback(
+    (size: number) => {
+      setPageSize(size)
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('page', '0')
+      router.push(`${pathname}?${params.toString()}`)
+    },
+    [searchParams, router, pathname]
   )
 
   // ---------------------------------------------------------------------------
@@ -469,9 +478,10 @@ export function AuditLogTable({ initialLogs, initialTotal, tenants }: AuditLogTa
       {/* Pagination */}
       <Pagination
         page={currentPage}
-        pageSize={PAGE_SIZE}
+        pageSize={pageSize}
         total={total}
         onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
       />
     </div>
   )

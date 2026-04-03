@@ -27,8 +27,6 @@ import type { EnhancedFilterConfig } from '@/types/filters'
 import type { SortConfig } from '@/types/filters'
 import type { Truck } from '@/types/database'
 
-const PAGE_SIZE = 12
-
 const ENHANCED_FILTER_CONFIG: EnhancedFilterConfig[] = [
   {
     key: 'status',
@@ -80,6 +78,8 @@ export function TruckList() {
   const viewMode = useViewMode('trucks')
   const setView = useViewStore((s) => s.setView)
 
+  const [pageSize, setPageSize] = useState(25)
+
   // Parse filters from URL
   const currentPage = parseInt(searchParams.get('page') ?? '0', 10)
 
@@ -109,7 +109,7 @@ export function TruckList() {
     truckType: activeFilters.truckType,
     search: activeFilters.search,
     page: currentPage,
-    pageSize: PAGE_SIZE,
+    pageSize,
     sortBy: currentSort?.field,
     sortDir: currentSort?.direction,
   })
@@ -157,6 +157,16 @@ export function TruckList() {
       } else {
         params.set('page', String(page))
       }
+      router.push(`/trucks?${params.toString()}`)
+    },
+    [searchParams, router]
+  )
+
+  const handlePageSizeChange = useCallback(
+    (size: number) => {
+      setPageSize(size)
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('page', '0')
       router.push(`/trucks?${params.toString()}`)
     },
     [searchParams, router]
@@ -319,9 +329,10 @@ export function TruckList() {
           <div className="mt-6">
             <Pagination
               page={currentPage}
-              pageSize={PAGE_SIZE}
+              pageSize={pageSize}
               total={total}
               onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
             />
           </div>
         </>

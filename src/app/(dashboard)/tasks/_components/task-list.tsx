@@ -17,8 +17,6 @@ import { useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import type { Task } from '@/types/database'
 
-const PAGE_SIZE = 12
-
 const FILTER_CONFIG: FilterConfig[] = [
   {
     key: 'search',
@@ -52,6 +50,8 @@ export function TaskList() {
   const searchParams = useSearchParams()
   const queryClient = useQueryClient()
 
+  const [pageSize, setPageSize] = useState(25)
+
   // Parse filters from URL
   const currentPage = parseInt(searchParams.get('page') ?? '0', 10)
   const currentTab = searchParams.get('tab') ?? 'all'
@@ -68,7 +68,7 @@ export function TaskList() {
     search: activeFilters.search,
     tab: currentTab === 'all' ? undefined : currentTab,
     page: currentPage,
-    pageSize: PAGE_SIZE,
+    pageSize,
   })
 
   // Drawer state
@@ -111,6 +111,16 @@ export function TaskList() {
       } else {
         params.set('page', String(page))
       }
+      router.push(`/tasks?${params.toString()}`)
+    },
+    [searchParams, router]
+  )
+
+  const handlePageSizeChange = useCallback(
+    (size: number) => {
+      setPageSize(size)
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('page', '0')
       router.push(`/tasks?${params.toString()}`)
     },
     [searchParams, router]
@@ -221,9 +231,10 @@ export function TaskList() {
           <div className="mt-6">
             <Pagination
               page={currentPage}
-              pageSize={PAGE_SIZE}
+              pageSize={pageSize}
               total={total}
               onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
             />
           </div>
         </>

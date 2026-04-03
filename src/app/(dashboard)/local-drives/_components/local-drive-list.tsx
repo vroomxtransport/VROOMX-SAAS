@@ -26,8 +26,6 @@ import type { EnhancedFilterConfig } from '@/types/filters'
 import type { SortConfig, DateRange } from '@/types/filters'
 import type { LocalDrive } from '@/types/database'
 
-const PAGE_SIZE = 12
-
 const STATUS_PILL_COLORS: Record<LocalDriveStatus, string> = {
   pending: 'bg-blue-100 text-blue-800',
   in_progress: 'bg-amber-100 text-amber-800',
@@ -56,6 +54,8 @@ export function LocalDriveList() {
   const searchParams = useSearchParams()
   const viewMode = useViewMode('local-drives')
   const setView = useViewStore((s) => s.setView)
+
+  const [pageSize, setPageSize] = useState(25)
 
   // Lightweight driver fetch for filter dropdown only (id + name, no pagination)
   const supabase = createClient()
@@ -149,7 +149,7 @@ export function LocalDriveList() {
     sortBy: currentSort?.field,
     sortDir: currentSort?.direction,
     page: currentPage,
-    pageSize: PAGE_SIZE,
+    pageSize,
   })
 
   // Drawer state
@@ -206,6 +206,16 @@ export function LocalDriveList() {
       } else {
         params.set('page', String(page))
       }
+      router.push(`/local-drives?${params.toString()}`)
+    },
+    [searchParams, router]
+  )
+
+  const handlePageSizeChange = useCallback(
+    (size: number) => {
+      setPageSize(size)
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('page', '0')
       router.push(`/local-drives?${params.toString()}`)
     },
     [searchParams, router]
@@ -397,9 +407,10 @@ export function LocalDriveList() {
           <div className="mt-6">
             <Pagination
               page={currentPage}
-              pageSize={PAGE_SIZE}
+              pageSize={pageSize}
               total={total}
               onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
             />
           </div>
         </>

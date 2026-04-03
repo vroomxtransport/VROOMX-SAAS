@@ -34,8 +34,6 @@ import type { SafetyEvent } from '@/types/database'
 import { ShieldAlert, AlertTriangle, FileWarning, ClipboardList, Plus, Download } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const PAGE_SIZE = 20
-
 type TabValue = 'all' | SafetyEventType
 
 const TABS: { value: TabValue; label: string }[] = [
@@ -54,6 +52,7 @@ interface EventFilters {
   severity: string
   status: string
   page: number
+  pageSize: number
 }
 
 const DEFAULT_FILTERS: EventFilters = {
@@ -65,6 +64,7 @@ const DEFAULT_FILTERS: EventFilters = {
   severity: '',
   status: '',
   page: 0,
+  pageSize: 25,
 }
 
 async function fetchSafetyEvents(filters: EventFilters) {
@@ -101,8 +101,8 @@ async function fetchSafetyEvents(filters: EventFilters) {
   }
 
   const { data, count, error } = await query.range(
-    filters.page * PAGE_SIZE,
-    (filters.page + 1) * PAGE_SIZE - 1
+    filters.page * filters.pageSize,
+    (filters.page + 1) * filters.pageSize - 1
   )
 
   if (error) throw error
@@ -573,7 +573,7 @@ export function EventsDashboard() {
       {/* Result count */}
       {!isLoading && total > 0 && (
         <p className="text-sm text-muted-foreground">
-          Showing <span className="font-medium text-foreground">{Math.min(total, PAGE_SIZE)}</span> of{' '}
+          Showing <span className="font-medium text-foreground">{Math.min(total, filters.pageSize)}</span> of{' '}
           <span className="font-medium text-foreground">{total}</span> events
         </p>
       )}
@@ -609,12 +609,13 @@ export function EventsDashboard() {
             ))}
           </div>
 
-          {total > PAGE_SIZE && (
+          {total > filters.pageSize && (
             <Pagination
               page={filters.page}
-              pageSize={PAGE_SIZE}
+              pageSize={filters.pageSize}
               total={total}
               onPageChange={(page) => setFilters(prev => ({ ...prev, page }))}
+              onPageSizeChange={(pageSize) => setFilters(prev => ({ ...prev, pageSize, page: 0 }))}
             />
           )}
         </>

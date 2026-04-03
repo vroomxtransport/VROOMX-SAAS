@@ -27,8 +27,6 @@ import type { TrailerType, TrailerStatus } from '@/types'
 import type { Trailer } from '@/types/database'
 import type { EnhancedFilterConfig, DateRange, SortConfig } from '@/types/filters'
 
-const PAGE_SIZE = 12
-
 // Status pill colors: active=emerald, inactive=muted, maintenance=amber
 const STATUS_PILL_OPTIONS = [
   { value: 'active', label: TRAILER_STATUS_LABELS.active, color: 'bg-emerald-600 text-white' },
@@ -69,6 +67,7 @@ export function TrailerList() {
   const viewMode = useViewMode('trailers')
   const setView = useViewStore((s) => s.setView)
 
+  const [pageSize, setPageSize] = useState(25)
   const [sort, setSort] = useState<SortConfig | undefined>(undefined)
 
   // Parse URL search params for simple filters
@@ -84,7 +83,7 @@ export function TrailerList() {
     sortBy: sort?.field,
     sortDir: sort?.direction,
     page: currentPage,
-    pageSize: PAGE_SIZE,
+    pageSize,
   })
 
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -122,6 +121,16 @@ export function TrailerList() {
       } else {
         params.set('page', String(page))
       }
+      router.push(`${pathname}?${params.toString()}`)
+    },
+    [searchParams, router, pathname]
+  )
+
+  const handlePageSizeChange = useCallback(
+    (size: number) => {
+      setPageSize(size)
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('page', '0')
       router.push(`${pathname}?${params.toString()}`)
     },
     [searchParams, router, pathname]
@@ -300,9 +309,10 @@ export function TrailerList() {
           <div className="mt-6">
             <Pagination
               page={currentPage}
-              pageSize={PAGE_SIZE}
+              pageSize={pageSize}
               total={total}
               onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
             />
           </div>
         </>
