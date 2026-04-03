@@ -317,10 +317,10 @@ function TeamMembersCard({ members }: { members: MemberRecord[] }) {
                 className="grid grid-cols-[1fr_1fr_100px_120px] gap-2 items-center border-b border-border px-6 py-3 last:border-b-0 hover:bg-muted/20 transition-colors"
               >
                 <div className="truncate text-sm font-medium">
-                  {member.name ?? <span className="text-muted-foreground/50 italic">—</span>}
+                  {member.name ?? <span className="text-muted-foreground italic">—</span>}
                 </div>
                 <div className="truncate text-sm text-muted-foreground">
-                  {member.email ?? <span className="text-muted-foreground/50">—</span>}
+                  {member.email ?? <span className="text-muted-foreground">—</span>}
                 </div>
                 <div>
                   <Badge variant="outline" className="text-xs capitalize">
@@ -391,10 +391,10 @@ function RecentActivityCard({ logs }: { logs: AuditLogRecord[] }) {
                     </Badge>
                   </div>
                   <div className="truncate text-sm">
-                    {log.description ?? <span className="text-muted-foreground/50 italic">—</span>}
+                    {log.description ?? <span className="text-muted-foreground italic">—</span>}
                   </div>
                   <div className="truncate text-xs text-muted-foreground">
-                    {log.actor_email ?? <span className="text-muted-foreground/50">system</span>}
+                    {log.actor_email ?? <span className="text-muted-foreground">system</span>}
                   </div>
                 </div>
               ))}

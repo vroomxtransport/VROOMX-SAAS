@@ -395,7 +395,7 @@ export function FuelCsvImportDialog({ open, onOpenChange }: FuelCsvImportDialogP
   // ============================================================================
 
   function renderTruckCell(row: CsvFuelRow) {
-    if (!row.truck?.trim()) return <span className="text-muted-foreground/50">—</span>
+    if (!row.truck?.trim()) return <span className="text-muted-foreground">—</span>
     const key = row.truck.trim().toLowerCase()
     const id = truckMap[key]
     if (id) {
@@ -413,7 +413,7 @@ export function FuelCsvImportDialog({ open, onOpenChange }: FuelCsvImportDialogP
   }
 
   function renderDriverCell(row: CsvFuelRow) {
-    if (!row.driver?.trim()) return <span className="text-muted-foreground/50">—</span>
+    if (!row.driver?.trim()) return <span className="text-muted-foreground">—</span>
     const key = row.driver.trim().toLowerCase()
     const id = driverMap[key]
     if (id) {

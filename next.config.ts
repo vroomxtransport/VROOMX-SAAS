@@ -40,6 +40,7 @@ const securityHeaders = [
       "font-src 'self'",
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://us.i.posthog.com https://api.stripe.com https://api.eia.gov https://vpic.nhtsa.dot.gov https://nominatim.openstreetmap.org https://api.samsara.com https://quickbooks.api.intuit.com https://sandbox-quickbooks.api.intuit.com https://oauth.platform.intuit.com https://api.fleet.msfuelcard.com https://router.project-osrm.org",
       "frame-src https://js.stripe.com https://hooks.stripe.com",
+      "media-src 'self' https://d8j0ntlcm91z4.cloudfront.net",
       "frame-ancestors 'none'",
     ].join('; '),
   },

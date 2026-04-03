@@ -228,7 +228,7 @@ export function LocalRunList() {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                <Navigation className="h-10 w-10 text-muted-foreground/30 mb-3" />
+                <Navigation className="h-10 w-10 text-muted-foreground/60 mb-3" />
                 <p className="text-sm text-muted-foreground">Select a run from the list to view details and manage drives</p>
               </div>
             )}

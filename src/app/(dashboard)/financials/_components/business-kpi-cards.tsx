@@ -203,7 +203,7 @@ function PrimaryKPICard({ label, value, icon: Icon, accent, description, tooltip
           <div className="flex items-center gap-1">
             <p className="text-xs font-medium text-muted-foreground truncate">{label}</p>
             {tooltip && (
-              <Info className="h-3 w-3 shrink-0 text-muted-foreground/40" />
+              <Info className="h-3 w-3 shrink-0 text-muted-foreground/60" />
             )}
           </div>
           <p className="mt-1 text-3xl font-bold tabular-nums text-foreground truncate">{value}</p>
@@ -244,7 +244,7 @@ function StandardKPICard({ label, value, icon: Icon, accent, description, toolti
           <div className="flex items-center gap-1">
             <p className="text-xs font-medium text-muted-foreground truncate">{label}</p>
             {tooltip && (
-              <Info className="h-3 w-3 shrink-0 text-muted-foreground/40" />
+              <Info className="h-3 w-3 shrink-0 text-muted-foreground/60" />
             )}
           </div>
           <p className="mt-1 text-xl font-bold tabular-nums text-foreground truncate">{value}</p>

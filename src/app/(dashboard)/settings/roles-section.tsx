@@ -340,7 +340,7 @@ export function RolesSection({ customRoles: initialRoles }: RolesSectionProps) {
 
           {initialRoles.length === 0 && !showForm && (
             <div className="rounded-xl border border-dashed border-border/60 bg-muted/10 px-6 py-8 text-center">
-              <Shield className="h-8 w-8 text-muted-foreground/40 mx-auto mb-3" />
+              <Shield className="h-8 w-8 text-muted-foreground/60 mx-auto mb-3" />
               <p className="text-sm font-medium text-muted-foreground">No custom roles yet</p>
               <p className="text-xs text-muted-foreground/70 mt-1 mb-4">
                 Create roles to fine-tune access for specific team members.
@@ -457,7 +457,7 @@ export function RolesSection({ customRoles: initialRoles }: RolesSectionProps) {
                 </div>
               </div>
 
-              <Separator className="opacity-40" />
+              <Separator className="opacity-60" />
 
               {/* Name + Description */}
               <div className="grid gap-3 sm:grid-cols-2">

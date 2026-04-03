@@ -277,7 +277,7 @@ export function BrokerList() {
                       {broker.email}
                     </span>
                   ) : (
-                    <span className="text-muted-foreground/50">--</span>
+                    <span className="text-muted-foreground">--</span>
                   )}
                 </div>
                 <div className="truncate text-sm text-muted-foreground">
@@ -287,12 +287,12 @@ export function BrokerList() {
                       {broker.phone}
                     </span>
                   ) : (
-                    <span className="text-muted-foreground/50">--</span>
+                    <span className="text-muted-foreground">--</span>
                   )}
                 </div>
                 <div className="truncate text-sm text-muted-foreground">
                   {broker.factoring_company ?? (
-                    <span className="text-muted-foreground/50">--</span>
+                    <span className="text-muted-foreground">--</span>
                   )}
                 </div>
                 <div>
@@ -301,7 +301,7 @@ export function BrokerList() {
                       {PAYMENT_TERMS_LABELS[broker.payment_terms]}
                     </Badge>
                   ) : (
-                    <span className="text-xs text-muted-foreground/50">--</span>
+                    <span className="text-xs text-muted-foreground">--</span>
                   )}
                 </div>
                 <div>

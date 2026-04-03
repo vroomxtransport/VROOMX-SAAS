@@ -90,7 +90,7 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
             <div className="p-4 text-center text-sm text-muted-foreground">Loading...</div>
           ) : notifications.length === 0 ? (
             <div className="p-8 text-center">
-              <Bell className="mx-auto h-8 w-8 text-muted-foreground/30 mb-2" />
+              <Bell className="mx-auto h-8 w-8 text-muted-foreground/60 mb-2" />
               <p className="text-sm text-muted-foreground">No new notifications</p>
             </div>
           ) : (

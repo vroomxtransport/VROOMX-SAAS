@@ -109,7 +109,7 @@ export function TripAnalyticsDashboard({ initialTrips }: TripAnalyticsDashboardP
   }
 
   function sortIcon(field: SortField) {
-    if (sortField !== field) return <ArrowUpDown className="h-3 w-3 text-muted-foreground/40" />
+    if (sortField !== field) return <ArrowUpDown className="h-3 w-3 text-muted-foreground/60" />
     return sortDir === 'asc'
       ? <ArrowUp className="h-3 w-3 text-foreground" />
       : <ArrowDown className="h-3 w-3 text-foreground" />

@@ -166,7 +166,7 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
                 alt="VroomX"
                 width={45}
                 height={45}
-                className="h-[2.8rem] w-auto object-contain"
+                className="h-[6.7rem] w-auto object-contain brightness-0"
               />
             ) : (
               <Image
@@ -174,13 +174,13 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
                 alt="VroomX TMS"
                 width={196}
                 height={67}
-                className="h-[3.15rem] w-auto"
+                className="h-[7.6rem] w-auto brightness-0"
               />
             )}
           </Link>
           <button
             onClick={close}
-            className="lg:hidden shrink-0 rounded-md p-1 text-[#c8c8c4] hover:bg-[var(--sidebar-hover)] transition-colors"
+            className="lg:hidden shrink-0 rounded-md p-1 text-[var(--sidebar-text)] hover:bg-[var(--sidebar-hover)] transition-colors"
             aria-label="Close sidebar"
           >
             <X className="h-5 w-5" />
@@ -194,7 +194,7 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
             isCollapsed && 'lg:hidden'
           )}
         >
-          <p className="text-sm font-medium text-white text-center truncate">{tenantName}</p>
+          <p className="text-sm font-medium text-foreground text-center truncate">{tenantName}</p>
         </div>
 
         {/* Collapse toggle (desktop only) */}
@@ -202,7 +202,7 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
           <button
             onClick={toggleCollapse}
             className={cn(
-              'flex items-center gap-2 rounded-md p-1.5 text-[#c8c8c4] hover:bg-[var(--sidebar-hover)] hover:text-white transition-colors',
+              'flex items-center gap-2 rounded-md p-1.5 text-[var(--sidebar-text)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-text-active)] transition-colors',
               isCollapsed && 'lg:mx-auto'
             )}
             aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -247,24 +247,24 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
                     <Link
                       href={item.href}
                       onClick={() => close()}
-                      style={{ color: isActive ? '#ffffff' : '#c8c8c4' }}
+                      style={{ color: isActive ? 'var(--sidebar-text-active)' : 'var(--sidebar-text)' }}
                       className={cn(
                         'group flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-all duration-150 relative',
                         isActive
-                          ? 'bg-[var(--sidebar-active)] shadow-[inset_0_0_0_1px_rgba(25,35,52,0.15)]'
-                          : 'hover:bg-[var(--sidebar-hover)] hover:!text-white',
+                          ? 'bg-[var(--sidebar-active)]'
+                          : 'hover:bg-[var(--sidebar-hover)] hover:!text-[var(--sidebar-text-active)]',
                         isCollapsed && 'lg:justify-center lg:px-0 lg:py-1.5 lg:mx-auto lg:w-10'
                       )}
                     >
                       {/* Active indicator pill */}
                       {isActive && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-[var(--brand-muted)]" />
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-brand" />
                       )}
                       <Icon
                         className={cn(
                           'shrink-0 transition-colors',
                           isCollapsed ? 'h-[18px] w-[18px]' : 'h-5 w-5',
-                          isActive ? 'text-[var(--brand-muted)]' : 'group-hover:text-white'
+                          isActive ? 'text-brand' : 'group-hover:text-[var(--sidebar-text-active)]'
                         )}
                       />
                       <span
@@ -292,7 +292,7 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
                             {linkContent}
                             {/* Collapsed dot indicator for unread */}
                             {badge && (
-                              <span className="pointer-events-none absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-[var(--brand)] ring-2 ring-[var(--sidebar-bg)]" />
+                              <span className="pointer-events-none absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-[var(--brand)] ring-2 ring-background" />
                             )}
                           </div>
                         </TooltipTrigger>

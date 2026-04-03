@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { HeroSection } from '@/components/marketing/hero-section'
+import { NexoraHero } from '@/components/marketing/nexora-hero'
 import { MetricsBanner } from '@/components/marketing/metrics-banner'
 import { PainAgitationSection } from '@/components/marketing/pain-agitation-section'
 import { FinancialIntelligence } from '@/components/marketing/financial-intelligence'
@@ -71,7 +71,7 @@ export default function LandingPage() {
     <>
       <SoftwareApplicationJsonLd />
       <FAQPageJsonLd faqs={pageFaqs} />
-      <HeroSection />
+      <NexoraHero />
       <MetricsBanner />
       <Feature197 />
       <FinancialIntelligence />

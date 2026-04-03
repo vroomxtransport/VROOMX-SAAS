@@ -155,7 +155,7 @@ export function PDFImportDialog({ open, onOpenChange }: PDFImportDialogProps) {
               </>
             ) : (
               <>
-                <FileUp className="h-10 w-10 text-muted-foreground/40 mb-4" />
+                <FileUp className="h-10 w-10 text-muted-foreground/60 mb-4" />
                 <p className="text-sm font-medium">Drop your PDF here or click to browse</p>
                 <p className="text-xs text-muted-foreground mt-1">Rate confirmations, dispatch contracts, manifests (25MB max)</p>
               </>

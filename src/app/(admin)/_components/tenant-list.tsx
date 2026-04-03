@@ -249,7 +249,7 @@ export function TenantList() {
         </div>
       ) : tenants.length === 0 ? (
         <div className="flex min-h-[320px] flex-col items-center justify-center rounded-xl border border-border bg-surface">
-          <Building2 className="h-10 w-10 text-muted-foreground/40 mb-4" />
+          <Building2 className="h-10 w-10 text-muted-foreground/60 mb-4" />
           <p className="text-sm font-medium text-foreground">No tenants found</p>
           <p className="mt-1 text-xs text-muted-foreground">
             Try adjusting your filters or search query.

@@ -118,7 +118,7 @@ function StatusPills({
         >
           {opt.label}
           {opt.count !== undefined && (
-            <span className="ml-1 opacity-70">{opt.count}</span>
+            <span className="ml-1">{opt.count}</span>
           )}
         </button>
       ))}

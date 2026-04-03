@@ -92,7 +92,7 @@ export function UpcomingPickups({ pickups }: UpcomingPickupsProps) {
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-xs text-muted-foreground">{pickup.orderNumber}</span>
-                        <span className="text-muted-foreground/40">|</span>
+                        <span className="text-muted-foreground/60">|</span>
                         <span className="flex items-center gap-1 text-xs text-muted-foreground">
                           <MapPin className="h-3 w-3" />
                           {pickup.location}

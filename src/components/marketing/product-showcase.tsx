@@ -31,7 +31,7 @@ function OrdersMockup() {
         {['All', 'Active', 'Delivered', 'Invoiced'].map((f) => (
           <div
             key={f}
-            className="h-5 rounded-md bg-muted px-3 text-[8px] leading-5 text-muted-foreground/40"
+            className="h-5 rounded-md bg-muted px-3 text-[8px] leading-5 text-muted-foreground/60"
           >
             {f}
           </div>

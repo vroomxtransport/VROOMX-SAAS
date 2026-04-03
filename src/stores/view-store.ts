@@ -13,16 +13,16 @@ export const useViewStore = create<ViewStore>()(
   persist(
     (set) => ({
       views: {
-        drivers: 'grid',
-        trucks: 'grid',
-        trailers: 'grid',
-        orders: 'grid',
+        drivers: 'list',
+        trucks: 'list',
+        trailers: 'list',
+        orders: 'list',
         tasks: 'list',
         'local-drives': 'list',
         fuel: 'list',
         maintenance: 'list',
         compliance: 'list',
-        dispatchers: 'grid',
+        dispatchers: 'list',
       },
       setView: (section, mode) =>
         set((state) => ({
@@ -35,7 +35,7 @@ export const useViewStore = create<ViewStore>()(
   )
 )
 
-/** Hydration-safe hook — returns default 'grid' during SSR, then persisted value after mount */
+/** Hydration-safe hook — returns default 'list' during SSR, then persisted value after mount */
 export function useViewMode(section: ViewSection): 'grid' | 'list' {
   const mode = useViewStore((s) => s.views[section])
   const [hydrated, setHydrated] = useState(false)
@@ -44,5 +44,5 @@ export function useViewMode(section: ViewSection): 'grid' | 'list' {
     setHydrated(true)
   }, [])
 
-  return hydrated ? mode : 'grid'
+  return hydrated ? mode : 'list'
 }

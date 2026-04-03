@@ -187,7 +187,7 @@ function SortableHeader({ label, field, sort, onSort }: { label: string; field: 
       className="flex items-center gap-1 text-xs font-semibold text-foreground/60 hover:text-foreground transition-colors"
     >
       {label}
-      {!isActive && <ArrowUpDown className="h-3 w-3 opacity-40" />}
+      {!isActive && <ArrowUpDown className="h-3 w-3 opacity-60" />}
       {dir === 'asc' && <ArrowUp className="h-3 w-3" />}
       {dir === 'desc' && <ArrowDown className="h-3 w-3" />}
     </button>
@@ -252,7 +252,7 @@ export function OrdersDataTable({ orders, sort, onSort, onRowClick, onEdit }: Or
         const from = [o.pickup_city, o.pickup_state].filter(Boolean).join(', ')
         const to = [o.delivery_city, o.delivery_state].filter(Boolean).join(', ')
         return (
-          <div className="flex items-center gap-1 text-sm" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
+          <div className="flex items-center gap-1 text-sm text-muted-foreground">
             <span className="truncate">{from || 'TBD'}</span>
             <ArrowRight className="h-3 w-3 shrink-0 opacity-60" />
             <span className="truncate">{to || 'TBD'}</span>
@@ -267,7 +267,7 @@ export function OrdersDataTable({ orders, sort, onSort, onRowClick, onEdit }: Or
       size: 130,
       minSize: 70,
       cell: ({ getValue }) => (
-        <span className="text-sm truncate block" style={{ color: 'var(--foreground)', opacity: 0.7 }}>{(getValue() as string) || '--'}</span>
+        <span className="text-sm truncate block text-muted-foreground">{(getValue() as string) || '--'}</span>
       ),
     },
     {
@@ -277,7 +277,7 @@ export function OrdersDataTable({ orders, sort, onSort, onRowClick, onEdit }: Or
       size: 65,
       minSize: 45,
       cell: ({ getValue }) => (
-        <span className="text-sm" style={{ color: 'var(--foreground)', opacity: 0.7 }}>{(getValue() as string) || '--'}</span>
+        <span className="text-sm text-muted-foreground">{(getValue() as string) || '--'}</span>
       ),
     },
     {
@@ -288,7 +288,7 @@ export function OrdersDataTable({ orders, sort, onSort, onRowClick, onEdit }: Or
       cell: ({ row }) => {
         const o = row.original
         return (
-          <div className="flex items-center gap-1 text-sm" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
+          <div className="flex items-center gap-1 text-sm text-muted-foreground">
             <Calendar className="h-3.5 w-3.5 shrink-0 opacity-60" />
             <span>{formatShortDate(o.pickup_date)}</span>
             <ArrowRight className="h-3 w-3 shrink-0 opacity-60" />
@@ -304,7 +304,7 @@ export function OrdersDataTable({ orders, sort, onSort, onRowClick, onEdit }: Or
       size: 120,
       minSize: 70,
       cell: ({ getValue }) => (
-        <span className="text-sm truncate block" style={{ color: 'var(--foreground)', opacity: 0.7 }}>{(getValue() as string) || '--'}</span>
+        <span className="text-sm truncate block text-muted-foreground">{(getValue() as string) || '--'}</span>
       ),
     },
     {

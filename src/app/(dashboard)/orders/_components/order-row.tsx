@@ -138,7 +138,7 @@ export function OrderRow({ order, onClick, onEdit }: OrderRowProps) {
       <div className="hidden xl:flex items-center gap-1 text-xs text-muted-foreground shrink-0 w-[140px]">
         <Calendar className="h-3 w-3 shrink-0 opacity-50" />
         <span>{order.pickup_date ? new Date(order.pickup_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' }) : '--'}</span>
-        <ArrowRight className="h-2.5 w-2.5 shrink-0 opacity-40" />
+        <ArrowRight className="h-2.5 w-2.5 shrink-0 opacity-60" />
         <span>{order.delivery_date ? new Date(order.delivery_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' }) : '--'}</span>
       </div>
 

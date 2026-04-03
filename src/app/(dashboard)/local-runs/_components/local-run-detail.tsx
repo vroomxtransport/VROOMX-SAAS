@@ -232,7 +232,7 @@ export function LocalRunDetail({ runId, onEdit, onDelete, onStatusChange }: Loca
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-destructive shrink-0 ml-2"
+                    className="h-7 w-7 p-0 text-muted-foreground/70 hover:text-destructive shrink-0 ml-2"
                     onClick={(e) => { e.stopPropagation(); setRemovingDriveId(drive.id) }}
                   >
                     <X className="h-3.5 w-3.5" />

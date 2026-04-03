@@ -42,7 +42,7 @@ export function SortHeader({
       )}
     >
       {label}
-      {!isActive && <ArrowUpDown className="h-3 w-3 opacity-40" />}
+      {!isActive && <ArrowUpDown className="h-3 w-3 opacity-60" />}
       {direction === 'asc' && <ArrowUp className="h-3 w-3 text-brand" />}
       {direction === 'desc' && <ArrowDown className="h-3 w-3 text-brand" />}
     </button>

@@ -224,55 +224,48 @@ export default async function DashboardPage({
         </div>
       )}
 
-      {/* Hero Header */}
-      <div className="rounded-2xl border border-border bg-card p-5 lg:p-6">
-        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              <span className="text-brand font-semibold">{dayOfWeek}</span>, {fullDate}
-            </p>
-            <h1 className="mt-1.5 text-xl font-bold tracking-tight lg:text-2xl">
-              Welcome back, {userName}!
-            </h1>
-            {orderCount > 0 ? (
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="stat-pill">
-                  <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-75" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-brand" />
-                  </span>
-                  {activeLoads} active loads
+      {/* Page Header */}
+      <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight lg:text-3xl text-foreground">
+            Dashboard
+          </h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            Welcome back, {userName}! Here&apos;s what&apos;s happening today.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="hidden sm:inline-flex items-center rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground">
+            {fullDate}
+          </span>
+          {orderCount > 0 && (
+            <>
+              <span className="stat-pill">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-brand" />
                 </span>
-                <span className="stat-pill">
-                  <span className="h-2 w-2 rounded-full bg-amber-500" />
-                  {inTransit} in transit
-                </span>
-                <span className="stat-pill">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                  ${monthlyRevenue.toLocaleString()} MTD
-                </span>
-              </div>
-            ) : (
-              <p className="mt-1.5 text-sm text-muted-foreground">
-                Your fleet command center — manage loads, drivers, and revenue at a glance.
-              </p>
-            )}
-          </div>
-          <div className="flex gap-2 shrink-0">
-            <Button asChild size="sm" className="!text-white">
-              <Link href="/orders">
-                <Plus className="h-4 w-4" />
-                New Order
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/dispatch">
-                <Plus className="h-4 w-4" />
-                New Trip
-              </Link>
-            </Button>
-            <CustomizeDashboard />
-          </div>
+                {activeLoads} active
+              </span>
+              <span className="stat-pill">
+                <span className="h-2 w-2 rounded-full bg-amber-500" />
+                {inTransit} transit
+              </span>
+            </>
+          )}
+          <Button asChild size="sm" className="!text-white">
+            <Link href="/orders">
+              <Plus className="h-4 w-4" />
+              New Order
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/dispatch">
+              <Plus className="h-4 w-4" />
+              New Trip
+            </Link>
+          </Button>
+          <CustomizeDashboard />
         </div>
       </div>
 
@@ -327,7 +320,7 @@ export default async function DashboardPage({
                       </p>
                       <p className="text-sm text-muted-foreground">{step.description}</p>
                     </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
+                    <ChevronRight className="h-5 w-5 text-muted-foreground/60 group-hover:text-muted-foreground transition-colors" />
                   </a>
                 )
               })}

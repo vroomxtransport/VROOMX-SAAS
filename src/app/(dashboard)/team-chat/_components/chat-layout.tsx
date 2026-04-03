@@ -128,7 +128,7 @@ export function ChatLayout({ tenantId, userId, userName, email }: ChatLayoutProp
           ) : (
             <div className="flex flex-1 flex-col items-center justify-center gap-4 text-muted-foreground px-6">
               <div className="rounded-2xl bg-accent/50 p-5">
-                <MessageSquare className="h-12 w-12 opacity-40" />
+                <MessageSquare className="h-12 w-12 opacity-60" />
               </div>
               <div className="text-center">
                 <p className="text-sm font-medium text-foreground">
