@@ -65,8 +65,8 @@ function Button({
       aria-busy={loading || undefined}
       {...props}
     >
-      {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-      {children}
+      {!asChild && loading && <Loader2 className="h-4 w-4 animate-spin" />}
+      {!asChild ? children : React.Children.only(children)}
     </Comp>
   )
 }

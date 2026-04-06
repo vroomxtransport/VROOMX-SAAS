@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { fetchPlatformStats } from '@/app/actions/admin'
 import { PageHeader } from '@/components/shared/page-header'
 import { PlatformStats } from '../_components/platform-stats'
