@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils'
 import { factorOrder } from '@/app/actions/factoring'
 import { EnhancedFilterBar } from '@/components/shared/enhanced-filter-bar'
 import { CsvExportButton } from '@/components/shared/csv-export-button'
+import { CopyIdButton } from '@/components/shared/copy-id-button'
 import type { EnhancedFilterConfig, DateRange } from '@/types/filters'
 
 function formatCurrency(amount: number): string {
@@ -341,10 +342,13 @@ export function ReadyToInvoice({ factoringFeeRate = 0 }: ReadyToInvoiceProps) {
                     onCheckedChange={() => toggleSelect(order.id)}
                   />
                 </div>
-                <div className="w-20 shrink-0 text-sm font-medium">
-                  <Link href={`/orders/${order.id}`} className="text-blue-600 hover:underline">
-                    {order.orderNumber ?? 'N/A'}
-                  </Link>
+                <div className="w-24 shrink-0 text-sm font-medium">
+                  <div className="group flex items-center gap-1">
+                    <Link href={`/orders/${order.id}`} className="text-blue-600 hover:underline">
+                      {order.orderNumber ?? 'N/A'}
+                    </Link>
+                    <CopyIdButton value={order.orderNumber ?? order.id} className="opacity-0 group-hover:opacity-100" />
+                  </div>
                 </div>
                 <div className="w-36 shrink-0 text-sm text-muted-foreground truncate" title={order.vehicleName}>
                   {order.vehicleName}

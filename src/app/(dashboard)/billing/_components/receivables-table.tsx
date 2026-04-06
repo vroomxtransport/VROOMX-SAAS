@@ -7,6 +7,7 @@ import { PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS } from '@/types'
 import type { PaymentStatus } from '@/types'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
+import { CopyIdButton } from '@/components/shared/copy-id-button'
 import {
   Table,
   TableBody,
@@ -430,9 +431,12 @@ function BrokerRow({
             </TableCell>
             <TableCell />
             <TableCell className="pl-12 text-sm">
-              <Link href={`/orders/${order.id}`} className="text-blue-600 hover:underline">
-                {order.orderNumber ?? order.id.slice(0, 8)}
-              </Link>
+              <div className="group flex items-center gap-1">
+                <Link href={`/orders/${order.id}`} className="text-blue-600 hover:underline">
+                  {order.orderNumber ?? order.id.slice(0, 8)}
+                </Link>
+                <CopyIdButton value={order.orderNumber ?? order.id} className="opacity-0 group-hover:opacity-100" />
+              </div>
             </TableCell>
             <TableCell className="text-right text-sm">
               {formatCurrency(order.carrierPay)}

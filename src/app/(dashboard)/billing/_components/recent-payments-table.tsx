@@ -6,6 +6,7 @@ import type { RecentPayment } from '@/lib/queries/receivables'
 import { EnhancedFilterBar } from '@/components/shared/enhanced-filter-bar'
 import { CsvExportButton } from '@/components/shared/csv-export-button'
 import type { EnhancedFilterConfig, DateRange } from '@/types/filters'
+import { CopyIdButton } from '@/components/shared/copy-id-button'
 
 const FILTER_CONFIG: EnhancedFilterConfig[] = [
   {
@@ -114,7 +115,12 @@ export function RecentPaymentsTable({ data = [] }: RecentPaymentsTableProps) {
                 ) : (
                   filteredData.map((payment, i) => (
                     <tr key={`${payment.orderNumber}-${i}`} className="border-b border-border-subtle last:border-0">
-                      <td className="py-2 font-medium text-foreground">{payment.orderNumber}</td>
+                      <td className="py-2 font-medium text-foreground">
+                        <div className="group flex items-center gap-1">
+                          {payment.orderNumber}
+                          <CopyIdButton value={payment.orderNumber} className="opacity-0 group-hover:opacity-100" />
+                        </div>
+                      </td>
                       <td className="py-2 text-right tabular-nums text-foreground font-medium">
                         ${payment.amount.toLocaleString()}
                       </td>
