@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { Pencil, Phone, Mail } from 'lucide-react'
+import { CopyIdButton } from '@/components/shared/copy-id-button'
 import { DRIVER_TYPE_LABELS } from '@/types'
 import type { Driver } from '@/types/database'
 import type { DriverType, DriverPayType } from '@/types'
@@ -46,8 +47,9 @@ export function DriverRow({ driver, onClick, onEdit, onStatusToggle }: DriverRow
       }}
       className="flex w-full items-center gap-3 rounded-lg border border-border-subtle bg-surface px-3 py-2.5 text-left shadow-sm transition-colors card-hover hover:border-brand/30 focus-visible:ring-2 focus-visible:ring-brand/30 focus-visible:outline-none"
     >
-      <div className="min-w-0 flex-1">
+      <div className="group/name min-w-0 flex-1 flex items-center gap-1">
         <span className="text-sm font-semibold text-foreground">{fullName}</span>
+        <CopyIdButton value={fullName} className="opacity-0 group-hover/name:opacity-100 transition-opacity" />
       </div>
 
       <div className="flex items-center gap-1.5 shrink-0">
@@ -57,17 +59,19 @@ export function DriverRow({ driver, onClick, onEdit, onStatusToggle }: DriverRow
         </Badge>
       </div>
 
-      <div className="hidden md:flex items-center gap-3 text-xs text-muted-foreground shrink-0 w-[200px]">
+      <div className="hidden md:flex items-center gap-3 text-xs text-muted-foreground shrink-0">
         {driver.phone && (
-          <span className="flex items-center gap-1">
-            <Phone className="h-3 w-3" />
+          <span className="group/phone flex items-center gap-1">
+            <Phone className="h-3 w-3 shrink-0" />
             {driver.phone}
+            <CopyIdButton value={driver.phone} className="opacity-0 group-hover/phone:opacity-100 transition-opacity" />
           </span>
         )}
         {driver.email && (
-          <span className="flex items-center gap-1 truncate">
+          <span className="group/email flex items-center gap-1">
             <Mail className="h-3 w-3 shrink-0" />
-            <span className="truncate">{driver.email}</span>
+            {driver.email}
+            <CopyIdButton value={driver.email} className="opacity-0 group-hover/email:opacity-100 transition-opacity" />
           </span>
         )}
       </div>
@@ -76,7 +80,7 @@ export function DriverRow({ driver, onClick, onEdit, onStatusToggle }: DriverRow
         {formatPayInfo(driver.pay_type as DriverPayType, payRate)}
       </div>
 
-      <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+      <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
         <Switch
           size="sm"
           checked={driver.driver_status === 'active'}

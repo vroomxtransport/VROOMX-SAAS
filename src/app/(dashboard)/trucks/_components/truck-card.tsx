@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Pencil, Truck as TruckIcon } from 'lucide-react'
+import { CopyIdButton } from '@/components/shared/copy-id-button'
 import type { Truck } from '@/types/database'
 import { TRUCK_TYPE_LABELS } from '@/types'
 import type { TruckType, TruckStatus } from '@/types'
@@ -106,9 +107,12 @@ export function TruckCard({ truck, onClick, onEdit }: TruckCardProps) {
           <p className="text-xs text-foreground/80">{vehicleLine}</p>
         )}
         {truncatedVin && (
-          <p className="font-mono text-xs text-muted-foreground">
-            VIN: {truncatedVin}
-          </p>
+          <div className="group/vin flex items-center gap-1">
+            <p className="font-mono text-xs text-muted-foreground">
+              VIN: {truncatedVin}
+            </p>
+            <CopyIdButton value={truncatedVin} className="opacity-0 group-hover/vin:opacity-100 transition-opacity" />
+          </div>
         )}
       </div>
     </EntityCard>

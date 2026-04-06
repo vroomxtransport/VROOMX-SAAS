@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Pencil, Caravan, Truck as TruckIcon } from 'lucide-react'
+import { CopyIdButton } from '@/components/shared/copy-id-button'
 import type { Trailer } from '@/types/database'
 import { TRAILER_TYPE_LABELS } from '@/types'
 import type { TrailerType, TrailerStatus } from '@/types'
@@ -101,9 +102,12 @@ export function TrailerCard({ trailer, onEdit }: TrailerCardProps) {
           <p className="text-xs text-foreground/80">{vehicleLine}</p>
         )}
         {truncatedVin && (
-          <p className="font-mono text-xs text-muted-foreground">
-            VIN: {truncatedVin}
-          </p>
+          <div className="group/vin flex items-center gap-1">
+            <p className="font-mono text-xs text-muted-foreground">
+              VIN: {truncatedVin}
+            </p>
+            <CopyIdButton value={truncatedVin} className="opacity-0 group-hover/vin:opacity-100 transition-opacity" />
+          </div>
         )}
         {trailer.assigned_truck && (
           <div className="flex items-center gap-1 text-xs text-blue-600">

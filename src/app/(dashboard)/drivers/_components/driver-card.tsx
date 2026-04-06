@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { Pencil, Phone, Mail } from 'lucide-react'
+import { CopyIdButton } from '@/components/shared/copy-id-button'
 import { DRIVER_TYPE_LABELS, DRIVER_PAY_TYPE_LABELS } from '@/types'
 import type { Driver } from '@/types/database'
 import type { DriverType, DriverPayType } from '@/types'
@@ -38,7 +39,10 @@ export function DriverCard({ driver, onClick, onEdit, onStatusToggle }: DriverCa
     <EntityCard onClick={onClick}>
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-sm font-semibold text-foreground">{fullName}</h3>
+          <div className="group/name flex items-center gap-1">
+            <h3 className="truncate text-sm font-semibold text-foreground">{fullName}</h3>
+            <CopyIdButton value={fullName} className="opacity-0 group-hover/name:opacity-100 transition-opacity" />
+          </div>
           <div className="mt-1 flex items-center gap-2">
             <StatusBadge status={driver.driver_status} type="driver" />
             <Badge variant="outline" className="text-xs">
@@ -46,7 +50,7 @@ export function DriverCard({ driver, onClick, onEdit, onStatusToggle }: DriverCa
             </Badge>
           </div>
         </div>
-        <div className="ml-2 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+        <div className="ml-2 flex items-center gap-1" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
           <Switch
             size="sm"
             checked={driver.driver_status === 'active'}
@@ -66,15 +70,17 @@ export function DriverCard({ driver, onClick, onEdit, onStatusToggle }: DriverCa
 
       <div className="mt-2 space-y-1">
         {driver.phone && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="group/phone flex items-center gap-2 text-xs text-muted-foreground">
             <Phone className="h-3 w-3" />
             <span>{driver.phone}</span>
+            <CopyIdButton value={driver.phone} className="opacity-0 group-hover/phone:opacity-100 transition-opacity" />
           </div>
         )}
         {driver.email && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="group/email flex items-center gap-2 text-xs text-muted-foreground">
             <Mail className="h-3 w-3" />
             <span className="truncate">{driver.email}</span>
+            <CopyIdButton value={driver.email} className="opacity-0 group-hover/email:opacity-100 transition-opacity" />
           </div>
         )}
       </div>

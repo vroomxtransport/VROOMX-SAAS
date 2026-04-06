@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Pencil, Caravan, Truck as TruckIcon } from 'lucide-react'
+import { CopyIdButton } from '@/components/shared/copy-id-button'
 import type { Trailer } from '@/types/database'
 import { TRAILER_TYPE_LABELS } from '@/types'
 import type { TrailerType } from '@/types'
@@ -77,8 +78,9 @@ export function TrailerRow({ trailer, onEdit }: TrailerRowProps) {
       )}
 
       {truncatedVin && (
-        <div className="hidden lg:block font-mono text-xs text-muted-foreground shrink-0 w-[140px]">
+        <div className="group/vin hidden lg:flex items-center gap-1 font-mono text-xs text-muted-foreground shrink-0">
           VIN: {truncatedVin}
+          <CopyIdButton value={truncatedVin} className="opacity-0 group-hover/vin:opacity-100 transition-opacity" />
         </div>
       )}
 
