@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
+import { CopyIdButton } from '@/components/shared/copy-id-button'
 import { Pencil, ArrowRight, Calendar, UserPlus, UserCog, UserMinus, Trash2, MapPinned, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { useDrivers } from '@/hooks/use-drivers'
 import { useQueryClient } from '@tanstack/react-query'
@@ -214,8 +215,15 @@ export function OrdersDataTable({ orders, sort, onSort, onRowClick, onEdit }: Or
       accessorFn: (row) => row.order_number ?? 'Draft',
       size: 100,
       minSize: 70,
-      cell: ({ getValue }) => (
-        <span className="text-sm font-semibold text-foreground">{getValue() as string}</span>
+      cell: ({ getValue, row }) => (
+        <span className="group/id flex items-center gap-1">
+          <span className="text-sm font-semibold text-foreground">{getValue() as string}</span>
+          {row.original.order_number && (
+            <span className="opacity-0 group-hover/id:opacity-100 transition-opacity">
+              <CopyIdButton value={row.original.order_number} />
+            </span>
+          )}
+        </span>
       ),
     },
     {

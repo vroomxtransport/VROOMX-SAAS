@@ -2,6 +2,7 @@
 
 import { cn } from '@/lib/utils'
 import { StatusBadge } from '@/components/shared/status-badge'
+import { CopyIdButton } from '@/components/shared/copy-id-button'
 import { Button } from '@/components/ui/button'
 import {
   Pencil,
@@ -75,6 +76,9 @@ export function OrderHeaderBar({ order, onEdit, onDelete, canDelete }: OrderHead
             <h1 className="text-xl font-bold text-foreground">
               {order.order_number ?? 'Draft Order'}
             </h1>
+            {order.order_number && (
+              <CopyIdButton value={order.order_number} />
+            )}
             <StatusBadge status={order.status} type="order" />
           </div>
 

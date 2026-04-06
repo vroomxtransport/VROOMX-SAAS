@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { EntityCard } from '@/components/shared/entity-card'
+import { CopyIdButton } from '@/components/shared/copy-id-button'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { Button } from '@/components/ui/button'
@@ -97,10 +98,15 @@ export function OrderCard({ order, onClick, onEdit }: OrderCardProps) {
     <EntityCard onClick={onClick}>
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
+          <div className="group/id flex items-center gap-1.5">
             <span className="text-xs font-medium text-muted-foreground">
               {order.order_number ?? 'Draft'}
             </span>
+            {order.order_number && (
+              <span className="opacity-0 group-hover/id:opacity-100 transition-opacity">
+                <CopyIdButton value={order.order_number} />
+              </span>
+            )}
             <StatusBadge status={order.status} type="order" />
           </div>
           <h3 className="mt-1 truncate text-sm font-semibold text-foreground">

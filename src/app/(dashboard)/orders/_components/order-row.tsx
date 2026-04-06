@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
+import { CopyIdButton } from '@/components/shared/copy-id-button'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -99,10 +100,15 @@ export function OrderRow({ order, onClick, onEdit }: OrderRowProps) {
       className="flex w-full items-center gap-3 rounded-lg border border-border-subtle bg-surface px-3 py-2.5 text-left shadow-sm transition-colors card-hover hover:border-brand/30 focus-visible:ring-2 focus-visible:ring-brand/30 focus-visible:outline-none"
     >
       {/* Order number */}
-      <div className="flex items-center gap-2 shrink-0 w-[90px]">
+      <div className="group/id flex items-center gap-1 shrink-0 w-[110px]">
         <span className="text-sm font-semibold text-foreground truncate">
           {order.order_number ?? 'Draft'}
         </span>
+        {order.order_number && (
+          <span className="opacity-0 group-hover/id:opacity-100 transition-opacity">
+            <CopyIdButton value={order.order_number} />
+          </span>
+        )}
       </div>
 
       {/* Status */}
