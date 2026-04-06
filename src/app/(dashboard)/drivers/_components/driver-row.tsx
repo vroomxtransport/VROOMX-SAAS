@@ -72,7 +72,7 @@ export function DriverRow({ driver, onClick, onEdit, onStatusToggle }: DriverRow
         )}
       </div>
 
-      <div className="hidden lg:block text-xs font-medium text-muted-foreground shrink-0 w-[160px]">
+      <div className="hidden lg:block text-xs font-medium text-foreground/80 shrink-0 w-[160px]">
         {formatPayInfo(driver.pay_type as DriverPayType, payRate)}
       </div>
 

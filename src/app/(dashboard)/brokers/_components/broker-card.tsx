@@ -24,20 +24,20 @@ export function BrokerCard({ broker, onClick, onEdit }: BrokerCardProps) {
 
           <div className="mt-1.5 space-y-1.5">
             {broker.email && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Mail className="h-3.5 w-3.5 shrink-0" />
+              <div className="flex items-center gap-2 text-sm text-foreground/80">
+                <Mail className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 <span className="truncate">{broker.email}</span>
               </div>
             )}
             {broker.phone && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Phone className="h-3.5 w-3.5 shrink-0" />
+              <div className="flex items-center gap-2 text-sm text-foreground/80">
+                <Phone className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 <span>{broker.phone}</span>
               </div>
             )}
             {broker.factoring_company && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Building2 className="h-3.5 w-3.5 shrink-0" />
+              <div className="flex items-center gap-2 text-sm text-foreground/80">
+                <Building2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 <span className="truncate">{broker.factoring_company}</span>
               </div>
             )}

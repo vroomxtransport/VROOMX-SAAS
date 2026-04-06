@@ -103,10 +103,10 @@ export function TruckCard({ truck, onClick, onEdit }: TruckCardProps) {
 
       <div className="mt-2 space-y-1">
         {vehicleLine && (
-          <p className="text-xs text-muted-foreground">{vehicleLine}</p>
+          <p className="text-xs text-foreground/80">{vehicleLine}</p>
         )}
         {truncatedVin && (
-          <p className="font-mono text-xs text-muted-foreground/60">
+          <p className="font-mono text-xs text-muted-foreground">
             VIN: {truncatedVin}
           </p>
         )}

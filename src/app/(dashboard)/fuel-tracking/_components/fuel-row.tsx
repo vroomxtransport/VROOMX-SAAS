@@ -45,8 +45,8 @@ export function FuelRow({ entry, onEdit }: FuelRowProps) {
       </div>
 
       <div className="flex items-center gap-3 shrink-0 text-sm">
-        <span className="text-muted-foreground">{gallons.toFixed(2)} gal</span>
-        <span className="text-muted-foreground">${costPerGallon.toFixed(3)}/gal</span>
+        <span className="text-foreground/80">{gallons.toFixed(2)} gal</span>
+        <span className="text-foreground/80">${costPerGallon.toFixed(3)}/gal</span>
         <span className="font-semibold text-foreground">${totalCost.toFixed(2)}</span>
       </div>
 

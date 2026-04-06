@@ -91,7 +91,7 @@ export function LocalDriveRow({ localDrive, onClick, onEdit }: LocalDriveRowProp
       )}
 
       {driverName && (
-        <div className="hidden md:block text-xs text-muted-foreground shrink-0 w-[140px] truncate">
+        <div className="hidden md:block text-xs text-foreground shrink-0 w-[140px] truncate">
           {driverName}
         </div>
       )}
@@ -101,7 +101,7 @@ export function LocalDriveRow({ localDrive, onClick, onEdit }: LocalDriveRowProp
         {formatDate(localDrive.scheduled_date)}
       </div>
 
-      <div className="hidden lg:flex items-center gap-1 text-xs font-medium text-muted-foreground shrink-0 w-[80px]">
+      <div className="hidden lg:flex items-center gap-1 text-xs font-medium text-foreground shrink-0 w-[80px]">
         <DollarSign className="h-3 w-3" />
         {formatRevenue(localDrive.revenue)}
       </div>

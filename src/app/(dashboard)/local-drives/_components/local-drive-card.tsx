@@ -86,8 +86,8 @@ export function LocalDriveCard({ localDrive, onClick, onEdit }: LocalDriveCardPr
           </div>
         )}
         {driverName && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <User className="h-3 w-3" />
+          <div className="flex items-center gap-2 text-xs text-foreground">
+            <User className="h-3 w-3 text-muted-foreground" />
             <span>{driverName}</span>
           </div>
         )}
@@ -104,7 +104,7 @@ export function LocalDriveCard({ localDrive, onClick, onEdit }: LocalDriveCardPr
       </div>
 
       <div className="mt-2 border-t border-border pt-1.5">
-        <div className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+        <div className="flex items-center gap-1 text-xs text-foreground font-medium">
           <DollarSign className="h-3 w-3" />
           <span>{formatRevenue(localDrive.revenue)}</span>
         </div>

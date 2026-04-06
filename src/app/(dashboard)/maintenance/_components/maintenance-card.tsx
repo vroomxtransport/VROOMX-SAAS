@@ -76,7 +76,7 @@ export function MaintenanceCard({ record, onClick, onEdit }: MaintenanceCardProp
           </div>
         )}
         {cost > 0 && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2 text-xs text-foreground font-medium">
             <DollarSign className="h-3 w-3" />
             <span>${cost.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
           </div>

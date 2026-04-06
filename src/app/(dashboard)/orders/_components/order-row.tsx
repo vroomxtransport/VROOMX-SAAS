@@ -117,13 +117,13 @@ export function OrderRow({ order, onClick, onEdit }: OrderRowProps) {
       </div>
 
       {/* Vehicle */}
-      <div className="min-w-0 flex-1 truncate text-sm text-foreground/80">
+      <div className="min-w-0 flex-1 truncate text-sm text-foreground">
         {formatVehicle(order)}
       </div>
 
       {/* Route */}
       {(pickupCity || deliveryCity) && (
-        <div className="hidden md:flex items-center gap-1.5 text-xs text-muted-foreground shrink-0 max-w-[240px]">
+        <div className="hidden md:flex items-center gap-1.5 text-xs text-foreground/80 shrink-0 max-w-[240px]">
           <span className="truncate">{pickupCity || 'TBD'}</span>
           <ArrowRight className="h-3 w-3 shrink-0 text-muted-foreground/60" />
           <span className="truncate">{deliveryCity || 'TBD'}</span>
@@ -131,17 +131,17 @@ export function OrderRow({ order, onClick, onEdit }: OrderRowProps) {
       )}
 
       {/* Broker */}
-      <div className="hidden lg:block text-xs text-muted-foreground shrink-0 w-[130px] truncate">
+      <div className="hidden lg:block text-xs text-foreground shrink-0 w-[130px] truncate">
         {order.broker?.name || '--'}
       </div>
 
       {/* Payment Type */}
-      <div className="hidden lg:block text-xs text-muted-foreground shrink-0 w-[60px]">
+      <div className="hidden lg:block text-xs text-foreground shrink-0 w-[60px]">
         {order.payment_type || '--'}
       </div>
 
       {/* Dates */}
-      <div className="hidden xl:flex items-center gap-1 text-xs text-muted-foreground shrink-0 w-[140px]">
+      <div className="hidden xl:flex items-center gap-1 text-xs text-foreground/80 shrink-0 w-[140px]">
         <Calendar className="h-3 w-3 shrink-0 opacity-50" />
         <span>{order.pickup_date ? new Date(order.pickup_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' }) : '--'}</span>
         <ArrowRight className="h-2.5 w-2.5 shrink-0 opacity-60" />
@@ -149,7 +149,7 @@ export function OrderRow({ order, onClick, onEdit }: OrderRowProps) {
       </div>
 
       {/* Driver */}
-      <div className="hidden lg:block text-xs text-muted-foreground shrink-0 w-[120px] truncate">
+      <div className="hidden lg:block text-xs text-foreground shrink-0 w-[120px] truncate">
         {driverName || '--'}
       </div>
 

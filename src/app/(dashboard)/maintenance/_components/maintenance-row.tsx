@@ -70,7 +70,7 @@ export function MaintenanceRow({ record, onClick, onEdit }: MaintenanceRowProps)
         )}
       </div>
 
-      <div className="hidden lg:flex items-center gap-1 text-xs font-medium text-muted-foreground shrink-0 w-[100px]">
+      <div className="hidden lg:flex items-center gap-1 text-xs font-medium text-foreground shrink-0 w-[100px]">
         {cost > 0 && (
           <>
             <DollarSign className="h-3 w-3" />

@@ -80,7 +80,7 @@ export function DriverCard({ driver, onClick, onEdit, onStatusToggle }: DriverCa
       </div>
 
       <div className="mt-2 border-t border-border pt-1.5">
-        <p className="text-xs font-medium text-muted-foreground">
+        <p className="text-xs font-medium text-foreground/80">
           Pay: {formatPayInfo(driver.pay_type as DriverPayType, payRate)}
         </p>
       </div>

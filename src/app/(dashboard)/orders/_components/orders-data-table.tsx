@@ -103,7 +103,7 @@ function ActionsCell({ order, onEdit, onRowClick }: { order: OrderWithRelations;
             <TooltipContent>{order.driver ? 'Reassign' : 'Assign'}</TooltipContent>
           </Tooltip>
           <PopoverContent className="w-56 p-2" align="end">
-            <p className="text-xs font-semibold text-foreground/60 mb-2">Select driver</p>
+            <p className="text-xs font-semibold text-foreground/80 mb-2">Select driver</p>
             <div className="space-y-1 max-h-48 overflow-y-auto">
               {driversData?.drivers?.map((d) => (
                 <button
@@ -185,7 +185,7 @@ function SortableHeader({ label, field, sort, onSort }: { label: string; field: 
         else if (dir === 'asc') onSort({ field, direction: 'desc' })
         else onSort(undefined)
       }}
-      className="flex items-center gap-1 text-xs font-semibold text-foreground/60 hover:text-foreground transition-colors"
+      className="flex items-center gap-1 text-xs font-semibold text-foreground/80 hover:text-foreground transition-colors"
     >
       {label}
       {!isActive && <ArrowUpDown className="h-3 w-3 opacity-60" />}
@@ -228,7 +228,7 @@ export function OrdersDataTable({ orders, sort, onSort, onRowClick, onEdit }: Or
     },
     {
       id: 'status',
-      header: () => <span className="text-xs font-semibold text-foreground/60">Status</span>,
+      header: () => <span className="text-xs font-semibold text-foreground/80">Status</span>,
       accessorFn: (row) => row.status,
       size: 100,
       minSize: 80,
@@ -236,7 +236,7 @@ export function OrdersDataTable({ orders, sort, onSort, onRowClick, onEdit }: Or
     },
     {
       id: 'vehicle',
-      header: () => <span className="text-xs font-semibold text-foreground/60">Vehicle</span>,
+      header: () => <span className="text-xs font-semibold text-foreground/80">Vehicle</span>,
       accessorFn: (row) => {
         const parts: string[] = []
         if (row.vehicle_year) parts.push(String(row.vehicle_year))
@@ -252,7 +252,7 @@ export function OrdersDataTable({ orders, sort, onSort, onRowClick, onEdit }: Or
     },
     {
       id: 'route',
-      header: () => <span className="text-xs font-semibold text-foreground/60">Route</span>,
+      header: () => <span className="text-xs font-semibold text-foreground/80">Route</span>,
       size: 200,
       minSize: 120,
       cell: ({ row }) => {
@@ -260,7 +260,7 @@ export function OrdersDataTable({ orders, sort, onSort, onRowClick, onEdit }: Or
         const from = [o.pickup_city, o.pickup_state].filter(Boolean).join(', ')
         const to = [o.delivery_city, o.delivery_state].filter(Boolean).join(', ')
         return (
-          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+          <div className="flex items-center gap-1 text-sm text-foreground/80">
             <span className="truncate">{from || 'TBD'}</span>
             <ArrowRight className="h-3 w-3 shrink-0 opacity-60" />
             <span className="truncate">{to || 'TBD'}</span>
@@ -270,33 +270,33 @@ export function OrdersDataTable({ orders, sort, onSort, onRowClick, onEdit }: Or
     },
     {
       id: 'broker',
-      header: () => <span className="text-xs font-semibold text-foreground/60">Broker</span>,
+      header: () => <span className="text-xs font-semibold text-foreground/80">Broker</span>,
       accessorFn: (row) => row.broker?.name ?? '',
       size: 130,
       minSize: 70,
       cell: ({ getValue }) => (
-        <span className="text-sm truncate block text-muted-foreground">{(getValue() as string) || '--'}</span>
+        <span className="text-sm truncate block text-foreground">{(getValue() as string) || '--'}</span>
       ),
     },
     {
       id: 'pay_type',
-      header: () => <span className="text-xs font-semibold text-foreground/60">Pay</span>,
+      header: () => <span className="text-xs font-semibold text-foreground/80">Pay</span>,
       accessorFn: (row) => row.payment_type ?? '',
       size: 65,
       minSize: 45,
       cell: ({ getValue }) => (
-        <span className="text-sm text-muted-foreground">{(getValue() as string) || '--'}</span>
+        <span className="text-sm text-foreground">{(getValue() as string) || '--'}</span>
       ),
     },
     {
       id: 'dates',
-      header: () => <span className="text-xs font-semibold text-foreground/60">Dates</span>,
+      header: () => <span className="text-xs font-semibold text-foreground/80">Dates</span>,
       size: 130,
       minSize: 90,
       cell: ({ row }) => {
         const o = row.original
         return (
-          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+          <div className="flex items-center gap-1 text-sm text-foreground/80">
             <Calendar className="h-3.5 w-3.5 shrink-0 opacity-60" />
             <span>{formatShortDate(o.pickup_date)}</span>
             <ArrowRight className="h-3 w-3 shrink-0 opacity-60" />
@@ -307,12 +307,12 @@ export function OrdersDataTable({ orders, sort, onSort, onRowClick, onEdit }: Or
     },
     {
       id: 'driver',
-      header: () => <span className="text-xs font-semibold text-foreground/60">Driver</span>,
+      header: () => <span className="text-xs font-semibold text-foreground/80">Driver</span>,
       accessorFn: (row) => row.driver ? `${row.driver.first_name} ${row.driver.last_name}` : '',
       size: 120,
       minSize: 70,
       cell: ({ getValue }) => (
-        <span className="text-sm truncate block text-muted-foreground">{(getValue() as string) || '--'}</span>
+        <span className="text-sm truncate block text-foreground">{(getValue() as string) || '--'}</span>
       ),
     },
     {

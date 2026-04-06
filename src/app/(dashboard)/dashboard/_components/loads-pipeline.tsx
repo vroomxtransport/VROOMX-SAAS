@@ -101,11 +101,11 @@ export function LoadsPipeline({ pipelineCounts, recentOrders }: LoadsPipelinePro
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border-subtle">
-                <th className="pb-2 text-left text-xs font-medium text-muted-foreground">Order #</th>
-                <th className="pb-2 text-left text-xs font-medium text-muted-foreground hidden sm:table-cell">Vehicle</th>
-                <th className="pb-2 text-left text-xs font-medium text-muted-foreground hidden md:table-cell">Route</th>
-                <th className="pb-2 text-left text-xs font-medium text-muted-foreground">Status</th>
-                <th className="pb-2 text-right text-xs font-medium text-muted-foreground">Revenue</th>
+                <th className="pb-2 text-left text-xs font-medium text-foreground/80">Order #</th>
+                <th className="pb-2 text-left text-xs font-medium text-foreground/80 hidden sm:table-cell">Vehicle</th>
+                <th className="pb-2 text-left text-xs font-medium text-foreground/80 hidden md:table-cell">Route</th>
+                <th className="pb-2 text-left text-xs font-medium text-foreground/80">Status</th>
+                <th className="pb-2 text-right text-xs font-medium text-foreground/80">Revenue</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle">

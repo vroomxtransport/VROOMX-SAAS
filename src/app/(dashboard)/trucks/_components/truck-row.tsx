@@ -79,12 +79,12 @@ export function TruckRow({ truck, onClick, onEdit }: TruckRowProps) {
         )}
       </div>
 
-      <div className="hidden md:block text-xs text-muted-foreground min-w-0 flex-1 truncate">
+      <div className="hidden md:block text-xs text-foreground/80 min-w-0 flex-1 truncate">
         {vehicleLine}
       </div>
 
       {truncatedVin && (
-        <div className="hidden lg:block font-mono text-xs text-muted-foreground/60 shrink-0 w-[140px]">
+        <div className="hidden lg:block font-mono text-xs text-muted-foreground shrink-0 w-[140px]">
           VIN: {truncatedVin}
         </div>
       )}

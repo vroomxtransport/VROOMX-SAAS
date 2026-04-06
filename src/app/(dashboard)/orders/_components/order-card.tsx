@@ -99,7 +99,7 @@ export function OrderCard({ order, onClick, onEdit }: OrderCardProps) {
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1">
           <div className="group/id flex items-center gap-1.5">
-            <span className="text-xs font-medium text-muted-foreground">
+            <span className="rounded bg-accent/60 px-1.5 py-0.5 text-xs font-bold tracking-wide text-foreground">
               {order.order_number ?? 'Draft'}
             </span>
             {order.order_number && (
@@ -136,10 +136,10 @@ export function OrderCard({ order, onClick, onEdit }: OrderCardProps) {
       {/* Broker + Payment + Dates row */}
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
         {order.broker && (
-          <span>Broker: <span className="text-foreground/80">{order.broker.name}</span></span>
+          <span>Broker: <span className="text-foreground">{order.broker.name}</span></span>
         )}
         {order.payment_type && (
-          <span>Pay: <span className="text-foreground/80">{order.payment_type}</span></span>
+          <span>Pay: <span className="text-foreground">{order.payment_type}</span></span>
         )}
         {(order.pickup_date || order.delivery_date) && (
           <span>
@@ -168,7 +168,7 @@ export function OrderCard({ order, onClick, onEdit }: OrderCardProps) {
           )}
         </div>
         {driverName && (
-          <span className="text-xs text-muted-foreground">{driverName}</span>
+          <span className="text-xs font-medium text-foreground">{driverName}</span>
         )}
       </div>
 

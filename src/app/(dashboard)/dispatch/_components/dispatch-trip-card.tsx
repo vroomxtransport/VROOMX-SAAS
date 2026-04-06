@@ -145,12 +145,12 @@ export function DispatchTripCard({ trip, isDraggingOrder, activeId }: DispatchTr
       </div>
 
       {/* Truck | Driver */}
-      <div className="mt-1.5 text-xs text-muted-foreground">
+      <div className="mt-1.5 text-xs text-foreground">
         {truckUnit} | {driverName}
       </div>
 
       {/* Route */}
-      <div className="mt-1 text-xs text-muted-foreground truncate" title={routeText}>
+      <div className="mt-1 text-xs text-foreground/80 truncate" title={routeText}>
         {routeText}
       </div>
 
