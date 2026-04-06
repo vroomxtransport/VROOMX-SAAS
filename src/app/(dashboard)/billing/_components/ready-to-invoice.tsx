@@ -367,7 +367,7 @@ export function ReadyToInvoice({ factoringFeeRate = 0 }: ReadyToInvoiceProps) {
                     </div>
                   )}
                 </div>
-                <div className="w-20 shrink-0 text-xs text-muted-foreground text-right hidden sm:block">
+                <div className="w-20 shrink-0 text-xs text-muted-foreground text-right hidden sm:block mr-2">
                   {formatDate(order.updatedAt)}
                 </div>
                 <div className={cn('shrink-0 flex justify-end gap-1.5', showFactoring ? 'w-44' : 'w-28')}>
