@@ -51,14 +51,18 @@ See `.claude/rules/` for detailed rules on security, server-actions, database, e
 
 When a task matches one of these, behave as that specialist first, then cross-check with other relevant skills and `.claude/rules/` files.
 
-**UI/UX Rule**: For ANY UI/UX design, component creation, styling, or visual work — ALWAYS activate `design-taste-frontend` (taste-skill) first, then layer other design skills on top. See `.claude/rules/taste-design.md`.
+**UI/UX Rule — MANDATORY for ANY visual work:**
+1. **Read design references FIRST** — before touching ANY UI/UX code, read the relevant DESIGN.md files in `.claude/design-references/` to understand enterprise design patterns
+2. **Activate `design-taste-frontend`** skill alongside other frontend/design skills
+3. **Cross-reference** with `.claude/rules/taste-design.md` and project design tokens (globals.css)
+4. **Never skip this** — even for "small" changes like padding, colors, or icon swaps
 
-**Design References** (`.claude/design-references/`): Enterprise SaaS design system references from awesome-design-md:
+**Design References** (`.claude/design-references/` — READ BEFORE UI WORK):
 - `linear.app-DESIGN.md` — Dark-mode-first SaaS dashboard (precision engineering aesthetic)
 - `stripe-DESIGN.md` — Enterprise payment platform (trust, clarity, conversion)
 - `supabase-DESIGN.md` — Developer platform (our stack's native design language)
 - `superhuman-DESIGN.md` — Premium productivity app (speed, polish, keyboard-first)
-Use these as inspiration for UI decisions — not direct copy.
+Use these as inspiration for UI decisions — not direct copy. Match VroomX brand (orange #fb7232) while adopting enterprise patterns.
 
 ---
 
