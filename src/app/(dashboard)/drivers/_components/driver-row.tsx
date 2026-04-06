@@ -1,5 +1,7 @@
 'use client'
 
+import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
@@ -7,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Pencil, Phone, Mail } from 'lucide-react'
 import { CopyIdButton } from '@/components/shared/copy-id-button'
 import { DRIVER_TYPE_LABELS } from '@/types'
+import { updateDriverStatus } from '@/app/actions/drivers'
 import type { Driver } from '@/types/database'
 import type { DriverType, DriverPayType } from '@/types'
 
@@ -14,7 +17,6 @@ interface DriverRowProps {
   driver: Driver
   onClick: () => void
   onEdit: (e: React.MouseEvent) => void
-  onStatusToggle: (checked: boolean) => void
 }
 
 function formatPayInfo(payType: DriverPayType, payRate: number): string {
@@ -30,9 +32,23 @@ function formatPayInfo(payType: DriverPayType, payRate: number): string {
   }
 }
 
-export function DriverRow({ driver, onClick, onEdit, onStatusToggle }: DriverRowProps) {
+export function DriverRow({ driver, onClick, onEdit }: DriverRowProps) {
   const fullName = `${driver.first_name} ${driver.last_name}`
   const payRate = parseFloat(driver.pay_rate)
+  const queryClient = useQueryClient()
+  const [isPending, setIsPending] = useState(false)
+
+  const handleToggle = async (checked: boolean) => {
+    if (isPending) return
+    setIsPending(true)
+    try {
+      const newStatus = checked ? 'active' : 'inactive'
+      await updateDriverStatus(driver.id, newStatus)
+      queryClient.invalidateQueries({ queryKey: ['drivers'] })
+    } finally {
+      setIsPending(false)
+    }
+  }
 
   return (
     <div
@@ -84,7 +100,8 @@ export function DriverRow({ driver, onClick, onEdit, onStatusToggle }: DriverRow
         <Switch
           size="sm"
           checked={driver.driver_status === 'active'}
-          onCheckedChange={onStatusToggle}
+          onCheckedChange={handleToggle}
+          disabled={isPending}
           aria-label="Toggle driver status"
         />
         <Button

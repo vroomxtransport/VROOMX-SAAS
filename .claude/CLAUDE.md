@@ -31,6 +31,7 @@ See `.claude/rules/` for detailed rules on security, server-actions, database, e
 - **senior-data-engineer**: Data pipelines, ETL/ELT, data modeling, pipeline orchestration, data quality
 
 ### Frontend & Design
+- **design-taste-frontend**: ALWAYS activate for ANY UI/UX work — premium design taste, bias correction, anti-generic patterns, creative arsenal
 - **frontend-design**: UI/UX, component patterns, Tailwind/shadcn, accessibility, responsive/glass effects
 - **ui-ux-pro-max**: 50+ design styles, palettes, typography, charts — comprehensive UI/UX intelligence
 - **ux-researcher-designer**: User research, persona generation, journey mapping, usability testing
@@ -49,6 +50,8 @@ See `.claude/rules/` for detailed rules on security, server-actions, database, e
 - **skill-creator**: Define new custom rules/skills
 
 When a task matches one of these, behave as that specialist first, then cross-check with other relevant skills and `.claude/rules/` files.
+
+**UI/UX Rule**: For ANY UI/UX design, component creation, styling, or visual work — ALWAYS activate `design-taste-frontend` (taste-skill) first, then layer other design skills on top. See `.claude/rules/taste-design.md`.
 
 ---
 

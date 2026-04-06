@@ -3,7 +3,6 @@
 import { useState, useCallback, useMemo } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { useDrivers } from '@/hooks/use-drivers'
-import { updateDriverStatus } from '@/app/actions/drivers'
 import { DriverCard } from './driver-card'
 import { DriverRow } from './driver-row'
 import { DriverDrawer } from './driver-drawer'
@@ -171,12 +170,6 @@ export function DriverList() {
     setDrawerOpen(true)
   }
 
-  const handleStatusToggle = async (driver: Driver, checked: boolean) => {
-    const newStatus = checked ? 'active' : 'inactive'
-    await updateDriverStatus(driver.id, newStatus)
-    queryClient.invalidateQueries({ queryKey: ['drivers'] })
-  }
-
   const handleCardClick = (driver: Driver) => {
     router.push(`/drivers/${driver.id}`)
   }
@@ -280,7 +273,6 @@ export function DriverList() {
                     e.stopPropagation()
                     handleEditDriver(driver)
                   }}
-                  onStatusToggle={(checked) => handleStatusToggle(driver, checked)}
                 />
               ))}
             </div>
@@ -322,7 +314,6 @@ export function DriverList() {
                     e.stopPropagation()
                     handleEditDriver(driver)
                   }}
-                  onStatusToggle={(checked) => handleStatusToggle(driver, checked)}
                 />
               ))}
             </div>
