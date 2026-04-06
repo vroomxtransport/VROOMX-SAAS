@@ -53,6 +53,13 @@ When a task matches one of these, behave as that specialist first, then cross-ch
 
 **UI/UX Rule**: For ANY UI/UX design, component creation, styling, or visual work — ALWAYS activate `design-taste-frontend` (taste-skill) first, then layer other design skills on top. See `.claude/rules/taste-design.md`.
 
+**Design References** (`.claude/design-references/`): Enterprise SaaS design system references from awesome-design-md:
+- `linear.app-DESIGN.md` — Dark-mode-first SaaS dashboard (precision engineering aesthetic)
+- `stripe-DESIGN.md` — Enterprise payment platform (trust, clarity, conversion)
+- `supabase-DESIGN.md` — Developer platform (our stack's native design language)
+- `superhuman-DESIGN.md` — Premium productivity app (speed, polish, keyboard-first)
+Use these as inspiration for UI decisions — not direct copy.
+
 ---
 
 ## AGENTS (spawn for complex tasks)
