@@ -4,11 +4,15 @@ import { useState, useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { EntitySelector } from '../../_components/entity-selector'
-import { ChecklistItem } from '../../_components/checklist-item'
 import { UploadDrawer } from '../../_components/upload-drawer'
+import { FolderTable } from '../../_components/folder-table'
+import { BulkUploadDialog } from '../../_components/bulk-upload-dialog'
+import { CreateFolderDialog } from '../../_components/create-folder-dialog'
+import { fetchComplianceFolders } from '@/lib/queries/compliance-folders'
+import type { ComplianceFolder } from '@/lib/queries/compliance-folders'
+import { deleteCustomFolder } from '@/app/actions/compliance'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Shield, CheckCircle2 } from 'lucide-react'
-import type { ComplianceRequirement, ComplianceDocument } from '@/types/database'
 
 // ---------------------------------------------------------------------------
 // Progress bar
@@ -33,9 +37,7 @@ function ProgressBar({ complete, total }: ProgressBarProps) {
           </span>
         </div>
         <div className="flex items-center gap-2">
-          {allDone && (
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
-          )}
+          {allDone && <CheckCircle2 className="h-4 w-4 text-green-500" />}
           <span className="text-sm font-medium text-foreground">
             {complete} of {total} complete
           </span>
@@ -82,7 +84,7 @@ function EmptyDriverState() {
       <div>
         <p className="text-sm font-medium text-foreground">Select a driver</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          Choose a driver above to view their Driver Qualification File checklist
+          Choose a driver above to view their Driver Qualification File
         </p>
       </div>
     </div>
@@ -90,15 +92,20 @@ function EmptyDriverState() {
 }
 
 // ---------------------------------------------------------------------------
-// Checklist skeleton
+// Folder skeleton
 // ---------------------------------------------------------------------------
 
-function ChecklistSkeleton() {
+function FolderSkeleton() {
   return (
-    <div className="space-y-2">
-      {Array.from({ length: 9 }).map((_, i) => (
-        <Skeleton key={i} className="h-14 w-full rounded-xl" />
-      ))}
+    <div className="widget-card p-0 overflow-hidden">
+      <div className="border-b border-border px-4 py-3">
+        <Skeleton className="h-5 w-32" />
+      </div>
+      <div className="space-y-px">
+        {Array.from({ length: 9 }).map((_, i) => (
+          <Skeleton key={i} className="h-12 w-full rounded-none" />
+        ))}
+      </div>
     </div>
   )
 }
@@ -112,6 +119,8 @@ export function DqfDashboard() {
   const queryClient = useQueryClient()
   const [selectedDriverId, setSelectedDriverId] = useState('')
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [bulkUploadOpen, setBulkUploadOpen] = useState(false)
+  const [createFolderOpen, setCreateFolderOpen] = useState(false)
   const [drawerPrefill, setDrawerPrefill] = useState<{
     documentType?: string
     entityType?: string
@@ -121,81 +130,82 @@ export function DqfDashboard() {
     isRequired?: boolean
   } | undefined>(undefined)
 
-  // Fetch FMCSA DQF requirements (tenant-agnostic seed data + tenant overrides)
-  const { data: requirements = [], isLoading: requirementsLoading } = useQuery({
-    queryKey: ['compliance-requirements', 'dqf'],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('compliance_requirements')
-        .select('*')
-        .eq('document_type', 'dqf')
-        .eq('is_active', true)
-        .order('sort_order')
-      return (data ?? []) as ComplianceRequirement[]
-    },
-    staleTime: 60_000,
-  })
-
-  // Fetch documents for the selected driver
-  const { data: documents = [], isLoading: documentsLoading } = useQuery({
-    queryKey: ['compliance-docs-dqf', selectedDriverId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('compliance_documents')
-        .select('*')
-        .eq('document_type', 'dqf')
-        .eq('entity_type', 'driver')
-        .eq('entity_id', selectedDriverId)
-        .order('created_at', { ascending: false })
-      return (data ?? []) as ComplianceDocument[]
-    },
+  // Fetch folders (groups documents by sub_category, fills in empty folders)
+  const { data: folders = [], isLoading: foldersLoading } = useQuery({
+    queryKey: ['compliance-folders', 'dqf', 'driver', selectedDriverId],
+    queryFn: () => fetchComplianceFolders(supabase, 'dqf', 'driver', selectedDriverId),
     enabled: !!selectedDriverId,
     staleTime: 30_000,
   })
 
-  // Match each requirement to the most-recent document with that sub_category
-  const docBySubCategory = documents.reduce<Record<string, ComplianceDocument>>(
-    (acc, doc) => {
-      if (!doc.sub_category) return acc
-      // Keep the newest one per sub_category (already ordered desc by created_at)
-      if (!acc[doc.sub_category]) {
-        acc[doc.sub_category] = doc
-      }
-      return acc
-    },
-    {}
-  )
+  const completedCount = folders.filter((f) => f.activeDocument !== null).length
 
-  const completedCount = requirements.filter(
-    (req) => !!docBySubCategory[req.sub_category]
-  ).length
-
-  const handleUpload = useCallback(
-    (requirement: ComplianceRequirement) => {
+  const handleUploadNewVersion = useCallback(
+    (folder: ComplianceFolder) => {
       setDrawerPrefill({
         documentType: 'dqf',
         entityType: 'driver',
         entityId: selectedDriverId,
-        subCategory: requirement.sub_category,
-        regulationReference: requirement.regulation_reference ?? undefined,
-        isRequired: true,
+        subCategory: folder.subCategory,
+        isRequired: folder.isRequired,
       })
       setDrawerOpen(true)
     },
     [selectedDriverId]
   )
 
+  const handleBulkDownload = useCallback(() => {
+    if (!selectedDriverId) return
+    const params = new URLSearchParams({
+      documentType: 'dqf',
+      entityType: 'driver',
+      entityId: selectedDriverId,
+    })
+    window.location.href = `/api/compliance/download?${params.toString()}`
+  }, [selectedDriverId])
+
   const handleDrawerClose = useCallback(
     (open: boolean) => {
       setDrawerOpen(open)
       if (!open && selectedDriverId) {
-        queryClient.invalidateQueries({ queryKey: ['compliance-docs-dqf', selectedDriverId] })
-        queryClient.invalidateQueries({ queryKey: ['compliance-docs'] })
+        queryClient.invalidateQueries({ queryKey: ['compliance-folders', 'dqf', 'driver', selectedDriverId] })
         queryClient.invalidateQueries({ queryKey: ['compliance-expiration-alerts'] })
       }
     },
     [queryClient, selectedDriverId]
   )
+
+  const handleBulkUploadSuccess = useCallback(() => {
+    if (!selectedDriverId) return
+    queryClient.invalidateQueries({ queryKey: ['compliance-folders', 'dqf', 'driver', selectedDriverId] })
+    queryClient.invalidateQueries({ queryKey: ['compliance-expiration-alerts'] })
+  }, [queryClient, selectedDriverId])
+
+  const handleCreateFolderSuccess = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['compliance-folders', 'dqf', 'driver', selectedDriverId] })
+  }, [queryClient, selectedDriverId])
+
+  const handleDeleteFolder = useCallback(async (folder: ComplianceFolder) => {
+    if (!folder.isCustom) return
+    if (folder.documents.length > 0) {
+      const confirmed = window.confirm(
+        `"${folder.label}" contains ${folder.documents.length} document${folder.documents.length === 1 ? '' : 's'}. Deleting the folder will not delete the documents, but they will become unfiled. Continue?`
+      )
+      if (!confirmed) return
+    } else {
+      const confirmed = window.confirm(`Delete folder "${folder.label}"?`)
+      if (!confirmed) return
+    }
+    const result = await deleteCustomFolder({
+      documentType: 'dqf',
+      subCategory: folder.subCategory,
+    })
+    if ('error' in result && result.error) {
+      alert(typeof result.error === 'string' ? result.error : 'Failed to delete folder')
+      return
+    }
+    queryClient.invalidateQueries({ queryKey: ['compliance-folders', 'dqf', 'driver', selectedDriverId] })
+  }, [queryClient, selectedDriverId])
 
   return (
     <div className="space-y-6">
@@ -214,43 +224,52 @@ export function DqfDashboard() {
       {selectedDriverId && (
         <>
           {/* Progress bar */}
-          {!requirementsLoading && requirements.length > 0 && (
-            <ProgressBar complete={completedCount} total={requirements.length} />
+          {!foldersLoading && folders.length > 0 && (
+            <ProgressBar complete={completedCount} total={folders.length} />
           )}
 
-          {/* Checklist */}
-          <div className="widget-card p-4">
-            <h2 className="mb-4 text-sm font-semibold text-foreground">
-              Required Documents
-            </h2>
-
-            {requirementsLoading || documentsLoading ? (
-              <ChecklistSkeleton />
-            ) : requirements.length === 0 ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                No requirements configured. Contact your administrator to set up FMCSA requirements.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {requirements.map((req) => (
-                  <ChecklistItem
-                    key={req.id}
-                    requirement={req}
-                    document={docBySubCategory[req.sub_category] ?? null}
-                    onUpload={handleUpload}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Folder table */}
+          {foldersLoading ? (
+            <FolderSkeleton />
+          ) : (
+            <FolderTable
+              documentType="dqf"
+              entityType="driver"
+              entityId={selectedDriverId}
+              folders={folders}
+              onUploadNewVersion={handleUploadNewVersion}
+              onBulkUpload={() => setBulkUploadOpen(true)}
+              onBulkDownload={handleBulkDownload}
+              onCreateFolder={() => setCreateFolderOpen(true)}
+              onDeleteFolder={handleDeleteFolder}
+            />
+          )}
         </>
       )}
 
-      {/* Upload drawer */}
+      {/* Upload drawer (single file, "upload new version" path) */}
       <UploadDrawer
         open={drawerOpen}
         onOpenChange={handleDrawerClose}
         prefill={drawerPrefill}
+      />
+
+      {/* Bulk upload dialog */}
+      <BulkUploadDialog
+        open={bulkUploadOpen}
+        onOpenChange={setBulkUploadOpen}
+        documentType="dqf"
+        entityType="driver"
+        entityId={selectedDriverId}
+        onSuccess={handleBulkUploadSuccess}
+      />
+
+      {/* Create folder dialog */}
+      <CreateFolderDialog
+        open={createFolderOpen}
+        onOpenChange={setCreateFolderOpen}
+        documentType="dqf"
+        onSuccess={handleCreateFolderSuccess}
       />
     </div>
   )

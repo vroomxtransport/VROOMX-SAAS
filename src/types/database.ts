@@ -454,6 +454,7 @@ export interface ComplianceDocument {
   storage_path: string | null
   file_size: number | null
   expires_at: string | null
+  issue_date: string | null
   uploaded_by: string | null
   notes: string | null
   sub_category: string

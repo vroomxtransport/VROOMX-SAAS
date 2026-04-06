@@ -796,6 +796,7 @@ export const complianceDocuments = pgTable('compliance_documents', {
   storagePath: text('storage_path'),
   fileSize: integer('file_size'),
   expiresAt: date('expires_at'),
+  issueDate: date('issue_date'),
   uploadedBy: uuid('uploaded_by'),
   notes: text('notes'),
   subCategory: text('sub_category').notNull().default('other'),

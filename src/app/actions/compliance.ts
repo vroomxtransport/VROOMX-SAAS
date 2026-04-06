@@ -1,5 +1,6 @@
 'use server'
 
+import { z } from 'zod'
 import { authorize, safeError } from '@/lib/authz'
 import { complianceDocSchema } from '@/lib/validations/compliance'
 import { deleteFile } from '@/lib/storage'
@@ -24,6 +25,7 @@ export async function createComplianceDoc(data: unknown) {
       entity_id: parsed.data.entityId || null,
       name: parsed.data.name,
       expires_at: parsed.data.expiresAt || null,
+      issue_date: parsed.data.issueDate || null,
       notes: parsed.data.notes || null,
       file_name: parsed.data.fileName || null,
       storage_path: parsed.data.storagePath || null,
@@ -63,6 +65,7 @@ export async function updateComplianceDoc(id: string, data: unknown) {
       entity_id: parsed.data.entityId || null,
       name: parsed.data.name,
       expires_at: parsed.data.expiresAt || null,
+      issue_date: parsed.data.issueDate || null,
       notes: parsed.data.notes || null,
       file_name: parsed.data.fileName || null,
       storage_path: parsed.data.storagePath || null,
@@ -79,6 +82,47 @@ export async function updateComplianceDoc(id: string, data: unknown) {
 
   if (error) {
     return { error: safeError(error, 'updateComplianceDoc') }
+  }
+
+  revalidatePath('/compliance')
+  return { success: true, data: doc }
+}
+
+const updateFieldsSchema = z.object({
+  id: z.string().uuid(),
+  issueDate: z.string().nullable().optional(),
+  expiresAt: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+})
+
+export async function updateComplianceDocFields(
+  id: string,
+  fields: { issueDate?: string | null; expiresAt?: string | null; notes?: string | null }
+) {
+  const parsed = updateFieldsSchema.safeParse({ id, ...fields })
+  if (!parsed.success) {
+    return { error: parsed.error.flatten().fieldErrors }
+  }
+
+  const auth = await authorize('compliance.update')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
+
+  const updates: Record<string, string | null> = {}
+  if ('issueDate' in fields) updates['issue_date'] = parsed.data.issueDate ?? null
+  if ('expiresAt' in fields) updates['expires_at'] = parsed.data.expiresAt ?? null
+  if ('notes' in fields) updates['notes'] = parsed.data.notes ?? null
+
+  const { data: doc, error } = await supabase
+    .from('compliance_documents')
+    .update(updates)
+    .eq('id', parsed.data.id)
+    .eq('tenant_id', tenantId)
+    .select()
+    .single()
+
+  if (error) {
+    return { error: safeError(error, 'updateComplianceDocFields') }
   }
 
   revalidatePath('/compliance')
@@ -192,6 +236,108 @@ export async function seedComplianceRequirements() {
   if (error) {
     return { error: safeError(error, 'seedComplianceRequirements') }
   }
+
+  revalidatePath('/compliance')
+  return { success: true }
+}
+
+// ============================================================================
+// Custom Folder Management
+// ============================================================================
+
+const createFolderSchema = z.object({
+  documentType: z.enum(['dqf', 'vehicle_qualification', 'company_document']),
+  label: z.string().min(1, 'Folder name is required').max(80),
+})
+
+/**
+ * Slugify a user-entered folder name into a sub_category key.
+ * Prefixed with `custom_` to distinguish from FMCSA predefined categories.
+ */
+function slugifyFolderName(label: string): string {
+  const slug = label
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 60)
+  return `custom_${slug || 'folder'}`
+}
+
+export async function createCustomFolder(data: unknown) {
+  const parsed = createFolderSchema.safeParse(data)
+  if (!parsed.success) return { error: parsed.error.flatten().fieldErrors }
+
+  const auth = await authorize('compliance.create', {
+    rateLimit: { key: 'createCustomFolder', limit: 20, windowMs: 60_000 },
+  })
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
+
+  const subCategory = slugifyFolderName(parsed.data.label)
+
+  // Determine sort_order: place after the highest existing sort_order for this document_type
+  const { data: lastSortRow } = await supabase
+    .from('compliance_requirements')
+    .select('sort_order')
+    .eq('tenant_id', tenantId)
+    .eq('document_type', parsed.data.documentType)
+    .order('sort_order', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  const nextSortOrder = (lastSortRow?.sort_order ?? 99) + 1
+
+  const { error } = await supabase
+    .from('compliance_requirements')
+    .insert({
+      tenant_id: tenantId,
+      document_type: parsed.data.documentType,
+      sub_category: subCategory,
+      display_name: parsed.data.label.trim(),
+      is_active: true,
+      sort_order: nextSortOrder,
+    })
+
+  if (error) {
+    if (error.code === '23505') {
+      return { error: 'A folder with this name already exists' }
+    }
+    return { error: safeError(error, 'createCustomFolder') }
+  }
+
+  revalidatePath('/compliance')
+  return { success: true, subCategory }
+}
+
+const deleteFolderSchema = z.object({
+  documentType: z.enum(['dqf', 'vehicle_qualification', 'company_document']),
+  subCategory: z.string().min(1),
+})
+
+export async function deleteCustomFolder(data: unknown) {
+  const parsed = deleteFolderSchema.safeParse(data)
+  if (!parsed.success) return { error: 'Invalid folder' }
+
+  const auth = await authorize('compliance.delete')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
+
+  // Safety: only allow deleting custom folders (sub_category prefixed with `custom_`)
+  if (!parsed.data.subCategory.startsWith('custom_')) {
+    return { error: 'Cannot delete predefined FMCSA folders' }
+  }
+
+  const { error } = await supabase
+    .from('compliance_requirements')
+    .delete()
+    .eq('tenant_id', tenantId)
+    .eq('document_type', parsed.data.documentType)
+    .eq('sub_category', parsed.data.subCategory)
+
+  if (error) return { error: safeError(error, 'deleteCustomFolder') }
 
   revalidatePath('/compliance')
   return { success: true }

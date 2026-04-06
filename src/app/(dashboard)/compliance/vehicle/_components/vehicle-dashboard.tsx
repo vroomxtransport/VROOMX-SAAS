@@ -4,11 +4,15 @@ import { useState, useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { EntitySelector } from '../../_components/entity-selector'
-import { ChecklistItem } from '../../_components/checklist-item'
 import { UploadDrawer } from '../../_components/upload-drawer'
+import { FolderTable } from '../../_components/folder-table'
+import { BulkUploadDialog } from '../../_components/bulk-upload-dialog'
+import { CreateFolderDialog } from '../../_components/create-folder-dialog'
+import { fetchComplianceFolders } from '@/lib/queries/compliance-folders'
+import type { ComplianceFolder } from '@/lib/queries/compliance-folders'
+import { deleteCustomFolder } from '@/app/actions/compliance'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Truck, CheckCircle2, Info } from 'lucide-react'
-import type { ComplianceRequirement, ComplianceDocument } from '@/types/database'
+import { Truck, CheckCircle2 } from 'lucide-react'
 
 // ---------------------------------------------------------------------------
 // Progress bar
@@ -68,48 +72,6 @@ function ProgressBar({ complete, total }: ProgressBarProps) {
 }
 
 // ---------------------------------------------------------------------------
-// Special info banners for certain sub-categories
-// ---------------------------------------------------------------------------
-
-interface InfoBannerProps {
-  subCategory: string
-  document: ComplianceDocument | null
-}
-
-function daysUntil(dateStr: string): number {
-  const now = new Date()
-  now.setHours(0, 0, 0, 0)
-  const target = new Date(dateStr)
-  target.setHours(0, 0, 0, 0)
-  return Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-}
-
-function SpecialInfoBanner({ subCategory, document }: InfoBannerProps) {
-  if (subCategory === 'annual_dot_inspection' && document?.expires_at) {
-    const days = daysUntil(document.expires_at)
-    if (days > 0 && days <= 60) {
-      return (
-        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          <span>Annual DOT inspection due in <strong>{days} days</strong></span>
-        </div>
-      )
-    }
-  }
-
-  if (subCategory === 'insurance') {
-    return (
-      <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
-        <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-        <span>FMCSA minimum: <strong>$1M liability</strong> / <strong>$5k per vehicle cargo</strong></span>
-      </div>
-    )
-  }
-
-  return null
-}
-
-// ---------------------------------------------------------------------------
 // Empty state (no truck selected)
 // ---------------------------------------------------------------------------
 
@@ -130,15 +92,20 @@ function EmptyTruckState() {
 }
 
 // ---------------------------------------------------------------------------
-// Checklist skeleton
+// Folder skeleton
 // ---------------------------------------------------------------------------
 
-function ChecklistSkeleton() {
+function FolderSkeleton() {
   return (
-    <div className="space-y-2">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <Skeleton key={i} className="h-14 w-full rounded-xl" />
-      ))}
+    <div className="widget-card p-0 overflow-hidden">
+      <div className="border-b border-border px-4 py-3">
+        <Skeleton className="h-5 w-32" />
+      </div>
+      <div className="space-y-px">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-12 w-full rounded-none" />
+        ))}
+      </div>
     </div>
   )
 }
@@ -152,6 +119,8 @@ export function VehicleDashboard() {
   const queryClient = useQueryClient()
   const [selectedTruckId, setSelectedTruckId] = useState('')
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [bulkUploadOpen, setBulkUploadOpen] = useState(false)
+  const [createFolderOpen, setCreateFolderOpen] = useState(false)
   const [drawerPrefill, setDrawerPrefill] = useState<{
     documentType?: string
     entityType?: string
@@ -161,80 +130,82 @@ export function VehicleDashboard() {
     isRequired?: boolean
   } | undefined>(undefined)
 
-  // Fetch FMCSA vehicle requirements
-  const { data: requirements = [], isLoading: requirementsLoading } = useQuery({
-    queryKey: ['compliance-requirements', 'vehicle_qualification'],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('compliance_requirements')
-        .select('*')
-        .eq('document_type', 'vehicle_qualification')
-        .eq('is_active', true)
-        .order('sort_order')
-      return (data ?? []) as ComplianceRequirement[]
-    },
-    staleTime: 60_000,
-  })
-
-  // Fetch documents for the selected truck
-  const { data: documents = [], isLoading: documentsLoading } = useQuery({
-    queryKey: ['compliance-docs-vehicle', selectedTruckId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('compliance_documents')
-        .select('*')
-        .eq('document_type', 'vehicle_qualification')
-        .eq('entity_type', 'truck')
-        .eq('entity_id', selectedTruckId)
-        .order('created_at', { ascending: false })
-      return (data ?? []) as ComplianceDocument[]
-    },
+  // Fetch folders (groups documents by sub_category, fills in empty folders)
+  const { data: folders = [], isLoading: foldersLoading } = useQuery({
+    queryKey: ['compliance-folders', 'vehicle_qualification', 'truck', selectedTruckId],
+    queryFn: () => fetchComplianceFolders(supabase, 'vehicle_qualification', 'truck', selectedTruckId),
     enabled: !!selectedTruckId,
     staleTime: 30_000,
   })
 
-  // Match each requirement to the most-recent document with that sub_category
-  const docBySubCategory = documents.reduce<Record<string, ComplianceDocument>>(
-    (acc, doc) => {
-      if (!doc.sub_category) return acc
-      if (!acc[doc.sub_category]) {
-        acc[doc.sub_category] = doc
-      }
-      return acc
-    },
-    {}
-  )
+  const completedCount = folders.filter((f) => f.activeDocument !== null).length
 
-  const completedCount = requirements.filter(
-    (req) => !!docBySubCategory[req.sub_category]
-  ).length
-
-  const handleUpload = useCallback(
-    (requirement: ComplianceRequirement) => {
+  const handleUploadNewVersion = useCallback(
+    (folder: ComplianceFolder) => {
       setDrawerPrefill({
         documentType: 'vehicle_qualification',
         entityType: 'truck',
         entityId: selectedTruckId,
-        subCategory: requirement.sub_category,
-        regulationReference: requirement.regulation_reference ?? undefined,
-        isRequired: true,
+        subCategory: folder.subCategory,
+        isRequired: folder.isRequired,
       })
       setDrawerOpen(true)
     },
     [selectedTruckId]
   )
 
+  const handleBulkDownload = useCallback(() => {
+    if (!selectedTruckId) return
+    const params = new URLSearchParams({
+      documentType: 'vehicle_qualification',
+      entityType: 'truck',
+      entityId: selectedTruckId,
+    })
+    window.location.href = `/api/compliance/download?${params.toString()}`
+  }, [selectedTruckId])
+
   const handleDrawerClose = useCallback(
     (open: boolean) => {
       setDrawerOpen(open)
       if (!open && selectedTruckId) {
-        queryClient.invalidateQueries({ queryKey: ['compliance-docs-vehicle', selectedTruckId] })
-        queryClient.invalidateQueries({ queryKey: ['compliance-docs'] })
+        queryClient.invalidateQueries({ queryKey: ['compliance-folders', 'vehicle_qualification', 'truck', selectedTruckId] })
         queryClient.invalidateQueries({ queryKey: ['compliance-expiration-alerts'] })
       }
     },
     [queryClient, selectedTruckId]
   )
+
+  const handleBulkUploadSuccess = useCallback(() => {
+    if (!selectedTruckId) return
+    queryClient.invalidateQueries({ queryKey: ['compliance-folders', 'vehicle_qualification', 'truck', selectedTruckId] })
+    queryClient.invalidateQueries({ queryKey: ['compliance-expiration-alerts'] })
+  }, [queryClient, selectedTruckId])
+
+  const handleCreateFolderSuccess = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['compliance-folders', 'vehicle_qualification', 'truck', selectedTruckId] })
+  }, [queryClient, selectedTruckId])
+
+  const handleDeleteFolder = useCallback(async (folder: ComplianceFolder) => {
+    if (!folder.isCustom) return
+    if (folder.documents.length > 0) {
+      const confirmed = window.confirm(
+        `"${folder.label}" contains ${folder.documents.length} document${folder.documents.length === 1 ? '' : 's'}. Deleting the folder will not delete the documents, but they will become unfiled. Continue?`
+      )
+      if (!confirmed) return
+    } else {
+      const confirmed = window.confirm(`Delete folder "${folder.label}"?`)
+      if (!confirmed) return
+    }
+    const result = await deleteCustomFolder({
+      documentType: 'vehicle_qualification',
+      subCategory: folder.subCategory,
+    })
+    if ('error' in result && result.error) {
+      alert(typeof result.error === 'string' ? result.error : 'Failed to delete folder')
+      return
+    }
+    queryClient.invalidateQueries({ queryKey: ['compliance-folders', 'vehicle_qualification', 'truck', selectedTruckId] })
+  }, [queryClient, selectedTruckId])
 
   return (
     <div className="space-y-6">
@@ -253,48 +224,52 @@ export function VehicleDashboard() {
       {selectedTruckId && (
         <>
           {/* Progress bar */}
-          {!requirementsLoading && requirements.length > 0 && (
-            <ProgressBar complete={completedCount} total={requirements.length} />
+          {!foldersLoading && folders.length > 0 && (
+            <ProgressBar complete={completedCount} total={folders.length} />
           )}
 
-          {/* Checklist */}
-          <div className="widget-card p-4">
-            <h2 className="mb-4 text-sm font-semibold text-foreground">
-              Required Documents
-            </h2>
-
-            {requirementsLoading || documentsLoading ? (
-              <ChecklistSkeleton />
-            ) : requirements.length === 0 ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                No requirements configured. Contact your administrator to set up FMCSA requirements.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {requirements.map((req) => (
-                  <div key={req.id} className="space-y-1">
-                    <ChecklistItem
-                      requirement={req}
-                      document={docBySubCategory[req.sub_category] ?? null}
-                      onUpload={handleUpload}
-                    />
-                    <SpecialInfoBanner
-                      subCategory={req.sub_category}
-                      document={docBySubCategory[req.sub_category] ?? null}
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Folder table */}
+          {foldersLoading ? (
+            <FolderSkeleton />
+          ) : (
+            <FolderTable
+              documentType="vehicle_qualification"
+              entityType="truck"
+              entityId={selectedTruckId}
+              folders={folders}
+              onUploadNewVersion={handleUploadNewVersion}
+              onBulkUpload={() => setBulkUploadOpen(true)}
+              onBulkDownload={handleBulkDownload}
+              onCreateFolder={() => setCreateFolderOpen(true)}
+              onDeleteFolder={handleDeleteFolder}
+            />
+          )}
         </>
       )}
 
-      {/* Upload drawer */}
+      {/* Upload drawer (single file, "upload new version" path) */}
       <UploadDrawer
         open={drawerOpen}
         onOpenChange={handleDrawerClose}
         prefill={drawerPrefill}
+      />
+
+      {/* Bulk upload dialog */}
+      <BulkUploadDialog
+        open={bulkUploadOpen}
+        onOpenChange={setBulkUploadOpen}
+        documentType="vehicle_qualification"
+        entityType="truck"
+        entityId={selectedTruckId}
+        onSuccess={handleBulkUploadSuccess}
+      />
+
+      {/* Create folder dialog */}
+      <CreateFolderDialog
+        open={createFolderOpen}
+        onOpenChange={setCreateFolderOpen}
+        documentType="vehicle_qualification"
+        onSuccess={handleCreateFolderSuccess}
       />
     </div>
   )

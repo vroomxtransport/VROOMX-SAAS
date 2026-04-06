@@ -3,11 +3,15 @@
 import { useState, useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { ChecklistItem } from '../../_components/checklist-item'
 import { UploadDrawer } from '../../_components/upload-drawer'
+import { FolderTable } from '../../_components/folder-table'
+import { BulkUploadDialog } from '../../_components/bulk-upload-dialog'
+import { CreateFolderDialog } from '../../_components/create-folder-dialog'
+import { fetchComplianceFolders } from '@/lib/queries/compliance-folders'
+import type { ComplianceFolder } from '@/lib/queries/compliance-folders'
+import { deleteCustomFolder } from '@/app/actions/compliance'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Building2, CheckCircle2, Info, Calendar } from 'lucide-react'
-import type { ComplianceRequirement, ComplianceDocument } from '@/types/database'
+import { Building2, CheckCircle2 } from 'lucide-react'
 
 // ---------------------------------------------------------------------------
 // Progress bar
@@ -67,54 +71,20 @@ function ProgressBar({ complete, total }: ProgressBarProps) {
 }
 
 // ---------------------------------------------------------------------------
-// Special info banners for certain sub-categories
+// Folder skeleton
 // ---------------------------------------------------------------------------
 
-interface InfoBannerProps {
-  subCategory: string
-}
-
-function SpecialInfoBanner({ subCategory }: InfoBannerProps) {
-  if (subCategory === 'ucr') {
-    return (
-      <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
-        <Calendar className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-        <span>UCR annual registration — <strong>deadline: December 31</strong></span>
-      </div>
-    )
-  }
-
-  if (subCategory === 'boc3') {
-    return (
-      <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
-        <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-        <span>BOC-3 Process Agent — <strong>verify process agent annually</strong></span>
-      </div>
-    )
-  }
-
-  if (subCategory === 'operating_authority') {
-    return (
-      <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
-        <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-        <span>Upload your MC# letter and USDOT certificate for easy reference</span>
-      </div>
-    )
-  }
-
-  return null
-}
-
-// ---------------------------------------------------------------------------
-// Checklist skeleton
-// ---------------------------------------------------------------------------
-
-function ChecklistSkeleton() {
+function FolderSkeleton() {
   return (
-    <div className="space-y-2">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <Skeleton key={i} className="h-14 w-full rounded-xl" />
-      ))}
+    <div className="widget-card p-0 overflow-hidden">
+      <div className="border-b border-border px-4 py-3">
+        <Skeleton className="h-5 w-32" />
+      </div>
+      <div className="space-y-px">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-12 w-full rounded-none" />
+        ))}
+      </div>
     </div>
   )
 }
@@ -127,6 +97,8 @@ export function CompanyDashboard() {
   const supabase = createClient()
   const queryClient = useQueryClient()
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [bulkUploadOpen, setBulkUploadOpen] = useState(false)
+  const [createFolderOpen, setCreateFolderOpen] = useState(false)
   const [drawerPrefill, setDrawerPrefill] = useState<{
     documentType?: string
     entityType?: string
@@ -136,116 +108,126 @@ export function CompanyDashboard() {
     isRequired?: boolean
   } | undefined>(undefined)
 
-  // Fetch FMCSA company requirements
-  const { data: requirements = [], isLoading: requirementsLoading } = useQuery({
-    queryKey: ['compliance-requirements', 'company_document'],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('compliance_requirements')
-        .select('*')
-        .eq('document_type', 'company_document')
-        .eq('is_active', true)
-        .order('sort_order')
-      return (data ?? []) as ComplianceRequirement[]
-    },
-    staleTime: 60_000,
-  })
-
-  // Fetch company-level documents (entity_type = 'company', no specific entity_id)
-  const { data: documents = [], isLoading: documentsLoading } = useQuery({
-    queryKey: ['compliance-docs-company'],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('compliance_documents')
-        .select('*')
-        .eq('document_type', 'company_document')
-        .eq('entity_type', 'company')
-        .order('created_at', { ascending: false })
-      return (data ?? []) as ComplianceDocument[]
-    },
+  // Fetch folders (groups documents by sub_category, fills in empty folders)
+  const { data: folders = [], isLoading: foldersLoading } = useQuery({
+    queryKey: ['compliance-folders', 'company_document', 'company', null],
+    queryFn: () => fetchComplianceFolders(supabase, 'company_document', 'company', null),
     staleTime: 30_000,
   })
 
-  // Match each requirement to the most-recent document with that sub_category
-  const docBySubCategory = documents.reduce<Record<string, ComplianceDocument>>(
-    (acc, doc) => {
-      if (!doc.sub_category) return acc
-      if (!acc[doc.sub_category]) {
-        acc[doc.sub_category] = doc
-      }
-      return acc
+  const completedCount = folders.filter((f) => f.activeDocument !== null).length
+
+  const handleUploadNewVersion = useCallback(
+    (folder: ComplianceFolder) => {
+      setDrawerPrefill({
+        documentType: 'company_document',
+        entityType: 'company',
+        entityId: '',
+        subCategory: folder.subCategory,
+        isRequired: folder.isRequired,
+      })
+      setDrawerOpen(true)
     },
-    {}
+    []
   )
 
-  const completedCount = requirements.filter(
-    (req) => !!docBySubCategory[req.sub_category]
-  ).length
-
-  const handleUpload = useCallback((requirement: ComplianceRequirement) => {
-    setDrawerPrefill({
+  const handleBulkDownload = useCallback(() => {
+    const params = new URLSearchParams({
       documentType: 'company_document',
       entityType: 'company',
-      entityId: '',
-      subCategory: requirement.sub_category,
-      regulationReference: requirement.regulation_reference ?? undefined,
-      isRequired: true,
     })
-    setDrawerOpen(true)
+    window.location.href = `/api/compliance/download?${params.toString()}`
   }, [])
 
   const handleDrawerClose = useCallback(
     (open: boolean) => {
       setDrawerOpen(open)
       if (!open) {
-        queryClient.invalidateQueries({ queryKey: ['compliance-docs-company'] })
-        queryClient.invalidateQueries({ queryKey: ['compliance-docs'] })
+        queryClient.invalidateQueries({ queryKey: ['compliance-folders', 'company_document', 'company', null] })
         queryClient.invalidateQueries({ queryKey: ['compliance-expiration-alerts'] })
       }
     },
     [queryClient]
   )
 
+  const handleBulkUploadSuccess = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['compliance-folders', 'company_document', 'company', null] })
+    queryClient.invalidateQueries({ queryKey: ['compliance-expiration-alerts'] })
+  }, [queryClient])
+
+  const handleCreateFolderSuccess = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['compliance-folders', 'company_document', 'company', null] })
+  }, [queryClient])
+
+  const handleDeleteFolder = useCallback(async (folder: ComplianceFolder) => {
+    if (!folder.isCustom) return
+    if (folder.documents.length > 0) {
+      const confirmed = window.confirm(
+        `"${folder.label}" contains ${folder.documents.length} document${folder.documents.length === 1 ? '' : 's'}. Deleting the folder will not delete the documents, but they will become unfiled. Continue?`
+      )
+      if (!confirmed) return
+    } else {
+      const confirmed = window.confirm(`Delete folder "${folder.label}"?`)
+      if (!confirmed) return
+    }
+    const result = await deleteCustomFolder({
+      documentType: 'company_document',
+      subCategory: folder.subCategory,
+    })
+    if ('error' in result && result.error) {
+      alert(typeof result.error === 'string' ? result.error : 'Failed to delete folder')
+      return
+    }
+    queryClient.invalidateQueries({ queryKey: ['compliance-folders', 'company_document', 'company', null] })
+  }, [queryClient])
+
   return (
     <div className="space-y-6">
       {/* Progress bar */}
-      {!requirementsLoading && requirements.length > 0 && (
-        <ProgressBar complete={completedCount} total={requirements.length} />
+      {!foldersLoading && folders.length > 0 && (
+        <ProgressBar complete={completedCount} total={folders.length} />
       )}
 
-      {/* Checklist */}
-      <div className="widget-card p-4">
-        <h2 className="mb-4 text-sm font-semibold text-foreground">
-          Required Documents
-        </h2>
+      {/* Folder table */}
+      {foldersLoading ? (
+        <FolderSkeleton />
+      ) : (
+        <FolderTable
+          documentType="company_document"
+          entityType="company"
+          entityId={null}
+          folders={folders}
+          onUploadNewVersion={handleUploadNewVersion}
+          onBulkUpload={() => setBulkUploadOpen(true)}
+          onBulkDownload={handleBulkDownload}
+          onCreateFolder={() => setCreateFolderOpen(true)}
+          onDeleteFolder={handleDeleteFolder}
+        />
+      )}
 
-        {requirementsLoading || documentsLoading ? (
-          <ChecklistSkeleton />
-        ) : requirements.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">
-            No requirements configured. Contact your administrator to set up company compliance requirements.
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {requirements.map((req) => (
-              <div key={req.id} className="space-y-1">
-                <ChecklistItem
-                  requirement={req}
-                  document={docBySubCategory[req.sub_category] ?? null}
-                  onUpload={handleUpload}
-                />
-                <SpecialInfoBanner subCategory={req.sub_category} />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Upload drawer */}
+      {/* Upload drawer (single file, "upload new version" path) */}
       <UploadDrawer
         open={drawerOpen}
         onOpenChange={handleDrawerClose}
         prefill={drawerPrefill}
+      />
+
+      {/* Bulk upload dialog */}
+      <BulkUploadDialog
+        open={bulkUploadOpen}
+        onOpenChange={setBulkUploadOpen}
+        documentType="company_document"
+        entityType="company"
+        entityId={null}
+        onSuccess={handleBulkUploadSuccess}
+      />
+
+      {/* Create folder dialog */}
+      <CreateFolderDialog
+        open={createFolderOpen}
+        onOpenChange={setCreateFolderOpen}
+        documentType="company_document"
+        onSuccess={handleCreateFolderSuccess}
       />
     </div>
   )
