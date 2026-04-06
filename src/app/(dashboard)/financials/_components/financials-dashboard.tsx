@@ -16,7 +16,7 @@ import { ProfitByTruckTable } from './profit-by-truck-table'
 import { ProfitByDriverTable } from './profit-by-driver-table'
 import { TopBrokersTable } from './top-brokers-table'
 import { createClient } from '@/lib/supabase/client'
-import { fetchKPIAggregates, fetchProfitByTruck, fetchProfitByDriver, fetchPnLData } from '@/lib/queries/financials'
+import { fetchKPIAggregates, fetchPreviousPeriodKPIs, fetchProfitByTruck, fetchProfitByDriver, fetchPnLData } from '@/lib/queries/financials'
 import { useQuery } from '@tanstack/react-query'
 
 interface FinancialsDashboardProps {
@@ -46,6 +46,13 @@ export function FinancialsDashboard({
     queryKey: ['financials', 'kpi', dateRange?.from, dateRange?.to],
     queryFn: () => fetchKPIAggregates(supabase, dateRange),
     initialData: dateRange === undefined ? initialAggregates : undefined,
+    staleTime: 60_000,
+  })
+
+  // Fetch KPI aggregates for the prior period (non-blocking — loads separately)
+  const { data: prevAggregates } = useQuery({
+    queryKey: ['financials', 'kpi-prev', dateRange?.from, dateRange?.to],
+    queryFn: () => fetchPreviousPeriodKPIs(supabase, dateRange),
     staleTime: 60_000,
   })
 
@@ -85,6 +92,9 @@ export function FinancialsDashboard({
     misc: agg.expensesByCategory.misc,
   })
 
+  // Compute trip-level KPIs for the prior period (for delta indicators)
+  const prevKpis = prevAggregates ? calculateKPIs(prevAggregates) : null
+
   // Compute business-level KPIs (with overhead)
   const pnlInput = pnlData ?? initialPnLData
   const pnl = calculatePnL(pnlInput)
@@ -98,7 +108,7 @@ export function FinancialsDashboard({
       </div>
 
       {/* Section 1: Business KPIs (includes overhead) */}
-      <BusinessKPICards pnl={pnl} unitMetrics={unitMetrics} />
+      <BusinessKPICards pnl={pnl} unitMetrics={unitMetrics} prevAggregates={prevAggregates ?? null} />
 
       {/* Divider */}
       <div className="border-t border-border/50" />
@@ -107,6 +117,9 @@ export function FinancialsDashboard({
       <KPICards
         kpis={kpis}
         revenue={agg.totalRevenue}
+        prevKpis={prevKpis}
+        prevRevenue={prevAggregates?.totalRevenue ?? null}
+        prevOrderCount={prevAggregates?.orderCount ?? null}
       />
 
       {/* Row 2: Revenue Chart + Expense Breakdown */}

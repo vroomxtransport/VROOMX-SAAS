@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { startOfMonth, startOfQuarter, startOfYear, endOfMonth, subMonths, subDays, format } from 'date-fns'
+import { startOfMonth, startOfQuarter, startOfYear, endOfMonth, subMonths, subDays, format, subMilliseconds } from 'date-fns'
 import { fetchFixedExpensesForPeriod } from './business-expenses'
 import type { PnLInput } from '@/lib/financial/pnl-calculations'
 import type { DateRange } from '@/types/filters'
@@ -983,4 +983,50 @@ export async function fetchTripAnalytics(
       orderCount,
     }
   })
+}
+
+// ============================================================================
+// Previous-Period Comparison
+// ============================================================================
+
+/**
+ * Compute the previous period's date bounds that mirror the current period.
+ *
+ * - MTD (undefined): previous = same day-count window in the prior month
+ *   e.g. Apr 1–6 → Mar 1–6
+ * - Custom range: shift the entire window backward by its own duration
+ *   e.g. Mar 1–30 (30 days) → Jan 30 – Feb 28
+ */
+export function getPreviousPeriodBounds(dateRange?: DateRange): { startDate: Date; endDate: Date } {
+  const { startDate, endDate } = getDateBounds(dateRange)
+
+  // Duration in milliseconds
+  const durationMs = endDate.getTime() - startDate.getTime()
+
+  const prevEnd = subMilliseconds(startDate, 1) // 1 ms before current start → exclusive upper bound
+  const prevStart = new Date(prevEnd.getTime() - durationMs)
+
+  return { startDate: prevStart, endDate: prevEnd }
+}
+
+/**
+ * Fetch KPIAggregates for the period immediately preceding the given dateRange.
+ * The prior period covers the same number of days/time as the current period,
+ * shifted backward so it ends just before the current period starts.
+ *
+ * Used to compute period-over-period delta indicators.
+ */
+export async function fetchPreviousPeriodKPIs(
+  supabase: SupabaseClient,
+  dateRange?: DateRange
+): Promise<KPIAggregates> {
+  const { startDate: prevStart, endDate: prevEnd } = getPreviousPeriodBounds(dateRange)
+
+  // Build a synthetic DateRange for the prior period and reuse the existing query
+  const prevDateRange: DateRange = {
+    from: prevStart.toISOString(),
+    to: prevEnd.toISOString(),
+  }
+
+  return fetchKPIAggregates(supabase, prevDateRange)
 }

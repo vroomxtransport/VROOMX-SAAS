@@ -10,6 +10,7 @@ import {
   Shield,
   CreditCard,
   Bell,
+  BellRing,
   FileText,
   Key,
   Webhook,
@@ -57,6 +58,7 @@ const SETTINGS_NAV: NavGroup[] = [
     items: [
       { name: 'Terminals', href: '/settings/terminals', icon: Warehouse },
       { name: 'Notifications', href: '/settings/notifications', icon: Bell },
+      { name: 'Alert Rules', href: '/settings/alerts', icon: BellRing },
       { name: 'Order Defaults', href: '/settings/order-defaults', icon: FileText },
     ],
   },

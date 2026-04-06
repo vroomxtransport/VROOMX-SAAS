@@ -2,6 +2,8 @@
 
 import { cn } from '@/lib/utils'
 import type { PnLOutput, UnitMetrics } from '@/lib/financial/pnl-calculations'
+import { calculatePnL, calculateUnitMetrics } from '@/lib/financial/pnl-calculations'
+import type { KPIAggregates } from '@/lib/queries/financials'
 import {
   DollarSign,
   TrendingUp,
@@ -19,10 +21,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { KPIDelta } from '@/components/shared/kpi-delta'
 
 interface BusinessKPICardsProps {
   pnl: PnLOutput
   unitMetrics: UnitMetrics
+  /** Raw aggregates for the prior period — used to compute deltas. Null while loading or unavailable. */
+  prevAggregates?: KPIAggregates | null
 }
 
 interface KPICardDef {
@@ -32,6 +37,7 @@ interface KPICardDef {
   accent: 'blue' | 'emerald' | 'amber' | 'violet' | 'rose'
   description?: string
   tooltip?: string
+  delta?: { current: number; previous: number; invertColor?: boolean }
 }
 
 const ICON_STYLES = {
@@ -58,15 +64,73 @@ function fmtPerMile(val: number | null): string {
   return `$${val.toFixed(2)}/mi`
 }
 
-export function BusinessKPICards({ pnl, unitMetrics }: BusinessKPICardsProps) {
+export function BusinessKPICards({ pnl, unitMetrics, prevAggregates }: BusinessKPICardsProps) {
+  // Derive prior-period P&L from raw aggregates (no fixed costs available for prev period)
+  // We build a minimal PnLInput with zeroed fixed expenses so relative comparisons are valid
+  // for revenue, net margin (approximated), and per-mile metrics.
+  const prevPnl: PnLOutput | null = prevAggregates
+    ? calculatePnL({
+        totalRevenue: prevAggregates.totalRevenue,
+        totalBrokerFees: prevAggregates.totalBrokerFees,
+        totalLocalFees: prevAggregates.totalLocalFees,
+        totalDriverPay: prevAggregates.totalDriverPay,
+        fuelCosts: prevAggregates.expensesByCategory.fuel,
+        tollCosts: prevAggregates.expensesByCategory.tolls,
+        maintenanceCosts: prevAggregates.expensesByCategory.repairs,
+        lodgingCosts: prevAggregates.expensesByCategory.lodging,
+        miscCosts: prevAggregates.expensesByCategory.misc,
+        totalCarrierPay: prevAggregates.totalCarrierPay,
+        fixedExpensesByCategory: {},
+        totalFixedExpenses: 0,
+        truckCount: prevAggregates.truckCount,
+        completedTripCount: prevAggregates.completedTripCount,
+        carsHauled: 0,
+        totalMiles: prevAggregates.totalMiles,
+        orderCount: prevAggregates.orderCount,
+      })
+    : null
+
+  const prevUnitMetrics: UnitMetrics | null =
+    prevAggregates && prevPnl
+      ? calculateUnitMetrics(
+          {
+            totalRevenue: prevAggregates.totalRevenue,
+            totalBrokerFees: prevAggregates.totalBrokerFees,
+            totalLocalFees: prevAggregates.totalLocalFees,
+            totalDriverPay: prevAggregates.totalDriverPay,
+            fuelCosts: prevAggregates.expensesByCategory.fuel,
+            tollCosts: prevAggregates.expensesByCategory.tolls,
+            maintenanceCosts: prevAggregates.expensesByCategory.repairs,
+            lodgingCosts: prevAggregates.expensesByCategory.lodging,
+            miscCosts: prevAggregates.expensesByCategory.misc,
+            totalCarrierPay: prevAggregates.totalCarrierPay,
+            fixedExpensesByCategory: {},
+            totalFixedExpenses: 0,
+            truckCount: prevAggregates.truckCount,
+            completedTripCount: prevAggregates.completedTripCount,
+            carsHauled: 0,
+            totalMiles: prevAggregates.totalMiles,
+            orderCount: prevAggregates.orderCount,
+          },
+          prevPnl,
+        )
+      : null
+
   const topCards: KPICardDef[] = [
-    { label: 'Revenue', value: fmt$(pnl.revenue), icon: DollarSign, accent: 'blue' },
+    {
+      label: 'Revenue',
+      value: fmt$(pnl.revenue),
+      icon: DollarSign,
+      accent: 'blue',
+      delta: prevPnl != null ? { current: pnl.revenue, previous: prevPnl.revenue } : undefined,
+    },
     {
       label: 'Net Profit',
       value: fmt$(pnl.netProfitBeforeTax),
       icon: pnl.netProfitBeforeTax >= 0 ? TrendingUp : TrendingDown,
       accent: pnl.netProfitBeforeTax >= 0 ? 'emerald' : 'rose',
       description: 'After all costs + overhead',
+      delta: prevPnl != null ? { current: pnl.netProfitBeforeTax, previous: prevPnl.netProfitBeforeTax } : undefined,
     },
     {
       label: 'Net Margin',
@@ -74,6 +138,7 @@ export function BusinessKPICards({ pnl, unitMetrics }: BusinessKPICardsProps) {
       icon: Target,
       accent: pnl.netMargin >= 10 ? 'emerald' : pnl.netMargin >= 0 ? 'amber' : 'rose',
       description: 'Net profit / revenue',
+      delta: prevPnl != null ? { current: pnl.netMargin, previous: prevPnl.netMargin } : undefined,
     },
   ]
 
@@ -85,6 +150,16 @@ export function BusinessKPICards({ pnl, unitMetrics }: BusinessKPICardsProps) {
     description: 'Insurance, rent, leases, etc.',
   }
 
+  const prevBusinessCpm =
+    prevUnitMetrics?.rpm != null && prevUnitMetrics?.netProfitPerMile != null
+      ? prevUnitMetrics.rpm - prevUnitMetrics.netProfitPerMile
+      : null
+
+  const currentBusinessCpm =
+    unitMetrics.rpm != null && unitMetrics.netProfitPerMile != null
+      ? unitMetrics.rpm - unitMetrics.netProfitPerMile
+      : null
+
   const row2: KPICardDef[] = [
     {
       label: 'Business RPM',
@@ -93,16 +168,20 @@ export function BusinessKPICards({ pnl, unitMetrics }: BusinessKPICardsProps) {
       accent: 'blue',
       description: 'Revenue Per Mile',
       tooltip: 'Total revenue divided by total miles driven',
+      delta: prevUnitMetrics?.rpm != null && unitMetrics.rpm != null
+        ? { current: unitMetrics.rpm, previous: prevUnitMetrics.rpm }
+        : undefined,
     },
     {
       label: 'Business CPM',
-      value: fmtPerMile(unitMetrics.netProfitPerMile !== null && unitMetrics.rpm !== null
-        ? (unitMetrics.rpm - unitMetrics.netProfitPerMile)
-        : null),
+      value: fmtPerMile(currentBusinessCpm),
       icon: TrendingDown,
       accent: 'amber',
       description: 'Cost Per Mile (all overhead)',
       tooltip: 'Includes trip costs + prorated business expenses (insurance, rent, truck leases, software, etc.)',
+      delta: currentBusinessCpm != null && prevBusinessCpm != null
+        ? { current: currentBusinessCpm, previous: prevBusinessCpm, invertColor: true }
+        : undefined,
     },
     {
       label: 'Business PPM',
@@ -111,6 +190,9 @@ export function BusinessKPICards({ pnl, unitMetrics }: BusinessKPICardsProps) {
       accent: unitMetrics.netProfitPerMile !== null && unitMetrics.netProfitPerMile >= 0 ? 'emerald' : 'rose',
       description: 'Profit Per Mile (true)',
       tooltip: 'Net profit after ALL costs (trip + business overhead) divided by total miles',
+      delta: unitMetrics.netProfitPerMile != null && prevUnitMetrics?.netProfitPerMile != null
+        ? { current: unitMetrics.netProfitPerMile, previous: prevUnitMetrics.netProfitPerMile }
+        : undefined,
     },
     {
       label: 'Break-Even Revenue',
@@ -195,7 +277,7 @@ export function BusinessKPICards({ pnl, unitMetrics }: BusinessKPICardsProps) {
   )
 }
 
-function PrimaryKPICard({ label, value, icon: Icon, accent, description, tooltip, shimmer }: KPICardDef & { shimmer?: boolean }) {
+function PrimaryKPICard({ label, value, icon: Icon, accent, description, tooltip, shimmer, delta }: KPICardDef & { shimmer?: boolean }) {
   const card = (
     <div className={cn('widget-card-primary p-4', shimmer && 'shimmer-border')}>
       <div className="flex items-start justify-between">
@@ -207,9 +289,18 @@ function PrimaryKPICard({ label, value, icon: Icon, accent, description, tooltip
             )}
           </div>
           <p className="mt-1 text-3xl font-bold tabular-nums text-foreground truncate">{value}</p>
-          {description && (
-            <p className="mt-0.5 text-[10px] text-muted-foreground/70">{description}</p>
-          )}
+          <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
+            {delta && (
+              <KPIDelta
+                current={delta.current}
+                previous={delta.previous}
+                invertColor={delta.invertColor}
+              />
+            )}
+            {description && (
+              <p className="text-[10px] text-muted-foreground/70">{description}</p>
+            )}
+          </div>
         </div>
         <div className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-lg', ICON_STYLES[accent])}>
           <Icon className="h-4 w-4" />
@@ -236,7 +327,7 @@ function PrimaryKPICard({ label, value, icon: Icon, accent, description, tooltip
   return card
 }
 
-function StandardKPICard({ label, value, icon: Icon, accent, description, tooltip }: KPICardDef) {
+function StandardKPICard({ label, value, icon: Icon, accent, description, tooltip, delta }: KPICardDef) {
   const card = (
     <div className="widget-card p-4">
       <div className="flex items-start justify-between">
@@ -248,9 +339,18 @@ function StandardKPICard({ label, value, icon: Icon, accent, description, toolti
             )}
           </div>
           <p className="mt-1 text-xl font-bold tabular-nums text-foreground truncate">{value}</p>
-          {description && (
-            <p className="mt-0.5 text-[10px] text-muted-foreground/70">{description}</p>
-          )}
+          <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
+            {delta && (
+              <KPIDelta
+                current={delta.current}
+                previous={delta.previous}
+                invertColor={delta.invertColor}
+              />
+            )}
+            {description && (
+              <p className="text-[10px] text-muted-foreground/70">{description}</p>
+            )}
+          </div>
         </div>
         <div className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-lg', ICON_STYLES[accent])}>
           <Icon className="h-4 w-4" />

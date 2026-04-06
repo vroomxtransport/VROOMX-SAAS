@@ -1097,6 +1097,56 @@ export type NewWebNotification = typeof webNotifications.$inferInsert
 export type DrizzleOrderActivityLog = typeof orderActivityLogs.$inferSelect
 export type NewOrderActivityLog = typeof orderActivityLogs.$inferInsert
 
+// ============================================================================
+// Alert Rules & History Tables
+// ============================================================================
+
+/**
+ * Alert Rules Table
+ * Tenant-configurable KPI threshold alerts. When a metric crosses a threshold,
+ * an in-app notification and/or email is triggered (subject to cooldown).
+ */
+export const alertRules = pgTable('alert_rules', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull(),
+  name: text('name').notNull(),
+  metric: text('metric').notNull(), // e.g., 'daily_revenue', 'operating_ratio', 'on_time_rate', 'ar_aging_60'
+  operator: text('operator').notNull(), // 'gt' | 'lt' | 'gte' | 'lte'
+  threshold: numeric('threshold', { precision: 12, scale: 2 }).notNull(),
+  notifyInApp: boolean('notify_in_app').notNull().default(true),
+  notifyEmail: boolean('notify_email').notNull().default(false),
+  emailRecipients: jsonb('email_recipients'), // string[] | null
+  enabled: boolean('enabled').notNull().default(true),
+  lastTriggeredAt: timestamp('last_triggered_at', { withTimezone: true }),
+  cooldownMinutes: integer('cooldown_minutes').notNull().default(1440), // 24 hours default
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_alert_rules_tenant').on(table.tenantId),
+])
+
+/**
+ * Alert History Table
+ * Immutable record of every time an alert rule was triggered.
+ */
+export const alertHistory = pgTable('alert_history', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull(),
+  alertRuleId: uuid('alert_rule_id').notNull().references(() => alertRules.id, { onDelete: 'cascade' }),
+  metricValue: numeric('metric_value', { precision: 12, scale: 2 }).notNull(),
+  thresholdValue: numeric('threshold_value', { precision: 12, scale: 2 }).notNull(),
+  triggeredAt: timestamp('triggered_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_alert_history_rule').on(table.alertRuleId),
+])
+
+// Alert Rule types
+export type DrizzleAlertRule = typeof alertRules.$inferSelect
+export type NewAlertRule = typeof alertRules.$inferInsert
+export type DrizzleAlertHistory = typeof alertHistory.$inferSelect
+export type NewAlertHistory = typeof alertHistory.$inferInsert
+
 // Dispatcher Payroll
 export type DrizzleDispatcherPayConfig = typeof dispatcherPayConfigs.$inferSelect
 export type NewDispatcherPayConfig = typeof dispatcherPayConfigs.$inferInsert
@@ -1421,3 +1471,70 @@ export type DrizzleSamsaraWebhookEvent = typeof samsaraWebhookEvents.$inferSelec
 export type NewSamsaraWebhookEvent = typeof samsaraWebhookEvents.$inferInsert
 export type DrizzleEldLog = typeof eldLogs.$inferSelect
 export type NewEldLog = typeof eldLogs.$inferInsert
+
+// ============================================================================
+// Custom Reports & Saved Views
+// ============================================================================
+
+export const customReports = pgTable('custom_reports', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull(),
+  name: text('name').notNull(),
+  description: text('description'),
+  config: jsonb('config').notNull(),
+  isShared: boolean('is_shared').notNull().default(false),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_custom_reports_tenant').on(table.tenantId),
+  index('idx_custom_reports_user').on(table.tenantId, table.userId),
+])
+
+export const savedViews = pgTable('saved_views', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull(),
+  pageKey: text('page_key').notNull(),
+  name: text('name').notNull(),
+  filters: jsonb('filters').notNull(),
+  sortBy: text('sort_by'),
+  sortDirection: text('sort_direction'),
+  isShared: boolean('is_shared').notNull().default(false),
+  isDefault: boolean('is_default').notNull().default(false),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_saved_views_tenant').on(table.tenantId),
+  index('idx_saved_views_page').on(table.tenantId, table.pageKey),
+])
+
+export type DrizzleCustomReport = typeof customReports.$inferSelect
+export type NewCustomReport = typeof customReports.$inferInsert
+export type DrizzleSavedView = typeof savedViews.$inferSelect
+export type NewSavedView = typeof savedViews.$inferInsert
+
+// ============================================================================
+// Scheduled Reports
+// ============================================================================
+
+export const scheduledReports = pgTable('scheduled_reports', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull(),
+  reportId: uuid('report_id').notNull().references(() => customReports.id, { onDelete: 'cascade' }),
+  schedule: text('schedule').notNull(), // 'daily' | 'weekly_monday' | 'weekly_friday' | 'monthly_1' | 'monthly_15'
+  recipients: jsonb('recipients').notNull(), // string[] of email addresses
+  format: text('format').notNull().default('pdf'), // 'pdf' | 'excel' | 'csv'
+  enabled: boolean('enabled').notNull().default(true),
+  lastSentAt: timestamp('last_sent_at', { withTimezone: true }),
+  nextRunAt: timestamp('next_run_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_scheduled_reports_tenant').on(table.tenantId),
+  index('idx_scheduled_reports_next_run').on(table.nextRunAt),
+])
+
+export type DrizzleScheduledReport = typeof scheduledReports.$inferSelect
+export type NewScheduledReport = typeof scheduledReports.$inferInsert

@@ -12,6 +12,7 @@ import { UpcomingPickups } from './_components/upcoming-pickups'
 import { ActivityFeed } from './_components/activity-feed'
 import { CustomizeDashboard } from './_components/customize-dashboard'
 import { DashboardWidgets } from './_components/dashboard-widgets'
+import { RolePresetSelector } from './_components/role-preset-selector'
 import { OpenInvoices } from './_components/open-invoices'
 import { TopDrivers } from './_components/top-drivers'
 import { QuickLinks } from './_components/quick-links'
@@ -234,7 +235,7 @@ export default async function DashboardPage({
             Welcome back, {userName}! Here&apos;s what&apos;s happening today.
           </p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
           <span className="hidden sm:inline-flex items-center rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground">
             {fullDate}
           </span>
@@ -253,6 +254,7 @@ export default async function DashboardPage({
               </span>
             </>
           )}
+          <RolePresetSelector />
           <Button asChild size="sm" className="!text-white">
             <Link href="/orders">
               <Plus className="h-4 w-4" />

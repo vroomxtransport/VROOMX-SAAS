@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import type { ProfitByTruck } from '@/lib/queries/financials'
 import { SortHeader } from '@/components/shared/sort-header'
 import { CsvExportButton } from '@/components/shared/csv-export-button'
+import { ExcelExportButton } from '@/components/shared/excel-export-button'
 import { Input } from '@/components/ui/input'
 import { Search, X } from 'lucide-react'
 import type { SortConfig } from '@/types/filters'
@@ -77,6 +78,18 @@ export function ProfitByTruckTable({ data }: ProfitByTruckTableProps) {
     }))
   }, [sorted])
 
+  // Excel export handler — raw numbers so Excel can apply its own format codes
+  const handleExcelExport = useCallback(async (): Promise<Record<string, unknown>[]> => {
+    return sorted.map((truck) => ({
+      unitNumber: truck.unitNumber,
+      revenue: truck.revenue,
+      expenses: truck.expenses,
+      profit: truck.profit,
+      margin: truck.margin,   // passed as plain number; percent format divides by 100 inside util
+      tripCount: truck.tripCount,
+    }))
+  }, [sorted])
+
   if (data.length === 0) {
     return (
       <div className="widget-card">
@@ -121,6 +134,20 @@ export function ProfitByTruckTable({ data }: ProfitByTruckTableProps) {
             filename="profit-by-truck"
             headers={['unitNumber', 'revenue', 'expenses', 'profit', 'margin', 'tripCount']}
             fetchData={handleCsvExport}
+            className="h-8 text-xs"
+          />
+          <ExcelExportButton
+            filename="profit-by-truck"
+            sheetName="Profit by Truck"
+            columns={[
+              { key: 'unitNumber', header: 'Unit #', format: 'text', width: 12 },
+              { key: 'revenue', header: 'Revenue', format: 'currency', width: 14 },
+              { key: 'expenses', header: 'Expenses', format: 'currency', width: 14 },
+              { key: 'profit', header: 'Profit', format: 'currency', width: 14 },
+              { key: 'margin', header: 'Margin %', format: 'percent', width: 10 },
+              { key: 'tripCount', header: 'Trips', format: 'number', width: 8 },
+            ]}
+            fetchData={handleExcelExport}
             className="h-8 text-xs"
           />
         </div>
