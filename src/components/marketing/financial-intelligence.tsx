@@ -1,6 +1,15 @@
 'use client'
 
-import { ArrowRight, ClipboardList, Calculator, Wallet, Truck, ShieldCheck, TrendingUp } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import {
+  ArrowRight01Icon,
+  ClipboardIcon,
+  Calculator01Icon,
+  Wallet01Icon,
+  TruckIcon,
+  ShieldEnergyIcon,
+  Analytics02Icon,
+} from '@hugeicons/core-free-icons'
 import { RadialOrbitalTimeline } from '@/components/ui/radial-orbital-timeline'
 
 const timelineData = [
@@ -9,7 +18,7 @@ const timelineData = [
     title: 'Orders & Dispatch',
     description:
       'Create orders, assign to trips, and dispatch drivers\u2014all in one streamlined workflow.',
-    icon: <ClipboardList />,
+    icon: <HugeiconsIcon icon={ClipboardIcon} size={20} />,
     status: 'completed' as const,
   },
   {
@@ -17,7 +26,7 @@ const timelineData = [
     title: 'Financial Intelligence',
     description:
       'Clean Gross, driver settlements, profit-per-truck, and break-even analysis in real time.',
-    icon: <Calculator />,
+    icon: <HugeiconsIcon icon={Calculator01Icon} size={20} />,
     status: 'completed' as const,
   },
   {
@@ -25,7 +34,7 @@ const timelineData = [
     title: 'Driver Settlements',
     description:
       'Four pay models with per-order overrides. Generate, approve, and track payroll automatically.',
-    icon: <Wallet />,
+    icon: <HugeiconsIcon icon={Wallet01Icon} size={20} />,
     status: 'completed' as const,
   },
   {
@@ -33,7 +42,7 @@ const timelineData = [
     title: 'Fleet Management',
     description:
       'Track trucks, trailers, fuel, and maintenance with document expiry alerts.',
-    icon: <Truck />,
+    icon: <HugeiconsIcon icon={TruckIcon} size={20} />,
     status: 'in-progress' as const,
   },
   {
@@ -41,7 +50,7 @@ const timelineData = [
     title: 'Compliance & Safety',
     description:
       'FMCSA-aligned DQF tracking, DOT inspection logs, and cargo damage claims.',
-    icon: <ShieldCheck />,
+    icon: <HugeiconsIcon icon={ShieldEnergyIcon} size={20} />,
     status: 'in-progress' as const,
   },
   {
@@ -49,7 +58,7 @@ const timelineData = [
     title: 'Growth Analytics',
     description:
       'Revenue trends, broker scorecards, and route profitability to scale smarter.',
-    icon: <TrendingUp />,
+    icon: <HugeiconsIcon icon={Analytics02Icon} size={20} />,
     status: 'pending' as const,
   },
 ]
@@ -82,7 +91,7 @@ export function FinancialIntelligence() {
             className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-brand px-6 text-sm font-semibold text-white shadow-md transition-all hover:bg-brand/90 hover:shadow-lg"
           >
             Start Your Free Trial
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            <HugeiconsIcon icon={ArrowRight01Icon} size={16} className="transition-transform group-hover:translate-x-0.5" />
           </a>
         </div>
       </div>

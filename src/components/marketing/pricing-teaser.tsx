@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { ArrowRight, Check } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { ArrowRight01Icon, Tick02Icon } from '@hugeicons/core-free-icons'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
@@ -92,7 +93,7 @@ export function PricingTeaser() {
                     <div className="mt-6 space-y-3 text-left">
                       {plan.features.map((feature) => (
                         <div key={feature} className="flex items-center gap-2">
-                          <Check className={`h-4 w-4 ${checkColors[plan.accent]} shrink-0`} />
+                          <HugeiconsIcon icon={Tick02Icon} size={16} className={`${checkColors[plan.accent]} shrink-0`} />
                           <span className="text-sm text-muted-foreground">
                             {feature}
                           </span>
@@ -126,7 +127,7 @@ export function PricingTeaser() {
                 <div className="mt-6 space-y-3 text-left">
                   {plan.features.map((feature) => (
                     <div key={feature} className="flex items-center gap-2">
-                      <Check className={`h-4 w-4 ${checkColors[plan.accent]} shrink-0`} />
+                      <HugeiconsIcon icon={Tick02Icon} size={16} className={`${checkColors[plan.accent]} shrink-0`} />
                       <span className="text-sm text-muted-foreground">
                         {feature}
                       </span>
@@ -147,7 +148,7 @@ export function PricingTeaser() {
           <Button variant="outline" asChild>
             <Link href="/pricing">
               View Full Pricing
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <HugeiconsIcon icon={ArrowRight01Icon} size={16} className="ml-2" />
             </Link>
           </Button>
         </div>

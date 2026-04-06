@@ -15,7 +15,7 @@ import {
   Car01Icon,
   Route01Icon,
   TruckIcon,
-  ContainerTruck01Icon,
+  CaravanIcon,
   UserSettings01Icon,
   DeliveryTruck01Icon,
   Wrench01Icon,
@@ -78,7 +78,7 @@ const NAV_CATEGORIES: NavCategory[] = [
     label: 'Fleet',
     items: [
       { name: 'Trucks', href: '/trucks', icon: TruckIcon },
-      { name: 'Trailers', href: '/trailers', icon: ContainerTruck01Icon },
+      { name: 'Trailers', href: '/trailers', icon: CaravanIcon },
       { name: 'Drivers', href: '/drivers', icon: UserSettings01Icon, minRole: 'dispatcher' },
       { name: 'Local Runs', href: '/local-runs', icon: DeliveryTruck01Icon, minRole: 'dispatcher' },
       { name: 'Maintenance', href: '/maintenance', icon: Wrench01Icon, minRole: 'dispatcher' },

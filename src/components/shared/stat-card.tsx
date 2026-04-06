@@ -1,11 +1,12 @@
-import type { LucideIcon } from 'lucide-react'
-import { TrendingUp, TrendingDown } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { ChartIncreaseIcon, ChartDecreaseIcon } from '@hugeicons/core-free-icons'
 
 interface StatCardProps {
   label: string
   value: string | number
   sublabel?: string
-  icon: LucideIcon
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  icon: any // Hugeicons icon data (array) or legacy Lucide React component (function)
   accent?: 'blue' | 'amber' | 'emerald' | 'violet'
   trend?: {
     value: number
@@ -34,8 +35,10 @@ const SPARKLINE_COLORS: Record<string, string> = {
   violet: '#8b5cf6',
 }
 
-export function StatCard({ label, value, sublabel, icon: Icon, accent = 'blue', trend }: StatCardProps) {
+export function StatCard({ label, value, sublabel, icon, accent = 'blue', trend }: StatCardProps) {
   const a = ACCENT_STYLES[accent]
+  // Hugeicons icons are arrays of SVG path data; Lucide icons are React component functions
+  const isHugeicon = Array.isArray(icon)
 
   return (
     <div className="rounded-lg border border-border bg-card p-5">
@@ -49,7 +52,12 @@ export function StatCard({ label, value, sublabel, icon: Icon, accent = 'blue', 
           </p>
         </div>
         <div className={`rounded-xl p-2.5 ${a.iconBg}`}>
-          <Icon className={`h-5 w-5 ${a.iconText}`} />
+          {isHugeicon ? (
+            <HugeiconsIcon icon={icon} size={20} className={a.iconText} />
+          ) : (
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (() => { const Icon = icon as any; return <Icon className={`h-5 w-5 ${a.iconText}`} /> })()
+          )}
         </div>
       </div>
 
@@ -59,7 +67,10 @@ export function StatCard({ label, value, sublabel, icon: Icon, accent = 'blue', 
               <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${
                 trend.value >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
               }`}>
-                {trend.value >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                {trend.value >= 0
+                  ? <HugeiconsIcon icon={ChartIncreaseIcon} size={12} />
+                  : <HugeiconsIcon icon={ChartDecreaseIcon} size={12} />
+                }
                 {trend.value >= 0 ? '+' : ''}{trend.value}%
               </span>
               {trend.label && <span className="text-xs text-muted-foreground">{trend.label}</span>}

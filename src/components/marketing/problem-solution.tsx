@@ -1,7 +1,8 @@
 'use client'
 
 import { useRef } from 'react'
-import { X, CheckCircle, ArrowRight } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Cancel01Icon, CheckmarkCircle01Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons'
 import { TimelineContent } from '@/components/ui/timeline-animation'
 import { VerticalCutReveal } from '@/components/ui/vertical-cut-reveal'
 
@@ -89,7 +90,7 @@ export function ProblemSolution() {
             <div className="rounded-2xl border border-red-200/50 bg-gradient-to-br from-red-50/40 to-transparent p-8">
               <div className="flex items-center gap-3 mb-8">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/10">
-                  <X className="h-5 w-5 text-red-500" />
+                  <HugeiconsIcon icon={Cancel01Icon} size={20} className="text-red-500" />
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-red-600">The Problem</h3>
@@ -100,7 +101,7 @@ export function ProblemSolution() {
                 {problems.map((item) => (
                   <div key={item.title} className="flex gap-4 group">
                     <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-500/10 ring-2 ring-red-500/10 transition-colors group-hover:bg-red-500/20">
-                      <X className="h-3.5 w-3.5 text-red-500" />
+                      <HugeiconsIcon icon={Cancel01Icon} size={14} className="text-red-500" />
                     </div>
                     <div>
                       <p className="font-bold text-foreground">{item.title}</p>
@@ -117,7 +118,7 @@ export function ProblemSolution() {
           {/* Connecting arrow */}
           <div className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
             <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border-subtle bg-surface shadow-sm">
-              <ArrowRight className="h-4 w-4 text-muted-foreground" />
+              <HugeiconsIcon icon={ArrowRight01Icon} size={16} className="text-muted-foreground" />
             </div>
           </div>
 
@@ -129,7 +130,7 @@ export function ProblemSolution() {
               <div className="relative">
                 <div className="flex items-center gap-3 mb-8">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10">
-                    <CheckCircle className="h-5 w-5 text-emerald-500" />
+                    <HugeiconsIcon icon={CheckmarkCircle01Icon} size={20} className="text-emerald-500" />
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-emerald-600">The VroomX Way</h3>
@@ -140,7 +141,7 @@ export function ProblemSolution() {
                   {solutions.map((item) => (
                     <div key={item.title} className="flex gap-4 group">
                       <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 ring-2 ring-emerald-500/10 transition-colors group-hover:bg-emerald-500/20">
-                        <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
+                        <HugeiconsIcon icon={CheckmarkCircle01Icon} size={14} className="text-emerald-500" />
                       </div>
                       <div>
                         <p className="font-bold text-foreground">{item.title}</p>

@@ -1,25 +1,25 @@
 'use client'
 
+import { HugeiconsIcon } from '@hugeicons/react'
 import {
-  Search,
-  Bell,
-  Gauge,
-  ListTodo,
-  MapPinned,
-  Car,
-  Milestone,
-  Truck,
-  IdCard,
-  CircleDollarSign,
-  FileText,
-  SlidersHorizontal,
-  Plus,
-  Activity,
-  TrendingUp,
-  TrendingDown,
-  Layers,
-  Users,
-} from 'lucide-react'
+  Search01Icon,
+  Notification01Icon,
+  DashboardSpeed01Icon,
+  Task01Icon,
+  MapPinIcon,
+  Car01Icon,
+  Route01Icon,
+  TruckIcon,
+  IdentityCardIcon,
+  DollarCircleIcon,
+  Invoice02Icon,
+  SlidersHorizontalIcon,
+  PlusSignIcon,
+  Activity01Icon,
+  Analytics02Icon,
+  Layers01Icon,
+  UserGroupIcon,
+} from '@hugeicons/core-free-icons'
 
 export function DashboardPreview() {
   return (
@@ -44,7 +44,7 @@ export function DashboardPreview() {
             </div>
 
             <div className="bg-secondary rounded-lg px-3 py-1 flex items-center gap-2 text-muted-foreground w-56">
-              <Search className="h-3 w-3" />
+              <HugeiconsIcon icon={Search01Icon} size={12} />
               <span className="text-[10px]">Search orders, drivers...</span>
               <span className="ml-auto text-[9px] bg-card border border-border rounded px-1.5 py-0.5 font-medium">
                 ⌘K
@@ -52,7 +52,7 @@ export function DashboardPreview() {
             </div>
 
             <div className="flex items-center gap-3">
-              <Bell className="h-3.5 w-3.5 text-muted-foreground" />
+              <HugeiconsIcon icon={Notification01Icon} size={14} className="text-muted-foreground" />
               <div className="bg-brand text-white rounded-full w-6 h-6 flex items-center justify-center text-[10px] font-semibold">
                 MR
               </div>
@@ -64,24 +64,24 @@ export function DashboardPreview() {
             {/* Sidebar — dark theme */}
             <div className="w-36 py-2.5 px-1.5" style={{ background: '#1a1a19' }}>
               <NavCategory label="Main">
-                <NavItem icon={Gauge} label="Dashboard" active />
-                <NavItem icon={ListTodo} label="Tasks" badge="5" />
-                <NavItem icon={MapPinned} label="Live Map" />
+                <NavItem icon={DashboardSpeed01Icon} label="Dashboard" active />
+                <NavItem icon={Task01Icon} label="Tasks" badge="5" />
+                <NavItem icon={MapPinIcon} label="Live Map" />
               </NavCategory>
               <NavCategory label="Operations">
-                <NavItem icon={Car} label="Orders" />
-                <NavItem icon={Milestone} label="Trips" />
+                <NavItem icon={Car01Icon} label="Orders" />
+                <NavItem icon={Route01Icon} label="Trips" />
               </NavCategory>
               <NavCategory label="Fleet">
-                <NavItem icon={Truck} label="Trucks" />
-                <NavItem icon={IdCard} label="Drivers" />
+                <NavItem icon={TruckIcon} label="Trucks" />
+                <NavItem icon={IdentityCardIcon} label="Drivers" />
               </NavCategory>
               <NavCategory label="Finance">
-                <NavItem icon={CircleDollarSign} label="Financials" />
-                <NavItem icon={FileText} label="Billing" />
+                <NavItem icon={DollarCircleIcon} label="Financials" />
+                <NavItem icon={Invoice02Icon} label="Billing" />
               </NavCategory>
               <NavCategory label="System">
-                <NavItem icon={SlidersHorizontal} label="Settings" />
+                <NavItem icon={SlidersHorizontalIcon} label="Settings" />
               </NavCategory>
             </div>
 
@@ -99,11 +99,11 @@ export function DashboardPreview() {
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="flex items-center gap-1 bg-brand text-white rounded-md px-2 py-0.5 text-[9px] font-medium">
-                    <Plus className="h-2.5 w-2.5" />
+                    <HugeiconsIcon icon={PlusSignIcon} size={10} />
                     New Order
                   </div>
                   <div className="flex items-center gap-1 border border-border rounded-md px-2 py-0.5 text-[9px] font-medium text-foreground bg-card">
-                    <Plus className="h-2.5 w-2.5" />
+                    <HugeiconsIcon icon={PlusSignIcon} size={10} />
                     New Trip
                   </div>
                 </div>
@@ -111,10 +111,10 @@ export function DashboardPreview() {
 
               {/* Stat Cards */}
               <div className="grid grid-cols-4 gap-2">
-                <StatCard icon={Car} iconBg="bg-blue-50" iconColor="text-blue-500" label="Active Loads" value="47" trend="+12%" up />
-                <StatCard icon={Truck} iconBg="bg-amber-50" iconColor="text-amber-500" label="In-Transit" value="23" trend="+8%" up />
-                <StatCard icon={Activity} iconBg="bg-emerald-50" iconColor="text-emerald-600" label="Revenue MTD" value="$128,450" trend="+18%" up />
-                <StatCard icon={CircleDollarSign} iconBg="bg-violet-50" iconColor="text-violet-500" label="Avg $/Mile" value="$2.47" trend="-3%" up={false} />
+                <StatCard icon={Car01Icon} iconBg="bg-blue-50" iconColor="text-blue-500" label="Active Loads" value="47" trend="+12%" up />
+                <StatCard icon={TruckIcon} iconBg="bg-amber-50" iconColor="text-amber-500" label="In-Transit" value="23" trend="+8%" up />
+                <StatCard icon={Activity01Icon} iconBg="bg-emerald-50" iconColor="text-emerald-600" label="Revenue MTD" value="$128,450" trend="+18%" up />
+                <StatCard icon={DollarCircleIcon} iconBg="bg-violet-50" iconColor="text-violet-500" label="Avg $/Mile" value="$2.47" trend="-3%" up={false} />
               </div>
 
               {/* Widget Grid */}
@@ -235,9 +235,9 @@ export function DashboardPreview() {
                 </div>
 
                 <div className="flex gap-4">
-                  <FleetRow icon={Truck} label="Trucks" sublabel="Active vehicles" current={6} total={8} barColor="from-blue-500 to-blue-400" />
-                  <FleetRow icon={Users} label="Drivers" sublabel="On trip" current={4} total={5} barColor="from-violet-500 to-violet-400" />
-                  <FleetRow icon={Layers} label="Capacity" sublabel="Slots in use" current={47} total={72} barColor="from-amber-500 to-amber-400" />
+                  <FleetRow icon={TruckIcon} label="Trucks" sublabel="Active vehicles" current={6} total={8} barColor="from-blue-500 to-blue-400" />
+                  <FleetRow icon={UserGroupIcon} label="Drivers" sublabel="On trip" current={4} total={5} barColor="from-violet-500 to-violet-400" />
+                  <FleetRow icon={Layers01Icon} label="Capacity" sublabel="Slots in use" current={47} total={72} barColor="from-amber-500 to-amber-400" />
                 </div>
               </div>
             </div>
@@ -262,12 +262,13 @@ function NavCategory({ label, children }: { label: string; children: React.React
 }
 
 function NavItem({
-  icon: Icon,
+  icon,
   label,
   active,
   badge,
 }: {
-  icon: React.ComponentType<{ className?: string }>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  icon: any
   label: string
   active?: boolean
   badge?: string
@@ -280,7 +281,7 @@ function NavItem({
         background: active ? '#333332' : 'transparent',
       }}
     >
-      <Icon className="h-3 w-3 shrink-0" />
+      <HugeiconsIcon icon={icon} size={12} className="shrink-0" />
       <span className={active ? 'font-medium' : ''}>{label}</span>
       {badge && (
         <span className="ml-auto text-[8px] font-semibold bg-blue-500 text-white rounded-full px-1.5">
@@ -301,7 +302,7 @@ function StatPill({ dot, text }: { dot: string; text: string }) {
 }
 
 function StatCard({
-  icon: Icon,
+  icon,
   iconBg,
   iconColor,
   label,
@@ -309,7 +310,8 @@ function StatCard({
   trend,
   up,
 }: {
-  icon: React.ComponentType<{ className?: string }>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  icon: any
   iconBg: string
   iconColor: string
   label: string
@@ -321,10 +323,10 @@ function StatCard({
     <div className="bg-card rounded-lg p-2 border border-border">
       <div className="flex items-center justify-between mb-1">
         <div className={`${iconBg} rounded-md w-5 h-5 flex items-center justify-center`}>
-          <Icon className={`h-3 w-3 ${iconColor}`} />
+          <HugeiconsIcon icon={icon} size={12} className={iconColor} />
         </div>
         <span className={`text-[9px] font-medium flex items-center gap-0.5 ${up ? 'text-emerald-600' : 'text-red-500'}`}>
-          {up ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
+          <HugeiconsIcon icon={Analytics02Icon} size={10} />
           {trend}
         </span>
       </div>
@@ -361,14 +363,15 @@ function OrderRow({
 }
 
 function FleetRow({
-  icon: Icon,
+  icon,
   label,
   sublabel,
   current,
   total,
   barColor,
 }: {
-  icon: React.ComponentType<{ className?: string }>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  icon: any
   label: string
   sublabel: string
   current: number
@@ -380,7 +383,7 @@ function FleetRow({
     <div className="flex-1">
       <div className="flex items-center justify-between mb-0.5">
         <div className="flex items-center gap-1">
-          <Icon className="h-3 w-3 text-muted-foreground" />
+          <HugeiconsIcon icon={icon} size={12} className="text-muted-foreground" />
           <span className="text-[10px] font-medium text-foreground">{label}</span>
         </div>
         <span className="text-[10px] font-semibold text-foreground tabular-nums">{current}/{total}</span>

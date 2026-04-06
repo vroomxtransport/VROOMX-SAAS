@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Bell, CheckCheck } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Notification01Icon, TickDouble01Icon } from '@hugeicons/core-free-icons'
 import {
   Popover,
   PopoverContent,
@@ -62,7 +63,7 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
           className="relative rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
           aria-label="Notifications"
         >
-          <Bell className="h-4 w-4" />
+          <HugeiconsIcon icon={Notification01Icon} size={16} />
           {count > 0 && (
             <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white">
               {count > 9 ? '9+' : count}
@@ -80,7 +81,7 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
               className="h-auto px-2 py-1 text-xs text-muted-foreground"
               onClick={handleMarkAllRead}
             >
-              <CheckCheck className="mr-1 h-3 w-3" />
+              <HugeiconsIcon icon={TickDouble01Icon} size={12} className="mr-1" />
               Mark all read
             </Button>
           )}
@@ -90,7 +91,7 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
             <div className="p-4 text-center text-sm text-muted-foreground">Loading...</div>
           ) : notifications.length === 0 ? (
             <div className="p-8 text-center">
-              <Bell className="mx-auto h-8 w-8 text-muted-foreground/60 mb-2" />
+              <HugeiconsIcon icon={Notification01Icon} size={32} className="mx-auto text-muted-foreground/60 mb-2" />
               <p className="text-sm text-muted-foreground">No new notifications</p>
             </div>
           ) : (

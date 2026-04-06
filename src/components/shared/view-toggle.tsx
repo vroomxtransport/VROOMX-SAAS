@@ -1,6 +1,7 @@
 'use client'
 
-import { LayoutGrid, List } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { LayoutGridIcon, MenuSquareIcon } from '@hugeicons/core-free-icons'
 import { cn } from '@/lib/utils'
 
 interface ViewToggleProps {
@@ -21,7 +22,7 @@ export function ViewToggle({ viewMode, onViewChange }: ViewToggleProps) {
             : 'text-muted-foreground hover:text-foreground'
         )}
       >
-        <LayoutGrid className="h-4 w-4" />
+        <HugeiconsIcon icon={LayoutGridIcon} size={16} />
         <span className="hidden sm:inline">Grid</span>
       </button>
       <button
@@ -34,7 +35,7 @@ export function ViewToggle({ viewMode, onViewChange }: ViewToggleProps) {
             : 'text-muted-foreground hover:text-foreground'
         )}
       >
-        <List className="h-4 w-4" />
+        <HugeiconsIcon icon={MenuSquareIcon} size={16} />
         <span className="hidden sm:inline">List</span>
       </button>
     </div>

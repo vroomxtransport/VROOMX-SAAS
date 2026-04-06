@@ -2,7 +2,8 @@
 
 import { useRef } from 'react'
 import Link from 'next/link'
-import { ArrowRight, Check } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { ArrowRight01Icon, Tick02Icon } from '@hugeicons/core-free-icons'
 import { TimelineContent } from '@/components/ui/timeline-animation'
 
 const revealVariants = {
@@ -43,7 +44,7 @@ export function FinalCTA() {
                     className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-brand to-[#2a3a4f] px-6 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg hover:brightness-110"
                   >
                     Start Your Free Trial
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                    <HugeiconsIcon icon={ArrowRight01Icon} size={16} className="transition-transform group-hover:translate-x-0.5" />
                   </Link>
                   <Link
                     href="/pricing"
@@ -56,7 +57,7 @@ export function FinalCTA() {
                 <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-medium text-muted-foreground">
                   {['No credit card required', 'Set up in 5 minutes', 'Cancel anytime'].map((item) => (
                     <span key={item} className="flex items-center gap-1.5">
-                      <Check className="h-4 w-4 text-emerald-500" />
+                      <HugeiconsIcon icon={Tick02Icon} size={16} className="text-emerald-500" />
                       {item}
                     </span>
                   ))}

@@ -1,7 +1,8 @@
 'use client'
 
 import { motion } from 'motion/react'
-import { Play } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { PlayIcon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { DashboardPreview } from '@/components/marketing/dashboard-preview'
 
@@ -75,7 +76,7 @@ export function NexoraHero() {
             size="icon"
             className="h-11 w-11 rounded-full border-0 bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] hover:bg-white/80"
           >
-            <Play className="h-4 w-4 fill-foreground text-foreground" />
+            <HugeiconsIcon icon={PlayIcon} size={16} className="text-foreground" />
           </Button>
         </motion.div>
 

@@ -1,15 +1,16 @@
 'use client'
 
 import { useRef } from 'react'
-import { Car, Zap, Clock, Sparkles } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Car01Icon, FlashIcon, Clock01Icon, SparklesIcon } from '@hugeicons/core-free-icons'
 import { TimelineContent } from '@/components/ui/timeline-animation'
 
-const stats: { value: string; label: string; icon: LucideIcon }[] = [
-  { value: '10,000+', label: 'Vehicles dispatched monthly', icon: Car },
-  { value: '99.8%', label: 'Uptime SLA', icon: Zap },
-  { value: '< 5 min', label: 'Average setup time', icon: Clock },
-  { value: '$0', label: 'To start your free trial', icon: Sparkles },
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const stats: { value: string; label: string; icon: any }[] = [
+  { value: '10,000+', label: 'Vehicles dispatched monthly', icon: Car01Icon },
+  { value: '99.8%', label: 'Uptime SLA', icon: FlashIcon },
+  { value: '< 5 min', label: 'Average setup time', icon: Clock01Icon },
+  { value: '$0', label: 'To start your free trial', icon: SparklesIcon },
 ]
 
 const revealVariants = {
@@ -28,12 +29,11 @@ export function StatsBanner() {
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-8 lg:grid-cols-4">
           {stats.map((stat, idx) => {
-            const Icon = stat.icon
             return (
               <TimelineContent key={stat.label} as="div" animationNum={idx} timelineRef={sectionRef} customVariants={revealVariants}>
                 <div className="text-center">
                   <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-brand/10">
-                    <Icon className="h-5 w-5 text-brand" />
+                    <HugeiconsIcon icon={stat.icon} size={20} className="text-brand" />
                   </div>
                   <p className="text-3xl font-extrabold tracking-tight text-brand sm:text-4xl">
                     {stat.value}

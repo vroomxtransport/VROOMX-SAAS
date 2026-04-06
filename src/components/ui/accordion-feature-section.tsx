@@ -2,14 +2,15 @@
 
 import { useState, type ReactNode } from "react"
 import Image from "next/image"
+import { HugeiconsIcon } from "@hugeicons/react"
 import {
-  Car,
-  Navigation,
-  CreditCard,
-  Truck,
-  Fuel,
-  Lock,
-} from "lucide-react"
+  Car01Icon,
+  Navigation01Icon,
+  CreditCardIcon,
+  TruckIcon,
+  Fuel01Icon,
+  LockIcon,
+} from "@hugeicons/core-free-icons"
 
 import {
   Accordion,
@@ -129,7 +130,7 @@ function SecurityVisual() {
     <div className="flex h-full flex-col gap-3 rounded-xl bg-surface p-4">
       <div className="flex items-center gap-2">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/15">
-          <Lock className="h-4 w-4 text-emerald-500" />
+          <HugeiconsIcon icon={LockIcon} size={16} className="text-emerald-500" />
         </div>
         <div className="space-y-1">
           <div className="h-2 w-24 rounded-full bg-foreground/15" />
@@ -201,7 +202,7 @@ const vroomxFeatures: FeatureItem[] = [
   },
 ]
 
-const featureIcons = [Car, Navigation, CreditCard, Truck, Fuel, Lock]
+const featureIcons = [Car01Icon, Navigation01Icon, CreditCardIcon, TruckIcon, Fuel01Icon, LockIcon]
 
 /* ── Component ──────────────────────────────────────────────────────── */
 
@@ -241,7 +242,7 @@ function Feature197({ features = vroomxFeatures }: { features?: FeatureItem[] })
               }}
             >
               {features.map((tab, idx) => {
-                const Icon = featureIcons[idx] ?? Car
+                const Icon = featureIcons[idx] ?? Car01Icon
                 return (
                   <AccordionItem
                     key={tab.id}
@@ -253,7 +254,7 @@ function Feature197({ features = vroomxFeatures }: { features?: FeatureItem[] })
                         <div
                           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-brand/15 bg-gradient-to-b from-brand/[0.12] to-brand/[0.04]"
                         >
-                          <Icon className="h-5 w-5 text-brand" />
+                          <HugeiconsIcon icon={Icon} size={20} className="text-brand" />
                         </div>
                         <h6
                           className={`text-left text-lg font-semibold transition-colors ${

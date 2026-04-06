@@ -1,7 +1,8 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { Download } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Download01Icon } from '@hugeicons/core-free-icons'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 
@@ -65,7 +66,7 @@ export function CsvExportButton({
       disabled={exporting}
       className={cn('h-9 gap-1.5', className)}
     >
-      <Download className="h-3.5 w-3.5" />
+      <HugeiconsIcon icon={Download01Icon} size={14} />
       {exporting ? 'Exporting...' : 'Export CSV'}
     </Button>
   )

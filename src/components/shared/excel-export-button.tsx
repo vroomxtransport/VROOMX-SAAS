@@ -1,7 +1,8 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { FileSpreadsheet } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { FileSpreadsheetIcon } from '@hugeicons/core-free-icons'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { exportToExcel } from '@/lib/export/excel-export'
@@ -47,7 +48,7 @@ export function ExcelExportButton({
       disabled={exporting}
       className={cn('gap-1.5', className)}
     >
-      <FileSpreadsheet className="h-3.5 w-3.5" />
+      <HugeiconsIcon icon={FileSpreadsheetIcon} size={14} />
       {exporting ? 'Exporting...' : 'Excel'}
     </Button>
   )

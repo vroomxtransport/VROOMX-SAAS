@@ -2,7 +2,8 @@
 
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { X } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Cancel01Icon } from '@hugeicons/core-free-icons'
 import { motion, AnimatePresence } from 'motion/react'
 
 interface BulkAction {
@@ -81,7 +82,7 @@ export function BulkActionBar({
                 onClick={onClearSelection}
                 className="h-8 w-8 p-0"
               >
-                <X className="h-4 w-4" />
+                <HugeiconsIcon icon={Cancel01Icon} size={16} />
               </Button>
             </div>
           </motion.div>

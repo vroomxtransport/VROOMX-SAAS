@@ -10,7 +10,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
-import { X } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Cancel01Icon } from '@hugeicons/core-free-icons'
 
 export interface FilterOption {
   value: string
@@ -131,7 +132,7 @@ export function FilterBar({ filters, onFilterChange, activeFilters }: FilterBarP
           onClick={clearAllFilters}
           className="h-9 px-2 text-muted-foreground hover:text-foreground"
         >
-          <X className="mr-1 h-4 w-4" />
+          <HugeiconsIcon icon={Cancel01Icon} size={16} className="mr-1" />
           Clear filters
         </Button>
       )}

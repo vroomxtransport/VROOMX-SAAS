@@ -13,7 +13,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Calendar as CalendarIcon, X } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Calendar03Icon, Cancel01Icon } from '@hugeicons/core-free-icons'
 import { Calendar } from '@/components/ui/calendar'
 import type { DateRange, DatePreset } from '@/types/filters'
 import { getDatePresets } from '@/types/filters'
@@ -72,7 +73,7 @@ export function DateRangePicker({
       <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
         <PopoverTrigger asChild>
           <Button variant="outline" size="sm" className="h-9 gap-1.5">
-            <CalendarIcon className="h-3.5 w-3.5" />
+            <HugeiconsIcon icon={Calendar03Icon} size={14} />
             {value ? (
               <span className="text-xs">
                 {formatDate(value.from)} – {formatDate(value.to)}
@@ -90,7 +91,7 @@ export function DateRangePicker({
                 }}
                 className="ml-1 rounded-full p-0.5 hover:bg-muted"
               >
-                <X className="h-3 w-3" />
+                <HugeiconsIcon icon={Cancel01Icon} size={12} />
               </button>
             )}
           </Button>

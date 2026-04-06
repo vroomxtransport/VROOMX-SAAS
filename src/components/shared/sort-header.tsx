@@ -1,6 +1,7 @@
 'use client'
 
-import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Sorting01Icon, ArrowUp01Icon, ArrowDown01Icon } from '@hugeicons/core-free-icons'
 import { cn } from '@/lib/utils'
 import type { SortConfig } from '@/types/filters'
 
@@ -42,9 +43,9 @@ export function SortHeader({
       )}
     >
       {label}
-      {!isActive && <ArrowUpDown className="h-3 w-3 opacity-60" />}
-      {direction === 'asc' && <ArrowUp className="h-3 w-3 text-brand" />}
-      {direction === 'desc' && <ArrowDown className="h-3 w-3 text-brand" />}
+      {!isActive && <HugeiconsIcon icon={Sorting01Icon} size={12} className="opacity-60" />}
+      {direction === 'asc' && <HugeiconsIcon icon={ArrowUp01Icon} size={12} className="text-brand" />}
+      {direction === 'desc' && <HugeiconsIcon icon={ArrowDown01Icon} size={12} className="text-brand" />}
     </button>
   )
 }

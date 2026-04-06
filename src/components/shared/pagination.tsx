@@ -2,7 +2,8 @@
 
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { ArrowLeft01Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons'
 import { cn } from '@/lib/utils'
 
 const DEFAULT_PAGE_SIZE_OPTIONS = [25, 50, 100, 200]
@@ -73,7 +74,7 @@ export function Pagination({
           disabled={isFirstPage}
           className="h-8"
         >
-          <ChevronLeft className="mr-1 h-4 w-4" />
+          <HugeiconsIcon icon={ArrowLeft01Icon} size={16} className="mr-1" />
           Previous
         </Button>
 
@@ -106,7 +107,7 @@ export function Pagination({
           className="h-8"
         >
           Next
-          <ChevronRight className="ml-1 h-4 w-4" />
+          <HugeiconsIcon icon={ArrowRight01Icon} size={16} className="ml-1" />
         </Button>
       </div>
 

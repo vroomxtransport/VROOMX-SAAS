@@ -2,38 +2,44 @@
 
 import { useRef } from 'react'
 import Image from 'next/image'
-import { Camera, FileCheck, MapPin, WifiOff } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import {
+  Camera01Icon,
+  Invoice02Icon,
+  MapPinIcon,
+  WifiDisconnected01Icon,
+} from '@hugeicons/core-free-icons'
 import { TimelineContent } from '@/components/ui/timeline-animation'
 import { DeviceFrame } from './device-frame'
 
 interface DriverFeature {
-  icon: LucideIcon
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  icon: any
   title: string
   description: string
 }
 
 const driverFeatures: DriverFeature[] = [
   {
-    icon: Camera,
+    icon: Camera01Icon,
     title: 'Photo Inspections',
     description:
       'Capture vehicle condition at pickup and delivery with timestamped photos.',
   },
   {
-    icon: FileCheck,
+    icon: Invoice02Icon,
     title: 'Digital BOL',
     description:
       'Generate bills of lading with e-signatures. No more paper forms.',
   },
   {
-    icon: MapPin,
+    icon: MapPinIcon,
     title: 'Real-Time Status',
     description:
       'Drivers update order status with one tap. You see it instantly.',
   },
   {
-    icon: WifiOff,
+    icon: WifiDisconnected01Icon,
     title: 'Works Offline',
     description:
       'Full inspection capability without cell service. Syncs when back online.',
@@ -85,7 +91,6 @@ export function DriverAppSection() {
 
             <div className="mt-10 space-y-6">
               {driverFeatures.map((feature, idx) => {
-                const Icon = feature.icon
                 return (
                   <TimelineContent
                     key={feature.title}
@@ -95,7 +100,7 @@ export function DriverAppSection() {
                   >
                     <div className="flex gap-4">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-brand/15 bg-gradient-to-b from-brand/[0.12] to-brand/[0.04]">
-                        <Icon className="h-5 w-5 text-brand" />
+                        <HugeiconsIcon icon={feature.icon} size={20} className="text-brand" />
                       </div>
                       <div>
                         <h3 className="text-sm font-semibold text-foreground">

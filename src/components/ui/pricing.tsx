@@ -4,7 +4,14 @@ import { TimelineContent } from "@/components/ui/timeline-animation";
 import { VerticalCutReveal } from "@/components/ui/vertical-cut-reveal";
 import { cn } from "@/lib/utils";
 import NumberFlow from "@number-flow/react";
-import { Truck, CheckCheck, Car, Headphones, Shield, User } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  TruckIcon,
+  Tick02Icon,
+  Car01Icon,
+  HeadphonesIcon,
+  UserIcon,
+} from "@hugeicons/core-free-icons";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { useRef, useState } from "react";
@@ -19,9 +26,9 @@ const plans = [
     buttonText: "Start Free Trial",
     buttonVariant: "outline" as const,
     features: [
-      { text: "1 truck, 1 driver (you)", icon: <User size={20} /> },
-      { text: "Up to 20 orders/month", icon: <Car size={20} /> },
-      { text: "Email support", icon: <Headphones size={20} /> },
+      { text: "1 truck, 1 driver (you)", icon: <HugeiconsIcon icon={UserIcon} size={20} /> },
+      { text: "Up to 20 orders/month", icon: <HugeiconsIcon icon={Car01Icon} size={20} /> },
+      { text: "Email support", icon: <HugeiconsIcon icon={HeadphonesIcon} size={20} /> },
     ],
     includes: [
       "Free includes:",
@@ -41,9 +48,9 @@ const plans = [
     buttonText: "Start Free Trial",
     buttonVariant: "outline" as const,
     features: [
-      { text: "Up to 50 orders/month", icon: <Car size={20} /> },
-      { text: "5 trucks, 5 drivers", icon: <Truck size={20} /> },
-      { text: "Email support", icon: <Headphones size={20} /> },
+      { text: "Up to 50 orders/month", icon: <HugeiconsIcon icon={Car01Icon} size={20} /> },
+      { text: "5 trucks, 5 drivers", icon: <HugeiconsIcon icon={TruckIcon} size={20} /> },
+      { text: "Email support", icon: <HugeiconsIcon icon={HeadphonesIcon} size={20} /> },
     ],
     includes: [
       "Free includes:",
@@ -64,9 +71,9 @@ const plans = [
     buttonVariant: "default" as const,
     popular: true,
     features: [
-      { text: "Unlimited orders", icon: <Car size={20} /> },
-      { text: "25 trucks, unlimited drivers", icon: <Truck size={20} /> },
-      { text: "Priority support", icon: <Headphones size={20} /> },
+      { text: "Unlimited orders", icon: <HugeiconsIcon icon={Car01Icon} size={20} /> },
+      { text: "25 trucks, unlimited drivers", icon: <HugeiconsIcon icon={TruckIcon} size={20} /> },
+      { text: "Priority support", icon: <HugeiconsIcon icon={HeadphonesIcon} size={20} /> },
     ],
     includes: [
       "Everything in Starter, plus:",
@@ -286,7 +293,7 @@ export default function PricingSection() {
                     {plan.includes.slice(1).map((feature, featureIndex) => (
                       <li key={featureIndex} className="flex items-center">
                         <span className="h-5 w-5 bg-brand/10 border border-brand/30 rounded-full grid place-content-center mr-3 shrink-0">
-                          <CheckCheck className="h-3 w-3 text-brand" />
+                          <HugeiconsIcon icon={Tick02Icon} size={12} className="text-brand" />
                         </span>
                         <span className="text-sm text-muted-foreground">{feature}</span>
                       </li>

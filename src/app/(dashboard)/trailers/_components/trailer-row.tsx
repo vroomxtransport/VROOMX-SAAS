@@ -10,7 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Pencil, Caravan, Truck as TruckIcon } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { PencilEdit01Icon, CaravanIcon, TruckIcon } from '@hugeicons/core-free-icons'
 import { CopyIdButton } from '@/components/shared/copy-id-button'
 import type { Trailer } from '@/types/database'
 import { TRAILER_TYPE_LABELS } from '@/types'
@@ -53,7 +54,7 @@ export function TrailerRow({ trailer, onEdit }: TrailerRowProps) {
       className="flex w-full items-center gap-3 rounded-lg border border-border-subtle bg-surface px-3 py-2.5 text-left shadow-sm transition-colors card-hover hover:border-brand/30"
     >
       <div className="flex items-center gap-2 min-w-0 shrink-0 w-[100px]">
-        <Caravan className="h-4 w-4 shrink-0 text-muted-foreground/60" />
+        <HugeiconsIcon icon={CaravanIcon} size={16} className="shrink-0 text-muted-foreground/60" />
         <span className="text-sm font-semibold text-foreground truncate">
           {trailer.trailer_number}
         </span>
@@ -72,7 +73,7 @@ export function TrailerRow({ trailer, onEdit }: TrailerRowProps) {
 
       {trailer.assigned_truck && (
         <div className="hidden md:flex items-center gap-1 text-xs text-blue-600 shrink-0">
-          <TruckIcon className="h-3 w-3" />
+          <HugeiconsIcon icon={TruckIcon} size={12} />
           <span>{trailer.assigned_truck.unit_number}</span>
         </div>
       )}
@@ -108,7 +109,7 @@ export function TrailerRow({ trailer, onEdit }: TrailerRowProps) {
             onEdit()
           }}
         >
-          <Pencil className="h-4 w-4" />
+          <HugeiconsIcon icon={PencilEdit01Icon} size={16} />
         </Button>
       </div>
     </div>

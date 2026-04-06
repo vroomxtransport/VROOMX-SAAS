@@ -3,12 +3,13 @@
 import { useRef } from 'react'
 import { useInView } from 'motion/react'
 import NumberFlow from '@number-flow/react'
-import { Zap, TrendingUp, DollarSign } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { FlashIcon, Analytics02Icon, MoneyBag02Icon } from '@hugeicons/core-free-icons'
 import { TimelineContent } from '@/components/ui/timeline-animation'
 
 interface Metric {
-  icon: LucideIcon
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  icon: any
   value: number
   prefix: string
   suffix: string
@@ -18,7 +19,7 @@ interface Metric {
 
 const metrics: Metric[] = [
   {
-    icon: Zap,
+    icon: FlashIcon,
     value: 47,
     prefix: '',
     suffix: '%',
@@ -26,7 +27,7 @@ const metrics: Metric[] = [
     sublabel: 'vs. 0% with spreadsheets and most dispatch tools',
   },
   {
-    icon: TrendingUp,
+    icon: Analytics02Icon,
     value: 3.2,
     prefix: '',
     suffix: 'x',
@@ -34,7 +35,7 @@ const metrics: Metric[] = [
     sublabel: 'Without adding a single office hire',
   },
   {
-    icon: DollarSign,
+    icon: MoneyBag02Icon,
     value: 12400,
     prefix: '$',
     suffix: '',
@@ -57,7 +58,6 @@ export function MetricsBanner() {
         >
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-3 lg:gap-12">
             {metrics.map((metric, idx) => {
-              const Icon = metric.icon
               const isDecimal = !Number.isInteger(metric.value)
               return (
                 <TimelineContent
@@ -68,7 +68,7 @@ export function MetricsBanner() {
                 >
                   <div className="text-center">
                     <div className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-brand/15 bg-gradient-to-b from-brand/[0.12] to-brand/[0.04]">
-                      <Icon className="h-5 w-5 text-brand" />
+                      <HugeiconsIcon icon={metric.icon} size={20} className="text-brand" />
                     </div>
                     <p className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
                       {metric.prefix}

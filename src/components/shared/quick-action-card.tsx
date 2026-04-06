@@ -1,16 +1,17 @@
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
-import type { LucideIcon } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
 
 interface QuickActionCardProps {
   href: string
-  icon: LucideIcon
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  icon: any // Hugeicons icon data (array of SVG paths)
   label: string
   description: string
   disabled?: boolean
 }
 
-export function QuickActionCard({ href, icon: Icon, label, description, disabled }: QuickActionCardProps) {
+export function QuickActionCard({ href, icon, label, description, disabled }: QuickActionCardProps) {
   if (disabled) {
     return (
       <div
@@ -18,7 +19,7 @@ export function QuickActionCard({ href, icon: Icon, label, description, disabled
         aria-disabled="true"
       >
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted">
-          <Icon className="h-5 w-5 text-muted-foreground" />
+          <HugeiconsIcon icon={icon} size={20} className="text-muted-foreground" />
         </div>
         <div className="min-w-0">
           <p className="text-sm font-medium text-foreground">{label}</p>
@@ -37,7 +38,7 @@ export function QuickActionCard({ href, icon: Icon, label, description, disabled
       )}
     >
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted transition-all duration-200 group-hover:bg-brand/10">
-        <Icon className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-brand" />
+        <HugeiconsIcon icon={icon} size={20} className="text-muted-foreground transition-colors group-hover:text-brand" />
       </div>
       <div className="min-w-0">
         <p className="text-sm font-medium text-foreground">{label}</p>

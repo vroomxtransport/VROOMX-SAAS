@@ -1,7 +1,8 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { ChartIncreaseIcon, ChartDecreaseIcon, MinusSignIcon } from '@hugeicons/core-free-icons'
 
 export interface KPIDeltaProps {
   current: number
@@ -23,7 +24,7 @@ export function KPIDelta({ current, previous, invertColor = false, className }: 
   if (previous === 0) {
     return (
       <span className={cn('inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-medium tabular-nums text-muted-foreground/60 bg-muted/40', className)}>
-        <Minus className="h-3 w-3" />
+        <HugeiconsIcon icon={MinusSignIcon} size={12} />
         <span></span>
       </span>
     )
@@ -35,7 +36,7 @@ export function KPIDelta({ current, previous, invertColor = false, className }: 
   if (isZero) {
     return (
       <span className={cn('inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-medium tabular-nums text-muted-foreground/60 bg-muted/40', className)}>
-        <Minus className="h-3 w-3" />
+        <HugeiconsIcon icon={MinusSignIcon} size={12} />
         <span>0%</span>
       </span>
     )
@@ -58,8 +59,8 @@ export function KPIDelta({ current, previous, invertColor = false, className }: 
       )}
     >
       {isPositiveChange
-        ? <TrendingUp className="h-3 w-3 shrink-0" />
-        : <TrendingDown className="h-3 w-3 shrink-0" />
+        ? <HugeiconsIcon icon={ChartIncreaseIcon} size={12} className="shrink-0" />
+        : <HugeiconsIcon icon={ChartDecreaseIcon} size={12} className="shrink-0" />
       }
       <span>{label}</span>
     </span>

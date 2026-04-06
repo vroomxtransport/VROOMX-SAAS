@@ -11,7 +11,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { getTierDisplayName, getStatusBadgeColor } from '@/lib/tier'
-import { Settings, LogOut } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Settings02Icon, Logout01Icon } from '@hugeicons/core-free-icons'
 import Link from 'next/link'
 import type { TenantRole, SubscriptionStatus } from '@/types'
 
@@ -89,7 +90,7 @@ export function UserMenu({
 
         <DropdownMenuItem asChild>
           <Link href="/settings" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
+            <HugeiconsIcon icon={Settings02Icon} size={16} />
             Settings
           </Link>
         </DropdownMenuItem>
@@ -97,7 +98,7 @@ export function UserMenu({
         <DropdownMenuSeparator />
 
         <DropdownMenuItem onClick={handleLogout} className="text-red-600">
-          <LogOut className="mr-2 h-4 w-4" />
+          <HugeiconsIcon icon={Logout01Icon} size={16} className="mr-2" />
           Logout
         </DropdownMenuItem>
       </DropdownMenuContent>

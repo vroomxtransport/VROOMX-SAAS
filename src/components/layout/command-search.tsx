@@ -2,7 +2,15 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, PackageSearch, Truck, UserCog, Route, Loader2 } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import {
+  Search01Icon,
+  PackageSearchIcon,
+  TruckIcon,
+  UserSettings01Icon,
+  Route01Icon,
+  Loading03Icon,
+} from '@hugeicons/core-free-icons'
 import {
   Dialog,
   DialogContent,
@@ -14,19 +22,22 @@ import { globalSearch, type SearchResult, type SearchResults } from '@/app/actio
 
 type Category = 'all' | 'orders' | 'drivers' | 'trucks' | 'trips'
 
-const CATEGORIES: { value: Category; label: string; icon: typeof Search }[] = [
-  { value: 'all', label: 'All', icon: Search },
-  { value: 'orders', label: 'Orders', icon: PackageSearch },
-  { value: 'drivers', label: 'Drivers', icon: UserCog },
-  { value: 'trucks', label: 'Trucks', icon: Truck },
-  { value: 'trips', label: 'Trips', icon: Route },
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type HugeIcon = any // Hugeicons icon data (array of SVG paths)
+
+const CATEGORIES: { value: Category; label: string; icon: HugeIcon }[] = [
+  { value: 'all', label: 'All', icon: Search01Icon },
+  { value: 'orders', label: 'Orders', icon: PackageSearchIcon },
+  { value: 'drivers', label: 'Drivers', icon: UserSettings01Icon },
+  { value: 'trucks', label: 'Trucks', icon: TruckIcon },
+  { value: 'trips', label: 'Trips', icon: Route01Icon },
 ]
 
-const CATEGORY_ICONS: Record<string, typeof Search> = {
-  orders: PackageSearch,
-  drivers: UserCog,
-  trucks: Truck,
-  trips: Route,
+const CATEGORY_ICONS: Record<string, HugeIcon> = {
+  orders: PackageSearchIcon,
+  drivers: UserSettings01Icon,
+  trucks: TruckIcon,
+  trips: Route01Icon,
 }
 
 export function CommandSearch() {
@@ -131,7 +142,7 @@ export function CommandSearch() {
         onClick={() => setOpen(true)}
         className="hidden sm:flex items-center gap-2 w-full max-w-sm rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-muted-foreground hover:border-brand/30 hover:bg-accent/50 transition-all"
       >
-        <Search className="h-3.5 w-3.5 text-muted-foreground/60" />
+        <HugeiconsIcon icon={Search01Icon} size={14} className="text-muted-foreground/60" />
         <span className="flex-1 text-left text-muted-foreground/60">Search...</span>
         <kbd className="inline-flex h-5 items-center gap-0.5 rounded border border-border bg-muted/60 px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
           <span className="text-xs">⌘</span>K
@@ -147,9 +158,9 @@ export function CommandSearch() {
           {/* Search input */}
           <div className="flex items-center gap-2 border-b px-4 py-3">
             {loading ? (
-              <Loader2 className="h-4 w-4 text-brand shrink-0 animate-spin" />
+              <HugeiconsIcon icon={Loading03Icon} size={16} className="text-brand shrink-0 animate-spin" />
             ) : (
-              <Search className="h-4 w-4 text-brand shrink-0" />
+              <HugeiconsIcon icon={Search01Icon} size={16} className="text-brand shrink-0" />
             )}
             <Input
               placeholder="Search orders, trucks, drivers..."
@@ -163,23 +174,20 @@ export function CommandSearch() {
 
           {/* Category filters */}
           <div className="flex gap-1 px-4 pt-3 pb-2 border-b">
-            {CATEGORIES.map((cat) => {
-              const CatIcon = cat.icon
-              return (
-                <button
-                  key={cat.value}
-                  onClick={() => handleCategoryChange(cat.value)}
-                  className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-all ${
-                    category === cat.value
-                      ? 'bg-brand/10 text-brand border border-brand/30'
-                      : 'text-muted-foreground hover:bg-accent border border-transparent'
-                  }`}
-                >
-                  <CatIcon className="h-3 w-3" />
-                  {cat.label}
-                </button>
-              )
-            })}
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat.value}
+                onClick={() => handleCategoryChange(cat.value)}
+                className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-all ${
+                  category === cat.value
+                    ? 'bg-brand/10 text-brand border border-brand/30'
+                    : 'text-muted-foreground hover:bg-accent border border-transparent'
+                }`}
+              >
+                <HugeiconsIcon icon={cat.icon} size={12} />
+                {cat.label}
+              </button>
+            ))}
           </div>
 
           {/* Results area */}
@@ -194,7 +202,7 @@ export function CommandSearch() {
 
             {hasQuery && loading && (
               <div className="p-6 text-center">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground mx-auto mb-2" />
+                <HugeiconsIcon icon={Loading03Icon} size={20} className="animate-spin text-muted-foreground mx-auto mb-2" />
                 <p className="text-xs text-muted-foreground">Searching...</p>
               </div>
             )}
@@ -213,13 +221,13 @@ export function CommandSearch() {
                 {(['orders', 'drivers', 'trucks', 'trips'] as const).map((cat) => {
                   const items = results[cat]
                   if (items.length === 0) return null
-                  const CatIcon = CATEGORY_ICONS[cat]
+                  const catIcon = CATEGORY_ICONS[cat]
 
                   return (
                     <div key={cat}>
                       <div className="px-4 py-1.5">
                         <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                          <CatIcon className="h-3 w-3" />
+                          <HugeiconsIcon icon={catIcon} size={12} />
                           {cat}
                         </p>
                       </div>

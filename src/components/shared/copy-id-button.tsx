@@ -8,7 +8,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { Check, Copy } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Tick02Icon, Copy01Icon } from '@hugeicons/core-free-icons'
 import { cn } from '@/lib/utils'
 
 interface CopyIdButtonProps {
@@ -49,7 +50,7 @@ export function CopyIdButton({ value, className }: CopyIdButtonProps) {
                 copied ? 'scale-100 opacity-100' : 'scale-0 opacity-0'
               )}
             >
-              <Check className="h-3.5 w-3.5 stroke-emerald-500" aria-hidden="true" />
+              <HugeiconsIcon icon={Tick02Icon} size={14} className="text-emerald-500" aria-hidden="true" />
             </div>
             <div
               className={cn(
@@ -57,7 +58,7 @@ export function CopyIdButton({ value, className }: CopyIdButtonProps) {
                 copied ? 'scale-0 opacity-0' : 'scale-100 opacity-100'
               )}
             >
-              <Copy className="h-3.5 w-3.5" aria-hidden="true" />
+              <HugeiconsIcon icon={Copy01Icon} size={14} aria-hidden="true" />
             </div>
           </Button>
         </TooltipTrigger>

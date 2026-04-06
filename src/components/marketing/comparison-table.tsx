@@ -1,7 +1,8 @@
 'use client'
 
 import { useRef } from 'react'
-import { Check, X, AlertTriangle } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Tick02Icon, Cancel01Icon, Alert02Icon } from '@hugeicons/core-free-icons'
 import { TimelineContent } from '@/components/ui/timeline-animation'
 import { cn } from '@/lib/utils'
 
@@ -122,11 +123,11 @@ const rows: ComparisonRow[] = [
 function StatusIcon({ status }: { status: CellStatus }) {
   switch (status) {
     case 'yes':
-      return <Check className="h-4 w-4 text-emerald-500" />
+      return <HugeiconsIcon icon={Tick02Icon} size={16} className="text-emerald-500" />
     case 'no':
-      return <X className="h-4 w-4 text-red-400/70" />
+      return <HugeiconsIcon icon={Cancel01Icon} size={16} className="text-red-400/70" />
     case 'partial':
-      return <AlertTriangle className="h-4 w-4 text-amber-500" />
+      return <HugeiconsIcon icon={Alert02Icon} size={16} className="text-amber-500" />
     case 'text':
       return null
   }

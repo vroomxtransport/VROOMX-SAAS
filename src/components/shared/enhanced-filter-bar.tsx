@@ -23,7 +23,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { X, Search, SlidersHorizontal, ChevronDown, Calendar as CalendarIcon } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import {
+  Cancel01Icon,
+  Search01Icon,
+  SlidersHorizontalIcon,
+  ArrowDown01Icon,
+  Calendar03Icon,
+} from '@hugeicons/core-free-icons'
 import { Calendar } from '@/components/ui/calendar'
 import { cn } from '@/lib/utils'
 import type { EnhancedFilterConfig, FilterOption, DateRange, DatePreset } from '@/types/filters'
@@ -60,7 +67,7 @@ function DebouncedSearch({
 
   return (
     <div className="relative">
-      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <HugeiconsIcon icon={Search01Icon} size={16} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
       <Input
         placeholder={placeholder}
         value={local}
@@ -75,7 +82,7 @@ function DebouncedSearch({
           }}
           className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
         >
-          <X className="h-3.5 w-3.5" />
+          <HugeiconsIcon icon={Cancel01Icon} size={14} />
         </button>
       )}
     </div>
@@ -156,7 +163,7 @@ function MultiSelectFilter({
               {selected.length}
             </Badge>
           )}
-          <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+          <HugeiconsIcon icon={ArrowDown01Icon} size={14} className="opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-2" align="start">
@@ -238,7 +245,7 @@ function DateRangeFilter({
       <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
         <PopoverTrigger asChild>
           <Button variant="outline" size="sm" className="h-9 gap-1.5">
-            <CalendarIcon className="h-3.5 w-3.5" />
+            <HugeiconsIcon icon={Calendar03Icon} size={14} />
             {value ? (
               <span className="text-xs">
                 {formatDate(value.from)} – {formatDate(value.to)}
@@ -246,7 +253,7 @@ function DateRangeFilter({
             ) : (
               label
             )}
-            <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+            <HugeiconsIcon icon={ArrowDown01Icon} size={14} className="opacity-50" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[200px] p-2" align="start">
@@ -478,9 +485,9 @@ export function EnhancedFilterBar({
             onClick={clearAll}
             className="h-9 gap-1.5 text-muted-foreground hover:text-foreground"
           >
-            <SlidersHorizontal className="h-3.5 w-3.5" />
+            <HugeiconsIcon icon={SlidersHorizontalIcon} size={14} />
             {activeCount} active
-            <X className="h-3.5 w-3.5" />
+            <HugeiconsIcon icon={Cancel01Icon} size={14} />
           </Button>
         )}
 
@@ -519,7 +526,7 @@ export function EnhancedFilterBar({
                 }}
                 className="ml-0.5 rounded-full p-0.5 hover:bg-muted"
               >
-                <X className="h-3 w-3" />
+                <HugeiconsIcon icon={Cancel01Icon} size={12} />
               </button>
             </Badge>
           ))}

@@ -1,55 +1,56 @@
 'use client'
 
 import { useRef } from 'react'
+import { HugeiconsIcon } from '@hugeicons/react'
 import {
-  ClipboardList,
-  Route,
-  Smartphone,
-  Receipt,
-  Truck,
-  ShieldCheck,
-} from 'lucide-react'
+  ClipboardIcon,
+  Route01Icon,
+  SmartPhone01Icon,
+  ReceiptDollarIcon,
+  TruckIcon,
+  ShieldEnergyIcon,
+} from '@hugeicons/core-free-icons'
 import { TimelineContent } from '@/components/ui/timeline-animation'
 import { VerticalCutReveal } from '@/components/ui/vertical-cut-reveal'
 
 const features = [
   {
-    icon: ClipboardList,
+    icon: ClipboardIcon,
     title: 'Load Management',
     description:
       'Create and track vehicle transport orders with VIN decoding, multi-step intake wizards, and real-time status updates from new to delivered.',
     gradient: 'from-blue-500 to-blue-600',
   },
   {
-    icon: Route,
+    icon: Route01Icon,
     title: 'Smart Dispatch',
     description:
       'Build optimized trips, assign orders and drivers, visualize routes on a Kanban board, and auto-calculate driver pay across three pay models.',
     gradient: 'from-violet-500 to-purple-600',
   },
   {
-    icon: Smartphone,
+    icon: SmartPhone01Icon,
     title: 'Driver Mobile App',
     description:
       'Native iOS app with offline-capable inspections, photo and video capture, digital BOL generation, and real-time order status updates.',
     gradient: 'from-cyan-500 to-blue-500',
   },
   {
-    icon: Receipt,
+    icon: ReceiptDollarIcon,
     title: 'Automated Billing',
     description:
       'Generate branded PDF invoices, send via email, record payments, and track receivables with aging analysis and collection metrics.',
     gradient: 'from-emerald-500 to-green-600',
   },
   {
-    icon: Truck,
+    icon: TruckIcon,
     title: 'Fleet Operations',
     description:
       'Manage trucks, trailers, and drivers in one place. Track documents with expiry alerts, upload CDLs and medical cards, monitor fleet health.',
     gradient: 'from-amber-500 to-orange-500',
   },
   {
-    icon: ShieldCheck,
+    icon: ShieldEnergyIcon,
     title: 'Enterprise Security',
     description:
       'Row-level security isolates every carrier. Role-based access, team invitations, and SOC-2 aligned infrastructure you can trust.',
@@ -97,7 +98,7 @@ export function FeatureGrid() {
             <TimelineContent key={feature.title} as="div" animationNum={3 + idx} timelineRef={sectionRef} customVariants={revealVariants}>
               <div className="group rounded-2xl border border-border-subtle bg-surface p-6 shadow-sm transition-all duration-200 hover:border-border hover:shadow-md card-hover">
                 <div className={`flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br ${feature.gradient}`}>
-                  <feature.icon className="h-5 w-5 text-white" />
+                  <HugeiconsIcon icon={feature.icon} size={20} className="text-white" />
                 </div>
                 <h3 className="mt-4 text-base font-bold">{feature.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">

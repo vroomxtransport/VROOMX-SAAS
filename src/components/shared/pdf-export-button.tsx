@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { FileText } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Invoice02Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -32,7 +33,7 @@ export function PdfExportButton({ onExport, className, label }: PdfExportButtonP
       disabled={exporting}
       className={cn('gap-1.5', className)}
     >
-      <FileText className="h-3.5 w-3.5" />
+      <HugeiconsIcon icon={Invoice02Icon} size={14} />
       {exporting ? 'Generating\u2026' : (label ?? 'PDF')}
     </Button>
   )
