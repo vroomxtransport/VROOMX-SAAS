@@ -31,7 +31,7 @@ export function Header({
   const { toggle, isCollapsed, toggleCollapse } = useSidebarStore()
 
   return (
-    <header className="sticky top-0 z-30 flex h-12 items-center justify-between border-b border-border bg-background/80 backdrop-blur-xl px-4 lg:px-6">
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background/90 backdrop-blur-xl shadow-sm px-4 lg:px-6">
       <div className="flex items-center gap-2">
         {/* Mobile hamburger */}
         <button

@@ -68,6 +68,9 @@
   --color-success-foreground: var(--success-foreground);
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
+  --color-table-row-alt: var(--table-row-alt);
+  --color-table-row-hover: var(--table-row-hover);
+  --color-table-header-bg: var(--table-header-bg);
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
   --animate-ripple: ripple 2s ease calc(var(--i, 0) * 0.2s) infinite;
@@ -75,8 +78,8 @@
 }
 
 :root {
-  --radius: 10px;
-  --font-sans: "Verlag", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  --radius: 8px;
+  --font-sans: var(--font-geist-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: monospace;
   --font-serif: "ChronicleCondensed", "ChronicleTextG1Roman", "IBM Plex Serif", serif;
   --font-display: 'Instrument Serif', serif;
@@ -102,12 +105,12 @@
   --input: #e5e7eb;
   --ring: #192334;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.05), 0 4px 16px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.04);
-  --shadow-xl: 0 8px 16px rgba(0, 0, 0, 0.06), 0 16px 32px rgba(0, 0, 0, 0.04);
-  --shadow-2xl: 0 12px 24px rgba(0, 0, 0, 0.08);
+  --shadow-sm: 0 1px 2px rgba(50,50,93,0.08), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow: 0 2px 4px rgba(50,50,93,0.1), 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 6px rgba(50,50,93,0.11), 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 16px rgba(50,50,93,0.12), 0 4px 8px rgba(0,0,0,0.06);
+  --shadow-xl: 0 12px 24px rgba(50,50,93,0.14), 0 8px 16px rgba(0,0,0,0.08);
+  --shadow-2xl: 0 20px 40px rgba(50,50,93,0.16), 0 12px 24px rgba(0,0,0,0.1);
 
   --chart-1: #192334;
   --chart-2: #f59e0b;
@@ -144,7 +147,7 @@
   --sidebar-bg-subtle: #f8f9fb;
   --sidebar-border-color: #e5e7eb;
   --sidebar-hover: #f3f4f6;
-  --sidebar-active: #eef2ff;
+  --sidebar-active: #e8ecf4;
   --sidebar-active-glow: transparent;
   --sidebar-text: #6b7280;
   --sidebar-text-active: #192334;
@@ -159,6 +162,28 @@
   --accent-violet-bg: #f5f3ff;
   --accent-emerald: #10b981;
   --accent-emerald-bg: #ecfdf5;
+
+  /* Table tokens */
+  --table-row-alt: rgba(0,0,0,0.015);
+  --table-row-hover: rgba(0,0,0,0.04);
+  --table-header-bg: #f4f5f7;
+  --table-border: #e5e7eb;
+
+  /* Semantic status tokens */
+  --status-new: #3b82f6;
+  --status-new-bg: #eff6ff;
+  --status-pending: #f59e0b;
+  --status-pending-bg: #fffbeb;
+  --status-active: #10b981;
+  --status-active-bg: #ecfdf5;
+  --status-completed: #059669;
+  --status-completed-bg: #d1fae5;
+  --status-cancelled: #ef4444;
+  --status-cancelled-bg: #fef2f2;
+  --status-invoiced: #6366f1;
+  --status-invoiced-bg: #eef2ff;
+  --status-paid: #059669;
+  --status-paid-bg: #d1fae5;
 
   /* Auth animated components */
   --skeleton: #e5e5e5;
@@ -206,12 +231,12 @@
   --surface: #ffffff;
   --surface-raised: #edf0f4;
   --border-subtle: #d1d5db;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.1);
-  --shadow: 0 2px 4px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07), 0 8px 24px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.08), 0 16px 40px rgba(0, 0, 0, 0.06);
-  --shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.06);
-  --shadow-2xl: 0px 9px 20px 0px rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 1px 2px rgba(50,50,93,0.08), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow: 0 2px 4px rgba(50,50,93,0.1), 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 6px rgba(50,50,93,0.11), 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 16px rgba(50,50,93,0.12), 0 4px 8px rgba(0,0,0,0.06);
+  --shadow-xl: 0 12px 24px rgba(50,50,93,0.14), 0 8px 16px rgba(0,0,0,0.08);
+  --shadow-2xl: 0 20px 40px rgba(50,50,93,0.16), 0 12px 24px rgba(0,0,0,0.1);
   background-color: var(--background);
   color: var(--foreground);
 }
@@ -335,6 +360,10 @@
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom);
   }
+
+  .table-row-striped:nth-child(even) {
+    background-color: var(--table-row-alt);
+  }
 }
 
 @layer components {
@@ -447,10 +476,11 @@
     background: var(--card);
     padding: 1.25rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.04);
-    transition: box-shadow 0.2s ease;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
 
     &:hover {
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px rgba(50,50,93,0.11), 0 2px 4px rgba(0,0,0,0.06), 0 0 0 1px rgba(255,255,255,0.5) inset;
     }
   }
 
@@ -481,7 +511,7 @@
     align-items: center;
     gap: 0.5rem;
     font-size: 0.875rem;
-    font-weight: 700;
+    font-weight: 500;
     color: var(--foreground);
     letter-spacing: -0.01em;
   }
