@@ -79,6 +79,50 @@ export async function sendMessage(channelId: string, data: unknown) {
   return { success: true, data: message }
 }
 
+export async function updateChannel(channelId: string, data: unknown) {
+  if (!UUID_RE.test(channelId)) return { error: 'Invalid channel ID' }
+
+  const parsed = channelSchema.safeParse(data)
+  if (!parsed.success) return { error: parsed.error.flatten().fieldErrors }
+
+  const auth = await authorize('chat.update', { rateLimit: { key: 'updateChannel', limit: 20, windowMs: 60_000 } })
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
+
+  const { data: channel, error } = await supabase
+    .from('chat_channels')
+    .update({
+      name: parsed.data.name,
+      description: parsed.data.description || null,
+    })
+    .eq('id', channelId)
+    .eq('tenant_id', tenantId)
+    .select()
+    .single()
+
+  if (error) return { error: safeError(error, 'updateChannel') }
+  revalidatePath('/team-chat')
+  return { success: true, data: channel }
+}
+
+export async function deleteChannel(channelId: string) {
+  if (!UUID_RE.test(channelId)) return { error: 'Invalid channel ID' }
+
+  const auth = await authorize('chat.delete', { rateLimit: { key: 'deleteChannel', limit: 10, windowMs: 60_000 } })
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
+
+  const { error } = await supabase
+    .from('chat_channels')
+    .delete()
+    .eq('id', channelId)
+    .eq('tenant_id', tenantId)
+
+  if (error) return { error: safeError(error, 'deleteChannel') }
+  revalidatePath('/team-chat')
+  return { success: true }
+}
+
 export async function createChannel(data: unknown) {
   const parsed = channelSchema.safeParse(data)
   if (!parsed.success) return { error: parsed.error.flatten().fieldErrors }

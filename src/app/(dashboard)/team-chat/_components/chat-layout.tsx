@@ -56,6 +56,14 @@ export function ChatLayout({ tenantId, userId, userName, email }: ChatLayoutProp
     [channels, selectedChannelId]
   )
 
+  // If the selected channel was deleted, fall back to the first available channel
+  useEffect(() => {
+    if (!channels || channels.length === 0) return
+    if (selectedChannelId && !channels.some((c) => c.id === selectedChannelId)) {
+      setSelectedChannelId(channels[0].id)
+    }
+  }, [channels, selectedChannelId])
+
   // Focus channel heading on channel switch
   useEffect(() => {
     if (selectedChannelId) {

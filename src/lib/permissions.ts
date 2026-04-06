@@ -25,7 +25,7 @@ export const PERMISSION_CATEGORIES = {
   payments: ['payments.view', 'payments.create'],
   invoices: ['invoices.view', 'invoices.send'],
   tasks: ['tasks.view', 'tasks.create', 'tasks.update', 'tasks.delete'],
-  chat: ['chat.view', 'chat.create'],
+  chat: ['chat.view', 'chat.create', 'chat.update', 'chat.delete'],
   documents: ['documents.view', 'documents.create', 'documents.update', 'documents.delete'],
   trip_expenses: ['trip_expenses.view', 'trip_expenses.create', 'trip_expenses.update', 'trip_expenses.delete'],
   business_expenses: ['business_expenses.view', 'business_expenses.create', 'business_expenses.update', 'business_expenses.delete'],

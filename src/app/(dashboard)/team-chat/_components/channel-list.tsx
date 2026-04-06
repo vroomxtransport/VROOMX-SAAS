@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useChannels } from '@/hooks/use-chat'
-import { createChannel } from '@/app/actions/chat'
+import { createChannel, updateChannel, deleteChannel } from '@/app/actions/chat'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -12,9 +12,11 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { Hash, Plus, Loader2 } from 'lucide-react'
+import { ConfirmDialog } from '@/components/shared/confirm-dialog'
+import { Hash, Plus, Loader2, Pencil, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ChannelListSkeleton } from './channel-skeleton'
+import type { ChatChannel } from '@/types/database'
 
 interface ChannelListProps {
   selectedChannelId: string | null
@@ -30,6 +32,23 @@ export function ChannelList({ selectedChannelId, onSelectChannel, onMobileClose 
   const [creating, setCreating] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
 
+  // Edit state
+  const [editingChannel, setEditingChannel] = useState<ChatChannel | null>(null)
+  const [editName, setEditName] = useState('')
+  const [editDesc, setEditDesc] = useState('')
+  const [updating, setUpdating] = useState(false)
+
+  // Delete state
+  const [deletingChannel, setDeletingChannel] = useState<ChatChannel | null>(null)
+
+  // Sync edit dialog fields when editingChannel changes
+  useEffect(() => {
+    if (editingChannel) {
+      setEditName(editingChannel.name)
+      setEditDesc(editingChannel.description ?? '')
+    }
+  }, [editingChannel])
+
   async function handleCreate() {
     if (!channelName.trim()) return
     setCreating(true)
@@ -41,6 +60,32 @@ export function ChannelList({ selectedChannelId, onSelectChannel, onMobileClose 
       setDialogOpen(false)
       setChannelName('')
       setChannelDesc('')
+    }
+  }
+
+  async function handleUpdate() {
+    if (!editingChannel || !editName.trim()) return
+    setUpdating(true)
+    const result = await updateChannel(editingChannel.id, {
+      name: editName.trim(),
+      description: editDesc.trim(),
+    })
+    setUpdating(false)
+    if (!('error' in result && result.error)) {
+      setEditingChannel(null)
+    }
+  }
+
+  async function handleDelete() {
+    if (!deletingChannel) return
+    const wasSelected = selectedChannelId === deletingChannel.id
+    await deleteChannel(deletingChannel.id)
+    setDeletingChannel(null)
+    if (wasSelected) {
+      const remaining = channels?.filter((c) => c.id !== deletingChannel.id)
+      if (remaining && remaining.length > 0) {
+        onSelectChannel(remaining[0].id)
+      }
     }
   }
 
@@ -114,29 +159,58 @@ export function ChannelList({ selectedChannelId, onSelectChannel, onMobileClose 
             {channels.map((channel) => {
               const isSelected = selectedChannelId === channel.id
               return (
-                <button
-                  key={channel.id}
-                  role="option"
-                  aria-selected={isSelected}
-                  onClick={() => handleSelectChannel(channel.id)}
-                  tabIndex={isSelected ? 0 : -1}
-                  className={cn(
-                    'flex w-full items-start gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors text-left',
-                    isSelected
-                      ? 'bg-brand/10 text-foreground border-l-2 border-brand'
-                      : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground border-l-2 border-transparent'
-                  )}
-                >
-                  <Hash className="h-4 w-4 shrink-0 opacity-60 mt-0.5" />
-                  <div className="min-w-0 flex-1">
-                    <span className="truncate block">{channel.name}</span>
-                    {channel.description && (
-                      <span className="text-xs text-muted-foreground truncate block mt-0.5">
-                        {channel.description}
-                      </span>
+                <div key={channel.id} className="group/channel relative">
+                  <button
+                    role="option"
+                    aria-selected={isSelected}
+                    onClick={() => handleSelectChannel(channel.id)}
+                    tabIndex={isSelected ? 0 : -1}
+                    className={cn(
+                      'flex w-full items-start gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors text-left pr-16',
+                      isSelected
+                        ? 'bg-brand/10 text-foreground border-l-2 border-brand'
+                        : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground border-l-2 border-transparent'
                     )}
+                  >
+                    <Hash className="h-4 w-4 shrink-0 opacity-60 mt-0.5" />
+                    <div className="min-w-0 flex-1">
+                      <span className="truncate block">{channel.name}</span>
+                      {channel.description && (
+                        <span className="text-xs text-muted-foreground truncate block mt-0.5">
+                          {channel.description}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+
+                  {/* Hover actions */}
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 group-hover/channel:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      className="h-6 w-6"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setEditingChannel(channel)
+                      }}
+                      aria-label={`Edit ${channel.name}`}
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      className="h-6 w-6 hover:text-destructive"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setDeletingChannel(channel)
+                      }}
+                      aria-label={`Delete ${channel.name}`}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
                   </div>
-                </button>
+                </div>
               )
             })}
           </div>
@@ -164,6 +238,7 @@ export function ChannelList({ selectedChannelId, onSelectChannel, onMobileClose 
         )}
       </div>
 
+      {/* Create dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="shimmer-border">
           <DialogHeader>
@@ -198,6 +273,53 @@ export function ChannelList({ selectedChannelId, onSelectChannel, onMobileClose 
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit dialog */}
+      <Dialog open={!!editingChannel} onOpenChange={(open) => { if (!open) setEditingChannel(null) }}>
+        <DialogContent className="shimmer-border">
+          <DialogHeader>
+            <DialogTitle>Edit Channel</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Input
+              placeholder="Channel name"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleUpdate()
+              }}
+            />
+            <Input
+              placeholder="Description (optional)"
+              value={editDesc}
+              onChange={(e) => setEditDesc(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleUpdate()
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingChannel(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdate} disabled={updating || !editName.trim()}>
+              {updating && <Loader2 className="h-4 w-4 animate-spin" />}
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirm */}
+      <ConfirmDialog
+        open={!!deletingChannel}
+        onOpenChange={(open) => { if (!open) setDeletingChannel(null) }}
+        title={`Delete #${deletingChannel?.name ?? ''}?`}
+        description="This will permanently delete the channel and all its messages. This cannot be undone."
+        confirmLabel="Delete Channel"
+        destructive
+        onConfirm={handleDelete}
+      />
     </div>
   )
 }
