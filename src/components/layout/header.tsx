@@ -1,7 +1,12 @@
 'use client'
 
 import { useSidebarStore } from '@/stores/sidebar-store'
-import { Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import {
+  Menu01Icon,
+  SidebarLeft01Icon,
+  SidebarRight01Icon,
+} from '@hugeicons/core-free-icons'
 import { Breadcrumbs } from './breadcrumbs'
 import { CommandSearch } from './command-search'
 import { UserMenu } from './user-menu'
@@ -39,7 +44,7 @@ export function Header({
           className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors lg:hidden"
           aria-label="Toggle sidebar"
         >
-          <Menu className="h-5 w-5" />
+          <HugeiconsIcon icon={Menu01Icon} size={20} />
         </button>
 
         {/* Desktop collapse toggle */}
@@ -49,9 +54,9 @@ export function Header({
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {isCollapsed ? (
-            <PanelLeftOpen className="h-4 w-4" />
+            <HugeiconsIcon icon={SidebarRight01Icon} size={16} />
           ) : (
-            <PanelLeftClose className="h-4 w-4" />
+            <HugeiconsIcon icon={SidebarLeft01Icon} size={16} />
           )}
         </button>
 

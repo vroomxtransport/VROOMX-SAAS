@@ -6,34 +6,34 @@ import { usePathname } from 'next/navigation'
 import { useSidebarStore } from '@/stores/sidebar-store'
 import { hasMinRole } from '@/lib/tier'
 import type { TenantRole } from '@/types'
+import { HugeiconsIcon } from '@hugeicons/react'
 import {
-  Gauge,
-  Car,
-  Milestone,
-  Truck,
-  IdCard,
-  Building2,
-  FileText,
-  SlidersHorizontal,
-  X,
-  PanelLeftClose,
-  PanelLeftOpen,
-  MapPinned,
-  ListTodo,
-  MapPin,
-  Hammer,
-  Droplets,
-  Radio,
-  Activity,
-  MessagesSquare,
-  ShieldAlert,
-  CircleDollarSign,
-  Caravan,
-  Wallet,
-  Plug,
-  Route,
-  Navigation,
-} from 'lucide-react'
+  DashboardSquare01Icon,
+  TaskDaily02Icon,
+  MapsLocation01Icon,
+  MessageMultiple02Icon,
+  Car01Icon,
+  Route01Icon,
+  TruckIcon,
+  ContainerTruck01Icon,
+  UserSettings01Icon,
+  DeliveryTruck01Icon,
+  Wrench01Icon,
+  Fuel01Icon,
+  HeadsetIcon,
+  Analytics02Icon,
+  Wallet01Icon,
+  ShieldEnergyIcon,
+  MoneyBag02Icon,
+  Invoice02Icon,
+  DeliveryBox01Icon,
+  Building06Icon,
+  PlugSocketIcon,
+  Settings02Icon,
+  Cancel01Icon,
+  SidebarLeft01Icon,
+  SidebarRight01Icon,
+} from '@hugeicons/core-free-icons'
 import { cn } from '@/lib/utils'
 import {
   Tooltip,
@@ -46,7 +46,8 @@ import { useChatUnread } from '@/hooks/use-chat-unread'
 type NavItem = {
   name: string
   href: string
-  icon: React.ElementType
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  icon: any
   minRole?: TenantRole
   badge?: number
 }
@@ -60,58 +61,58 @@ const NAV_CATEGORIES: NavCategory[] = [
   {
     label: 'Main',
     items: [
-      { name: 'Dashboard', href: '/dashboard', icon: Gauge },
-      { name: 'Tasks', href: '/tasks', icon: ListTodo },
-      { name: 'Live Map', href: '/live-map', icon: MapPinned },
-      { name: 'Team Chat', href: '/team-chat', icon: MessagesSquare },
+      { name: 'Dashboard', href: '/dashboard', icon: DashboardSquare01Icon },
+      { name: 'Tasks', href: '/tasks', icon: TaskDaily02Icon },
+      { name: 'Live Map', href: '/live-map', icon: MapsLocation01Icon },
+      { name: 'Team Chat', href: '/team-chat', icon: MessageMultiple02Icon },
     ],
   },
   {
     label: 'Operations',
     items: [
-      { name: 'Orders', href: '/orders', icon: Car },
-      { name: 'Trips', href: '/dispatch', icon: Milestone },
+      { name: 'Orders', href: '/orders', icon: Car01Icon },
+      { name: 'Trips', href: '/dispatch', icon: Route01Icon },
     ],
   },
   {
     label: 'Fleet',
     items: [
-      { name: 'Trucks', href: '/trucks', icon: Truck },
-      { name: 'Trailers', href: '/trailers', icon: Caravan },
-      { name: 'Drivers', href: '/drivers', icon: IdCard, minRole: 'dispatcher' },
-      { name: 'Local Runs', href: '/local-runs', icon: Route, minRole: 'dispatcher' },
-      { name: 'Maintenance', href: '/maintenance', icon: Hammer, minRole: 'dispatcher' },
-      { name: 'Fuel Tracking', href: '/fuel-tracking', icon: Droplets, minRole: 'dispatcher' },
+      { name: 'Trucks', href: '/trucks', icon: TruckIcon },
+      { name: 'Trailers', href: '/trailers', icon: ContainerTruck01Icon },
+      { name: 'Drivers', href: '/drivers', icon: UserSettings01Icon, minRole: 'dispatcher' },
+      { name: 'Local Runs', href: '/local-runs', icon: DeliveryTruck01Icon, minRole: 'dispatcher' },
+      { name: 'Maintenance', href: '/maintenance', icon: Wrench01Icon, minRole: 'dispatcher' },
+      { name: 'Fuel Tracking', href: '/fuel-tracking', icon: Fuel01Icon, minRole: 'dispatcher' },
     ],
   },
   {
     label: 'People',
     items: [
-      { name: 'Dispatchers', href: '/dispatchers', icon: Radio, minRole: 'admin' },
-      { name: 'Performance', href: '/dispatcher-performance', icon: Activity, minRole: 'admin' },
+      { name: 'Dispatchers', href: '/dispatchers', icon: HeadsetIcon, minRole: 'admin' },
+      { name: 'Performance', href: '/dispatcher-performance', icon: Analytics02Icon, minRole: 'admin' },
     ],
   },
   {
     label: 'Safety & Compliance',
     items: [
-      { name: 'Safety & Compliance', href: '/compliance', icon: ShieldAlert, minRole: 'admin' },
+      { name: 'Safety & Compliance', href: '/compliance', icon: ShieldEnergyIcon, minRole: 'admin' },
     ],
   },
   {
     label: 'Finance',
     items: [
-      { name: 'Financials', href: '/financials', icon: CircleDollarSign, minRole: 'admin' },
-      { name: 'Billing', href: '/billing', icon: FileText, minRole: 'admin' },
-      { name: 'Payroll', href: '/payroll', icon: Wallet, minRole: 'admin' },
-      { name: 'Local Driver Pay', href: '/local-driver-payroll', icon: Navigation, minRole: 'admin' },
-      { name: 'Brokers', href: '/brokers', icon: Building2, minRole: 'dispatcher' },
+      { name: 'Financials', href: '/financials', icon: MoneyBag02Icon, minRole: 'admin' },
+      { name: 'Billing', href: '/billing', icon: Invoice02Icon, minRole: 'admin' },
+      { name: 'Payroll', href: '/payroll', icon: Wallet01Icon, minRole: 'admin' },
+      { name: 'Local Driver Pay', href: '/local-driver-payroll', icon: DeliveryBox01Icon, minRole: 'admin' },
+      { name: 'Brokers', href: '/brokers', icon: Building06Icon, minRole: 'dispatcher' },
     ],
   },
   {
     label: 'System',
     items: [
-      { name: 'Integrations', href: '/integrations', icon: Plug },
-      { name: 'Settings', href: '/settings', icon: SlidersHorizontal, minRole: 'admin' },
+      { name: 'Integrations', href: '/integrations', icon: PlugSocketIcon },
+      { name: 'Settings', href: '/settings', icon: Settings02Icon, minRole: 'admin' },
     ],
   },
 ]
@@ -183,7 +184,7 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
             className="lg:hidden shrink-0 rounded-md p-1 text-[var(--sidebar-text)] hover:bg-[var(--sidebar-hover)] transition-colors"
             aria-label="Close sidebar"
           >
-            <X className="h-5 w-5" />
+            <HugeiconsIcon icon={Cancel01Icon} size={20} />
           </button>
         </div>
 
@@ -208,10 +209,10 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
             aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             {isCollapsed ? (
-              <PanelLeftOpen className="h-4 w-4" />
+              <HugeiconsIcon icon={SidebarRight01Icon} size={16} />
             ) : (
               <>
-                <PanelLeftClose className="h-4 w-4" />
+                <HugeiconsIcon icon={SidebarLeft01Icon} size={16} />
                 <span className="text-xs text-[var(--sidebar-category)]">Collapse</span>
               </>
             )}
@@ -238,7 +239,6 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
               {/* Nav items */}
               <div className="space-y-0.5">
                 {category.items.map((item) => {
-                  const Icon = item.icon
                   const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
                   // Inject live unread count for Team Chat
                   const badge = item.href === '/team-chat' && totalUnread > 0 ? totalUnread : undefined
@@ -260,10 +260,11 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
                       {isActive && (
                         <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-brand" />
                       )}
-                      <Icon
+                      <HugeiconsIcon
+                        icon={item.icon}
+                        size={isCollapsed ? 18 : 20}
                         className={cn(
                           'shrink-0 transition-colors',
-                          isCollapsed ? 'h-[18px] w-[18px]' : 'h-5 w-5',
                           isActive ? 'text-brand' : 'group-hover:text-[var(--sidebar-text-active)]'
                         )}
                       />
