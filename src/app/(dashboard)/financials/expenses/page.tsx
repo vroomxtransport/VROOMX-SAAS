@@ -1,5 +1,3 @@
-export const dynamic = 'force-dynamic'
-
 import { BusinessExpensesDashboard } from '../_components/business-expenses-dashboard'
 
 export const metadata = {

@@ -33,9 +33,6 @@ import {
   Plug,
   Route,
   Navigation,
-  Star,
-  Trophy,
-  FileBarChart,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -82,7 +79,6 @@ const NAV_CATEGORIES: NavCategory[] = [
       { name: 'Trucks', href: '/trucks', icon: Truck },
       { name: 'Trailers', href: '/trailers', icon: Caravan },
       { name: 'Drivers', href: '/drivers', icon: IdCard, minRole: 'dispatcher' },
-      { name: 'Driver Performance', href: '/drivers/performance', icon: Trophy, minRole: 'admin' },
       { name: 'Local Runs', href: '/local-runs', icon: Route, minRole: 'dispatcher' },
       { name: 'Maintenance', href: '/maintenance', icon: Hammer, minRole: 'dispatcher' },
       { name: 'Fuel Tracking', href: '/fuel-tracking', icon: Droplets, minRole: 'dispatcher' },
@@ -105,12 +101,10 @@ const NAV_CATEGORIES: NavCategory[] = [
     label: 'Finance',
     items: [
       { name: 'Financials', href: '/financials', icon: CircleDollarSign, minRole: 'admin' },
-      { name: 'Reports', href: '/reports', icon: FileBarChart, minRole: 'admin' },
       { name: 'Billing', href: '/billing', icon: FileText, minRole: 'admin' },
       { name: 'Payroll', href: '/payroll', icon: Wallet, minRole: 'admin' },
       { name: 'Local Driver Pay', href: '/local-driver-payroll', icon: Navigation, minRole: 'admin' },
       { name: 'Brokers', href: '/brokers', icon: Building2, minRole: 'dispatcher' },
-      { name: 'Broker Scorecard', href: '/brokers/scorecard', icon: Star, minRole: 'admin' },
     ],
   },
   {
@@ -235,7 +229,7 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
                 )
               ) : (
                 <div className="mb-1.5 px-3 pt-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--sidebar-category)]">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--sidebar-category)]">
                     {category.label}
                   </span>
                 </div>
@@ -255,7 +249,7 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
                       onClick={() => close()}
                       style={{ color: isActive ? 'var(--sidebar-text-active)' : 'var(--sidebar-text)' }}
                       className={cn(
-                        'group flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-all duration-150 hover:translate-x-0.5 relative',
+                        'group flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-all duration-150 relative',
                         isActive
                           ? 'bg-[var(--sidebar-active)]'
                           : 'hover:bg-[var(--sidebar-hover)] hover:!text-[var(--sidebar-text-active)]',
@@ -264,7 +258,7 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
                     >
                       {/* Active indicator pill */}
                       {isActive && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 h-7 w-[4px] rounded-r-full bg-brand" />
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-brand" />
                       )}
                       <Icon
                         className={cn(
@@ -323,7 +317,7 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
         <div className="border-t border-[var(--sidebar-border-color)] px-4 py-2">
           <p
             className={cn(
-              'text-[10px] text-[var(--sidebar-category)] text-center opacity-60',
+              'text-xs text-[var(--sidebar-category)] text-center',
               isCollapsed && 'lg:text-[10px]'
             )}
           >

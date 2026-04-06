@@ -38,10 +38,10 @@ export function StatCard({ label, value, sublabel, icon: Icon, accent = 'blue', 
   const a = ACCENT_STYLES[accent]
 
   return (
-    <div className="rounded-lg border border-border bg-card p-5 shadow-sm hover:shadow-md transition-shadow duration-200">
+    <div className="rounded-lg border border-border bg-card p-5">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+          <p className="text-xs font-medium text-muted-foreground tracking-wide">
             {label}
           </p>
           <p className="mt-2 text-3xl font-bold tracking-tight text-foreground tabular-nums">

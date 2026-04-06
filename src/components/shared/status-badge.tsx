@@ -101,11 +101,11 @@ export function StatusBadge({ status, type, className, pulsing }: StatusBadgePro
       variant="outline"
       className={cn('gap-1.5', colorClasses, className)}
     >
-      <span className="relative flex h-2 w-2">
+      <span className="relative flex h-1.5 w-1.5">
         {pulsing && (
           <span className={cn('absolute inline-flex h-full w-full animate-ping rounded-full opacity-75', dotColor)} />
         )}
-        <span className={cn('relative inline-flex h-2 w-2 rounded-full', dotColor)} />
+        <span className={cn('relative inline-flex h-1.5 w-1.5 rounded-full', dotColor)} />
       </span>
       {label}
     </Badge>

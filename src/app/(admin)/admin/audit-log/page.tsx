@@ -1,5 +1,3 @@
-export const dynamic = 'force-dynamic'
-
 import { Suspense } from 'react'
 import { PageHeader } from '@/components/shared/page-header'
 import { fetchAuditLogs } from '@/app/actions/admin'

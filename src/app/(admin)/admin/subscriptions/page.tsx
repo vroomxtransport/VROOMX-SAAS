@@ -1,5 +1,3 @@
-export const dynamic = 'force-dynamic'
-
 import Link from 'next/link'
 import { PageHeader } from '@/components/shared/page-header'
 import { StatCard } from '@/components/shared/stat-card'

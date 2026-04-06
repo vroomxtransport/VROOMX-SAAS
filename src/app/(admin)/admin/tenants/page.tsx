@@ -1,5 +1,3 @@
-export const dynamic = 'force-dynamic'
-
 import { Suspense } from 'react'
 import { TenantList } from '@/app/(admin)/_components/tenant-list'
 
