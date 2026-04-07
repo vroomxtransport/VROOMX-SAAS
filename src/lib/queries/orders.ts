@@ -27,16 +27,32 @@ export interface OrdersResult {
   total: number
 }
 
+// SCAN-008: allowlist to block column-injection via unvalidated sortBy.
+// Covers the columns the orders table UI exposes as sortable headers.
+const ORDER_ALLOWED_SORT_COLUMNS = [
+  'created_at', 'order_number', 'status', 'payment_status',
+  'carrier_pay', 'broker_fee', 'local_fee', 'pickup_city', 'delivery_city',
+  'invoice_date',
+]
+const ORDER_DEFAULT_SORT = 'created_at'
+
 export async function fetchOrders(
   supabase: SupabaseClient,
   filters: OrderFilters = {}
 ): Promise<OrdersResult> {
   const { status, brokerId, driverId, dateFrom, dateTo, search, paymentStatuses, sortBy, sortDir, page = 0, pageSize = 20 } = filters
 
+  const resolvedSortBy =
+    sortBy && ORDER_ALLOWED_SORT_COLUMNS.includes(sortBy) ? sortBy : ORDER_DEFAULT_SORT
+  // Preserve previous behavior: when the caller passes an explicit sortBy,
+  // default direction is ascending; otherwise (no sortBy) default to
+  // descending by created_at (newest first).
+  const ascending = sortBy ? sortDir === 'asc' : false
+
   let query = supabase
     .from('orders')
     .select('vehicles, *, broker:brokers(id, name, email), driver:drivers(id, first_name, last_name), trip:trips(id, trip_number, status)', { count: 'exact' })
-    .order(sortBy ?? 'created_at', { ascending: sortBy ? sortDir === 'asc' : false })
+    .order(resolvedSortBy, { ascending })
     .range(page * pageSize, (page + 1) * pageSize - 1)
 
   if (status) {

@@ -28,16 +28,30 @@ export interface TripsResult {
 
 const TRIP_SELECT = '*, driver:drivers(id, first_name, last_name, driver_type, pay_type, pay_rate), truck:trucks(id, unit_number, truck_type)'
 
+// SCAN-008: whitelist sortable columns to block column-injection via
+// unvalidated URL params. PostgREST rejects unknown columns with a 400
+// rather than leaking data, but an unbounded allowlist lets a caller
+// sort on any indexed column (useful for enumeration + DoS via slow
+// sorts on unindexed columns). Matches the pattern already in fuel.ts.
+const TRIP_ALLOWED_SORT_COLUMNS = [
+  'created_at', 'trip_number', 'status', 'start_date', 'end_date',
+  'total_revenue', 'driver_pay', 'net_profit',
+]
+const TRIP_DEFAULT_SORT = 'created_at'
+
 export async function fetchTrips(
   supabase: SupabaseClient,
   filters: TripFilters = {}
 ): Promise<TripsResult> {
   const { status, driverId, truckId, startDate, endDate, search, sortBy, sortDir, page = 0, pageSize = 20 } = filters
 
+  const resolvedSortBy =
+    sortBy && TRIP_ALLOWED_SORT_COLUMNS.includes(sortBy) ? sortBy : TRIP_DEFAULT_SORT
+
   let query = supabase
     .from('trips')
     .select(TRIP_SELECT, { count: 'exact' })
-    .order(sortBy ?? 'created_at', { ascending: sortDir === 'asc' })
+    .order(resolvedSortBy, { ascending: sortDir === 'asc' })
     .range(page * pageSize, (page + 1) * pageSize - 1)
 
   if (status) {

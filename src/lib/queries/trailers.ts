@@ -21,16 +21,28 @@ export interface TrailersResult {
   total: number
 }
 
+// SCAN-008: allowlist to block column-injection via unvalidated sortBy.
+const TRAILER_ALLOWED_SORT_COLUMNS = [
+  'trailer_number', 'status', 'trailer_type', 'year', 'make', 'model', 'created_at',
+]
+const TRAILER_DEFAULT_SORT = 'trailer_number'
+
 export async function fetchTrailers(
   supabase: SupabaseClient,
   filters: TrailerFilters = {}
 ): Promise<TrailersResult> {
   const { status, trailerType, search, sortBy, sortDir, page = 0, pageSize = 20 } = filters
 
+  const resolvedSortBy =
+    sortBy && TRAILER_ALLOWED_SORT_COLUMNS.includes(sortBy) ? sortBy : TRAILER_DEFAULT_SORT
+  // Preserve previous behavior: default ascending, flipped only if caller
+  // explicitly set sortDir='desc' with a valid sortBy.
+  const ascending = sortBy ? sortDir === 'asc' : true
+
   let query = supabase
     .from('trailers')
     .select('*, assigned_truck:trucks!trailer_id(id, unit_number)', { count: 'exact' })
-    .order(sortBy ?? 'trailer_number', { ascending: sortBy ? sortDir === 'asc' : true })
+    .order(resolvedSortBy, { ascending })
     .range(page * pageSize, (page + 1) * pageSize - 1)
 
   if (status) {

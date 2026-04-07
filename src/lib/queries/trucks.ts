@@ -17,16 +17,27 @@ export interface TrucksResult {
   total: number
 }
 
+// SCAN-008: allowlist to block column-injection via unvalidated sortBy.
+// Must match actual columns in the trucks table (src/db/schema.ts:192-210).
+const TRUCK_ALLOWED_SORT_COLUMNS = [
+  'created_at', 'unit_number', 'make', 'model', 'year',
+  'truck_type', 'truck_status', 'vin', 'ownership',
+]
+const TRUCK_DEFAULT_SORT = 'created_at'
+
 export async function fetchTrucks(
   supabase: SupabaseClient,
   filters: TruckFilters = {}
 ): Promise<TrucksResult> {
   const { status, truckType, search, page = 0, pageSize = 20, sortBy, sortDir } = filters
 
+  const resolvedSortBy =
+    sortBy && TRUCK_ALLOWED_SORT_COLUMNS.includes(sortBy) ? sortBy : TRUCK_DEFAULT_SORT
+
   let query = supabase
     .from('trucks')
     .select('*', { count: 'exact' })
-    .order(sortBy ?? 'created_at', { ascending: sortDir === 'asc' })
+    .order(resolvedSortBy, { ascending: sortDir === 'asc' })
     .range(page * pageSize, (page + 1) * pageSize - 1)
 
   if (status) {
