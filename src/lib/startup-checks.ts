@@ -59,6 +59,29 @@ const REQUIRED_ENV: EnvCheck[] = [
 
   // QuickBooks webhook — referenced by route handler
   { name: 'QUICKBOOKS_WEBHOOK_VERIFIER', required: false, description: 'QB webhook HMAC verifier (only required if QB integration enabled)' },
+
+  // CFG-006: these three would previously fail silently at runtime if
+  // unset — now surfaced at boot so misconfigurations crash fast.
+  //
+  // NEXT_PUBLIC_APP_URL: used by src/app/actions/billing.ts to build
+  //   Stripe checkout success/cancel redirects. Missing → Stripe
+  //   receives `undefined/settings?...` and returns a cryptic error.
+  // RESEND_API_KEY: used by src/lib/resend/client.ts for all email
+  //   sends (invoices, invites, alerts). Missing → silent failure
+  //   the first time we try to email a customer.
+  // NEXT_PUBLIC_SENTRY_DSN: used by sentry.server.config.ts and
+  //   instrumentation-client.ts. Sentry init silently no-ops if the
+  //   DSN is absent — production error tracking goes dark without
+  //   any indication anything is wrong.
+  { name: 'NEXT_PUBLIC_APP_URL', required: true, description: 'Canonical app URL for Stripe checkout redirects' },
+  { name: 'RESEND_API_KEY', required: true, description: 'Resend API key for transactional email' },
+  { name: 'NEXT_PUBLIC_SENTRY_DSN', required: true, description: 'Sentry DSN for error tracking' },
+
+  // PLATFORM_ADMIN_EMAILS: gates /admin route access. If unset the
+  // admin panel is fully locked out (safe-by-default), so this is a
+  // warning rather than a hard fail. The warning is printed in
+  // assertRequiredEnvVars() below.
+  { name: 'PLATFORM_ADMIN_EMAILS', required: false, description: 'Comma-separated admin email allowlist — admin panel locked out if unset' },
 ]
 
 /**
@@ -97,6 +120,14 @@ export function assertRequiredEnvVars(): void {
     void import('./rate-limit').then(({ rateLimitMode }) => {
       console.info(`[startup] rate-limit backend: ${rateLimitMode()}`)
     })
+    // CFG-006: warn (don't throw) when optional-but-impactful vars are
+    // missing. PLATFORM_ADMIN_EMAILS is the main one — its absence
+    // silently locks the admin panel, which is safe but surprising.
+    if (!process.env.PLATFORM_ADMIN_EMAILS) {
+      console.warn(
+        '[startup] PLATFORM_ADMIN_EMAILS unset — /admin panel is locked out for all users',
+      )
+    }
     return
   }
 
