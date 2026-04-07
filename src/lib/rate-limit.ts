@@ -117,6 +117,16 @@ function rateLimitInMemory(key: string, config: RateLimitConfig): RateLimitResul
 // ---------------------------------------------------------------------------
 
 /**
+ * Returns which rate-limit backend is currently active. Used by startup
+ * checks to log the operational mode at boot, so operators can confirm
+ * Upstash is in effect in production rather than the in-memory fallback
+ * (which is process-local and bypassable across multi-instance deploys).
+ */
+export function rateLimitMode(): 'upstash' | 'in-memory' {
+  return getRedis() != null ? 'upstash' : 'in-memory'
+}
+
+/**
  * Check rate limit for the given key.
  *
  * Production: Upstash Redis sliding window (distributed, multi-instance safe).

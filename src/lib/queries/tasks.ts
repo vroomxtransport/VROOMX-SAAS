@@ -2,6 +2,11 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Task } from '@/types/database'
 import { sanitizeSearch } from '@/lib/sanitize-search'
 
+// M4: explicit column allowlist instead of SELECT *.
+const TASK_COLUMNS =
+  'id, tenant_id, title, description, status, priority, due_date, ' +
+  'assigned_to, assigned_name, category, created_by, created_at, updated_at'
+
 export interface TaskFilters {
   status?: string
   priority?: string
@@ -31,7 +36,7 @@ export async function fetchTasks(
 
   let query = supabase
     .from('tasks')
-    .select('*', { count: 'exact' })
+    .select(TASK_COLUMNS, { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(page * pageSize, (page + 1) * pageSize - 1)
 
@@ -68,7 +73,9 @@ export async function fetchTasks(
   if (error) throw error
 
   return {
-    tasks: (data ?? []) as Task[],
+    // Constant column list (M4) defeats Supabase's literal-string row
+    // inference; cast through unknown to the known shape.
+    tasks: ((data ?? []) as unknown) as Task[],
     total: count ?? 0,
   }
 }
@@ -79,13 +86,13 @@ export async function fetchTask(
 ): Promise<Task> {
   const { data, error } = await supabase
     .from('tasks')
-    .select('*')
+    .select(TASK_COLUMNS)
     .eq('id', id)
     .single()
 
   if (error) throw error
 
-  return data as Task
+  return (data as unknown) as Task
 }
 
 export async function fetchTaskCounts(

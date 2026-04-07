@@ -2,6 +2,20 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ComplianceDocument, ComplianceRequirement } from '@/types/database'
 import { sanitizeSearch } from '@/lib/sanitize-search'
 
+// M4: explicit column allowlist instead of SELECT *. Each list mirrors the
+// corresponding type in src/types/database.ts. Adding a new column to the
+// schema requires explicitly adding it here too — defense in depth against
+// accidental over-exposure when schemas evolve.
+const COMPLIANCE_DOC_COLUMNS =
+  'id, tenant_id, document_type, entity_type, entity_id, name, file_name, ' +
+  'storage_path, file_size, expires_at, issue_date, uploaded_by, notes, ' +
+  'sub_category, status, is_required, regulation_reference, created_at, updated_at'
+
+const COMPLIANCE_REQUIREMENT_COLUMNS =
+  'id, tenant_id, document_type, sub_category, display_name, description, ' +
+  'regulation_reference, renewal_period_months, retention_months, is_active, ' +
+  'sort_order, created_at'
+
 export interface ComplianceDocFilters {
   documentType?: string
   entityType?: string
@@ -51,7 +65,7 @@ export async function fetchComplianceDocs(
 
   let query = supabase
     .from('compliance_documents')
-    .select('*', { count: 'exact' })
+    .select(COMPLIANCE_DOC_COLUMNS, { count: 'exact' })
     .order(sortColumn, { ascending, nullsFirst: false })
     .range(page * pageSize, (page + 1) * pageSize - 1)
 
@@ -83,7 +97,10 @@ export async function fetchComplianceDocs(
   if (error) throw error
 
   return {
-    docs: (data ?? []) as ComplianceDocument[],
+    // Supabase JS infers the row shape from the literal passed to .select().
+    // We use a constant for the column list (M4) so the inferred type is
+    // generic; cast through unknown to the known shape.
+    docs: ((data ?? []) as unknown) as ComplianceDocument[],
     total: count ?? 0,
   }
 }
@@ -94,13 +111,13 @@ export async function fetchComplianceDoc(
 ): Promise<ComplianceDocument> {
   const { data, error } = await supabase
     .from('compliance_documents')
-    .select('*')
+    .select(COMPLIANCE_DOC_COLUMNS)
     .eq('id', id)
     .single()
 
   if (error) throw error
 
-  return data as ComplianceDocument
+  return (data as unknown) as ComplianceDocument
 }
 
 export async function fetchExpirationAlerts(
@@ -111,14 +128,14 @@ export async function fetchExpirationAlerts(
 
   const { data, error } = await supabase
     .from('compliance_documents')
-    .select('*')
+    .select(COMPLIANCE_DOC_COLUMNS)
     .not('expires_at', 'is', null)
     .lte('expires_at', thirtyDaysFromNow.toISOString())
     .order('expires_at', { ascending: true })
 
   if (error) throw error
 
-  return (data ?? []) as ComplianceDocument[]
+  return ((data ?? []) as unknown) as ComplianceDocument[]
 }
 
 export async function fetchComplianceOverview(
@@ -159,7 +176,7 @@ export async function fetchComplianceChecklist(
   // Fetch all active requirements for this document type
   const { data: requirements, error: reqError } = await supabase
     .from('compliance_requirements')
-    .select('*')
+    .select(COMPLIANCE_REQUIREMENT_COLUMNS)
     .eq('document_type', documentType)
     .eq('is_active', true)
     .order('sort_order', { ascending: true })
@@ -171,7 +188,7 @@ export async function fetchComplianceChecklist(
   // Fetch documents for this entity
   let docQuery = supabase
     .from('compliance_documents')
-    .select('*')
+    .select(COMPLIANCE_DOC_COLUMNS)
     .eq('document_type', documentType)
     .eq('entity_type', entityType)
 
@@ -183,8 +200,8 @@ export async function fetchComplianceChecklist(
 
   if (docError) throw docError
 
-  const docs = (documents ?? []) as ComplianceDocument[]
-  const reqs = (requirements ?? []) as ComplianceRequirement[]
+  const docs = ((documents ?? []) as unknown) as ComplianceDocument[]
+  const reqs = ((requirements ?? []) as unknown) as ComplianceRequirement[]
 
   // Map requirements to checklist items
   return reqs.map(req => {
@@ -284,7 +301,7 @@ export async function fetchComplianceRequirements(
 ): Promise<ComplianceRequirement[]> {
   let query = supabase
     .from('compliance_requirements')
-    .select('*')
+    .select(COMPLIANCE_REQUIREMENT_COLUMNS)
     .eq('is_active', true)
     .order('sort_order', { ascending: true })
 
@@ -296,5 +313,5 @@ export async function fetchComplianceRequirements(
 
   if (error) throw error
 
-  return (data ?? []) as ComplianceRequirement[]
+  return ((data ?? []) as unknown) as ComplianceRequirement[]
 }

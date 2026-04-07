@@ -1,6 +1,20 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { DispatcherPayConfig, DispatcherPayrollPeriod } from '@/types/database'
 
+// M4: explicit column allowlist instead of SELECT *.
+const PAY_CONFIG_COLUMNS =
+  'id, tenant_id, user_id, pay_type, pay_rate, pay_frequency, ' +
+  'effective_from, effective_to, notes, created_at, updated_at'
+
+const PAYROLL_PERIOD_COLUMNS =
+  'id, tenant_id, user_id, period_start, period_end, pay_type, pay_rate, ' +
+  'base_amount, performance_amount, total_amount, order_count, ' +
+  'total_order_revenue, status, approved_by, approved_at, paid_at, notes, ' +
+  'created_at, updated_at'
+
+const TENANT_MEMBERSHIP_COLUMNS =
+  'id, tenant_id, user_id, role, full_name, email, created_at, updated_at'
+
 // ============================================================================
 // Pay Config Queries
 // ============================================================================
@@ -16,7 +30,7 @@ export async function fetchDispatcherPayConfigs(
 ): Promise<DispatcherPayConfig[]> {
   let query = supabase
     .from('dispatcher_pay_configs')
-    .select('*')
+    .select(PAY_CONFIG_COLUMNS)
     .order('effective_from', { ascending: false })
 
   if (filters.userId) {
@@ -30,7 +44,9 @@ export async function fetchDispatcherPayConfigs(
   const { data, error } = await query
 
   if (error) throw error
-  return data ?? []
+  // Constant column list (M4) defeats Supabase's literal-string row
+  // inference; cast through unknown to the known shape.
+  return ((data ?? []) as unknown) as DispatcherPayConfig[]
 }
 
 export async function fetchActivePayConfig(
@@ -39,7 +55,7 @@ export async function fetchActivePayConfig(
 ): Promise<DispatcherPayConfig | null> {
   const { data, error } = await supabase
     .from('dispatcher_pay_configs')
-    .select('*')
+    .select(PAY_CONFIG_COLUMNS)
     .eq('user_id', userId)
     .is('effective_to', null)
     .order('effective_from', { ascending: false })
@@ -47,7 +63,7 @@ export async function fetchActivePayConfig(
     .single()
 
   if (error) return null
-  return data
+  return (data as unknown) as DispatcherPayConfig
 }
 
 // ============================================================================
@@ -74,7 +90,7 @@ export async function fetchPayrollPeriods(
 
   let query = supabase
     .from('dispatcher_payroll_periods')
-    .select('*', { count: 'exact' })
+    .select(PAYROLL_PERIOD_COLUMNS, { count: 'exact' })
     .order('period_start', { ascending: false })
 
   if (filters.userId) {
@@ -90,7 +106,10 @@ export async function fetchPayrollPeriods(
   const { data, error, count } = await query
 
   if (error) throw error
-  return { periods: data ?? [], total: count ?? 0 }
+  return {
+    periods: ((data ?? []) as unknown) as DispatcherPayrollPeriod[],
+    total: count ?? 0,
+  }
 }
 
 export async function fetchPayrollPeriodOrders(
@@ -130,7 +149,7 @@ export async function fetchDispatchersWithPayConfig(
   // Fetch all dispatchers (team members)
   const { data: members, error: membersError } = await supabase
     .from('tenant_memberships')
-    .select('*')
+    .select(TENANT_MEMBERSHIP_COLUMNS)
     .in('role', ['owner', 'admin', 'dispatcher'])
     .order('created_at', { ascending: true })
 
@@ -139,13 +158,13 @@ export async function fetchDispatchersWithPayConfig(
   // Fetch all active pay configs
   const { data: configs, error: configsError } = await supabase
     .from('dispatcher_pay_configs')
-    .select('*')
+    .select(PAY_CONFIG_COLUMNS)
     .is('effective_to', null)
 
   if (configsError) throw configsError
 
   const configMap = new Map<string, DispatcherPayConfig>()
-  for (const c of configs ?? []) {
+  for (const c of ((configs ?? []) as unknown) as DispatcherPayConfig[]) {
     configMap.set(c.user_id, c)
   }
 

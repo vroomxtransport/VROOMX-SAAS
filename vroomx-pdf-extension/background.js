@@ -12,14 +12,20 @@
 
 'use strict';
 
+// M11: load build-time config from config.js. importScripts is the
+// MV3 service-worker equivalent of <script src> for non-module workers.
+// All deployment identifiers live in config.js so a different environment
+// (staging/dev) can be targeted by editing one file.
+importScripts('config.js');
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const SUPABASE_PROJECT_REF = 'yrrczhlzulwvdqjwvhtu';
-const DEFAULT_VROOMX_URL = 'http://localhost:3000';
-const SESSION_TOKEN_KEY = 'vroomx_auth_token';
-const SESSION_USER_KEY = 'vroomx_auth_user';
-const STORAGE_IMPORT_COUNT_KEY = 'vroomx_import_count';
-const PENDING_ORDERS_KEY = 'pendingOrders';
+const SUPABASE_PROJECT_REF = VROOMX_CONFIG.SUPABASE_PROJECT_REF;
+const DEFAULT_VROOMX_URL = VROOMX_CONFIG.DEFAULT_VROOMX_URL;
+const SESSION_TOKEN_KEY = VROOMX_CONFIG.SESSION_TOKEN_KEY;
+const SESSION_USER_KEY = VROOMX_CONFIG.SESSION_USER_KEY;
+const STORAGE_IMPORT_COUNT_KEY = VROOMX_CONFIG.STORAGE_IMPORT_COUNT_KEY;
+const PENDING_ORDERS_KEY = VROOMX_CONFIG.PENDING_ORDERS_KEY;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

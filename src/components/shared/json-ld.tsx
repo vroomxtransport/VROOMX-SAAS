@@ -14,7 +14,11 @@ const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://vroomx.com'
  */
 export async function JsonLd({ data }: { data: Record<string, unknown> }) {
   const nonce = (await headers()).get('x-nonce') ?? undefined
-  const html = JSON.stringify(data)
+  // M8: escape `<` to `\u003c` so a malicious string value containing
+  // `</script>` can never break out of the inline script tag. JSON.stringify
+  // does not escape `<` by default — defense in depth even though current
+  // callers pass hardcoded data.
+  const html = JSON.stringify(data).replace(/</g, '\\u003c')
   return (
     <script
       type="application/ld+json"

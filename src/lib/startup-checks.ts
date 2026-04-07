@@ -91,6 +91,12 @@ export function assertRequiredEnvVars(): void {
     if (!isProd) {
       console.info('[startup] All required env vars present')
     }
+    // Log which rate-limit backend is active so operators can confirm
+    // Upstash is wired up in production (vs. the in-memory fallback that
+    // is bypassable across multi-instance deploys). M5 visibility fix.
+    void import('./rate-limit').then(({ rateLimitMode }) => {
+      console.info(`[startup] rate-limit backend: ${rateLimitMode()}`)
+    })
     return
   }
 

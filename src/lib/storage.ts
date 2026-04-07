@@ -1,4 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js'
+import { validateFileBuffer } from '@/lib/file-validation'
 
 const ALLOWED_EXTENSIONS = new Set([
   'pdf', 'png', 'jpg', 'jpeg', 'gif', 'webp',
@@ -12,6 +13,20 @@ const ALLOWED_MIME_PREFIXES = [
   'application/vnd.openxmlformats',
   'text/',
 ]
+
+// M6: explicit allowlist passed to the magic-byte validator. The MIME
+// prefixes above are for the user-supplied File.type header (trivially
+// spoofable); these are matched against the actual detected MIME from the
+// first ~4KB of the file bytes via the `file-type` package.
+const ALLOWED_MAGIC_BYTE_MIMES = [
+  'image/',
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-excel',
+  'text/',
+] as const
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024 // 25 MB
 
@@ -42,6 +57,16 @@ export async function uploadFile(
 
   if (file.type && !ALLOWED_MIME_PREFIXES.some(prefix => file.type.startsWith(prefix))) {
     return { path: '', error: `File type ${file.type} is not allowed.` }
+  }
+
+  // M6 fix: validate the actual file bytes via magic-byte detection.
+  // Defends against attackers renaming an executable as `evil.jpg` — the
+  // user-supplied extension and File.type header are both trivially
+  // spoofable; only the file signature in the first ~4KB is trustworthy.
+  const buffer = await file.arrayBuffer()
+  const validation = await validateFileBuffer(buffer, ALLOWED_MAGIC_BYTE_MIMES, MAX_FILE_SIZE)
+  if (!validation.ok) {
+    return { path: '', error: validation.error ?? 'File validation failed.' }
   }
 
   const fileName = `${crypto.randomUUID()}.${ext}`

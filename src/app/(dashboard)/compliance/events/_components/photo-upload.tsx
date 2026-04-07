@@ -4,12 +4,19 @@ import { useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/client'
+import { validateFile } from '@/lib/file-validation'
 import { ImagePlus, X, Upload, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const BUCKET = 'safety-photos'
 const MAX_PHOTOS = 10
 const MAX_SIZE = 25 * 1024 * 1024
+
+// M7: magic-byte allowlist for the validateFile() check below. Matches
+// the on-disk signatures that file-type recognises for image formats we
+// accept. heic is not yet recognised by file-type in all cases — fall
+// back to extension+MIME for that case via the legacy check.
+const ALLOWED_IMAGE_MIMES = ['image/'] as const
 
 export interface PhotoRecord {
   storagePath: string
@@ -48,6 +55,20 @@ export function PhotoUpload({ tenantId, eventId, value, onChange, disabled }: Ph
     if (!allowedExts.has(ext)) {
       setGlobalError(`${file.name} is not a supported image type.`)
       return null
+    }
+
+    // M7: magic-byte content validation. file-type recognises JPEG, PNG,
+    // GIF, WebP, and most HEIC files — anything else is rejected. This is
+    // a client-side check (an attacker controlling the browser can bypass
+    // it) but it gives legitimate users a fast-fail and is a defense-in-
+    // depth layer. The ultimate security boundary is the storage bucket's
+    // RLS policies + Supabase's own MIME enforcement at upload time.
+    if (ext !== 'heic') {
+      const validation = await validateFile(file, ALLOWED_IMAGE_MIMES, MAX_SIZE)
+      if (!validation.ok) {
+        setGlobalError(`${file.name}: ${validation.error ?? 'invalid image content'}`)
+        return null
+      }
     }
 
     const supabase = createClient()

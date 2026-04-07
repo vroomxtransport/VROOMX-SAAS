@@ -23,19 +23,12 @@ export default async function MembersPage() {
     redirect('/settings/profile')
   }
 
-  let admin: ReturnType<typeof createServiceRoleClient>
-  try {
-    admin = createServiceRoleClient()
-  } catch (e) {
-    console.error('[SETTINGS/MEMBERS] Failed to create service role client:', e)
-    return (
-      <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-center">
-        <p className="text-sm text-amber-800">
-          Unable to load team members. Please try again later.
-        </p>
-      </div>
-    )
-  }
+  // M3 fix: read tenant data via the RLS-scoped user client. The previous
+  // version used a service-role client for the membership query, which
+  // unnecessarily expanded the blast radius — RLS already enforces tenant
+  // isolation on tenant_memberships, invites, and tenants. The service-role
+  // client is now created lazily and used ONLY for auth.admin.getUserById
+  // calls below (which require admin privileges to read auth.users).
 
   let memberships: Array<{
     id: string
@@ -58,7 +51,7 @@ export default async function MembersPage() {
 
   try {
     const [membershipsResult, pendingInvitesResult, tenantResult] = await Promise.all([
-      admin
+      supabase
         .from('tenant_memberships')
         .select('id, user_id, role, full_name, email, created_at')
         .eq('tenant_id', tenantId)
@@ -85,6 +78,23 @@ export default async function MembersPage() {
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-center">
         <p className="text-sm text-amber-800">
           Unable to load team members. Please refresh the page.
+        </p>
+      </div>
+    )
+  }
+
+  // Service-role client is needed ONLY for auth.admin.getUserById, which
+  // reads from auth.users (a schema not exposed via PostgREST RLS). All
+  // tenant-scoped reads above use the user client.
+  let admin: ReturnType<typeof createServiceRoleClient>
+  try {
+    admin = createServiceRoleClient()
+  } catch (e) {
+    console.error('[SETTINGS/MEMBERS] Failed to create service role client:', e)
+    return (
+      <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-center">
+        <p className="text-sm text-amber-800">
+          Unable to load team members. Please try again later.
         </p>
       </div>
     )
