@@ -1,5 +1,5 @@
 import { renderToBuffer } from '@react-pdf/renderer'
-import { createClient } from '@/lib/supabase/server'
+import { authorize } from '@/lib/authz'
 import { getResend } from '@/lib/resend/client'
 import { getSignedUrl } from '@/lib/storage'
 import { logOrderActivity } from '@/lib/activity-log'
@@ -12,21 +12,19 @@ export async function POST(
   { params }: { params: Promise<{ orderId: string }> }
 ) {
   const { orderId } = await params
-  const supabase = await createClient()
 
-  // Verify user is authenticated
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  // SCAN-002 (SEC-003): gate behind invoices.send permission. This route
+  // previously only verified authentication + tenant presence, letting any
+  // tenant member email invoices regardless of role. Rate-limit modest to
+  // cap email abuse (Resend-backed).
+  const auth = await authorize('invoices.send', {
+    rateLimit: { key: 'invoiceSend', limit: 10, windowMs: 60_000 },
+  })
+  if (!auth.ok) {
+    const status = auth.error === 'Not authenticated' ? 401 : 403
+    return Response.json({ error: auth.error }, { status })
   }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return Response.json({ error: 'No tenant found' }, { status: 403 })
-  }
+  const { supabase, tenantId, user } = auth.ctx
 
   // Fetch order with broker relation
   const { data: order, error: orderError } = await supabase

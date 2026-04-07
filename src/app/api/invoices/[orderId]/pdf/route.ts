@@ -1,5 +1,5 @@
 import { renderToBuffer } from '@react-pdf/renderer'
-import { createClient } from '@/lib/supabase/server'
+import { authorize } from '@/lib/authz'
 import { getSignedUrl } from '@/lib/storage'
 import { InvoiceDocument } from '@/lib/pdf/invoice-template'
 
@@ -8,21 +8,17 @@ export async function GET(
   { params }: { params: Promise<{ orderId: string }> }
 ) {
   const { orderId } = await params
-  const supabase = await createClient()
 
-  // Verify user is authenticated
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  // SCAN-002 (SEC-003): gate behind invoices.view permission — previously
+  // the handler only verified authentication + tenant presence, letting any
+  // tenant member bypass the role-based permission model enforced in the
+  // equivalent server actions.
+  const auth = await authorize('invoices.view')
+  if (!auth.ok) {
+    const status = auth.error === 'Not authenticated' ? 401 : 403
+    return Response.json({ error: auth.error }, { status })
   }
-
-  const tenantId = user.app_metadata?.tenant_id
-  if (!tenantId) {
-    return Response.json({ error: 'No tenant found' }, { status: 403 })
-  }
+  const { supabase, tenantId } = auth.ctx
 
   // Fetch order with broker relation
   const { data: order, error: orderError } = await supabase
