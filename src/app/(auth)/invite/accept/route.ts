@@ -36,7 +36,26 @@ export async function GET(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (user) {
-    // User is logged in -- add to tenant directly
+    // H1 fix: verify the authenticated user's email matches the invited
+    // email. Without this, ANY signed-in user with a leaked invite token
+    // could claim it and gain access to a tenant they were never invited to.
+    // Email comparison is case-insensitive (auth.users stores lower-cased
+    // emails, but the invites table may be created with mixed case).
+    if (
+      !user.email ||
+      user.email.toLowerCase() !== (invite.email as string).toLowerCase()
+    ) {
+      console.warn('[INVITE_ACCEPT] Email mismatch', {
+        inviteId: invite.id,
+        userId: user.id,
+      })
+      redirect(
+        '/login?error=' +
+          encodeURIComponent('This invite is for a different email address')
+      )
+    }
+
+    // User is logged in and emails match -- add to tenant directly
     try {
       // Check if already a member
       const { data: existingMembership } = await admin

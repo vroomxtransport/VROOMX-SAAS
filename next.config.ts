@@ -5,6 +5,11 @@ const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
 })
 
+// Static security headers. Content-Security-Policy is NOT in this list —
+// it is set per-request by middleware.ts (H2 fix) so each response carries
+// a fresh nonce. The static-headers approach was abandoned because it
+// required `'unsafe-inline'` and `'unsafe-eval'` in `script-src`, which
+// effectively disabled CSP as an XSS mitigation.
 const securityHeaders = [
   {
     key: 'X-Frame-Options',
@@ -29,20 +34,6 @@ const securityHeaders = [
   {
     key: 'Permissions-Policy',
     value: 'camera=(), microphone=(), geolocation=(), browsing-topics=()',
-  },
-  {
-    key: 'Content-Security-Policy',
-    value: [
-      "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://us.i.posthog.com https://js.stripe.com",
-      "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https://*.supabase.co https://cdnjs.cloudflare.com https://*.tile.openstreetmap.org https://server.arcgisonline.com https://*.tile.opentopomap.org https://*.basemaps.cartocdn.com",
-      "font-src 'self'",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://us.i.posthog.com https://api.stripe.com https://api.eia.gov https://vpic.nhtsa.dot.gov https://nominatim.openstreetmap.org https://api.samsara.com https://quickbooks.api.intuit.com https://sandbox-quickbooks.api.intuit.com https://oauth.platform.intuit.com https://api.fleet.msfuelcard.com https://router.project-osrm.org",
-      "frame-src https://js.stripe.com https://hooks.stripe.com",
-      "media-src 'self' https://d8j0ntlcm91z4.cloudfront.net",
-      "frame-ancestors 'none'",
-    ].join('; '),
   },
 ]
 

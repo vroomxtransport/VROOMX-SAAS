@@ -2,6 +2,7 @@
 
 import { z } from 'zod'
 import { authorize, safeError } from '@/lib/authz'
+import { isInternalUrl } from '@/lib/url-safety'
 import { revalidatePath } from 'next/cache'
 
 const markReadSchema = z.object({
@@ -52,6 +53,15 @@ export async function createWebNotification(input: {
   const auth = await authorize('*')
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId } = auth.ctx
+
+  // H3 fix (write-side defense): reject any notification.link that isn't
+  // a safe internal path. Combined with the read-side check in
+  // notification-dropdown.tsx, this gives defense in depth: poisoned data
+  // never enters the table, AND any data that somehow bypassed it is
+  // refused at click time.
+  if (input.link != null && !isInternalUrl(input.link)) {
+    return { error: 'Notification link must be an internal path' }
+  }
 
   const { error } = await supabase.from('web_notifications').insert({
     tenant_id: tenantId,

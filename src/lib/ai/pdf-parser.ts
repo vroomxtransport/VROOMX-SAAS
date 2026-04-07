@@ -12,6 +12,19 @@ export interface PDFExtractionResult {
   rawText?: string
 }
 
+// H6 hardening bounds. Claude is configured with max_tokens: 4096 (≈12KB
+// of JSON in the worst case), but a malicious PDF could attempt prompt
+// injection to make the model emit a much larger payload, or a bug
+// upstream could allow oversized responses through. Defense in depth:
+//
+// MAX_RAW_TEXT_BYTES — drop the response entirely if the cleaned text
+//   exceeds 100KB. This is ~25× the configured max_tokens budget.
+// MAX_PARSED_ORDERS — cap the array length after JSON.parse to prevent
+//   OOM during the per-order Zod validation map below. Real-world PDFs
+//   contain at most a few dozen orders.
+const MAX_RAW_TEXT_BYTES = 100_000
+const MAX_PARSED_ORDERS = 1000
+
 export async function extractOrdersFromPDF(base64PDF: string): Promise<PDFExtractionResult> {
   const client = new Anthropic()
 
@@ -72,13 +85,42 @@ If no orders can be extracted, return an empty array [].`,
   const textContent = response.content.find((c) => c.type === 'text')
   const rawText = textContent?.type === 'text' ? textContent.text : '[]'
 
+  return parseExtractedOrders(rawText)
+}
+
+/**
+ * Parse a raw text payload from Claude into validated extracted orders.
+ *
+ * Pure function — no I/O, no SDK calls. Exported so it can be unit-tested
+ * with crafted inputs covering the H6 hardening bounds (oversized text,
+ * non-array JSON, oversized arrays, malformed JSON).
+ */
+export function parseExtractedOrders(rawText: string): PDFExtractionResult {
+  const cleaned = rawText.replace(/```json?\n?/g, '').replace(/```\n?/g, '').trim()
+
+  // H6: drop oversized payloads before JSON.parse to prevent OOM.
+  if (cleaned.length > MAX_RAW_TEXT_BYTES) {
+    console.warn('[pdf-parser] cleaned text exceeded MAX_RAW_TEXT_BYTES', {
+      length: cleaned.length,
+    })
+    return { orders: [], rawText }
+  }
+
   let parsed: unknown[]
   try {
-    const cleaned = rawText.replace(/```json?\n?/g, '').replace(/```\n?/g, '').trim()
-    parsed = JSON.parse(cleaned)
-    if (!Array.isArray(parsed)) parsed = []
+    const result = JSON.parse(cleaned)
+    parsed = Array.isArray(result) ? result : []
   } catch {
     return { orders: [], rawText }
+  }
+
+  // H6: cap array length before mapping. Each element triggers a Zod
+  // validation pass; an unbounded array would allocate memory linearly.
+  if (parsed.length > MAX_PARSED_ORDERS) {
+    console.warn('[pdf-parser] parsed array exceeded MAX_PARSED_ORDERS', {
+      length: parsed.length,
+    })
+    parsed = parsed.slice(0, MAX_PARSED_ORDERS)
   }
 
   const orders: ExtractedOrder[] = parsed.map((raw) => {

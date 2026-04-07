@@ -1,15 +1,31 @@
+import { headers } from 'next/headers'
+
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://vroomx.com'
 
-export function JsonLd({ data }: { data: Record<string, unknown> }) {
+/**
+ * Inline JSON-LD script tag.
+ *
+ * H2 nonce — reads the per-request CSP nonce from headers() and applies
+ * it to the script tag. Without the nonce, the strict script-src CSP
+ * set in middleware.ts would block this tag.
+ *
+ * Async server component: callers do not need to thread the nonce
+ * explicitly — it is read from request headers at render time.
+ */
+export async function JsonLd({ data }: { data: Record<string, unknown> }) {
+  const nonce = (await headers()).get('x-nonce') ?? undefined
+  const html = JSON.stringify(data)
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+      nonce={nonce}
+      // eslint-disable-next-line react/no-danger
+      dangerouslySetInnerHTML={{ __html: html }}
     />
   )
 }
 
-export function OrganizationJsonLd() {
+export async function OrganizationJsonLd() {
   const data = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
@@ -30,7 +46,7 @@ export function OrganizationJsonLd() {
   return <JsonLd data={data} />
 }
 
-export function SoftwareApplicationJsonLd() {
+export async function SoftwareApplicationJsonLd() {
   const data = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
@@ -86,7 +102,7 @@ export function SoftwareApplicationJsonLd() {
   return <JsonLd data={data} />
 }
 
-export function FAQPageJsonLd({
+export async function FAQPageJsonLd({
   faqs,
 }: {
   faqs: Array<{ question: string; answer: string }>
@@ -107,7 +123,7 @@ export function FAQPageJsonLd({
   return <JsonLd data={data} />
 }
 
-export function PricingJsonLd() {
+export async function PricingJsonLd() {
   const data = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
@@ -185,7 +201,7 @@ export function PricingJsonLd() {
   return <JsonLd data={data} />
 }
 
-export function BreadcrumbJsonLd({
+export async function BreadcrumbJsonLd({
   items,
 }: {
   items: Array<{ name: string; url: string }>

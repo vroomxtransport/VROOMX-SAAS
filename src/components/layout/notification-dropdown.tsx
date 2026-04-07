@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { useUnreadNotifications } from '@/hooks/use-notifications'
 import { markNotificationRead, markAllNotificationsRead } from '@/app/actions/notifications'
 import { useQueryClient } from '@tanstack/react-query'
+import { isInternalUrl } from '@/lib/url-safety'
 import type { WebNotification } from '@/types/database'
 
 interface NotificationDropdownProps {
@@ -42,9 +43,18 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
       ['notifications-unread', userId],
       (old) => old?.filter((n) => n.id !== notification.id) ?? []
     )
-    if (notification.link) {
+    // H3: only navigate if the link is an internal path. Defense against
+    // a poisoned notification.link in the DB causing an open redirect to
+    // a phishing site. The createWebNotification action also enforces
+    // this at the write boundary, but a defense-in-depth check on read
+    // protects against any data that bypassed write validation.
+    if (notification.link && isInternalUrl(notification.link)) {
       setOpen(false)
       router.push(notification.link)
+    } else if (notification.link) {
+      console.warn('[notifications] Refused to navigate to non-internal link', {
+        notificationId: notification.id,
+      })
     }
   }
 
