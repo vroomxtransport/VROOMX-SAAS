@@ -1,13 +1,19 @@
 'use server'
 
+import { z } from 'zod'
 import { authorize, safeError } from '@/lib/authz'
 import { createOrderSchema } from '@/lib/validations/order'
 import { geocodeAndSaveOrder } from '@/lib/geocoding-helpers'
 import { logOrderActivity } from '@/lib/activity-log'
 import { createWebNotification } from '@/app/actions/notifications'
 import { recalculateTripFinancials } from '@/app/actions/trips'
+import { uploadFile, deleteFile } from '@/lib/storage'
 import { revalidatePath } from 'next/cache'
 import type { OrderStatus } from '@/types'
+
+const ATTACHMENT_BUCKET = 'attachments'
+
+const uuidSchema = z.string().uuid()
 
 // Status workflow: defines the linear progression of order statuses
 const STATUS_ORDER: OrderStatus[] = ['new', 'assigned', 'picked_up', 'delivered', 'invoiced', 'paid']
@@ -688,4 +694,138 @@ export async function rollbackOrderStatus(id: string) {
   revalidatePath(`/orders/${id}`)
   revalidatePath('/orders')
   return { success: true, data: order }
+}
+
+// ----------------------------------------------------------------------------
+// Order attachments (SCAN-005 / SEC-010)
+// ----------------------------------------------------------------------------
+// These server actions replace direct client-side Supabase writes in
+// src/app/(dashboard)/orders/_components/order-attachments.tsx. Both enforce
+// orders.update so viewer-only roles cannot upload or delete attachments,
+// which the client-side path did not gate (RLS checked tenant_id only).
+
+export async function uploadOrderAttachment(formData: FormData) {
+  const orderIdRaw = formData.get('orderId')
+  const file = formData.get('file')
+
+  const orderIdParsed = uuidSchema.safeParse(orderIdRaw)
+  if (!orderIdParsed.success) {
+    return { error: 'Invalid order id' }
+  }
+  if (!(file instanceof File)) {
+    return { error: 'Missing file' }
+  }
+
+  const orderId = orderIdParsed.data
+
+  const auth = await authorize('orders.update', {
+    rateLimit: { key: 'uploadOrderAttachment', limit: 30, windowMs: 60_000 },
+  })
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId, user } = auth.ctx
+
+  // Verify the order belongs to the caller's tenant before attaching.
+  // This prevents a user from attaching files to another tenant's order
+  // via a forged orderId even if RLS on order_attachments had a gap.
+  const { data: order, error: orderErr } = await supabase
+    .from('orders')
+    .select('id')
+    .eq('id', orderId)
+    .eq('tenant_id', tenantId)
+    .maybeSingle()
+
+  if (orderErr) return { error: safeError(orderErr, 'uploadOrderAttachment.order') }
+  if (!order) return { error: 'Order not found' }
+
+  const { path, error: uploadErr } = await uploadFile(
+    supabase,
+    ATTACHMENT_BUCKET,
+    tenantId,
+    orderId,
+    file,
+  )
+  if (uploadErr || !path) {
+    return { error: uploadErr ?? 'Upload failed' }
+  }
+
+  const { data: inserted, error: insertErr } = await supabase
+    .from('order_attachments')
+    .insert({
+      tenant_id: tenantId,
+      order_id: orderId,
+      file_name: file.name,
+      file_type: file.type || 'application/octet-stream',
+      storage_path: path,
+      file_size: file.size,
+      uploaded_by: user.id,
+    })
+    .select('id, file_name, storage_path')
+    .single()
+
+  if (insertErr || !inserted) {
+    // Clean up the uploaded object so we don't leak storage on failure.
+    await deleteFile(supabase, ATTACHMENT_BUCKET, path).catch(() => {})
+    return { error: safeError(insertErr ?? { message: 'insert failed' }, 'uploadOrderAttachment.insert') }
+  }
+
+  logOrderActivity(supabase, {
+    tenantId,
+    orderId,
+    action: 'attachment_uploaded',
+    description: `Attachment uploaded: ${file.name}`,
+    actorId: user.id,
+    actorEmail: user.email,
+  }).catch(() => {})
+
+  revalidatePath(`/orders/${orderId}`)
+  return { success: true, data: inserted }
+}
+
+export async function deleteOrderAttachment(attachmentId: string) {
+  const parsed = uuidSchema.safeParse(attachmentId)
+  if (!parsed.success) return { error: 'Invalid attachment id' }
+
+  const auth = await authorize('orders.update', {
+    rateLimit: { key: 'deleteOrderAttachment', limit: 60, windowMs: 60_000 },
+  })
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId, user } = auth.ctx
+
+  // Fetch tenant-scoped row to get storage_path + order_id for revalidation.
+  // Tenant filter here is load-bearing: it's our authorization check on the
+  // attachment itself, independent of RLS.
+  const { data: attachment, error: fetchErr } = await supabase
+    .from('order_attachments')
+    .select('id, order_id, file_name, storage_path')
+    .eq('id', parsed.data)
+    .eq('tenant_id', tenantId)
+    .maybeSingle()
+
+  if (fetchErr) return { error: safeError(fetchErr, 'deleteOrderAttachment.fetch') }
+  if (!attachment) return { error: 'Attachment not found' }
+
+  // Delete storage object first. If the storage delete fails we still try
+  // the DB delete — an orphaned storage object is less bad than a dangling
+  // DB row pointing to a deleted file.
+  await deleteFile(supabase, ATTACHMENT_BUCKET, attachment.storage_path).catch(() => {})
+
+  const { error: deleteErr } = await supabase
+    .from('order_attachments')
+    .delete()
+    .eq('id', parsed.data)
+    .eq('tenant_id', tenantId)
+
+  if (deleteErr) return { error: safeError(deleteErr, 'deleteOrderAttachment.delete') }
+
+  logOrderActivity(supabase, {
+    tenantId,
+    orderId: attachment.order_id,
+    action: 'attachment_deleted',
+    description: `Attachment deleted: ${attachment.file_name}`,
+    actorId: user.id,
+    actorEmail: user.email,
+  }).catch(() => {})
+
+  revalidatePath(`/orders/${attachment.order_id}`)
+  return { success: true }
 }

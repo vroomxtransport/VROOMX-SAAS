@@ -2,8 +2,10 @@
 
 import { useState, useRef } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
-import { uploadFile, getSignedUrl } from '@/lib/storage'
+import { getSignedUrl } from '@/lib/storage'
+import { uploadOrderAttachment, deleteOrderAttachment } from '@/app/actions/orders'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -28,6 +30,10 @@ import type { OrderAttachment } from '@/types/database'
 
 interface OrderAttachmentsProps {
   orderId: string
+  // tenantId is still accepted for backwards compatibility with callers but
+  // is no longer used for writes — the server action reads tenantId from the
+  // authenticated session (SCAN-005). It is kept for the thumbnail read
+  // query which is scoped by RLS on the client.
   tenantId: string
 }
 
@@ -80,7 +86,7 @@ export function OrderAttachments({ orderId, tenantId }: OrderAttachmentsProps) {
     data: attachments,
     isLoading,
   } = useQuery({
-    queryKey: ['order-attachments', orderId],
+    queryKey: ['order-attachments', tenantId, orderId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('order_attachments')
@@ -137,43 +143,24 @@ export function OrderAttachments({ orderId, tenantId }: OrderAttachmentsProps) {
     setUploadError(null)
 
     try {
-      // Upload file to Supabase Storage
-      const { path, error: uploadErr } = await uploadFile(
-        supabase,
-        BUCKET,
-        tenantId,
-        orderId,
-        selectedFile
-      )
+      // SCAN-005: upload through the server action so authorize('orders.update')
+      // runs. The action handles storage upload + DB insert + cleanup on failure.
+      const formData = new FormData()
+      formData.append('orderId', orderId)
+      formData.append('file', selectedFile)
 
-      if (uploadErr) {
-        setUploadError(uploadErr)
-        setUploading(false)
-        return
-      }
+      const result = await uploadOrderAttachment(formData)
 
-      // Insert database record
-      const { error: insertErr } = await supabase
-        .from('order_attachments')
-        .insert({
-          tenant_id: tenantId,
-          order_id: orderId,
-          file_name: selectedFile.name,
-          file_type: selectedFile.type || 'application/octet-stream',
-          storage_path: path,
-          file_size: selectedFile.size,
-        })
-
-      if (insertErr) {
-        // Clean up uploaded file on DB insert failure
-        await supabase.storage.from(BUCKET).remove([path])
-        setUploadError(insertErr.message)
+      if ('error' in result && result.error) {
+        setUploadError(
+          typeof result.error === 'string' ? result.error : 'Upload failed.',
+        )
         setUploading(false)
         return
       }
 
       queryClient.invalidateQueries({
-        queryKey: ['order-attachments', orderId],
+        queryKey: ['order-attachments', tenantId, orderId],
       })
       setUploadOpen(false)
       resetForm()
@@ -197,19 +184,22 @@ export function OrderAttachments({ orderId, tenantId }: OrderAttachmentsProps) {
   const handleDelete = async () => {
     if (!selectedAttachment) return
 
-    // Delete from storage
-    await supabase.storage
-      .from(BUCKET)
-      .remove([selectedAttachment.storage_path])
+    // SCAN-005: delete through the server action so orders.update is checked.
+    const result = await deleteOrderAttachment(selectedAttachment.id)
 
-    // Delete DB record
-    await supabase
-      .from('order_attachments')
-      .delete()
-      .eq('id', selectedAttachment.id)
+    if ('error' in result && result.error) {
+      toast.error(
+        typeof result.error === 'string'
+          ? result.error
+          : 'Failed to delete attachment',
+      )
+      // Keep the dialog open so the user sees the error state and can retry
+      // or cancel. Don't wipe selectedAttachment.
+      return
+    }
 
     queryClient.invalidateQueries({
-      queryKey: ['order-attachments', orderId],
+      queryKey: ['order-attachments', tenantId, orderId],
     })
     setDeleteDialogOpen(false)
     setSelectedAttachment(null)
