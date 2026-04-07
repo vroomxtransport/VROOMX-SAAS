@@ -6,6 +6,33 @@
   NODE_VERSION = "22"
   SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,NEXT_PUBLIC_APP_URL,NEXT_PUBLIC_SENTRY_DSN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,SENTRY_ORG,SENTRY_PROJECT,SENTRY_AUTH_TOKEN,TEST_USER_EMAIL"
 
+# CFG-009: deploy-preview safety is configured in the Netlify dashboard,
+# NOT here. Env vars in netlify.toml are visible at build time and in
+# the committed repo, so scoping Stripe / Resend / Supabase keys per
+# context must be done via:
+#   Netlify dashboard → Site → Environment variables → "Specific scopes"
+# For each secret, set Production scope to the live value and
+# Deploy Previews + Branch Deploys scope to a test/staging value. That
+# way a PR preview can't hit production Stripe or send real emails.
+# This is called out here so future operators know to check the dashboard.
+
+# CFG-009: defensive security headers applied at the CDN edge. These
+# duplicate what next.config.ts + middleware.ts already set for SSR
+# responses, but static assets served directly by Netlify's CDN
+# (under /_next/static/*, /images/*, /*.svg, etc.) are excluded from
+# the Next.js middleware matcher and otherwise miss these headers.
+# Defense-in-depth: Netlify applies [[headers]] BEFORE the request
+# reaches Next.js, so every response — SSR or static — gets them.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), browsing-topics=()"
+    X-DNS-Prefetch-Control = "on"
+
 # PostHog reverse proxy — Next.js rewrites don't proxy external URLs on Netlify edge
 [[redirects]]
   from = "/ingest/static/*"
