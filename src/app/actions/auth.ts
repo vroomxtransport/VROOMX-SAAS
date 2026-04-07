@@ -15,10 +15,24 @@ function getStripe() {
   })
 }
 
+// AUTH-004: strengthen the password policy. 8 characters with no
+// complexity requirement accepted trivially weak passwords like
+// "password", "12345678", "aaaaaaaa". Raised to 12+ characters with
+// at least one uppercase, one digit, and one symbol — still well short
+// of NIST 800-63B's recommendation but closes the easy-guess window
+// without pulling in a dictionary-based estimator (zxcvbn).
+const passwordSchema = z
+  .string()
+  .min(12, 'Password must be at least 12 characters')
+  .regex(/[A-Z]/, 'Password must include at least one uppercase letter')
+  .regex(/[a-z]/, 'Password must include at least one lowercase letter')
+  .regex(/[0-9]/, 'Password must include at least one digit')
+  .regex(/[^A-Za-z0-9]/, 'Password must include at least one symbol')
+
 const signUpSchema = z.object({
   full_name: z.string().min(1, 'Full name is required'),
   email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  password: passwordSchema,
   company_name: z.string().min(1, 'Company name is required'),
   plan: z.enum(['starter', 'pro', 'enterprise']),
   dot_number: z.string().optional(),
@@ -65,10 +79,18 @@ export async function loginAction(prevState: any, formData: FormData) {
 export async function signUpAction(prevState: any, formData: FormData) {
   // 0. Rate limit signup by IP — signup is unauthenticated, so authorize()
   // doesn't apply. C3 fix: prevent enumeration via repeated signup attempts.
+  //
+  // AUTH-002: prefer `x-nf-client-connection-ip` as the primary IP source.
+  // Netlify's edge sets this header from the real TCP client IP and clients
+  // cannot override it. `x-forwarded-for` is kept as a fallback for local
+  // dev and non-Netlify deployments but should never be the only source of
+  // truth — attackers can spoof it and rotate spoofed IPs to bypass the
+  // 5/min cap. Mirror the fix already in src/lib/supabase/proxy.ts (CFG-008).
   const hdrs = await headers()
   const ip =
+    hdrs.get('x-nf-client-connection-ip')?.trim() ||
     hdrs.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    hdrs.get('x-real-ip') ||
+    hdrs.get('x-real-ip')?.trim() ||
     'unknown'
   const rl = await rateLimit(`signup-ip:${ip}`, { limit: 5, windowMs: 60_000 })
   if (!rl.allowed) {
@@ -119,6 +141,40 @@ export async function signUpAction(prevState: any, formData: FormData) {
   if (inviteToken) {
     const admin = createServiceRoleClient()
 
+    // AUTH-001: validate the invite token against the invites table BEFORE
+    // touching anyone's auth record. Prior code called
+    // admin.auth.admin.updateUserById(targetUserId, { password, email_confirm: true })
+    // whenever an invite_token was present and the email happened to match
+    // a pre-existing auth.users row. The token was never checked — so an
+    // attacker with any non-empty token value could reset the password of
+    // any pre-invited email. Validating here fails closed: unknown/expired/
+    // email-mismatched tokens abort before any service-role write.
+    const { data: invite, error: inviteErr } = await admin
+      .from('invites')
+      .select('id, email, status, expires_at')
+      .eq('token', inviteToken)
+      .maybeSingle()
+
+    if (inviteErr || !invite) {
+      return { error: 'Invalid invite link' }
+    }
+    if (invite.status !== 'pending') {
+      return { error: 'This invite has already been used or was revoked' }
+    }
+    if (new Date(invite.expires_at) < new Date()) {
+      return { error: 'This invite has expired' }
+    }
+    if (
+      typeof invite.email !== 'string' ||
+      invite.email.toLowerCase() !== email.toLowerCase()
+    ) {
+      // Token-email mismatch: someone is trying to claim a token that
+      // doesn't belong to them. Log for alerting but return a generic
+      // error so we don't confirm which email the token belongs to.
+      console.warn('[SIGNUP] Invite token email mismatch', { inviteId: invite.id })
+      return { error: 'Invalid invite link' }
+    }
+
     // C3 fix: Check if user was pre-created by admin.inviteUserByEmail() via
     // a targeted RPC lookup instead of admin.auth.admin.listUsers() which
     // loads ALL users into memory and leaks the full user directory.
@@ -133,7 +189,9 @@ export async function signUpAction(prevState: any, formData: FormData) {
     const isPreInvited = !!existingUserId && existingUserId !== authData.user.id
 
     if (isPreInvited) {
-      // User was pre-created by invite — update their password and confirm
+      // User was pre-created by invite — update their password and confirm.
+      // Safe to touch now because we verified the invite token + email match
+      // above; the caller has proven they own the invite.
       await admin.auth.admin.updateUserById(targetUserId, {
         password,
         email_confirm: true,
