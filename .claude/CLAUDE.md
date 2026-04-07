@@ -98,6 +98,8 @@ Use these as inspiration for UI decisions — not direct copy. Match VroomX bran
 3. Security/auth changes → run npm run audit:security
 4. Show BEFORE → AFTER diffs
 5. Prefer single tests over full suite for speed
+6. **After feature/task completion (before commit): spawn the `debugger` agent** to root-cause any failures, validate the change end-to-end, and surface regressions. Not required after every individual edit — only at the end of a logical unit of work. See `.claude/rules/debugger-usage.md`.
+7. **After any security-sensitive change (before commit): spawn the `security-auditor` agent** to review posture and surface regressions against prior audit waves. Required when the change touches auth, RLS/migrations, server actions, API routes, storage, webhooks, cron, secrets, CORS/CSP, rate limiting, multi-tenant data access, or auth-adjacent dependencies. See `.claude/rules/security-auditor-usage.md` for the full trigger list. Can run in parallel with the debugger for independent changes.
 
 ## Financial Model (critical — carrier walk-away if wrong)
 - **Clean Gross** = revenue - brokerFees - localFees (per order)
