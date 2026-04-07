@@ -16,7 +16,11 @@
 const VROOMX_CONFIG = {
   // Supabase project ref — used to construct the auth cookie name.
   // Public value, not secret. Override per-environment.
-  SUPABASE_PROJECT_REF: 'yrrczhlzulwvdqjwvhtu',
+  // SEC-LEAK-03 fix: previously 'yrrczhlzulwvdqjwvhtu' (copy-paste from
+  // a sibling project) which meant the extension looked for the wrong
+  // sb-<ref>-auth-token cookie on the VROOMX domain and silently failed
+  // to attach sessions. Correct ref is the VROOMX main app's.
+  SUPABASE_PROJECT_REF: 'hqoynittztyqmurnvkxx',
 
   // Default VroomX base URL when chrome.storage.sync has no override.
   DEFAULT_VROOMX_URL: 'http://localhost:3000',
