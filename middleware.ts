@@ -118,6 +118,13 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|ingest|monitoring|api/extension|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // AUTH-005: exclude webhook + cron routes. The middleware calls
+    // supabase.auth.getUser() on every matched request — an unnecessary
+    // Supabase Auth API round-trip for requests that can never be
+    // authenticated users. Stripe/QB webhooks verify their own signatures
+    // and cron routes verify CRON_SECRET, so there is nothing for the
+    // session middleware to add. Excluding them also removes a small
+    // latency tax on every webhook/cron invocation.
+    '/((?!_next/static|_next/image|favicon.ico|ingest|monitoring|api/extension|api/webhooks|api/cron|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
