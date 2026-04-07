@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
+import { rateLimit } from '@/lib/rate-limit'
+import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import Stripe from 'stripe'
@@ -61,6 +63,18 @@ export async function loginAction(prevState: any, formData: FormData) {
 }
 
 export async function signUpAction(prevState: any, formData: FormData) {
+  // 0. Rate limit signup by IP — signup is unauthenticated, so authorize()
+  // doesn't apply. C3 fix: prevent enumeration via repeated signup attempts.
+  const hdrs = await headers()
+  const ip =
+    hdrs.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    hdrs.get('x-real-ip') ||
+    'unknown'
+  const rl = await rateLimit(`signup-ip:${ip}`, { limit: 5, windowMs: 60_000 })
+  if (!rl.allowed) {
+    return { error: 'Too many signup attempts. Please try again in a minute.' }
+  }
+
   // 1. Validate inputs
   const parsed = signUpSchema.safeParse({
     full_name: formData.get('full_name'),
@@ -105,14 +119,22 @@ export async function signUpAction(prevState: any, formData: FormData) {
   if (inviteToken) {
     const admin = createServiceRoleClient()
 
-    // Check if user was already pre-created by admin.inviteUserByEmail()
-    // If so, just update their password and metadata
-    const { data: existingUsers } = await admin.auth.admin.listUsers()
-    const existingUser = existingUsers?.users?.find(u => u.email === email)
+    // C3 fix: Check if user was pre-created by admin.inviteUserByEmail() via
+    // a targeted RPC lookup instead of admin.auth.admin.listUsers() which
+    // loads ALL users into memory and leaks the full user directory.
+    const { data: existingUserId } = await admin.rpc(
+      'get_auth_user_id_by_email',
+      { p_email: email }
+    )
 
-    if (existingUser) {
+    // The freshly signUp()-created user from above may collide with the
+    // pre-invited user. Use the existing ID if found, otherwise the new ID.
+    const targetUserId = (existingUserId as string | null) ?? authData.user.id
+    const isPreInvited = !!existingUserId && existingUserId !== authData.user.id
+
+    if (isPreInvited) {
       // User was pre-created by invite — update their password and confirm
-      await admin.auth.admin.updateUserById(existingUser.id, {
+      await admin.auth.admin.updateUserById(targetUserId, {
         password,
         email_confirm: true,
         user_metadata: { full_name },
@@ -120,7 +142,7 @@ export async function signUpAction(prevState: any, formData: FormData) {
       })
     } else {
       // User wasn't pre-created — confirm email directly so sign-in works
-      await admin.auth.admin.updateUserById(authData.user.id, {
+      await admin.auth.admin.updateUserById(targetUserId, {
         email_confirm: true,
         app_metadata: { pending_invite: true },
       })

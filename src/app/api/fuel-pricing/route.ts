@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server'
+import { authorize } from '@/lib/authz'
 
-const EIA_API_URL =
+const EIA_BASE_URL =
   'https://api.eia.gov/v2/petroleum/pri/gnd/data/' +
-  '?api_key=DEMO_KEY' +
-  '&frequency=weekly' +
+  '?frequency=weekly' +
   '&data[0]=value' +
   '&facets[product][]=EPD2DXL0' + // Ultra Low Sulfur Diesel
-  '&facets[duoarea][]=NUS' +       // National U.S.
+  '&facets[duoarea][]=NUS' + // National U.S.
   '&sort[0][column]=period' +
   '&sort[0][direction]=desc' +
   '&length=1'
@@ -23,8 +23,33 @@ interface EIAResponse {
 }
 
 export async function GET() {
+  // C4 fix: require authentication + per-user rate limit. Was previously
+  // an open endpoint with a hardcoded DEMO_KEY in the URL.
+  const authResult = await authorize('*', {
+    checkSuspension: false,
+    rateLimit: { key: 'fuel-pricing', limit: 60, windowMs: 60_000 },
+  })
+
+  if (!authResult.ok) {
+    return NextResponse.json(
+      { error: authResult.error },
+      { status: 401 }
+    )
+  }
+
+  // C4 fix: read EIA_API_KEY from env (was hardcoded 'DEMO_KEY' literal).
+  // assertRequiredEnvVars() validates this is set on app boot in production.
+  const apiKey = process.env.EIA_API_KEY
+  if (!apiKey) {
+    console.error('[fuel-pricing] EIA_API_KEY not configured')
+    return NextResponse.json(
+      { error: 'Fuel pricing not configured' },
+      { status: 500 }
+    )
+  }
+
   try {
-    const res = await fetch(EIA_API_URL, {
+    const res = await fetch(`${EIA_BASE_URL}&api_key=${apiKey}`, {
       next: { revalidate: 86400 }, // Cache for 24 hours
     })
 

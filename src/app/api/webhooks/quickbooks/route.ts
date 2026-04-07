@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { verifyQuickBooksWebhook } from '@/lib/quickbooks/webhook'
 import { getQBClientForTenant, syncPaymentFromQB } from '@/lib/quickbooks/sync'
+import { validateQbId } from '@/lib/quickbooks/qbql'
 import type { QBWebhookPayload, QBWebhookNotification } from '@/lib/quickbooks/types'
 
 // ---------------------------------------------------------------------------
@@ -140,6 +141,19 @@ async function processEntity(
         const qbClient = await getQBClientForTenant(supabase, tenantId)
         if (!qbClient) break
 
+        // C1 fix: validate entity.id is a numeric string before interpolating
+        // into the QBQL query. The webhook signature is verified upstream, but
+        // a leaked verifier secret or compromised QB account would otherwise
+        // permit arbitrary QBQL injection here.
+        const idResult = validateQbId(entity.id)
+        if (!idResult.success) {
+          console.warn('[QB_WEBHOOK] Invalid Payment entity.id, skipping', {
+            id: entity.id,
+            realmId,
+          })
+          break
+        }
+
         const payments = await qbClient.query<{
           Id: string
           TotalAmt: number
@@ -147,7 +161,7 @@ async function processEntity(
             Amount: number
             LinkedTxn: Array<{ TxnId: string; TxnType: string }>
           }>
-        }>(`SELECT * FROM Payment WHERE Id = '${entity.id}'`)
+        }>(`SELECT * FROM Payment WHERE Id = '${idResult.data}'`)
 
         const payment = payments[0]
         if (!payment) break

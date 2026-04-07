@@ -11,6 +11,7 @@ import type {
   QBTokenResponse,
 } from './types'
 import { refreshAccessToken } from './oauth'
+import { validateQbDisplayName, escapeQbStringLiteral } from './qbql'
 
 // ============================================================================
 // QuickBooks API Client
@@ -200,8 +201,18 @@ export class QuickBooksClient {
     return response.Customer
   }
 
+  /**
+   * Find a QB Customer by display name.
+   *
+   * SECURITY: displayName is validated against a strict whitelist via
+   * validateQbDisplayName(). The returned safe value is then run through
+   * escapeQbStringLiteral() to escape apostrophes for QBQL string literal
+   * interpolation. The whitelist guarantees no escape-sensitive characters
+   * other than `'` survive, so the escape is safe.
+   */
   async findCustomerByName(displayName: string): Promise<QBCustomer | null> {
-    const escaped = displayName.replace(/'/g, "\\'")
+    const safeName = validateQbDisplayName(displayName)
+    const escaped = escapeQbStringLiteral(safeName)
     const results = await this.query<QBCustomer>(
       `SELECT * FROM Customer WHERE DisplayName = '${escaped}'`
     )
@@ -277,8 +288,15 @@ export class QuickBooksClient {
     return response.Vendor
   }
 
+  /**
+   * Find a QB Vendor by display name.
+   *
+   * SECURITY: same model as findCustomerByName — strict whitelist, then
+   * escape apostrophes for QBQL string-literal interpolation.
+   */
   async findVendorByName(displayName: string): Promise<QBVendor | null> {
-    const escaped = displayName.replace(/'/g, "\\'")
+    const safeName = validateQbDisplayName(displayName)
+    const escaped = escapeQbStringLiteral(safeName)
     const results = await this.query<QBVendor>(
       `SELECT * FROM Vendor WHERE DisplayName = '${escaped}'`
     )
