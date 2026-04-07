@@ -1,10 +1,20 @@
 'use server'
 
+import { z } from 'zod'
 import { authorize } from '@/lib/authz'
 import { redirect } from 'next/navigation'
 import { createPortalSession } from '@/lib/stripe/billing-portal'
 import { getStripeClient, getPriceMap } from '@/lib/stripe/config'
 import type { SubscriptionPlan } from '@/types'
+
+// SCAN-014: Zod validation for createCheckoutSession. TypeScript's
+// SubscriptionPlan type prevents invalid plans at compile time, but
+// server actions are called from client code over RPC where the type
+// guarantee evaporates. Runtime validation is the codebase standard
+// (see .claude/rules/server-actions.md).
+const checkoutPlanSchema = z.object({
+  plan: z.enum(['starter', 'pro', 'enterprise']),
+})
 
 /**
  * Creates a Stripe Billing Portal session and redirects the user.
@@ -46,12 +56,17 @@ export async function createBillingPortalSession() {
  * Redirects to Stripe Checkout to collect payment and start subscription.
  */
 export async function createCheckoutSession(plan: SubscriptionPlan) {
+  const parsed = checkoutPlanSchema.safeParse({ plan })
+  if (!parsed.success) {
+    return { error: 'Invalid plan selected.' }
+  }
+
   const auth = await authorize('billing.manage', { checkSuspension: false })
   if (!auth.ok) return { error: auth.error }
   const { user } = auth.ctx
 
   const priceMap = getPriceMap()
-  const priceId = priceMap[plan]
+  const priceId = priceMap[parsed.data.plan]
 
   if (!priceId) {
     return { error: 'Invalid plan selected.' }
