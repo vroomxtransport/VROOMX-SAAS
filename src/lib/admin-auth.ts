@@ -36,10 +36,13 @@ export type AdminAuthResult =
  * the service-role admin API. This is a one-shot lazy migration so we
  * don't need a separate DB migration to backfill existing platform admins.
  *
- * MFA factor enrollment is checked but not enforced — we log a warning
- * if a platform admin has zero enrolled factors so operators are aware.
- * Hard MFA enforcement at sign-in is a Supabase project setting (not
- * something we can gate from application code).
+ * MFA factor enrollment is hard-enforced at the application layer.
+ * A platform admin with zero verified factors is denied access with
+ * a clear error directing them to /settings/security to enroll. This
+ * is separate from Supabase's sign-in-level MFA enforcement (a project
+ * setting we cannot toggle from code) — we re-check at every admin
+ * entry point so an MFA-disabled project setting does not let an
+ * enrollment-skipped admin through.
  *
  * Returns a service-role Supabase client that bypasses RLS — callers
  * must NEVER expose this client to the browser.
@@ -99,11 +102,24 @@ export async function authorizeAdmin(): Promise<AdminAuthResult> {
     }
   }
 
-  // 4. MFA enrollment check (advisory — log only, do not block)
-  // Hard enforcement at sign-in is a Supabase project setting. From server
-  // code we can only confirm the user has at least one verified factor.
+  // 4. AUTH-006: MFA enrollment check (hard-enforced).
+  // Previously this was advisory-only — we logged a warning but let the
+  // caller through. That left platform admins operable without a second
+  // factor whenever Supabase's sign-in-level MFA enforcement wasn't set.
+  // Now we deny access if there are zero verified factors.
+  //
+  // listFactors can fail in edge runtimes; we treat that as deny-by-default
+  // for the admin panel because a service-role client is the prize and the
+  // fail-open alternative is worse than a temporary lockout.
   try {
-    const { data: factorsData } = await supabase.auth.mfa.listFactors()
+    const { data: factorsData, error: factorsErr } = await supabase.auth.mfa.listFactors()
+    if (factorsErr) {
+      console.error(
+        '[ADMIN_AUTH] MFA factor check failed:',
+        factorsErr instanceof Error ? factorsErr.message : factorsErr
+      )
+      return { ok: false, error: 'Unable to verify MFA status. Please try again.' }
+    }
     const verifiedFactors =
       [
         ...(factorsData?.totp ?? []),
@@ -111,17 +127,26 @@ export async function authorizeAdmin(): Promise<AdminAuthResult> {
       ].filter((f) => f.status === 'verified')
 
     if (verifiedFactors.length === 0) {
+      // NOTE: an in-app MFA enrollment UI at e.g. /settings/security does
+      // not exist yet. Admins must enroll a TOTP factor via the Supabase
+      // dashboard's user management or via a custom enrollment page (TODO:
+      // build one). The error message below is deliberately generic so it
+      // doesn't promise a URL we haven't shipped.
       console.warn(
-        `[ADMIN_AUTH] Platform admin ${userEmail} has zero verified MFA factors. ` +
-          `Recommend enrolling TOTP via /settings/security.`
+        `[ADMIN_AUTH] Platform admin ${userEmail} denied — zero verified MFA factors.`
       )
+      return {
+        ok: false,
+        error:
+          'MFA required for admin access. Please enroll a TOTP factor on your account before accessing the admin panel.',
+      }
     }
   } catch (mfaErr) {
-    // listFactors can fail in edge runtimes; non-fatal.
-    console.warn(
-      '[ADMIN_AUTH] MFA factor check failed:',
+    console.error(
+      '[ADMIN_AUTH] MFA factor check threw:',
       mfaErr instanceof Error ? mfaErr.message : mfaErr
     )
+    return { ok: false, error: 'Unable to verify MFA status. Please try again.' }
   }
 
   // 5. Return service-role client (bypasses RLS for cross-tenant operations)
