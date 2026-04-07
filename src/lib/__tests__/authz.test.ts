@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { authorize, safeError } from '@/lib/authz'
+import { authorize, safeError, __resetMembershipCacheForTests } from '@/lib/authz'
 
 // Mock dependencies
 vi.mock('@/lib/supabase/server', () => ({
@@ -22,8 +22,16 @@ const mockedCreateClient = vi.mocked(createClient)
 const mockedRateLimit = vi.mocked(rateLimit)
 const mockedIsAccountSuspended = vi.mocked(isAccountSuspended)
 
-// Helper to build a mock Supabase client with auth.getUser() response
+// Helper to build a mock Supabase client with auth.getUser() response.
+// The chain supports both .single() (custom_roles lookup) and .maybeSingle()
+// (SCAN-006 live tenant_memberships lookup). Default is a valid membership
+// row so SENSITIVE_PERMISSIONS calls with an authorized role pass through;
+// individual tests can pass `queryResult` to override for custom_roles.
 function mockSupabase(userResult: { data: { user: unknown }; error: unknown }, queryResult?: unknown) {
+  const terminalChain = {
+    single: vi.fn().mockResolvedValue(queryResult ?? { data: null, error: null }),
+    maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'membership-123' }, error: null }),
+  }
   const client = {
     auth: {
       getUser: vi.fn().mockResolvedValue(userResult),
@@ -31,9 +39,7 @@ function mockSupabase(userResult: { data: { user: unknown }; error: unknown }, q
     from: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue(queryResult ?? { data: null, error: null }),
-          }),
+          eq: vi.fn().mockReturnValue(terminalChain),
         }),
       }),
     }),
@@ -54,6 +60,9 @@ const validUser = {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  // SCAN-006: clear the in-process membership cache between tests so
+  // a prior test's "revoked" or "active" answer doesn't leak through.
+  __resetMembershipCacheForTests()
   mockedRateLimit.mockResolvedValue({ allowed: true, remaining: 9 })
   mockedIsAccountSuspended.mockResolvedValue({ suspended: false, gracePeriodEndsAt: null })
 })
