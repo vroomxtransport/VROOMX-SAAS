@@ -23,8 +23,8 @@ export function KPIDelta({ current, previous, invertColor = false, className }: 
   // Cannot compute a meaningful delta without a prior-period value
   if (previous === 0) {
     return (
-      <span className={cn('inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-medium tabular-nums text-muted-foreground/60 bg-muted/40', className)}>
-        <HugeiconsIcon icon={MinusSignIcon} size={12} />
+      <span className={cn('inline-flex items-center gap-1 rounded-full border border-border-subtle bg-muted/50 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-muted-foreground', className)}>
+        <HugeiconsIcon icon={MinusSignIcon} size={11} className="shrink-0" />
         <span></span>
       </span>
     )
@@ -35,8 +35,8 @@ export function KPIDelta({ current, previous, invertColor = false, className }: 
 
   if (isZero) {
     return (
-      <span className={cn('inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-medium tabular-nums text-muted-foreground/60 bg-muted/40', className)}>
-        <HugeiconsIcon icon={MinusSignIcon} size={12} />
+      <span className={cn('inline-flex items-center gap-1 rounded-full border border-border-subtle bg-muted/50 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-muted-foreground', className)}>
+        <HugeiconsIcon icon={MinusSignIcon} size={11} className="shrink-0" />
         <span>0%</span>
       </span>
     )
@@ -46,21 +46,21 @@ export function KPIDelta({ current, previous, invertColor = false, className }: 
   // For inverted metrics (costs), positive change is bad
   const isGood = invertColor ? !isPositiveChange : isPositiveChange
   const sign = isPositiveChange ? '+' : ''
-  const label = `${sign}${Math.abs(pct) >= 10 ? pct.toFixed(1) : pct.toFixed(1)}%`
+  const label = `${sign}${pct.toFixed(1)}%`
 
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-medium tabular-nums',
+        'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold tabular-nums',
         isGood
-          ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
-          : 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400',
+          ? 'border-emerald-200 bg-emerald-100 text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300'
+          : 'border-rose-200 bg-rose-100 text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300',
         className,
       )}
     >
       {isPositiveChange
-        ? <HugeiconsIcon icon={ChartIncreaseIcon} size={12} className="shrink-0" />
-        : <HugeiconsIcon icon={ChartDecreaseIcon} size={12} className="shrink-0" />
+        ? <HugeiconsIcon icon={ChartIncreaseIcon} size={11} className="shrink-0" />
+        : <HugeiconsIcon icon={ChartDecreaseIcon} size={11} className="shrink-0" />
       }
       <span>{label}</span>
     </span>
