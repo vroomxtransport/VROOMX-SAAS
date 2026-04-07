@@ -656,3 +656,19 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Chat @-mention tokens */
+.mention-token {
+  display: inline;
+  color: var(--brand);
+  font-weight: 600;
+  background: color-mix(in oklch, var(--brand) 10%, transparent);
+  padding: 0 0.25rem;
+  border-radius: 0.25rem;
+}
+
+.mention-token-self {
+  background: color-mix(in oklch, var(--brand) 22%, transparent);
+  color: var(--brand);
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--brand) 35%, transparent);
+}

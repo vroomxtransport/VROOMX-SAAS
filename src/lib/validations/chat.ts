@@ -7,9 +7,15 @@ export const chatAttachmentSchema = z.object({
   mimeType: z.string().max(100),
 })
 
+export const chatMentionSchema = z.object({
+  userId: z.string().uuid(),
+  displayName: z.string().min(1).max(100),
+})
+
 export const messageSchema = z.object({
   content: z.string().max(5000).optional(),
   attachments: z.array(chatAttachmentSchema).max(5).optional(),
+  mentions: z.array(chatMentionSchema).max(20).optional(),
 }).refine(
   (d) => (d.content && d.content.trim().length > 0) || (d.attachments && d.attachments.length > 0),
   { message: 'Message must have text or at least one attachment' }

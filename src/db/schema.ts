@@ -620,6 +620,7 @@ export const chatMessages = pgTable('chat_messages', {
   userName: text('user_name'),
   content: text('content'),
   attachments: jsonb('attachments'),
+  mentions: jsonb('mentions'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
   index('idx_chat_messages_tenant_id').on(table.tenantId),

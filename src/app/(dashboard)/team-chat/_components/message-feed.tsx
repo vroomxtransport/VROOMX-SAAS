@@ -11,9 +11,10 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 
 interface MessageFeedProps {
   channelId: string
+  currentUserId: string
 }
 
-export function MessageFeed({ channelId }: MessageFeedProps) {
+export function MessageFeed({ channelId, currentUserId }: MessageFeedProps) {
   const { data: messages, isLoading } = useMessages(channelId)
   const bottomRef = useRef<HTMLDivElement>(null)
   const prevMessageCountRef = useRef(0)
@@ -123,6 +124,7 @@ export function MessageFeed({ channelId }: MessageFeedProps) {
                   message={message}
                   isGrouped={isGrouped && !showDateSeparator}
                   animate={isRecent}
+                  currentUserId={currentUserId}
                 />
               </div>
             )

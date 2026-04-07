@@ -316,6 +316,11 @@ export interface ChatAttachment {
   mimeType: string
 }
 
+export interface ChatMention {
+  userId: string
+  displayName: string
+}
+
 export interface ChatMessage {
   id: string
   tenant_id: string
@@ -324,6 +329,7 @@ export interface ChatMessage {
   user_name: string | null
   content: string | null
   attachments: ChatAttachment[] | null
+  mentions: ChatMention[] | null
   created_at: string
 }
 

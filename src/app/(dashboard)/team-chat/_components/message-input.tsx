@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { uploadFile, deleteFile } from '@/lib/storage'
@@ -10,7 +10,10 @@ import { Textarea } from '@/components/ui/textarea'
 import { Send, Loader2, Paperclip } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { FilePreviewStrip } from './file-preview-strip'
-import type { ChatMessage, ChatAttachment } from '@/types/database'
+import { MentionPicker, filterMembers, getMemberDisplayName } from './mention-picker'
+import { useTenantMembers } from '@/hooks/use-tenant-members'
+import type { ChatMessage, ChatAttachment, ChatMention } from '@/types/database'
+import type { TenantMember } from '@/lib/queries/tenant-members'
 
 const MAX_LENGTH = 5000
 const WARN_THRESHOLD = 4500
@@ -27,20 +30,117 @@ function getFileExtension(name: string): string {
   return name.split('.').pop()?.toLowerCase() ?? ''
 }
 
+/**
+ * Detects an active @-mention query at the caret position.
+ * Walks backwards from the caret looking for an `@`. Returns the substring
+ * between the `@` and the caret if the `@` is at start-of-text or preceded
+ * by whitespace, AND no whitespace appears between `@` and caret.
+ * Returns null if no active mention query.
+ */
+function detectMentionQuery(text: string, caretPos: number): { query: string; start: number } | null {
+  if (caretPos === 0) return null
+  let i = caretPos - 1
+  while (i >= 0) {
+    const ch = text[i]
+    if (ch === '@') {
+      const before = i === 0 ? ' ' : text[i - 1]
+      if (/\s/.test(before)) {
+        return { query: text.slice(i + 1, caretPos), start: i }
+      }
+      return null
+    }
+    if (/\s/.test(ch)) return null
+    i--
+  }
+  return null
+}
+
 interface MessageInputProps {
   channelId: string
   channelName?: string
   tenantId: string
+  currentUserId: string
 }
 
-export function MessageInput({ channelId, channelName, tenantId }: MessageInputProps) {
+export function MessageInput({ channelId, channelName, tenantId, currentUserId }: MessageInputProps) {
   const [content, setContent] = useState('')
   const [files, setFiles] = useState<File[]>([])
   const [sending, setSending] = useState(false)
   const [uploadProgress, setUploadProgress] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState(false)
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null)
+  const [mentionStart, setMentionStart] = useState<number>(0)
+  const [pickerIndex, setPickerIndex] = useState(0)
+  const [draftMentions, setDraftMentions] = useState<ChatMention[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const queryClient = useQueryClient()
+  const { data: tenantMembers = [] } = useTenantMembers()
+
+  const filteredMembers = useMemo(
+    () =>
+      mentionQuery !== null
+        ? filterMembers(tenantMembers, mentionQuery, currentUserId)
+        : [],
+    [tenantMembers, mentionQuery, currentUserId]
+  )
+
+  // Reset picker index when the filtered list changes
+  useEffect(() => {
+    setPickerIndex(0)
+  }, [mentionQuery])
+
+  const updateMentionStateFromCaret = useCallback(
+    (text: string, caretPos: number) => {
+      const detected = detectMentionQuery(text, caretPos)
+      if (detected) {
+        setMentionQuery(detected.query)
+        setMentionStart(detected.start)
+      } else {
+        setMentionQuery(null)
+      }
+    },
+    []
+  )
+
+  const handleContentChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const newText = e.target.value
+      setContent(newText)
+      updateMentionStateFromCaret(newText, e.target.selectionStart ?? newText.length)
+    },
+    [updateMentionStateFromCaret]
+  )
+
+  const selectMention = useCallback(
+    (member: TenantMember) => {
+      const displayName = getMemberDisplayName(member)
+      const insertion = `@${displayName} `
+      const before = content.slice(0, mentionStart)
+      const afterCaret = content.slice(
+        textareaRef.current?.selectionStart ?? content.length
+      )
+      const newContent = before + insertion + afterCaret
+      setContent(newContent)
+      setDraftMentions((prev) => {
+        // Avoid duplicate entries for the same user
+        if (prev.some((m) => m.userId === member.userId)) return prev
+        return [...prev, { userId: member.userId, displayName }]
+      })
+      setMentionQuery(null)
+
+      // Restore caret position right after the inserted mention
+      const newCaret = before.length + insertion.length
+      requestAnimationFrame(() => {
+        const ta = textareaRef.current
+        if (ta) {
+          ta.focus()
+          ta.setSelectionRange(newCaret, newCaret)
+        }
+      })
+    },
+    [content, mentionStart]
+  )
 
   const validateAndAddFiles = useCallback((newFiles: FileList | File[]) => {
     const fileArray = Array.from(newFiles)
@@ -100,10 +200,21 @@ export function MessageInput({ channelId, channelName, tenantId }: MessageInputP
         setUploadProgress(null)
       }
 
-      // Send message with attachments
-      const messageData: { content?: string; attachments?: ChatAttachment[] } = {}
+      // Filter draft mentions: only keep ones whose @displayName token still
+      // appears in the trimmed content. Handles users deleting a mention by hand.
+      const liveMentions = draftMentions.filter((m) =>
+        trimmed.includes(`@${m.displayName}`)
+      )
+
+      // Send message with attachments + mentions
+      const messageData: {
+        content?: string
+        attachments?: ChatAttachment[]
+        mentions?: ChatMention[]
+      } = {}
       if (trimmed) messageData.content = trimmed
       if (attachments && attachments.length > 0) messageData.attachments = attachments
+      if (liveMentions.length > 0) messageData.mentions = liveMentions
 
       const result = await sendMessage(channelId, messageData)
 
@@ -114,6 +225,8 @@ export function MessageInput({ channelId, channelName, tenantId }: MessageInputP
         )
         setContent('')
         setFiles([])
+        setDraftMentions([])
+        setMentionQuery(null)
       } else if (result && 'error' in result) {
         // Message insert failed — cleanup uploaded files
         for (const p of uploadedPaths) {
@@ -174,13 +287,23 @@ export function MessageInput({ channelId, channelName, tenantId }: MessageInputP
     >
       <div
         className={cn(
-          'glass-panel rounded-xl p-3 transition-colors',
+          'relative glass-panel rounded-xl p-3 transition-colors',
           dragOver && 'ring-2 ring-brand/50 bg-brand/5'
         )}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
+        {mentionQuery !== null && (
+          <MentionPicker
+            query={mentionQuery}
+            members={tenantMembers}
+            selectedIndex={pickerIndex}
+            onSelect={selectMention}
+            excludeUserId={currentUserId}
+          />
+        )}
+
         <FilePreviewStrip files={files} onRemove={removeFile} />
 
         {uploadProgress && (
@@ -216,10 +339,45 @@ export function MessageInput({ channelId, channelName, tenantId }: MessageInputP
           </Button>
 
           <Textarea
+            ref={textareaRef}
             placeholder={placeholder}
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={handleContentChange}
+            onKeyUp={(e) => {
+              // Picker query needs to track caret movement (arrow keys, click, etc.)
+              if (mentionQuery !== null || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                const ta = e.currentTarget
+                updateMentionStateFromCaret(ta.value, ta.selectionStart ?? ta.value.length)
+              }
+            }}
+            onClick={(e) => {
+              const ta = e.currentTarget
+              updateMentionStateFromCaret(ta.value, ta.selectionStart ?? ta.value.length)
+            }}
             onKeyDown={(e) => {
+              // Picker keyboard nav takes priority over Enter-to-send
+              if (mentionQuery !== null && filteredMembers.length > 0) {
+                if (e.key === 'ArrowDown') {
+                  e.preventDefault()
+                  setPickerIndex((i) => (i + 1) % filteredMembers.length)
+                  return
+                }
+                if (e.key === 'ArrowUp') {
+                  e.preventDefault()
+                  setPickerIndex((i) => (i - 1 + filteredMembers.length) % filteredMembers.length)
+                  return
+                }
+                if (e.key === 'Enter' || e.key === 'Tab') {
+                  e.preventDefault()
+                  selectMention(filteredMembers[pickerIndex])
+                  return
+                }
+                if (e.key === 'Escape') {
+                  e.preventDefault()
+                  setMentionQuery(null)
+                  return
+                }
+              }
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault()
                 handleSend()

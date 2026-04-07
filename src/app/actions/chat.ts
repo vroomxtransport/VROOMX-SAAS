@@ -28,18 +28,38 @@ export async function sendMessage(channelId: string, data: unknown) {
     }
   }
 
+  // Resolve mentions: drop any client-claimed user_id that doesn't belong to this tenant.
+  // Never trust the client — server is the source of truth for who was actually mentioned.
+  let verifiedMentions: { userId: string; displayName: string }[] = []
+  if (parsed.data.mentions && parsed.data.mentions.length > 0) {
+    const claimedIds = parsed.data.mentions.map((m) => m.userId)
+    const { data: validMembers } = await supabase
+      .from('tenant_memberships')
+      .select('user_id')
+      .eq('tenant_id', tenantId)
+      .in('user_id', claimedIds)
+
+    const validIds = new Set((validMembers ?? []).map((m: { user_id: string }) => m.user_id))
+    verifiedMentions = parsed.data.mentions.filter((m) => validIds.has(m.userId))
+  }
+
+  const senderName = user.email?.split('@')[0] || 'Unknown'
+
   const { data: message, error } = await supabase.from('chat_messages').insert({
     tenant_id: tenantId,
     channel_id: channelId,
     user_id: user.id,
-    user_name: user.email?.split('@')[0] || 'Unknown',
+    user_name: senderName,
     content: parsed.data.content?.trim() || null,
     attachments: attachments && attachments.length > 0 ? attachments : null,
+    mentions: verifiedMentions.length > 0 ? verifiedMentions : null,
   }).select().single()
 
   if (error) return { error: safeError(error, 'sendMessage') }
 
-  // Fire-and-forget: notify other team members of the new message
+  // Fire-and-forget: notify other team members of the new message.
+  // Mentioned users get a louder `chat_mention` notification; everyone else gets `chat_message`.
+  // No double-notify — each member receives exactly one notification.
   void (async () => {
     try {
       // Fetch channel name for the notification title
@@ -59,15 +79,28 @@ export async function sendMessage(channelId: string, data: unknown) {
         .eq('tenant_id', tenantId)
         .neq('user_id', user.id)
 
+      const mentionedIds = new Set(verifiedMentions.map((m) => m.userId))
+      const bodyPreview = parsed.data.content?.slice(0, 100) || 'Sent an attachment'
+
       if (members) {
         for (const member of members) {
-          createWebNotification({
-            userId: member.user_id,
-            type: 'chat_message',
-            title: `New message in #${channelName}`,
-            body: parsed.data.content?.slice(0, 100) || 'Sent an attachment',
-            link: '/team-chat',
-          }).catch(() => {})
+          if (mentionedIds.has(member.user_id)) {
+            createWebNotification({
+              userId: member.user_id,
+              type: 'chat_mention',
+              title: `${senderName} mentioned you in #${channelName}`,
+              body: bodyPreview,
+              link: '/team-chat',
+            }).catch(() => {})
+          } else {
+            createWebNotification({
+              userId: member.user_id,
+              type: 'chat_message',
+              title: `New message in #${channelName}`,
+              body: bodyPreview,
+              link: '/team-chat',
+            }).catch(() => {})
+          }
         }
       }
     } catch {

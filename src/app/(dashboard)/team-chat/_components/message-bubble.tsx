@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { getUserColor, getUserInitials, getUserTextColor } from './chat-utils'
+import { renderMessageContent, isUserMentioned } from './mention-render'
 import { AttachmentDisplay } from './attachment-display'
 import type { ChatMessage } from '@/types/database'
 
@@ -15,9 +16,10 @@ interface MessageBubbleProps {
   message: ChatMessage
   isGrouped: boolean
   animate?: boolean
+  currentUserId: string
 }
 
-export function MessageBubble({ message, isGrouped, animate }: MessageBubbleProps) {
+export function MessageBubble({ message, isGrouped, animate, currentUserId }: MessageBubbleProps) {
   const time = new Date(message.created_at).toLocaleTimeString([], {
     hour: '2-digit',
     minute: '2-digit',
@@ -29,6 +31,7 @@ export function MessageBubble({ message, isGrouped, animate }: MessageBubbleProp
   const hasText = message.content && message.content.trim().length > 0
   const hasAttachments = message.attachments && message.attachments.length > 0
   const attachmentCount = message.attachments?.length ?? 0
+  const mentionsCurrentUser = isUserMentioned(message.mentions, currentUserId)
 
   const ariaLabel = [
     `${message.user_name ?? 'Unknown'} at ${time}:`,
@@ -76,9 +79,16 @@ export function MessageBubble({ message, isGrouped, animate }: MessageBubbleProp
         )}
         <div className="max-w-[85%] w-fit">
           {hasText && (
-            <div className="rounded-lg bg-surface-raised border border-border-subtle shadow-sm px-3 py-2">
+            <div
+              className={cn(
+                'rounded-lg shadow-sm px-3 py-2 border',
+                mentionsCurrentUser
+                  ? 'bg-brand/5 border-brand/30 ring-1 ring-brand/20'
+                  : 'bg-surface-raised border-border-subtle'
+              )}
+            >
               <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap break-words">
-                {message.content}
+                {renderMessageContent(message.content!, message.mentions, currentUserId)}
               </p>
             </div>
           )}

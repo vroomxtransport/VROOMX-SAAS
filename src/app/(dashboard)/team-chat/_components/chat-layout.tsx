@@ -126,11 +126,12 @@ export function ChatLayout({ tenantId, userId, userName, email }: ChatLayoutProp
                 onlineCount={onlineCount}
                 onToggleMemberList={() => setMemberListOpen(!memberListOpen)}
               />
-              <MessageFeed channelId={selectedChannelId} />
+              <MessageFeed channelId={selectedChannelId} currentUserId={userId} />
               <MessageInput
                 channelId={selectedChannelId}
                 channelName={selectedChannel?.name}
                 tenantId={tenantId}
+                currentUserId={userId}
               />
             </>
           ) : (
