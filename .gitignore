@@ -34,6 +34,15 @@ yarn-error.log*
 .env.local
 .env*.local
 
+# claude code local settings (never commit — may contain credentials or
+# per-user toggles). .claude/settings.local.json is also ignored via the
+# user's global git ignore; pinning it here too for repo-level defense.
+.claude/settings.json
+.claude/settings.local.json
+
+# repomix full-source dumps — used locally for AI context, never commit
+repomix-output.md
+
 # vercel (not used — deployed on netlify)
 .vercel
 
