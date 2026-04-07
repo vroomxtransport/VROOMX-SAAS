@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import Link from 'next/link'
 import { AlertTriangle } from 'lucide-react'
+import * as Sentry from '@sentry/nextjs'
 import { Button } from '@/components/ui/button'
 
 export default function Error({
@@ -13,7 +14,14 @@ export default function Error({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error(error)
+    // CFG-010: explicit Sentry capture with tagged context instead of
+    // console.error. The Wave 6a PII scrubber in instrumentation-client.ts
+    // runs on every captured event, so this routes through the scrubber
+    // rather than dumping the raw Error object to the browser console.
+    Sentry.captureException(error, {
+      tags: { boundary: 'app-error' },
+      extra: { digest: error.digest },
+    })
   }, [error])
 
   return (
