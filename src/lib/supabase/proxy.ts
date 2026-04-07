@@ -39,9 +39,19 @@ export async function updateSession(request: NextRequest) {
 
   // Rate limit auth endpoints (POST only = form submissions)
   if (request.method === 'POST' && AUTH_PATHS.some(p => request.nextUrl.pathname === p)) {
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-      ?? request.headers.get('x-real-ip')
-      ?? 'unknown'
+    // CFG-008: prefer `x-nf-client-connection-ip` — Netlify's edge sets
+    // this header from the real TCP client IP and clients cannot
+    // override it. `x-forwarded-for` is kept as a fallback for local
+    // dev and non-Netlify deployments, but a client-controlled header
+    // should never be the only source of truth for rate-limit keying.
+    // If none of the trusted sources are present we key on 'unknown',
+    // which means all such callers share one bucket — safer default
+    // than letting the spoofed IP win.
+    const ip =
+      request.headers.get('x-nf-client-connection-ip')?.trim() ||
+      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      request.headers.get('x-real-ip')?.trim() ||
+      'unknown'
     const { allowed } = await rateLimit(`auth:${ip}`, { limit: 10, windowMs: 60_000 })
     if (!allowed) {
       return NextResponse.json(
