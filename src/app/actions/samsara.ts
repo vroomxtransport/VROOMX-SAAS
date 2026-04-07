@@ -3,6 +3,7 @@
 import { z } from 'zod'
 import { authorize, safeError } from '@/lib/authz'
 import { logAuditEvent } from '@/lib/audit-log'
+import { issueNonce } from '@/lib/oauth-nonce'
 import { revalidatePath } from 'next/cache'
 import { getSamsaraAuthUrl, refreshAccessToken } from '@/lib/samsara/oauth'
 import { SamsaraClient } from '@/lib/samsara/client'
@@ -207,6 +208,15 @@ export async function connectSamsara(data?: { apiKey?: string }) {
 
     // OAuth flow: generate auth URL
     const nonce = crypto.randomBytes(16).toString('hex')
+
+    // L3 fix: persist the nonce server-side BEFORE redirecting the user
+    // to Samsara. The future Samsara callback route MUST call
+    // consumeNonce(nonce, tenantId, 'samsara') to complete the handshake.
+    // The infrastructure is in place now so the callback implementation
+    // doesn't need to remember to add it later. Same fail-closed semantic
+    // as the QuickBooks flow.
+    await issueNonce(nonce, tenantId, 'samsara')
+
     const statePayload = Buffer.from(
       JSON.stringify({ tenantId, nonce })
     ).toString('base64url')

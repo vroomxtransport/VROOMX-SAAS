@@ -111,17 +111,34 @@ export async function GET(request: Request) {
   }
 
   // 5. Generate ZIP buffer
-  const zipBuffer = await zip.generateAsync({
-    type: 'nodebuffer',
-    compression: 'DEFLATE',
-    compressionOptions: { level: 6 },
-  })
+  let zipBuffer: Buffer
+  try {
+    zipBuffer = await zip.generateAsync({
+      type: 'nodebuffer',
+      compression: 'DEFLATE',
+      compressionOptions: { level: 6 },
+    })
+  } catch (err) {
+    console.error('[bulk-download] zip generation failed:', err)
+    return NextResponse.json({ error: 'Failed to generate zip archive' }, { status: 500 })
+  }
 
-  // 6. Build a descriptive filename
+  // 6. Build a descriptive filename — L2: sanitize entityId before
+  // interpolation so an attacker passing crafted ?entityId= values
+  // (e.g. with quotes, control characters, or path separators) cannot
+  // inject into the Content-Disposition header. RLS already constrains
+  // which entityIds return rows, but defense in depth at the boundary.
+  // Allowed characters: ASCII letters, digits, dot, underscore, hyphen.
+  // Cap at 64 chars to prevent oversized filenames.
   const datestamp = new Date().toISOString().slice(0, 10)
-  const filename = `${entityType}-${entityId ?? 'company'}-documents-${datestamp}.zip`
+  const safeEntityId = (entityId ?? 'company')
+    .replace(/[^a-zA-Z0-9._-]/g, '_')
+    .slice(0, 64)
+  const filename = `${entityType}-${safeEntityId}-documents-${datestamp}.zip`
 
-  // 7. Return as a streaming download
+  // 7. Return as a streaming download. Filename is wrapped in double
+  // quotes per RFC 6266; the sanitization above guarantees no embedded
+  // quotes can break out of the quoted-string.
   return new NextResponse(zipBuffer as BodyInit, {
     status: 200,
     headers: {

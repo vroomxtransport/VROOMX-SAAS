@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { exchangeCodeForTokens } from '@/lib/quickbooks/oauth'
+import { consumeNonce } from '@/lib/oauth-nonce'
 
 // ---------------------------------------------------------------------------
 // GET /api/quickbooks/callback
@@ -27,11 +28,13 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // 2. Validate state token (base64-encoded JSON: { tenantId, nonce })
-    //    This prevents CSRF — the state was generated when the user started
-    //    the OAuth flow and should match the authenticated user's tenant.
+    // 2. Decode state token (base64-encoded JSON: { tenantId, nonce }).
+    //    Shape validation only — the actual replay/CSRF defense is the
+    //    nonce consume below.
     let statePayload: { tenantId: string; nonce: string }
     try {
+      // base64url is what the issuer produced via Buffer.toString('base64url'),
+      // but base64-with-default-tolerance also accepts standard base64.
       const decoded = Buffer.from(state, 'base64').toString('utf-8')
       statePayload = JSON.parse(decoded)
       if (!statePayload.tenantId || !statePayload.nonce) {
@@ -59,6 +62,28 @@ export async function GET(request: NextRequest) {
       console.error('[QB_CALLBACK] Tenant mismatch — possible CSRF')
       return NextResponse.redirect(
         new URL('/integrations/quickbooks?error=tenant_mismatch', baseUrl)
+      )
+    }
+
+    // 4a. L3 fix: validate AND consume the nonce. Rejects:
+    //     - Nonces this server never issued (forged state token)
+    //     - Nonces issued for a different tenant (CSRF + lateral movement)
+    //     - Nonces issued for a different provider (cross-protocol replay)
+    //     - Nonces older than NONCE_TTL_MS (10 minutes)
+    //     - Nonces already consumed by a previous callback (replay)
+    // The consume is atomic: a single PostgreSQL DELETE...RETURNING with
+    // all four predicates (nonce + tenant_id + provider + expires_at).
+    // If oauth_nonces table doesn't exist (migration not yet applied),
+    // consumeNonce returns false → flow is rejected (fail closed).
+    const nonceValid = await consumeNonce(
+      statePayload.nonce,
+      tenantId,
+      'quickbooks'
+    )
+    if (!nonceValid) {
+      console.error('[QB_CALLBACK] Nonce validation failed — possible replay or expired flow')
+      return NextResponse.redirect(
+        new URL('/integrations/quickbooks?error=invalid_state', baseUrl)
       )
     }
 

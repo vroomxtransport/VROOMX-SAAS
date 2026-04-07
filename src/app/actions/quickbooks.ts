@@ -3,6 +3,7 @@
 import { z } from 'zod'
 import { authorize, safeError } from '@/lib/authz'
 import { logAuditEvent } from '@/lib/audit-log'
+import { issueNonce } from '@/lib/oauth-nonce'
 import { revalidatePath } from 'next/cache'
 import { getQuickBooksAuthUrl } from '@/lib/quickbooks/oauth'
 import {
@@ -51,6 +52,14 @@ export async function connectQuickBooks() {
 
   try {
     const nonce = crypto.randomBytes(16).toString('hex')
+
+    // L3 fix: persist the nonce server-side BEFORE redirecting the user
+    // to Intuit. The callback will validate that the nonce came from a
+    // real OAuth initiation we issued (and hasn't been replayed). If
+    // issueNonce throws (e.g. oauth_nonces table missing), we abort the
+    // flow rather than starting an unverifiable OAuth handshake.
+    await issueNonce(nonce, tenantId, 'quickbooks')
+
     const statePayload = Buffer.from(
       JSON.stringify({ tenantId, nonce })
     ).toString('base64url')
