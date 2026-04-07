@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { SafetyEvent } from '@/types/database'
 import { sanitizeSearch } from '@/lib/sanitize-search'
+import { clampPageSize } from '@/lib/queries/pagination'
 
 export interface SafetyEventFilters {
   eventType?: string
@@ -46,8 +47,9 @@ export async function fetchSafetyEvents(
   const {
     eventType, severity, status, driverId, truckId,
     dateFrom, dateTo, search, sortBy, sortDir,
-    page = 0, pageSize = 20,
+    page = 0,
   } = filters
+  const pageSize = clampPageSize(filters.pageSize)
 
   const sortColumn = sortBy === 'severity' ? 'severity'
     : sortBy === 'title' ? 'title'

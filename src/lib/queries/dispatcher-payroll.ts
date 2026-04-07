@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { DispatcherPayConfig, DispatcherPayrollPeriod } from '@/types/database'
+import { clampPageSize } from '@/lib/queries/pagination'
 
 // M4: explicit column allowlist instead of SELECT *.
 const PAY_CONFIG_COLUMNS =
@@ -86,7 +87,8 @@ export async function fetchPayrollPeriods(
   supabase: SupabaseClient,
   filters: PayrollPeriodFilters = {},
 ): Promise<PayrollPeriodsResult> {
-  const { page = 0, pageSize = 20 } = filters
+  const { page = 0 } = filters
+  const pageSize = clampPageSize(filters.pageSize)
 
   let query = supabase
     .from('dispatcher_payroll_periods')

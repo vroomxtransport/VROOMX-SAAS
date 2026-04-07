@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { MaintenanceRecord } from '@/types/database'
 import { sanitizeSearch } from '@/lib/sanitize-search'
+import { clampPageSize } from '@/lib/queries/pagination'
 
 export interface MaintenanceFilters {
   truckId?: string
@@ -40,8 +41,8 @@ export async function fetchMaintenanceRecords(
     sortBy,
     sortDir,
     page = 0,
-    pageSize = 20,
   } = filters
+  const pageSize = clampPageSize(filters.pageSize)
 
   // Determine sort column — only allow known columns to prevent injection
   const allowedSortFields: Record<string, string> = {

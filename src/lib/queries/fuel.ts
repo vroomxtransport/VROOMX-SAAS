@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { FuelEntry } from '@/types/database'
 import { sanitizeSearch } from '@/lib/sanitize-search'
+import { clampPageSize } from '@/lib/queries/pagination'
 
 export interface FuelFilters {
   truckId?: string
@@ -29,7 +30,8 @@ export async function fetchFuelEntries(
   supabase: SupabaseClient,
   filters: FuelFilters = {}
 ): Promise<FuelEntriesResult> {
-  const { truckId, driverId, search, dateFrom, dateTo, sortBy, sortDir, page = 0, pageSize = 20 } = filters
+  const { truckId, driverId, search, dateFrom, dateTo, sortBy, sortDir, page = 0 } = filters
+  const pageSize = clampPageSize(filters.pageSize)
 
   // Determine sort column – whitelist allowed columns to prevent injection
   const allowedSortColumns = ['date', 'gallons', 'total_cost', 'cost_per_gallon', 'location']

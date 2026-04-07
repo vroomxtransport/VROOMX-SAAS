@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Task } from '@/types/database'
 import { sanitizeSearch } from '@/lib/sanitize-search'
+import { clampPageSize } from '@/lib/queries/pagination'
 
 // M4: explicit column allowlist instead of SELECT *.
 const TASK_COLUMNS =
@@ -32,7 +33,8 @@ export async function fetchTasks(
   supabase: SupabaseClient,
   filters: TaskFilters = {}
 ): Promise<TasksResult> {
-  const { status, priority, tab, search, page = 0, pageSize = 20 } = filters
+  const { status, priority, tab, search, page = 0 } = filters
+  const pageSize = clampPageSize(filters.pageSize)
 
   let query = supabase
     .from('tasks')

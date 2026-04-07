@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Order, Broker, Driver, Trip, OrderActivityLog } from '@/types/database'
 import { sanitizeSearch } from '@/lib/sanitize-search'
+import { clampPageSize } from '@/lib/queries/pagination'
 
 export interface OrderFilters {
   status?: string
@@ -40,7 +41,8 @@ export async function fetchOrders(
   supabase: SupabaseClient,
   filters: OrderFilters = {}
 ): Promise<OrdersResult> {
-  const { status, brokerId, driverId, dateFrom, dateTo, search, paymentStatuses, sortBy, sortDir, page = 0, pageSize = 20 } = filters
+  const { status, brokerId, driverId, dateFrom, dateTo, search, paymentStatuses, sortBy, sortDir, page = 0 } = filters
+  const pageSize = clampPageSize(filters.pageSize)
 
   const resolvedSortBy =
     sortBy && ORDER_ALLOWED_SORT_COLUMNS.includes(sortBy) ? sortBy : ORDER_DEFAULT_SORT

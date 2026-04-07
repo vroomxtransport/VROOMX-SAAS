@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Truck } from '@/types/database'
 import { sanitizeSearch } from '@/lib/sanitize-search'
+import { clampPageSize } from '@/lib/queries/pagination'
 
 export interface TruckFilters {
   status?: string
@@ -29,7 +30,8 @@ export async function fetchTrucks(
   supabase: SupabaseClient,
   filters: TruckFilters = {}
 ): Promise<TrucksResult> {
-  const { status, truckType, search, page = 0, pageSize = 20, sortBy, sortDir } = filters
+  const { status, truckType, search, page = 0, sortBy, sortDir } = filters
+  const pageSize = clampPageSize(filters.pageSize)
 
   const resolvedSortBy =
     sortBy && TRUCK_ALLOWED_SORT_COLUMNS.includes(sortBy) ? sortBy : TRUCK_DEFAULT_SORT

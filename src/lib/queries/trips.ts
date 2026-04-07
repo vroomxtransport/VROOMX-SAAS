@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Trip, Driver, Truck } from '@/types/database'
 import type { TripStatus } from '@/types'
 import { sanitizeSearch } from '@/lib/sanitize-search'
+import { clampPageSize } from '@/lib/queries/pagination'
 
 export interface TripFilters {
   status?: TripStatus
@@ -43,7 +44,8 @@ export async function fetchTrips(
   supabase: SupabaseClient,
   filters: TripFilters = {}
 ): Promise<TripsResult> {
-  const { status, driverId, truckId, startDate, endDate, search, sortBy, sortDir, page = 0, pageSize = 20 } = filters
+  const { status, driverId, truckId, startDate, endDate, search, sortBy, sortDir, page = 0 } = filters
+  const pageSize = clampPageSize(filters.pageSize)
 
   const resolvedSortBy =
     sortBy && TRIP_ALLOWED_SORT_COLUMNS.includes(sortBy) ? sortBy : TRIP_DEFAULT_SORT

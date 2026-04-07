@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { WebNotification } from '@/types/database'
+import { clampPageSize } from '@/lib/queries/pagination'
 
 export async function fetchUnreadNotifications(
   supabase: SupabaseClient,
@@ -23,8 +24,9 @@ export async function fetchNotifications(
   page: number = 0,
   pageSize: number = 20
 ): Promise<{ notifications: WebNotification[]; total: number }> {
-  const from = page * pageSize
-  const to = from + pageSize - 1
+  const resolvedPageSize = clampPageSize(pageSize)
+  const from = page * resolvedPageSize
+  const to = from + resolvedPageSize - 1
 
   const { data, error, count } = await supabase
     .from('web_notifications')

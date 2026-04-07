@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { LocalDrive } from '@/types/database'
 import { sanitizeSearch } from '@/lib/sanitize-search'
+import { clampPageSize } from '@/lib/queries/pagination'
 
 export interface LocalDriveFilters {
   status?: string
@@ -27,7 +28,8 @@ export async function fetchLocalDrives(
   supabase: SupabaseClient,
   filters: LocalDriveFilters = {}
 ): Promise<LocalDrivesResult> {
-  const { status, type, terminalId, search, driverId, tripId, dateFrom, dateTo, sortBy, sortDir, page = 0, pageSize = 20 } = filters
+  const { status, type, terminalId, search, driverId, tripId, dateFrom, dateTo, sortBy, sortDir, page = 0 } = filters
+  const pageSize = clampPageSize(filters.pageSize)
 
   let query = supabase
     .from('local_drives')

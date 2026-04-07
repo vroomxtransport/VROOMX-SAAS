@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Driver } from '@/types/database'
 import { sanitizeSearch } from '@/lib/sanitize-search'
+import { clampPageSize } from '@/lib/queries/pagination'
 
 export interface DriverFilters {
   status?: string
@@ -22,7 +23,8 @@ export async function fetchDrivers(
   supabase: SupabaseClient,
   filters: DriverFilters = {}
 ): Promise<DriversResult> {
-  const { status, driverType, search, payTypes, sortBy, sortDir, page = 0, pageSize = 20 } = filters
+  const { status, driverType, search, payTypes, sortBy, sortDir, page = 0 } = filters
+  const pageSize = clampPageSize(filters.pageSize)
 
   // Determine sort column and direction
   const sortColumn = sortBy ?? 'last_name'

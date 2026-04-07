@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Broker } from '@/types/database'
 import { sanitizeSearch } from '@/lib/sanitize-search'
+import { clampPageSize } from '@/lib/queries/pagination'
 
 export interface BrokerFilters {
   search?: string
@@ -19,7 +20,8 @@ export async function fetchBrokers(
   supabase: SupabaseClient,
   filters: BrokerFilters = {}
 ): Promise<BrokersResult> {
-  const { search, page = 0, pageSize = 20, sortBy = 'name', sortDir = 'asc' } = filters
+  const { search, page = 0, sortBy = 'name', sortDir = 'asc' } = filters
+  const pageSize = clampPageSize(filters.pageSize)
 
   let query = supabase
     .from('brokers')

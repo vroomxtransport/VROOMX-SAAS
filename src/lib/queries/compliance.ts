@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ComplianceDocument, ComplianceRequirement } from '@/types/database'
 import { sanitizeSearch } from '@/lib/sanitize-search'
+import { clampPageSize } from '@/lib/queries/pagination'
 
 // M4: explicit column allowlist instead of SELECT *. Each list mirrors the
 // corresponding type in src/types/database.ts. Adding a new column to the
@@ -57,7 +58,8 @@ export async function fetchComplianceDocs(
   supabase: SupabaseClient,
   filters: ComplianceDocFilters = {}
 ): Promise<ComplianceDocsResult> {
-  const { documentType, entityType, search, expiryFrom, expiryTo, sortBy, sortDir, page = 0, pageSize = 20 } = filters
+  const { documentType, entityType, search, expiryFrom, expiryTo, sortBy, sortDir, page = 0 } = filters
+  const pageSize = clampPageSize(filters.pageSize)
 
   // Determine sort column and direction
   const sortColumn = sortBy === 'expiry_date' ? 'expires_at' : 'expires_at'

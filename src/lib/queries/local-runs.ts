@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { LocalRun } from '@/types/database'
+import { clampPageSize } from '@/lib/queries/pagination'
 
 export interface LocalRunFilters {
   status?: string
@@ -21,7 +22,8 @@ export async function fetchLocalRuns(
   supabase: SupabaseClient,
   filters: LocalRunFilters = {}
 ): Promise<LocalRunsResult> {
-  const { status, terminalId, driverId, type, dateFrom, dateTo, page = 0, pageSize = 20 } = filters
+  const { status, terminalId, driverId, type, dateFrom, dateTo, page = 0 } = filters
+  const pageSize = clampPageSize(filters.pageSize)
 
   let query = supabase
     .from('local_runs')

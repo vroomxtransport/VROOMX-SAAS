@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Trailer } from '@/types/database'
 import { sanitizeSearch } from '@/lib/sanitize-search'
+import { clampPageSize } from '@/lib/queries/pagination'
 
 export interface TrailerFilters {
   status?: string
@@ -31,7 +32,8 @@ export async function fetchTrailers(
   supabase: SupabaseClient,
   filters: TrailerFilters = {}
 ): Promise<TrailersResult> {
-  const { status, trailerType, search, sortBy, sortDir, page = 0, pageSize = 20 } = filters
+  const { status, trailerType, search, sortBy, sortDir, page = 0 } = filters
+  const pageSize = clampPageSize(filters.pageSize)
 
   const resolvedSortBy =
     sortBy && TRAILER_ALLOWED_SORT_COLUMNS.includes(sortBy) ? sortBy : TRAILER_DEFAULT_SORT
