@@ -93,7 +93,7 @@ export function MessageBubble({ message, isGrouped, animate, currentUserId }: Me
             </div>
           )}
           {hasAttachments && (
-            <AttachmentDisplay attachments={message.attachments!} />
+            <AttachmentDisplay attachments={message.attachments!} tenantId={message.tenant_id} />
           )}
         </div>
       </div>
