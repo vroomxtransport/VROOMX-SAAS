@@ -4,7 +4,14 @@
 
 [build.environment]
   NODE_VERSION = "22"
-  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,NEXT_PUBLIC_APP_URL,NEXT_PUBLIC_SENTRY_DSN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,SENTRY_ORG,SENTRY_PROJECT,SENTRY_AUTH_TOKEN,TEST_USER_EMAIL"
+  # CFG-011: TEST_USER_EMAIL was previously in this allow-list but the
+  # actual e2e helper (e2e/helpers/auth.ts:8-9) reads E2E_TEST_EMAIL /
+  # E2E_TEST_PASSWORD, NOT TEST_USER_*. The TEST_USER_* vars are dead
+  # config. Removed from the omit list so the secret scanner is no
+  # longer bypassing a key that the scanner would never see anyway.
+  # Note to operators: if TEST_USER_EMAIL / TEST_USER_PASSWORD are set
+  # in your local .env.local or Netlify dashboard, they can be deleted.
+  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,NEXT_PUBLIC_APP_URL,NEXT_PUBLIC_SENTRY_DSN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,SENTRY_ORG,SENTRY_PROJECT,SENTRY_AUTH_TOKEN"
 
 # CFG-009: deploy-preview safety is configured in the Netlify dashboard,
 # NOT here. Env vars in netlify.toml are visible at build time and in
