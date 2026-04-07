@@ -49,14 +49,12 @@ const nextConfig: NextConfig = {
         source: '/(.*)',
         headers: securityHeaders,
       },
-      {
-        source: '/api/extension/:path*',
-        headers: [
-          { key: 'Access-Control-Allow-Origin', value: '*' },
-          { key: 'Access-Control-Allow-Methods', value: 'GET, POST, OPTIONS' },
-          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
-        ],
-      },
+      // SCAN-004: /api/extension/* CORS is handled per-request inside each
+      // route (OPTIONS + GET/POST) via `corsHeaders()` from
+      // src/lib/extension/cors.ts, which enforces the EXTENSION_ALLOWED_IDS
+      // allowlist. A previous static `Access-Control-Allow-Origin: *` rule
+      // here silently overrode that allowlist and exposed extension
+      // endpoints to any origin. Leave CORS to the route handlers.
     ]
   },
   async rewrites() {
