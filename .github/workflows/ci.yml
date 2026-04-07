@@ -30,3 +30,42 @@ jobs:
 
       - name: Unit Tests + Coverage
         run: npx vitest run --coverage
+
+  # CFG-012: dependency and secret scanning. Both jobs are allowed to
+  # surface issues without blocking PR merges (continue-on-error) so
+  # that a new moderate dep bump or a false-positive secret match
+  # doesn't wedge development — but failures are visible in the PR
+  # Checks tab and in GitHub's Security dashboard.
+  audit:
+    name: npm audit
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+      - name: Run npm audit (high + critical)
+        run: npm audit --audit-level=high
+
+  secrets-scan:
+    name: Gitleaks
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history so gitleaks can scan commit diffs, not just
+          # the working tree. Required for rule `protect-commit-messages`.
+          fetch-depth: 0
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          # Standard GitHub token — required by the action for API calls.
+          # Not an untrusted-input injection surface; no user-supplied
+          # fields from GitHub events are interpolated into run: commands
+          # anywhere in this workflow.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
