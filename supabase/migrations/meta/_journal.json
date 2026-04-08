@@ -43,6 +43,13 @@
       "when": 1773892851642,
       "tag": "0005_confused_puff_adder",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1775596947020,
+      "tag": "0006_stiff_shaman",
+      "breakpoints": true
     }
   ]
 }

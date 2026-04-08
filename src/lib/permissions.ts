@@ -32,6 +32,19 @@ export const PERMISSION_CATEGORIES = {
   dispatcher_payroll: ['dispatcher_payroll.view', 'dispatcher_payroll.create', 'dispatcher_payroll.update', 'dispatcher_payroll.approve'],
   settings: ['settings.view', 'settings.manage'],
   integrations: ['integrations.view', 'integrations.manage'],
+  driver_applications: [
+    'driver_applications.read',
+    'driver_applications.create',
+    'driver_applications.update',
+    'driver_applications.withdraw',
+  ],
+  driver_onboarding: [
+    'driver_onboarding.read',
+    'driver_onboarding.create',
+    'driver_onboarding.update',
+    'driver_onboarding.approve',
+    'driver_onboarding.adverse_action',
+  ],
 } as const
 
 // Flat list of all permissions
@@ -63,6 +76,8 @@ export const CATEGORY_LABELS: Record<string, string> = {
   dispatcher_payroll: 'Dispatcher Payroll',
   settings: 'Settings',
   integrations: 'Integrations',
+  driver_applications: 'Driver Applications',
+  driver_onboarding: 'Driver Onboarding',
 }
 
 // Built-in roles and their permission sets
@@ -76,6 +91,7 @@ export const BUILT_IN_ROLES: Record<string, string[]> = {
     'tasks.*', 'chat.*', 'documents.*', 'trip_expenses.*',
     'business_expenses.*', 'dispatcher_payroll.view',
     'integrations.view',
+    'driver_applications.read',
   ],
   billing: [
     'orders.view', 'orders.update',
@@ -85,6 +101,7 @@ export const BUILT_IN_ROLES: Record<string, string[]> = {
   safety: [
     'compliance.*', 'safety_events.*',
     'drivers.view', 'trucks.view', 'trailers.view', 'documents.view',
+    'driver_applications.*', 'driver_onboarding.*',
   ],
 }
 

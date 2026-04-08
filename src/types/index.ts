@@ -535,11 +535,11 @@ export const MAINTENANCE_STATUS_COLORS: Record<MaintenanceStatus, string> = {
 
 // Compliance types
 export type ComplianceDocType = 'dqf' | 'vehicle_qualification' | 'company_document'
-export type ComplianceEntityType = 'driver' | 'truck' | 'company'
+export type ComplianceEntityType = 'driver' | 'truck' | 'company' | 'driver_application'
 export type ComplianceDocStatus = 'valid' | 'expiring_soon' | 'expired'
 
 export const COMPLIANCE_DOC_TYPES: readonly ComplianceDocType[] = ['dqf', 'vehicle_qualification', 'company_document'] as const
-export const COMPLIANCE_ENTITY_TYPES: readonly ComplianceEntityType[] = ['driver', 'truck', 'company'] as const
+export const COMPLIANCE_ENTITY_TYPES: readonly ComplianceEntityType[] = ['driver', 'truck', 'company', 'driver_application'] as const
 export const COMPLIANCE_DOC_STATUSES: readonly ComplianceDocStatus[] = ['valid', 'expiring_soon', 'expired'] as const
 
 export const COMPLIANCE_DOC_TYPE_LABELS: Record<ComplianceDocType, string> = {
@@ -552,6 +552,7 @@ export const COMPLIANCE_ENTITY_TYPE_LABELS: Record<ComplianceEntityType, string>
   driver: 'Driver',
   truck: 'Truck',
   company: 'Company',
+  driver_application: 'Driver Application',
 }
 
 export const COMPLIANCE_DOC_STATUS_LABELS: Record<ComplianceDocStatus, string> = {
@@ -688,3 +689,246 @@ export const DOT_INSPECTION_LEVEL_LABELS: Record<DotInspectionLevel, string> = {
   IV: 'Level IV - Special',
   V: 'Level V - Vehicle Only',
 }
+
+// ============================================================================
+// Phase 9: Driver Onboarding Pipeline Types
+// ============================================================================
+
+// --- DriverApplicationStatus ---
+
+export type DriverApplicationStatus =
+  | 'draft'
+  | 'submitted'
+  | 'in_review'
+  | 'pending_adverse_action'
+  | 'approved'
+  | 'rejected'
+  | 'withdrawn'
+
+export const DRIVER_APPLICATION_STATUSES: readonly DriverApplicationStatus[] = [
+  'draft',
+  'submitted',
+  'in_review',
+  'pending_adverse_action',
+  'approved',
+  'rejected',
+  'withdrawn',
+] as const
+
+export const DRIVER_APPLICATION_STATUS_LABELS: Record<DriverApplicationStatus, string> = {
+  draft: 'Draft',
+  submitted: 'Submitted',
+  in_review: 'In Review',
+  pending_adverse_action: 'Pending Adverse Action',
+  approved: 'Approved',
+  rejected: 'Rejected',
+  withdrawn: 'Withdrawn',
+}
+
+export const DRIVER_APPLICATION_STATUS_COLORS: Record<DriverApplicationStatus, string> = {
+  draft: 'bg-gray-50 text-gray-700 border-gray-200',
+  submitted: 'bg-blue-50 text-blue-700 border-blue-200',
+  in_review: 'bg-amber-50 text-amber-700 border-amber-200',
+  pending_adverse_action: 'bg-orange-50 text-orange-700 border-orange-200',
+  approved: 'bg-green-50 text-green-700 border-green-200',
+  rejected: 'bg-red-50 text-red-700 border-red-200',
+  withdrawn: 'bg-gray-50 text-gray-500 border-gray-200',
+}
+
+// --- OnboardingStepKey ---
+
+export type OnboardingStepKey =
+  | 'application_review'
+  | 'mvr_pull'
+  | 'prior_employer_verification'
+  | 'clearinghouse_query'
+  | 'drug_test'
+  | 'medical_verification'
+  | 'road_test'
+  | 'psp_query'
+  | 'dq_file_assembly'
+  | 'final_approval'
+
+export const ONBOARDING_STEP_KEYS: readonly OnboardingStepKey[] = [
+  'application_review',
+  'mvr_pull',
+  'prior_employer_verification',
+  'clearinghouse_query',
+  'drug_test',
+  'medical_verification',
+  'road_test',
+  'psp_query',
+  'dq_file_assembly',
+  'final_approval',
+] as const
+
+export const ONBOARDING_STEP_KEY_LABELS: Record<OnboardingStepKey, string> = {
+  application_review: 'Application Review',
+  mvr_pull: 'Motor Vehicle Record (MVR)',
+  prior_employer_verification: 'Prior Employer Verification',
+  clearinghouse_query: 'FMCSA Clearinghouse Query',
+  drug_test: 'Pre-Employment Drug Test',
+  medical_verification: 'Medical Certificate Verification',
+  road_test: 'Road Test / CDL Equivalent',
+  psp_query: 'PSP Query (Optional)',
+  dq_file_assembly: 'DQ File Assembly',
+  final_approval: 'Final Approval',
+}
+
+export const ONBOARDING_STEP_ORDER: Record<OnboardingStepKey, number> = {
+  application_review: 1,
+  mvr_pull: 2,
+  prior_employer_verification: 3,
+  clearinghouse_query: 4,
+  drug_test: 5,
+  medical_verification: 6,
+  road_test: 7,
+  psp_query: 8,
+  dq_file_assembly: 9,
+  final_approval: 10,
+}
+
+export const ONBOARDING_STEP_KEY_REG_CITES: Record<OnboardingStepKey, string> = {
+  application_review: '§ 391.21(b)',
+  mvr_pull: '§ 391.23(a)(1)',
+  prior_employer_verification: '§ 391.23(a)(2)',
+  clearinghouse_query: '§ 382.701',
+  drug_test: '§ 382.301',
+  medical_verification: '§ 391.43 / § 391.45',
+  road_test: '§ 391.31 / § 391.33',
+  psp_query: 'FMCSA PSP',
+  dq_file_assembly: '§ 391.51',
+  final_approval: 'Internal',
+}
+
+// --- OnboardingStepStatus ---
+
+export type OnboardingStepStatus =
+  | 'pending'
+  | 'in_progress'
+  | 'passed'
+  | 'failed'
+  | 'waived'
+  | 'not_applicable'
+
+export const ONBOARDING_STEP_STATUSES: readonly OnboardingStepStatus[] = [
+  'pending',
+  'in_progress',
+  'passed',
+  'failed',
+  'waived',
+  'not_applicable',
+] as const
+
+export const ONBOARDING_STEP_STATUS_LABELS: Record<OnboardingStepStatus, string> = {
+  pending: 'Pending',
+  in_progress: 'In Progress',
+  passed: 'Passed',
+  failed: 'Failed',
+  waived: 'Waived',
+  not_applicable: 'Not Applicable',
+}
+
+export const ONBOARDING_STEP_STATUS_COLORS: Record<OnboardingStepStatus, string> = {
+  pending: 'bg-gray-50 text-gray-700 border-gray-200',
+  in_progress: 'bg-blue-50 text-blue-700 border-blue-200',
+  passed: 'bg-green-50 text-green-700 border-green-200',
+  failed: 'bg-red-50 text-red-700 border-red-200',
+  waived: 'bg-purple-50 text-purple-700 border-purple-200',
+  not_applicable: 'bg-gray-50 text-gray-400 border-gray-100',
+}
+
+// --- ConsentType ---
+
+export type ConsentType =
+  | 'application_certification'
+  | 'fcra_disclosure'
+  | 'driver_license_requirements_certification'
+  | 'drug_alcohol_testing_consent'
+  | 'safety_performance_history_investigation'
+  | 'psp_authorization'
+  | 'clearinghouse_limited_query'
+  | 'mvr_release'
+
+export const CONSENT_TYPES: readonly ConsentType[] = [
+  'application_certification',
+  'fcra_disclosure',
+  'driver_license_requirements_certification',
+  'drug_alcohol_testing_consent',
+  'safety_performance_history_investigation',
+  'psp_authorization',
+  'clearinghouse_limited_query',
+  'mvr_release',
+] as const
+
+export const CONSENT_TYPE_LABELS: Record<ConsentType, string> = {
+  application_certification: 'Application Certification (§ 391.21(b)(12))',
+  fcra_disclosure: 'FCRA Disclosure (§ 604(b)(2)(A))',
+  driver_license_requirements_certification: 'Driver License Requirements Certification (Parts 383/391)',
+  drug_alcohol_testing_consent: 'Drug & Alcohol Testing Consent (49 CFR Part 40.25(j))',
+  safety_performance_history_investigation: 'Safety Performance History Investigation (§ 391.23)',
+  psp_authorization: 'PSP Driver Disclosure & Authorization',
+  clearinghouse_limited_query: 'Clearinghouse Limited Query Consent (Ongoing)',
+  mvr_release: 'MVR Release (18 USC 2721)',
+}
+
+// Wizard page number for each consent (1-indexed, matches the 8-page form)
+export const CONSENT_TYPE_PAGE: Record<ConsentType, number> = {
+  application_certification: 1,
+  fcra_disclosure: 2,
+  driver_license_requirements_certification: 3,
+  drug_alcohol_testing_consent: 4,
+  safety_performance_history_investigation: 5,
+  psp_authorization: 6,
+  clearinghouse_limited_query: 7,
+  mvr_release: 8,
+}
+
+// --- ApplicantDocumentType ---
+
+export type ApplicantDocumentType = 'license_front' | 'license_back' | 'medical_card' | 'other'
+
+export const APPLICANT_DOCUMENT_TYPES: readonly ApplicantDocumentType[] = [
+  'license_front',
+  'license_back',
+  'medical_card',
+  'other',
+] as const
+
+export const APPLICANT_DOCUMENT_TYPE_LABELS: Record<ApplicantDocumentType, string> = {
+  license_front: "Driver's License (Front)",
+  license_back: "Driver's License (Back)",
+  medical_card: 'Medical Certificate (DOT Card)',
+  other: 'Other Document',
+}
+
+// --- PipelineOverallStatus (text column, not an enum) ---
+
+export type PipelineOverallStatus = 'pending' | 'in_progress' | 'on_hold' | 'cleared' | 'rejected'
+
+export const PIPELINE_OVERALL_STATUSES: readonly PipelineOverallStatus[] = [
+  'pending',
+  'in_progress',
+  'on_hold',
+  'cleared',
+  'rejected',
+] as const
+
+export const PIPELINE_OVERALL_STATUS_LABELS: Record<PipelineOverallStatus, string> = {
+  pending: 'Pending',
+  in_progress: 'In Progress',
+  on_hold: 'On Hold',
+  cleared: 'Cleared to Drive',
+  rejected: 'Rejected',
+}
+
+export const PIPELINE_OVERALL_STATUS_COLORS: Record<PipelineOverallStatus, string> = {
+  pending: 'bg-gray-50 text-gray-700 border-gray-200',
+  in_progress: 'bg-blue-50 text-blue-700 border-blue-200',
+  on_hold: 'bg-amber-50 text-amber-700 border-amber-200',
+  cleared: 'bg-green-50 text-green-700 border-green-200',
+  rejected: 'bg-red-50 text-red-700 border-red-200',
+}
+
+// Note: ComplianceEntityType, COMPLIANCE_ENTITY_TYPES, and COMPLIANCE_ENTITY_TYPE_LABELS
+// are defined above (extended to include 'driver_application' in Phase 9).

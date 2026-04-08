@@ -12,11 +12,15 @@ import {
   TRIP_STATUS_LABELS,
   TRAILER_STATUS_COLORS,
   TRAILER_STATUS_LABELS,
+  DRIVER_APPLICATION_STATUS_COLORS,
+  DRIVER_APPLICATION_STATUS_LABELS,
+  ONBOARDING_STEP_STATUS_COLORS,
+  ONBOARDING_STEP_STATUS_LABELS,
 } from '@/types'
 import type { OrderStatus, DriverStatus, TruckStatus, TripStatus, TrailerStatus } from '@/types'
 import { cn } from '@/lib/utils'
 
-type StatusBadgeType = 'order' | 'driver' | 'truck' | 'trip' | 'trailer'
+type StatusBadgeType = 'order' | 'driver' | 'truck' | 'trip' | 'trailer' | 'application' | 'onboarding_step'
 
 interface StatusBadgeProps {
   status: string
@@ -83,6 +87,31 @@ const STATUS_CONFIG: Record<StatusBadgeType, StatusConfig> = {
       active: 'bg-green-400',
       inactive: 'bg-gray-400',
       maintenance: 'bg-amber-400',
+    },
+  },
+  application: {
+    colors: DRIVER_APPLICATION_STATUS_COLORS as Record<string, string>,
+    labels: DRIVER_APPLICATION_STATUS_LABELS as Record<string, string>,
+    dotColors: {
+      draft: 'bg-gray-400',
+      submitted: 'bg-blue-400',
+      in_review: 'bg-amber-400',
+      pending_adverse_action: 'bg-orange-400',
+      approved: 'bg-green-500',
+      rejected: 'bg-red-400',
+      withdrawn: 'bg-gray-300',
+    },
+  },
+  onboarding_step: {
+    colors: ONBOARDING_STEP_STATUS_COLORS as Record<string, string>,
+    labels: ONBOARDING_STEP_STATUS_LABELS as Record<string, string>,
+    dotColors: {
+      pending: 'bg-gray-400',
+      in_progress: 'bg-blue-400',
+      passed: 'bg-green-500',
+      failed: 'bg-red-400',
+      waived: 'bg-purple-400',
+      not_applicable: 'bg-gray-300',
     },
   },
 }

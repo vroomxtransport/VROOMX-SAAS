@@ -77,6 +77,10 @@ export async function fetchComplianceDocs(
 
   if (entityType) {
     query = query.eq('entity_type', entityType)
+  } else {
+    // Exclude driver_application documents from the active-drivers compliance view.
+    // These belong in the onboarding pipeline and would appear as orphan rows here.
+    query = query.neq('entity_type', 'driver_application')
   }
 
   if (search) {

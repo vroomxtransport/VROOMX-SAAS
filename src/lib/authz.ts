@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { isAccountSuspended } from '@/lib/tier'
 import { hasPermission, getBuiltInRolePermissions } from '@/lib/permissions'
 import { rateLimit, type RateLimitConfig } from '@/lib/rate-limit'
+import { redactPii } from '@/lib/audit-redact'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 export interface AuthzContext {
@@ -202,9 +203,14 @@ export async function authorize(
 
 /**
  * Wrap a Supabase error into a generic message.
- * Logs the real error server-side but returns a safe string to the client.
+ * Logs the real error server-side (with PII redacted) but returns a safe
+ * generic string to the client so no internal detail leaks.
+ *
+ * SEC-013: error.message may contain PII (e.g. SSN in a constraint violation
+ * message). Run it through redactPii() before writing to the server log.
  */
 export function safeError(error: { message: string }, context?: string): string {
-  console.error(`[${context ?? 'ACTION'}]`, error.message)
+  const safeMsg = (redactPii({ msg: error.message }) as { msg: string }).msg
+  console.error(`[${context ?? 'ACTION'}]`, safeMsg)
   return 'An unexpected error occurred. Please try again.'
 }

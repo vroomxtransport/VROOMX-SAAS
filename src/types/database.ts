@@ -81,6 +81,10 @@ export interface Driver {
   auth_user_id: string | null
   pin_hash: string | null
   notes: string | null
+  // Phase 9: Driver Onboarding Pipeline extensions
+  application_id: string | null
+  hired_at: string | null
+  terminated_at: string | null
   created_at: string
   updated_at: string
 }
@@ -453,7 +457,7 @@ export interface ComplianceDocument {
   id: string
   tenant_id: string
   document_type: 'dqf' | 'vehicle_qualification' | 'company_document'
-  entity_type: 'driver' | 'truck' | 'company'
+  entity_type: 'driver' | 'truck' | 'company' | 'driver_application'
   entity_id: string | null
   name: string
   file_name: string | null
@@ -467,6 +471,7 @@ export interface ComplianceDocument {
   status: string
   is_required: boolean
   regulation_reference: string | null
+  onboarding_step_id: string | null
   created_at: string
   updated_at: string
 }
@@ -793,4 +798,211 @@ export interface FuelCardTransaction {
   // Optional joins
   truck?: { id: string; unit_number: string }
   driver?: { id: string; first_name: string; last_name: string }
+}
+
+// ============================================================================
+// Phase 9: Driver Onboarding Pipeline Interfaces
+// ============================================================================
+
+// § 391.21(b) structured application data stored in JSONB
+export interface DriverLicenseEntry {
+  license_number: string
+  state: string
+  class: string
+  expires: string
+  endorsements: string[]
+}
+
+export interface AccidentRecord {
+  date: string
+  nature: string
+  fatalities: number
+  injuries: number
+  location: string
+}
+
+export interface ViolationRecord {
+  date: string
+  charge: string
+  disposition: string
+}
+
+export interface EmployerRecord {
+  employer_name: string
+  phone: string | null
+  fax: string | null
+  email: string | null
+  address: string
+  city: string
+  state: string
+  zip: string
+  position_held: string
+  date_from: string
+  date_to: string | null
+  reason_for_leaving: string | null
+  equipment_class: string | null
+  subject_to_fmcsr: boolean
+  safety_sensitive_dot: boolean
+}
+
+export interface ForfeitureRecord {
+  denied_license: boolean
+  denied_license_explanation: string | null
+  revoked_suspended: boolean
+  revoked_suspended_explanation: string | null
+}
+
+export interface DrugAlcoholHistory {
+  positive_drug_test: boolean
+  alcohol_concentration_04: boolean
+  refused_test: boolean
+  return_to_duty_docs: boolean | null
+}
+
+export interface ApplicantInfo {
+  address: string
+  city: string
+  state: string
+  zip: string
+  lived_here_3_years: boolean
+}
+
+export interface DriverApplicationData {
+  schema_version: number
+  applicant_info: ApplicantInfo
+  licenses: DriverLicenseEntry[]
+  medical_certificate_expires: string | null
+  accidents: AccidentRecord[]
+  violations: ViolationRecord[]
+  forfeitures: ForfeitureRecord | null
+  drug_alcohol_history: DrugAlcoholHistory | null
+  employers: EmployerRecord[]
+  employment_gap_explanation: string | null
+  clearinghouse_registered: boolean | null
+}
+
+export interface DriverApplication {
+  id: string
+  tenant_id: string
+  status: 'draft' | 'submitted' | 'in_review' | 'pending_adverse_action' | 'approved' | 'rejected' | 'withdrawn'
+  first_name: string | null
+  last_name: string | null
+  email: string | null
+  phone: string | null
+  date_of_birth: string | null
+  ssn_encrypted: string | null
+  ssn_last4: string | null
+  license_number: string | null
+  license_state: string | null
+  created_by_user_id: string | null
+  application_data: DriverApplicationData | null
+  schema_version: number
+  resume_token: string | null
+  resume_token_expires_at: string | null
+  status_token: string | null
+  status_token_expires_at: string | null
+  submitted_at: string | null
+  reviewed_by: string | null
+  reviewed_at: string | null
+  pre_adverse_sent_at: string | null
+  adverse_action_sent_at: string | null
+  rejection_reason: string | null
+  archived_at: string | null
+  retention_expires_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface DriverApplicationAddressHistory {
+  id: string
+  tenant_id: string
+  application_id: string
+  street: string
+  city: string
+  state: string
+  zip: string
+  from_date: string
+  to_date: string | null
+  position: number
+  created_at: string
+}
+
+export interface DriverApplicationConsent {
+  id: string
+  tenant_id: string
+  application_id: string
+  consent_type:
+    | 'application_certification'
+    | 'fcra_disclosure'
+    | 'driver_license_requirements_certification'
+    | 'drug_alcohol_testing_consent'
+    | 'safety_performance_history_investigation'
+    | 'psp_authorization'
+    | 'clearinghouse_limited_query'
+    | 'mvr_release'
+  signed_text: string
+  signed_text_locale: string
+  typed_name: string
+  ip_address: string
+  user_agent: string
+  signed_at: string
+  valid_until: string | null
+}
+
+export interface DriverApplicationDocument {
+  id: string
+  tenant_id: string
+  application_id: string
+  document_type: 'license_front' | 'license_back' | 'medical_card' | 'other'
+  file_name: string
+  storage_path: string
+  file_size: number | null
+  mime_type: string | null
+  scan_status: string
+  uploaded_at: string
+}
+
+export interface DriverOnboardingPipeline {
+  id: string
+  tenant_id: string
+  application_id: string
+  driver_id: string | null
+  overall_status: string
+  started_at: string
+  cleared_at: string | null
+  cleared_by: string | null
+  rejected_at: string | null
+  rejected_by: string | null
+  notes: string | null
+  // Optional joins
+  application?: DriverApplication
+  steps?: DriverOnboardingStep[]
+}
+
+export interface DriverOnboardingStep {
+  id: string
+  tenant_id: string
+  pipeline_id: string
+  step_key:
+    | 'application_review'
+    | 'mvr_pull'
+    | 'prior_employer_verification'
+    | 'clearinghouse_query'
+    | 'drug_test'
+    | 'medical_verification'
+    | 'road_test'
+    | 'psp_query'
+    | 'dq_file_assembly'
+    | 'final_approval'
+  step_order: number
+  status: 'pending' | 'in_progress' | 'passed' | 'failed' | 'waived' | 'not_applicable'
+  required: boolean
+  waivable: boolean
+  waive_reason: string | null
+  assignee_id: string | null
+  notes: string | null
+  started_at: string | null
+  completed_at: string | null
+  created_at: string
+  updated_at: string
 }

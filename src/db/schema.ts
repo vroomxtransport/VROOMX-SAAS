@@ -1,4 +1,5 @@
-import { pgTable, uuid, text, timestamp, unique, index, numeric, integer, date, pgEnum, boolean, doublePrecision, jsonb } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, text, timestamp, unique, index, uniqueIndex, numeric, integer, date, pgEnum, boolean, doublePrecision, jsonb } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
 
 // ============================================================================
 // Enums
@@ -178,6 +179,10 @@ export const drivers = pgTable('drivers', {
   authUserId: uuid('auth_user_id'),
   pinHash: text('pin_hash'),
   notes: text('notes'),
+  // Driver Onboarding Pipeline extensions
+  applicationId: uuid('application_id'),
+  hiredAt: timestamp('hired_at', { withTimezone: true }),
+  terminatedAt: timestamp('terminated_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
@@ -561,7 +566,61 @@ export const localRunStatusEnum = pgEnum('local_run_status', ['planned', 'in_pro
 export const maintenanceTypeEnum = pgEnum('maintenance_type', ['preventive', 'repair', 'inspection', 'tire', 'oil_change', 'other'])
 export const maintenanceStatusEnum = pgEnum('maintenance_status', ['scheduled', 'in_progress', 'completed'])
 export const complianceDocTypeEnum = pgEnum('compliance_doc_type', ['dqf', 'vehicle_qualification', 'company_document'])
-export const complianceEntityTypeEnum = pgEnum('compliance_entity_type', ['driver', 'truck', 'company'])
+export const complianceEntityTypeEnum = pgEnum('compliance_entity_type', ['driver', 'truck', 'company', 'driver_application'])
+
+// ============================================================================
+// Driver Onboarding Pipeline Enums (Phase 9)
+// ============================================================================
+
+export const driverApplicationStatusEnum = pgEnum('driver_application_status', [
+  'draft',
+  'submitted',
+  'in_review',
+  'pending_adverse_action',
+  'approved',
+  'rejected',
+  'withdrawn',
+])
+
+export const onboardingStepKeyEnum = pgEnum('onboarding_step_key', [
+  'application_review',
+  'mvr_pull',
+  'prior_employer_verification',
+  'clearinghouse_query',
+  'drug_test',
+  'medical_verification',
+  'road_test',
+  'psp_query',
+  'dq_file_assembly',
+  'final_approval',
+])
+
+export const onboardingStepStatusEnum = pgEnum('onboarding_step_status', [
+  'pending',
+  'in_progress',
+  'passed',
+  'failed',
+  'waived',
+  'not_applicable',
+])
+
+export const consentTypeEnum = pgEnum('driver_application_consent_type', [
+  'application_certification',
+  'fcra_disclosure',
+  'driver_license_requirements_certification',
+  'drug_alcohol_testing_consent',
+  'safety_performance_history_investigation',
+  'psp_authorization',
+  'clearinghouse_limited_query',
+  'mvr_release',
+])
+
+export const applicantDocumentTypeEnum = pgEnum('applicant_document_type', [
+  'license_front',
+  'license_back',
+  'medical_card',
+  'other',
+])
 
 // ============================================================================
 // Phase 8 Tables: New Modules
@@ -804,6 +863,8 @@ export const complianceDocuments = pgTable('compliance_documents', {
   status: text('status').notNull().default('valid'),
   isRequired: boolean('is_required').notNull().default(false),
   regulationReference: text('regulation_reference'),
+  // Onboarding pipeline link (FK added after driverOnboardingSteps is defined below)
+  onboardingStepId: uuid('onboarding_step_id'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
@@ -874,6 +935,174 @@ export const complianceRequirements = pgTable('compliance_requirements', {
   unique().on(table.tenantId, table.documentType, table.subCategory),
   index('idx_compliance_requirements_tenant').on(table.tenantId),
   index('idx_compliance_requirements_type').on(table.tenantId, table.documentType),
+])
+
+// ============================================================================
+// Phase 9 Tables: Driver Onboarding Pipeline
+// ============================================================================
+
+/**
+ * Driver Applications Table
+ * Applicant entity, distinct from `drivers`. Lives until archived per § 391.51.
+ */
+export const driverApplications = pgTable('driver_applications', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  status: driverApplicationStatusEnum('status').notNull().default('draft'),
+
+  // Extracted columns for indexing, dedup, and validation
+  firstName: text('first_name'),
+  lastName: text('last_name'),
+  email: text('email'),
+  phone: text('phone'),
+  dateOfBirth: date('date_of_birth'),
+  ssnEncrypted: text('ssn_encrypted'),
+  ssnLast4: text('ssn_last4'),
+  licenseNumber: text('license_number'),
+  licenseState: text('license_state'),
+
+  // Full § 391.21(b) body (sections 1-12 except address history)
+  applicationData: jsonb('application_data'),
+  schemaVersion: integer('schema_version').notNull().default(1),
+
+  // Public auth tokens (split read/write)
+  resumeToken: uuid('resume_token').defaultRandom(),
+  resumeTokenExpiresAt: timestamp('resume_token_expires_at', { withTimezone: true }),
+  statusToken: uuid('status_token').defaultRandom(),
+  statusTokenExpiresAt: timestamp('status_token_expires_at', { withTimezone: true }),
+
+  // Admin-invite tracking (Phase 2 — admin-push model)
+  createdByUserId: uuid('created_by_user_id'),
+
+  // Lifecycle
+  submittedAt: timestamp('submitted_at', { withTimezone: true }),
+  reviewedBy: uuid('reviewed_by'),
+  reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+
+  // FCRA adverse-action two-step
+  preAdverseSentAt: timestamp('pre_adverse_sent_at', { withTimezone: true }),
+  adverseActionSentAt: timestamp('adverse_action_sent_at', { withTimezone: true }),
+  rejectionReason: text('rejection_reason'),
+
+  // Retention soft-delete
+  archivedAt: timestamp('archived_at', { withTimezone: true }),
+  retentionExpiresAt: timestamp('retention_expires_at', { withTimezone: true }),
+
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index('idx_driver_apps_tenant').on(t.tenantId),
+  index('idx_driver_apps_tenant_status').on(t.tenantId, t.status),
+  uniqueIndex('uniq_driver_apps_license_active')
+    .on(t.tenantId, t.licenseNumber)
+    .where(sql`status NOT IN ('rejected','withdrawn') AND archived_at IS NULL AND license_number IS NOT NULL`),
+  uniqueIndex('uniq_driver_apps_resume_token').on(t.resumeToken),
+  uniqueIndex('uniq_driver_apps_status_token').on(t.statusToken),
+])
+
+/**
+ * Driver Application Address History Table
+ * § 391.21(b)(3) 3-year residence list — extracted for SQL coverage validation.
+ */
+export const driverApplicationAddressHistory = pgTable('driver_application_address_history', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  applicationId: uuid('application_id').notNull().references(() => driverApplications.id, { onDelete: 'cascade' }),
+  street: text('street').notNull(),
+  city: text('city').notNull(),
+  state: text('state').notNull(),
+  zip: text('zip').notNull(),
+  fromDate: date('from_date').notNull(),
+  toDate: date('to_date'),
+  position: integer('position').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index('idx_app_addr_app').on(t.applicationId),
+])
+
+/**
+ * Driver Application Consents Table
+ * Immutable signature ledger — INSERT and SELECT only, no UPDATE or DELETE.
+ */
+export const driverApplicationConsents = pgTable('driver_application_consents', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  applicationId: uuid('application_id').notNull().references(() => driverApplications.id, { onDelete: 'cascade' }),
+  consentType: consentTypeEnum('consent_type').notNull(),
+  signedText: text('signed_text').notNull(),
+  signedTextLocale: text('signed_text_locale').notNull().default('en-US'),
+  typedName: text('typed_name').notNull(),
+  ipAddress: text('ip_address').notNull(),
+  userAgent: text('user_agent').notNull(),
+  signedAt: timestamp('signed_at', { withTimezone: true }).notNull().defaultNow(),
+  validUntil: timestamp('valid_until', { withTimezone: true }),
+}, (t) => [
+  index('idx_app_consents_app').on(t.applicationId),
+  uniqueIndex('uniq_app_consents_type').on(t.applicationId, t.consentType),
+])
+
+/**
+ * Driver Application Documents Table
+ * Applicant uploads (license front/back, medical card).
+ */
+export const driverApplicationDocuments = pgTable('driver_application_documents', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  applicationId: uuid('application_id').notNull().references(() => driverApplications.id, { onDelete: 'cascade' }),
+  documentType: applicantDocumentTypeEnum('document_type').notNull(),
+  fileName: text('file_name').notNull(),
+  storagePath: text('storage_path').notNull(),
+  fileSize: integer('file_size'),
+  mimeType: text('mime_type'),
+  scanStatus: text('scan_status').notNull().default('pending'),
+  uploadedAt: timestamp('uploaded_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index('idx_app_docs_app').on(t.applicationId),
+])
+
+/**
+ * Driver Onboarding Pipelines Table
+ * 1:1 with driver_applications once admin starts review.
+ */
+export const driverOnboardingPipelines = pgTable('driver_onboarding_pipelines', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  applicationId: uuid('application_id').notNull().unique().references(() => driverApplications.id, { onDelete: 'cascade' }),
+  driverId: uuid('driver_id').references(() => drivers.id, { onDelete: 'set null' }),
+  overallStatus: text('overall_status').notNull().default('pending'),
+  startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
+  clearedAt: timestamp('cleared_at', { withTimezone: true }),
+  clearedBy: uuid('cleared_by'),
+  rejectedAt: timestamp('rejected_at', { withTimezone: true }),
+  rejectedBy: uuid('rejected_by'),
+  notes: text('notes'),
+}, (t) => [
+  index('idx_onb_pipelines_tenant').on(t.tenantId),
+])
+
+/**
+ * Driver Onboarding Steps Table
+ * 10 rows per pipeline, seeded on pipeline creation.
+ */
+export const driverOnboardingSteps = pgTable('driver_onboarding_steps', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  pipelineId: uuid('pipeline_id').notNull().references(() => driverOnboardingPipelines.id, { onDelete: 'cascade' }),
+  stepKey: onboardingStepKeyEnum('step_key').notNull(),
+  stepOrder: integer('step_order').notNull(),
+  status: onboardingStepStatusEnum('status').notNull().default('pending'),
+  required: boolean('required').notNull().default(true),
+  waivable: boolean('waivable').notNull().default(false),
+  waiveReason: text('waive_reason'),
+  assigneeId: uuid('assignee_id'),
+  notes: text('notes'),
+  startedAt: timestamp('started_at', { withTimezone: true }),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index('idx_onb_steps_pipeline').on(t.pipelineId),
+  uniqueIndex('uniq_onb_steps_pipeline_key').on(t.pipelineId, t.stepKey),
 ])
 
 /**
@@ -1158,6 +1387,20 @@ export type NewDispatcherPayrollPeriod = typeof dispatcherPayrollPeriods.$inferI
 // Audit Logs
 export type DrizzleAuditLog = typeof auditLogs.$inferSelect
 export type NewAuditLog = typeof auditLogs.$inferInsert
+
+// Phase 9: Driver Onboarding Pipeline
+export type DrizzleDriverApplication = typeof driverApplications.$inferSelect
+export type NewDriverApplication = typeof driverApplications.$inferInsert
+export type DrizzleDriverApplicationAddressHistory = typeof driverApplicationAddressHistory.$inferSelect
+export type NewDriverApplicationAddressHistory = typeof driverApplicationAddressHistory.$inferInsert
+export type DrizzleDriverApplicationConsent = typeof driverApplicationConsents.$inferSelect
+export type NewDriverApplicationConsent = typeof driverApplicationConsents.$inferInsert
+export type DrizzleDriverApplicationDocument = typeof driverApplicationDocuments.$inferSelect
+export type NewDriverApplicationDocument = typeof driverApplicationDocuments.$inferInsert
+export type DrizzleDriverOnboardingPipeline = typeof driverOnboardingPipelines.$inferSelect
+export type NewDriverOnboardingPipeline = typeof driverOnboardingPipelines.$inferInsert
+export type DrizzleDriverOnboardingStep = typeof driverOnboardingSteps.$inferSelect
+export type NewDriverOnboardingStep = typeof driverOnboardingSteps.$inferInsert
 
 // ============================================================================
 // Platform Audit Logs (Admin Panel — NO RLS, service-role only)
