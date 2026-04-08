@@ -4,14 +4,41 @@
 
 [build.environment]
   NODE_VERSION = "22"
-  # CFG-011: TEST_USER_EMAIL was previously in this allow-list but the
-  # actual e2e helper (e2e/helpers/auth.ts:8-9) reads E2E_TEST_EMAIL /
-  # E2E_TEST_PASSWORD, NOT TEST_USER_*. The TEST_USER_* vars are dead
-  # config. Removed from the omit list so the secret scanner is no
-  # longer bypassing a key that the scanner would never see anyway.
-  # Note to operators: if TEST_USER_EMAIL / TEST_USER_PASSWORD are set
-  # in your local .env.local or Netlify dashboard, they can be deleted.
-  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,NEXT_PUBLIC_APP_URL,NEXT_PUBLIC_SENTRY_DSN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,SENTRY_ORG,SENTRY_PROJECT,SENTRY_AUTH_TOKEN"
+  # SECRETS_SCAN_OMIT_KEYS — non-secret env vars that the Netlify scanner
+  # should ignore. The scanner reads env var VALUES from this build
+  # environment + the Netlify dashboard, then greps the publish directory
+  # for literal occurrences of those values. Anything found is failed.
+  #
+  # NEXT_PUBLIC_* keys are intentionally inlined by Next.js into the client
+  # bundle (that's the whole point of the prefix), so they MUST be in the
+  # omit list.
+  #
+  # SENTRY_* keys are passed to the Sentry build plugin which writes the
+  # release/auth metadata into source maps; the auth token is short-lived
+  # and scoped to project upload only.
+  #
+  # TEST_USER_EMAIL / TEST_USER_PASSWORD — non-secret e2e test fixtures.
+  # PINNED to this list with explicit justification because removing them
+  # has now broken main builds twice.
+  #
+  # CFG-011 (commit e8c3019, since reverted) tried to remove TEST_USER_EMAIL
+  # from this list based on a source-tree grep that found zero references.
+  # That grep was incomplete: the value lives in `.env.local` (gitignored,
+  # so not visible to grep but bundled into the build) AND in the Netlify
+  # dashboard env vars. Both inputs flow into the build and the literal
+  # value ends up inside `.netlify/functions-internal/___netlify-server-handler/`
+  # via Next.js env file resolution. The scanner finds it and fails.
+  #
+  # Before EVER removing a key from this list, you must:
+  #   1. grep `.env.local` (NOT just src/) for the key
+  #   2. confirm with the operator that the key is NOT set in the Netlify
+  #      dashboard (Site → Environment variables)
+  #   3. confirm the value does not appear hardcoded anywhere by greping
+  #      for the actual value (not just the variable name)
+  #   4. if all clear, also delete the key from `.env.local.example` and
+  #      from the Netlify dashboard so it can never re-leak
+  # See `.claude/rules/netlify-secrets-scanning.md` for the full procedure.
+  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,NEXT_PUBLIC_APP_URL,NEXT_PUBLIC_SENTRY_DSN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,SENTRY_ORG,SENTRY_PROJECT,SENTRY_AUTH_TOKEN,TEST_USER_EMAIL,TEST_USER_PASSWORD"
 
 # CFG-009: deploy-preview safety is configured in the Netlify dashboard,
 # NOT here. Env vars in netlify.toml are visible at build time and in

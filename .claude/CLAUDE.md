@@ -138,5 +138,6 @@ Use these as inspiration for UI decisions — not direct copy. Match VroomX bran
 4. **Provider/layout changes**: Trace which components use hooks — ensure they're inside the provider boundary
 5. **TypeScript**: Run `npx tsc --noEmit` — Netlify build is stricter than local dev
 6. **DB migrations**: After running, verify with SELECT that columns/tables/policies actually exist
+7. **`netlify.toml` / env var changes**: NEVER remove a key from `SECRETS_SCAN_OMIT_KEYS` based on a source grep alone — `.env.local` is gitignored and the Netlify dashboard env vars are invisible to grep. See `.claude/rules/netlify-secrets-scanning.md` for the 4-step procedure. CFG-011 made this exact mistake and broke 6 production builds.
 
 When suggesting changes, first state which rules apply. If security risk → warn loudly and suggest alternatives.
