@@ -22,10 +22,12 @@
 
 import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { authorize, safeError } from '@/lib/authz'
 import { logAuditEvent } from '@/lib/audit-log'
 import { redactPii } from '@/lib/audit-redact'
 import { countBusinessDays } from '@/lib/business-days'
+import { copyFile } from '@/lib/storage'
 import {
   updateStepStatusSchema,
   uploadStepResultSchema,
@@ -735,6 +737,156 @@ export async function finalizeRejection(
 }
 
 // ---------------------------------------------------------------------------
+// Applicant → driver document transfer (helper for approvePipeline)
+// ---------------------------------------------------------------------------
+
+/**
+ * Maps applicant-uploaded document types to the driver_documents type enum.
+ * Both license scans become 'cdl' rows (FMCSA Part 391 drivers are CDL holders).
+ */
+const APPLICANT_TO_DRIVER_DOC_TYPE: Record<string, 'cdl' | 'medical_card' | 'other'> = {
+  license_front: 'cdl',
+  license_back:  'cdl',
+  medical_card:  'medical_card',
+  other:         'other',
+}
+
+/**
+ * Copy applicant-uploaded files from `driver_application_documents` into the
+ * new driver's `driver_documents` table on hire. Keeps the applicant originals
+ * intact for FMCSA § 391.51 audit retention (3 years).
+ *
+ * Partial failures are logged but do NOT throw — the driver is already created
+ * by the time this runs, and a file-level hiccup shouldn't block the hire.
+ * Admins can re-upload manually from the driver's Files tab.
+ *
+ * Returns a summary for audit_log metadata.
+ */
+/**
+ * Extract a file extension from a storage path. Handles edge cases:
+ *   - Path with no dot         → 'bin'
+ *   - Path with dot in a dir   → 'bin' (dot must be in the last segment)
+ *   - Path with trailing dot   → 'bin' (empty extension)
+ *   - Path like '.hidden'      → 'bin' (leading-dot hidden files)
+ *   - Path 'a/b/c.tar.gz'      → 'gz'
+ */
+function extractFileExtension(storagePath: string): string {
+  const lastSegment = storagePath.split('/').pop() ?? ''
+  const dotIndex = lastSegment.lastIndexOf('.')
+  if (dotIndex <= 0 || dotIndex === lastSegment.length - 1) {
+    // No dot, leading dot, or trailing dot → use fallback
+    return 'bin'
+  }
+  return lastSegment.slice(dotIndex + 1)
+}
+
+async function transferApplicantDocumentsToDriver(
+  supabase: SupabaseClient,
+  tenantId: string,
+  applicationId: string,
+  driverId: string,
+  actorUserId: string,
+): Promise<{ transferred: number; failed: number; skipped: number }> {
+  const { data: applicantDocs, error: fetchError } = await supabase
+    .from('driver_application_documents')
+    .select('id, document_type, file_name, storage_path, file_size, scan_status')
+    .eq('tenant_id', tenantId)
+    .eq('application_id', applicationId)
+
+  if (fetchError || !applicantDocs || applicantDocs.length === 0) {
+    return { transferred: 0, failed: 0, skipped: 0 }
+  }
+
+  // SEC-009 parity: only transfer docs that passed AV scanning. The applicant-side
+  // download path (`downloadApplicationDocument` in driver-applications.ts) blocks
+  // anything where `scan_status !== 'clean'`. If we transferred 'pending' or
+  // 'flagged' docs into `driver_documents`, the driver-side download path has no
+  // scan gate and would silently launder untrusted applicant bytes into the
+  // trusted driver doc space — a SEC-009 bypass.
+  //
+  // Until the AV scan edge function ships (TODO v2 in uploadApplicationDocument),
+  // nothing is ever marked 'clean', so this filter effectively skips everything.
+  // That is the correct fail-safe behavior: it matches the status quo where admins
+  // already cannot download these files from the applicant side.
+  const cleanDocs = applicantDocs.filter((d) => d.scan_status === 'clean')
+  const skippedCount = applicantDocs.length - cleanDocs.length
+
+  if (skippedCount > 0) {
+    const unscanned = applicantDocs.filter((d) => d.scan_status !== 'clean')
+    console.warn('[transferApplicantDocumentsToDriver] skipping unscanned/flagged docs', {
+      tenantId,
+      applicationId,
+      driverId,
+      skippedCount,
+      skippedIds: unscanned.map((d) => d.id),
+      skippedStatuses: unscanned.map((d) => d.scan_status),
+    })
+  }
+
+  const results = await Promise.allSettled(
+    cleanDocs.map(async (doc) => {
+      const ext = extractFileExtension(doc.storage_path)
+      const newPath = `${tenantId}/${driverId}/${crypto.randomUUID()}.${ext}`
+
+      const { error: copyError } = await copyFile(supabase, 'documents', doc.storage_path, newPath)
+      if (copyError) throw new Error(`copy failed: ${copyError}`)
+
+      const mappedType = APPLICANT_TO_DRIVER_DOC_TYPE[doc.document_type as string] ?? 'other'
+
+      const { error: insertError } = await supabase.from('driver_documents').insert({
+        tenant_id:     tenantId,
+        driver_id:     driverId,
+        document_type: mappedType,
+        file_name:     doc.file_name,
+        storage_path:  newPath,
+        file_size:     doc.file_size,
+        expires_at:    null,
+        // uploaded_by = admin who approved the hire, preserving accountability for
+        // promoting applicant bytes into the trusted driver doc space. Original
+        // applicant provenance stays on driver_application_documents (FMCSA § 391.51).
+        uploaded_by:   actorUserId,
+      })
+
+      if (insertError) {
+        // Storage copy succeeded but DB insert failed — roll back the copy
+        // to avoid orphan files in the driver's path. Log any rollback-remove
+        // failure so orphans can be audited later.
+        await supabase.storage
+          .from('documents')
+          .remove([newPath])
+          .catch((removeErr) => {
+            console.error(
+              '[transferApplicantDocumentsToDriver] rollback-remove failed — orphan at',
+              newPath,
+              removeErr,
+            )
+          })
+        throw new Error(`insert failed: ${insertError.message}`)
+      }
+    })
+  )
+
+  const transferred = results.filter((r) => r.status === 'fulfilled').length
+  const failed = results.length - transferred
+
+  if (failed > 0) {
+    const reasons = results
+      .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+      .map((r) => String(r.reason))
+    console.error('[transferApplicantDocumentsToDriver] partial failure', {
+      tenantId,
+      applicationId,
+      driverId,
+      transferred,
+      failed,
+      reasons,
+    })
+  }
+
+  return { transferred, failed, skipped: skippedCount }
+}
+
+// ---------------------------------------------------------------------------
 // approvePipeline
 // ---------------------------------------------------------------------------
 
@@ -751,6 +903,11 @@ export async function finalizeRejection(
  * 4. Sets application status='approved'
  * 5. Repoints compliance_documents entity_type to 'driver'
  * 6. Inserts audit_logs entry
+ *
+ * After the RPC succeeds, the TS action also copies applicant self-uploaded
+ * files (license front/back, medical card) from driver_application_documents
+ * into the driver's canonical path and inserts driver_documents rows, so the
+ * driver's Files tab is populated immediately on hire.
  */
 export async function approvePipeline(
   pipelineId: string
@@ -819,6 +976,18 @@ export async function approvePipeline(
     return { error: 'Pipeline approved but driver row was not returned' }
   }
 
+  // Transfer applicant self-uploaded docs (license scans, medical card) into
+  // the new driver's canonical path + driver_documents rows. Partial failures
+  // are logged server-side and surfaced in audit metadata, but never block
+  // the hire — the driver is already created by the RPC at this point.
+  const transferSummary = await transferApplicantDocumentsToDriver(
+    supabase,
+    tenantId,
+    pipeline.application_id as string,
+    driverId,
+    user.id,
+  )
+
   logAuditEvent(supabase, {
     tenantId,
     entityType: 'driver_application',
@@ -827,12 +996,19 @@ export async function approvePipeline(
     description: 'Pipeline approved — applicant promoted to driver',
     actorId: user.id,
     actorEmail: user.email,
-    metadata: { pipeline_id: idParsed.data, driver_id: driverId },
+    metadata: {
+      pipeline_id: idParsed.data,
+      driver_id: driverId,
+      docs_transferred: transferSummary.transferred,
+      docs_failed: transferSummary.failed,
+      docs_skipped_unscanned: transferSummary.skipped,
+    },
   }).catch(() => {})
 
   revalidatePath('/onboarding')
   revalidatePath(`/onboarding/${pipeline.application_id}`)
   revalidatePath('/drivers')
+  revalidatePath(`/drivers/${driverId}`)
 
   return { driverId }
 }

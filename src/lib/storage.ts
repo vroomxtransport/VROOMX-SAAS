@@ -99,6 +99,23 @@ export async function deleteFile(
 }
 
 /**
+ * Copy a file within a Supabase Storage bucket.
+ * Used to clone applicant-uploaded documents into the driver's canonical path on hire.
+ */
+export async function copyFile(
+  supabase: SupabaseClient,
+  bucket: string,
+  fromPath: string,
+  toPath: string,
+): Promise<{ error: string | null }> {
+  const { error } = await supabase.storage
+    .from(bucket)
+    .copy(fromPath, toPath)
+  if (error) return { error: error.message }
+  return { error: null }
+}
+
+/**
  * Get the public URL for a file in Supabase Storage.
  */
 export function getFileUrl(
