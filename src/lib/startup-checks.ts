@@ -39,6 +39,12 @@ const REQUIRED_ENV: EnvCheck[] = [
   // Stripe
   { name: 'STRIPE_SECRET_KEY', required: true, description: 'Stripe API key' },
   { name: 'STRIPE_WEBHOOK_SECRET', required: true, description: 'Stripe webhook signing secret' },
+  // Tier price IDs — must match src/lib/stripe/config.ts getPriceMap() keys.
+  // Missing these causes silent checkout failure: signUpAction's PRICE_MAP
+  // captures undefined, createCheckoutSession returns 'Invalid plan selected.'
+  { name: 'STRIPE_OWNER_OPERATOR_PRICE_ID', required: true, description: 'Stripe price ID for the Owner-Operator tier ($29/mo)' },
+  { name: 'STRIPE_STARTER_X_PRICE_ID',      required: true, description: 'Stripe price ID for the Starter X tier ($49/mo)' },
+  { name: 'STRIPE_PRO_X_PRICE_ID',          required: true, description: 'Stripe price ID for the Pro X tier ($149/mo)' },
 
   // Cron — added for M1 (CRON_SECRET silent failure)
   { name: 'CRON_SECRET', required: true, description: 'Bearer token for /api/cron/* endpoints' },

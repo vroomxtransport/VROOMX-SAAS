@@ -9,7 +9,7 @@ import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 
-type Plan = 'starter' | 'pro' | 'enterprise'
+type Plan = 'owner_operator' | 'starter_x' | 'pro_x'
 
 type FmcsaData = {
   legalName: string
@@ -25,9 +25,18 @@ type FmcsaData = {
 }
 
 const PLAN_INFO: Record<Plan, { name: string; description: string }> = {
-  starter: { name: 'Starter', description: `Up to ${TIER_LIMITS.starter.trucks} trucks, ${TIER_LIMITS.starter.users} users` },
-  pro: { name: 'Pro', description: `Up to ${TIER_LIMITS.pro.trucks} trucks, ${TIER_LIMITS.pro.users} users` },
-  enterprise: { name: 'Enterprise', description: 'Unlimited trucks and users' },
+  owner_operator: {
+    name: 'Owner-Operator',
+    description: `${TIER_LIMITS.owner_operator.trucks} truck, ${TIER_LIMITS.owner_operator.users} user — solo driver`,
+  },
+  starter_x: {
+    name: 'Starter X',
+    description: `Up to ${TIER_LIMITS.starter_x.trucks} trucks, ${TIER_LIMITS.starter_x.users} users`,
+  },
+  pro_x: {
+    name: 'Pro X',
+    description: `Up to ${TIER_LIMITS.pro_x.trucks} trucks, ${TIER_LIMITS.pro_x.users} users`,
+  },
 }
 
 function RevealSection({ show, children }: { show: boolean; children: React.ReactNode }) {
@@ -81,7 +90,7 @@ function SignupForm() {
   const searchParams = useSearchParams()
   const inviteToken = searchParams.get('invite_token')
   const [state, formAction, isPending] = useActionState(signUpAction, null)
-  const [selectedPlan, setSelectedPlan] = useState<Plan>('starter')
+  const [selectedPlan, setSelectedPlan] = useState<Plan>('starter_x')
   const [showPassword, setShowPassword] = useState(false)
 
   // DOT lookup state
@@ -178,7 +187,7 @@ function SignupForm() {
         <form action={formAction} className="space-y-4">
           <input type="hidden" name="invite_token" value={inviteToken} />
           <input type="hidden" name="company_name" value="Invited User" />
-          <input type="hidden" name="plan" value="starter" />
+          <input type="hidden" name="plan" value="starter_x" />
 
           <BoxReveal boxColor="var(--skeleton)" duration={0.3} width="100%" className="space-y-2">
             <AnimatedLabel htmlFor="full_name">Full Name</AnimatedLabel>
@@ -394,7 +403,7 @@ function SignupForm() {
             <div className="border-t border-border-subtle pt-4">
               <h3 className="text-sm font-semibold tracking-wide text-foreground mb-4">Select Plan</h3>
               <div className="grid gap-3">
-                {(['starter', 'pro', 'enterprise'] as Plan[]).map((plan) => (
+                {(['owner_operator', 'starter_x', 'pro_x'] as Plan[]).map((plan) => (
                   <label
                     key={plan}
                     className={`relative flex cursor-pointer rounded-lg border p-4 transition-all ${

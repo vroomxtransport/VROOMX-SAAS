@@ -169,7 +169,9 @@ export async function fetchPlatformStats() {
 
 const fetchTenantsSchema = z.object({
   search: z.string().optional(),
-  plan: z.string().optional(),
+  // Plan filter: whitelist the known tier values. Rejects typos at the Zod
+  // boundary instead of letting them hit the DB .eq() and silently return 0 rows.
+  plan: z.enum(['owner_operator', 'starter_x', 'pro_x']).optional(),
   status: z.string().optional(),
   sortBy: z.string().optional().default('created_at'),
   sortDir: z.enum(['asc', 'desc']).optional().default('desc'),

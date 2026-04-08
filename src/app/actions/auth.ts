@@ -8,6 +8,8 @@ import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import Stripe from 'stripe'
 import { z } from 'zod'
+import { getPriceMap } from '@/lib/stripe/config'
+import { TIER_TRIAL_DAYS } from '@/types'
 
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -34,7 +36,7 @@ const signUpSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: passwordSchema,
   company_name: z.string().min(1, 'Company name is required'),
-  plan: z.enum(['starter', 'pro', 'enterprise']),
+  plan: z.enum(['owner_operator', 'starter_x', 'pro_x']),
   dot_number: z.string().optional(),
   mc_number: z.string().optional(),
   address: z.string().optional(),
@@ -44,11 +46,9 @@ const signUpSchema = z.object({
   phone: z.string().optional(),
 })
 
-const PRICE_MAP: Record<string, string> = {
-  starter: process.env.STRIPE_STARTER_PRICE_ID!,
-  pro: process.env.STRIPE_PRO_PRICE_ID!,
-  enterprise: process.env.STRIPE_ENTERPRISE_PRICE_ID!,
-}
+// Intentionally no module-level PRICE_MAP const — env vars must be read lazily
+// via getPriceMap() so cold-start/build-time evaluation can't capture undefined
+// values. See src/lib/stripe/config.ts.
 
 export async function loginAction(prevState: any, formData: FormData) {
   const supabase = await createClient()
@@ -232,7 +232,9 @@ export async function signUpAction(prevState: any, formData: FormData) {
     .insert({
       name: company_name,
       slug: company_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
-      plan: 'trial',
+      // New tier system: every signup picks one of the 3 tiers at signup time.
+      // The "trial" state lives on subscription_status = 'trialing', not in plan.
+      plan,
       subscription_status: 'trialing',
       stripe_customer_id: customer.id,
       trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
@@ -266,17 +268,23 @@ export async function signUpAction(prevState: any, formData: FormData) {
     app_metadata: {
       tenant_id: tenant.id,
       role: 'admin',
-      plan: 'trial',
+      plan,
     },
   })
 
   // 7. Create Stripe Checkout Session with 14-day trial
+  const priceId = getPriceMap()[plan]
+  if (!priceId) {
+    console.error('[SIGNUP] Missing Stripe price ID for plan:', plan)
+    return { error: 'Billing is not configured for this plan. Contact support.' }
+  }
+
   const session = await stripe.checkout.sessions.create({
     customer: customer.id,
     mode: 'subscription',
-    line_items: [{ price: PRICE_MAP[plan], quantity: 1 }],
+    line_items: [{ price: priceId, quantity: 1 }],
     subscription_data: {
-      trial_period_days: 14,
+      trial_period_days: TIER_TRIAL_DAYS,
       metadata: { tenant_id: tenant.id },
     },
     success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?setup=complete`,

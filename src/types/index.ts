@@ -20,7 +20,13 @@ export {
 export type TenantRole = 'admin' | 'dispatcher' | 'billing' | 'safety' | 'owner'
 
 // Subscription plans
-export type SubscriptionPlan = 'starter' | 'pro' | 'enterprise'
+export type SubscriptionPlan = 'owner_operator' | 'starter_x' | 'pro_x'
+
+export const SUBSCRIPTION_PLANS: readonly SubscriptionPlan[] = [
+  'owner_operator',
+  'starter_x',
+  'pro_x',
+] as const
 
 // Subscription status
 export type SubscriptionStatus = 'trialing' | 'active' | 'past_due' | 'canceled' | 'unpaid'
@@ -39,19 +45,22 @@ export const INVITABLE_ROLES: readonly InvitableRole[] = [
   'admin', 'dispatcher', 'billing', 'safety',
 ] as const
 
-// Tier limits
+// Tier limits — must match the SQL CASE in enforce_truck_limit / enforce_user_limit
 export const TIER_LIMITS: Record<SubscriptionPlan, { trucks: number; users: number }> = {
-  starter: { trucks: 5, users: 3 },
-  pro: { trucks: 20, users: 10 },
-  enterprise: { trucks: Infinity, users: Infinity },
+  owner_operator: { trucks: 1,  users: 1 },
+  starter_x:      { trucks: 5,  users: 3 },
+  pro_x:          { trucks: 20, users: 10 },
 }
 
 // Pricing (monthly, in dollars)
 export const TIER_PRICING: Record<SubscriptionPlan, number> = {
-  starter: 49,
-  pro: 149,
-  enterprise: 299,
+  owner_operator: 29,
+  starter_x:      49,
+  pro_x:          149,
 }
+
+// Free trial length (days) — applied on all tiers via Stripe trial_period_days
+export const TIER_TRIAL_DAYS = 14
 
 // ============================================================================
 // Phase 2: Entity Type Unions

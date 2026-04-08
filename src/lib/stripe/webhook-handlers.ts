@@ -1,6 +1,14 @@
 import Stripe from 'stripe'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { PLAN_FROM_PRICE } from './config'
+import { SUBSCRIPTION_PLANS, type SubscriptionPlan } from '@/types'
+
+// Runtime guard: only accept plan strings that are members of the current
+// SubscriptionPlan union. Protects the DB write path from whatever Stripe
+// sends us — misconfigured price IDs, stale envs, or unmapped future prices.
+function isValidPlan(value: unknown): value is SubscriptionPlan {
+  return typeof value === 'string' && (SUBSCRIPTION_PLANS as readonly string[]).includes(value)
+}
 
 export async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const supabase = createServiceRoleClient()
@@ -44,7 +52,7 @@ export async function handleSubscriptionUpdated(subscription: Stripe.Subscriptio
   }
 
   const priceId = subscription.items.data[0]?.price.id
-  const plan = priceId ? (PLAN_FROM_PRICE[priceId] || 'unknown') : 'unknown'
+  const mappedPlan = priceId ? PLAN_FROM_PRICE[priceId] : undefined
 
   const statusMap: Record<string, string> = {
     trialing: 'trialing',
@@ -59,13 +67,28 @@ export async function handleSubscriptionUpdated(subscription: Stripe.Subscriptio
 
   const subscriptionStatus = statusMap[subscription.status] || subscription.status
 
+  // Build the update payload conditionally. If the incoming price ID does
+  // not map to a known SubscriptionPlan, PRESERVE the existing plan column
+  // rather than writing 'unknown' — the new trigger ELSE branch would
+  // otherwise clamp the tenant to 1 truck / 1 user on the next insert.
+  // (H-1 from the tier-rename security audit.)
+  const updatePayload: Record<string, string> = {
+    subscription_status: subscriptionStatus,
+    stripe_subscription_id: subscription.id,
+  }
+
+  if (isValidPlan(mappedPlan)) {
+    updatePayload.plan = mappedPlan
+  } else {
+    console.error(
+      'subscription.updated: unmapped Stripe price ID — preserving current tenant.plan',
+      { tenantId, priceId, subscriptionId: subscription.id },
+    )
+  }
+
   const { error } = await supabase
     .from('tenants')
-    .update({
-      plan,
-      subscription_status: subscriptionStatus,
-      stripe_subscription_id: subscription.id,
-    })
+    .update(updatePayload)
     .eq('id', tenantId)
 
   if (error) {

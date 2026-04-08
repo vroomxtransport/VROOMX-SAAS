@@ -22,12 +22,14 @@ export const stripe = new Proxy({} as Stripe, {
   }
 })
 
-// Map plan names to Stripe Price IDs (lazy evaluated)
+// Map plan names to Stripe Price IDs (lazy evaluated).
+// Plan keys must match src/types/index.ts SubscriptionPlan union.
+// The env var names must match .env.local.example + startup-checks.ts.
 export function getPriceMap(): Record<string, string> {
   return {
-    starter: process.env.STRIPE_STARTER_PRICE_ID!,
-    pro: process.env.STRIPE_PRO_PRICE_ID!,
-    enterprise: process.env.STRIPE_ENTERPRISE_PRICE_ID!,
+    owner_operator: process.env.STRIPE_OWNER_OPERATOR_PRICE_ID!,
+    starter_x:      process.env.STRIPE_STARTER_X_PRICE_ID!,
+    pro_x:          process.env.STRIPE_PRO_X_PRICE_ID!,
   }
 }
 

@@ -2,10 +2,9 @@ import { type TenantRole, type SubscriptionPlan, TIER_LIMITS } from '@/types'
 
 export function getTierDisplayName(plan: string): string {
   const names: Record<string, string> = {
-    trial: 'Free Trial',
-    starter: 'Starter',
-    pro: 'Pro',
-    enterprise: 'Enterprise',
+    owner_operator: 'Owner-Operator',
+    starter_x:      'Starter X',
+    pro_x:          'Pro X',
   }
   return names[plan] || plan
 }
@@ -35,7 +34,10 @@ export function hasMinRole(userRole: string, requiredRole: TenantRole): boolean 
 /**
  * Check if the tenant has capacity to add more of a given resource.
  * Always reads plan from DB (not JWT) to avoid stale data.
- * Trial plans use starter-tier limits.
+ *
+ * Must stay in lock-step with the SQL enforce_truck_limit / enforce_user_limit
+ * triggers. The DB is the source of truth — this function is a UX preview so
+ * the client can show "upgrade to add another truck" before the DB rejects it.
  */
 export async function checkTierLimit(
   supabase: any,
@@ -57,10 +59,7 @@ export async function checkTierLimit(
     return { allowed: false, current: 0, limit: 0, plan: tenant.plan }
   }
 
-  // Map plan to tier limits. 'trial' uses starter limits.
-  const plan = tenant.plan as SubscriptionPlan
-  const tierKey = plan === ('trial' as any) ? 'starter' : plan
-  const limits = TIER_LIMITS[tierKey as SubscriptionPlan]
+  const limits = TIER_LIMITS[tenant.plan as SubscriptionPlan]
 
   if (!limits) {
     return { allowed: false, current: 0, limit: 0, plan: tenant.plan }
@@ -78,9 +77,9 @@ export async function checkTierLimit(
   const current = count ?? 0
 
   return {
-    allowed: limit === Infinity ? true : current < limit,
+    allowed: current < limit,
     current,
-    limit: limit === Infinity ? -1 : limit, // -1 signals unlimited
+    limit,
     plan: tenant.plan,
   }
 }

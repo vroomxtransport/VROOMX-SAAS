@@ -2,6 +2,7 @@
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts'
 import { cn } from '@/lib/utils'
+import { getTierDisplayName } from '@/lib/tier'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -25,9 +26,9 @@ interface SubscriptionChartsProps {
 // ---------------------------------------------------------------------------
 
 const PLAN_COLORS: Record<string, string> = {
-  starter: '#3b82f6',   // blue
-  pro: '#8b5cf6',       // violet
-  enterprise: '#10b981', // emerald
+  owner_operator: '#10b981', // emerald
+  starter_x:      '#fb7232', // brand
+  pro_x:          '#3b82f6', // blue
 }
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; bar: string }> = {
@@ -89,7 +90,7 @@ function PlanPieTooltip({ active, payload }: PlanPieTooltipProps) {
 function PlanDistributionChart({ planDistribution }: { planDistribution: Record<string, PlanDistributionEntry> }) {
   const data = Object.entries(planDistribution).map(([plan, dist]) => ({
     plan,
-    name: plan.charAt(0).toUpperCase() + plan.slice(1),
+    name: getTierDisplayName(plan),
     total: dist.total,
   }))
 

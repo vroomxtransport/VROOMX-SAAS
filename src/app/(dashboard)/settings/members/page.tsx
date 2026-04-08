@@ -47,7 +47,7 @@ export default async function MembersPage() {
     expires_at: string
   }> = []
 
-  let tenantPlan = 'starter'
+  let tenantPlan = 'owner_operator'
 
   try {
     const [membershipsResult, pendingInvitesResult, tenantResult] = await Promise.all([
@@ -71,7 +71,7 @@ export default async function MembersPage() {
 
     memberships = membershipsResult.data ?? []
     pendingInvites = pendingInvitesResult.data ?? []
-    tenantPlan = tenantResult.data?.plan ?? 'starter'
+    tenantPlan = tenantResult.data?.plan ?? 'owner_operator'
   } catch (e) {
     console.error('[SETTINGS/MEMBERS] Data fetch failed:', e)
     return (

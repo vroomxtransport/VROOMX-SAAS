@@ -121,15 +121,15 @@ function BillingToggle({ isYearly, onToggle }: { isYearly: boolean; onToggle: (v
 // ─── Plan Card ───────────────────────────────────────────────────────────────
 
 const PLAN_ACCENT: Record<string, { topBorder: string; ring: string; bg: string; badgeBg: string; badgeText: string; btnClass: string }> = {
-  starter: {
-    topBorder: 'border-t-blue-500',
-    ring: 'ring-2 ring-blue-500/40 shadow-blue-500/10 shadow-lg',
-    bg: 'bg-blue-500/5',
-    badgeBg: 'bg-blue-100',
-    badgeText: 'text-blue-700',
-    btnClass: 'border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100',
+  owner_operator: {
+    topBorder: 'border-t-emerald-500',
+    ring: 'ring-2 ring-emerald-500/40 shadow-emerald-500/10 shadow-lg',
+    bg: 'bg-emerald-500/5',
+    badgeBg: 'bg-emerald-100',
+    badgeText: 'text-emerald-700',
+    btnClass: 'border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100',
   },
-  pro: {
+  starter_x: {
     topBorder: 'border-t-brand',
     ring: 'ring-2 ring-brand/40 shadow-brand/10 shadow-lg',
     bg: 'bg-brand/5',
@@ -137,13 +137,13 @@ const PLAN_ACCENT: Record<string, { topBorder: string; ring: string; bg: string;
     badgeText: 'text-brand',
     btnClass: 'bg-brand text-white hover:bg-brand/90',
   },
-  enterprise: {
-    topBorder: 'border-t-violet-500',
-    ring: 'ring-2 ring-violet-500/40 shadow-violet-500/10 shadow-lg',
-    bg: 'bg-violet-500/5',
-    badgeBg: 'bg-violet-100',
-    badgeText: 'text-violet-700',
-    btnClass: 'border border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100',
+  pro_x: {
+    topBorder: 'border-t-blue-500',
+    ring: 'ring-2 ring-blue-500/40 shadow-blue-500/10 shadow-lg',
+    bg: 'bg-blue-500/5',
+    badgeBg: 'bg-blue-100',
+    badgeText: 'text-blue-700',
+    btnClass: 'border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100',
   },
 }
 
@@ -164,8 +164,7 @@ function PlanCard({
 }) {
   const price = isYearly ? plan.yearlyPrice : plan.monthlyPrice
   const isLoading = loading === plan.key
-  const isUnlimited = plan.limits.trucks === Infinity
-  const accent = PLAN_ACCENT[plan.key] ?? PLAN_ACCENT.starter
+  const accent = PLAN_ACCENT[plan.key] ?? PLAN_ACCENT.starter_x
 
   return (
     <div
@@ -198,17 +197,13 @@ function PlanCard({
       <div className="mb-3">
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{plan.name}</p>
         <div className="mt-1 flex items-baseline gap-1">
-          {plan.key === 'enterprise' ? (
-            <span className="text-2xl font-bold text-foreground">Custom</span>
-          ) : (
-            <>
-              <span className="text-2xl font-bold tabular-nums text-foreground">${price}</span>
-              <span className="text-sm text-muted-foreground">/{isYearly ? 'yr' : 'mo'}</span>
-            </>
-          )}
+          <span className="text-2xl font-bold tabular-nums text-foreground">${price}</span>
+          <span className="text-sm text-muted-foreground">/{isYearly ? 'yr' : 'mo'}</span>
         </div>
         <p className="mt-1 text-xs text-muted-foreground">
-          {isUnlimited ? 'Unlimited trucks & users' : `${plan.limits.trucks} trucks · ${plan.limits.users} users`}
+          {plan.limits.trucks === 1 && plan.limits.users === 1
+            ? '1 truck · 1 user'
+            : `${plan.limits.trucks} trucks · ${plan.limits.users} users`}
         </p>
       </div>
 
@@ -299,10 +294,7 @@ function getBarColor(percent: number): string {
 }
 
 function UsageMeters({ plan, truckCount, userCount }: { plan: string; truckCount: number; userCount: number }) {
-  const tierKey = (plan === 'trial' ? 'starter' : plan) as SubscriptionPlan
-  const limits = TIER_LIMITS[tierKey] || TIER_LIMITS.starter
-  const truckLimit = limits.trucks === Infinity ? -1 : limits.trucks
-  const userLimit = limits.users === Infinity ? -1 : limits.users
+  const limits = TIER_LIMITS[plan as SubscriptionPlan] ?? TIER_LIMITS.owner_operator
 
   const meters = [
     {
@@ -310,14 +302,14 @@ function UsageMeters({ plan, truckCount, userCount }: { plan: string; truckCount
       icon: <Truck className="h-4 w-4 text-blue-500" />,
       iconBg: 'bg-blue-100',
       current: truckCount,
-      limit: truckLimit,
+      limit: limits.trucks,
     },
     {
       label: 'Team Members',
       icon: <Users className="h-4 w-4 text-violet-500" />,
       iconBg: 'bg-violet-100',
       current: userCount,
-      limit: userLimit,
+      limit: limits.users,
     },
   ]
 
@@ -326,8 +318,7 @@ function UsageMeters({ plan, truckCount, userCount }: { plan: string; truckCount
       <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Usage</h4>
       <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
         {meters.map((m) => {
-          const isUnlimited = m.limit === -1
-          const percent = isUnlimited ? 0 : Math.min((m.current / m.limit) * 100, 100)
+          const percent = Math.min((m.current / m.limit) * 100, 100)
 
           return (
             <div key={m.label} className="rounded-lg border border-border-subtle bg-secondary/40 p-3 space-y-2">
@@ -340,19 +331,15 @@ function UsageMeters({ plan, truckCount, userCount }: { plan: string; truckCount
                 </span>
                 <span className="text-xs font-semibold tabular-nums text-foreground">
                   {m.current}
-                  <span className="text-muted-foreground font-normal">
-                    {' '}/ {isUnlimited ? '\u221E' : m.limit}
-                  </span>
+                  <span className="text-muted-foreground font-normal">{' '}/ {m.limit}</span>
                 </span>
               </div>
-              {!isUnlimited && (
-                <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
-                  <div
-                    className={cn('h-full rounded-full transition-all duration-500', getBarColor(percent))}
-                    style={{ width: `${Math.max(percent, 2)}%` }}
-                  />
-                </div>
-              )}
+              <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
+                <div
+                  className={cn('h-full rounded-full transition-all duration-500', getBarColor(percent))}
+                  style={{ width: `${Math.max(percent, 2)}%` }}
+                />
+              </div>
             </div>
           )
         })}
@@ -435,13 +422,9 @@ function SupportContactLine() {
 export function SubscriptionSection({ currentPlan, subscriptionStatus, hasStripeCustomer, gracePeriodEndsAt, trialEndsAt, truckCount, userCount }: SubscriptionSectionProps) {
   const [isYearly, setIsYearly] = useState(false)
   const [loading, setLoading] = useState<string | null>(null)
-  const effectivePlan = currentPlan === 'trial' ? 'starter' : currentPlan
+  const effectivePlan = currentPlan
 
   async function handlePlanAction(plan: PlanDefinition) {
-    if (plan.key === 'enterprise') {
-      window.location.href = 'mailto:sales@vroomx.com?subject=Enterprise%20Plan%20Inquiry'
-      return
-    }
     if (plan.key === effectivePlan) return
 
     setLoading(plan.key)
@@ -460,9 +443,8 @@ export function SubscriptionSection({ currentPlan, subscriptionStatus, hasStripe
   function getButtonConfig(plan: PlanDefinition) {
     const isCurrent = plan.key === effectivePlan
     if (isCurrent) return { text: 'Current Plan', disabled: true, variant: 'current' as const }
-    if (plan.key === 'enterprise') return { text: 'Contact Sales', disabled: false, variant: 'outline' as const }
 
-    const planOrder: SubscriptionPlan[] = ['starter', 'pro', 'enterprise']
+    const planOrder: SubscriptionPlan[] = ['owner_operator', 'starter_x', 'pro_x']
     const currentIdx = planOrder.indexOf(effectivePlan as SubscriptionPlan)
     const targetIdx = planOrder.indexOf(plan.key)
     if (targetIdx > currentIdx) return { text: 'Upgrade', disabled: false, variant: 'upgrade' as const }

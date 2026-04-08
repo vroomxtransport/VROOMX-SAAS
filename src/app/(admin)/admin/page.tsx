@@ -22,24 +22,24 @@ const PLAN_CONFIG: Record<
   string,
   { label: string; barColor: string; badgeClass: string }
 > = {
-  starter: {
-    label: 'Starter',
-    barColor: 'bg-[var(--accent-blue)]',
-    badgeClass: 'border-blue-500/30 bg-blue-500/10 text-blue-400',
-  },
-  pro: {
-    label: 'Pro',
-    barColor: 'bg-[var(--accent-violet)]',
-    badgeClass: 'border-violet-500/30 bg-violet-500/10 text-violet-400',
-  },
-  enterprise: {
-    label: 'Enterprise',
+  owner_operator: {
+    label: 'Owner-Operator',
     barColor: 'bg-[var(--accent-emerald)]',
     badgeClass: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
   },
+  starter_x: {
+    label: 'Starter X',
+    barColor: 'bg-[var(--accent-orange,var(--accent-amber))]',
+    badgeClass: 'border-orange-500/30 bg-orange-500/10 text-orange-400',
+  },
+  pro_x: {
+    label: 'Pro X',
+    barColor: 'bg-[var(--accent-blue)]',
+    badgeClass: 'border-blue-500/30 bg-blue-500/10 text-blue-400',
+  },
 }
 
-const PLAN_ORDER = ['starter', 'pro', 'enterprise']
+const PLAN_ORDER = ['owner_operator', 'starter_x', 'pro_x']
 
 function PlanBadge({ plan }: { plan: string }) {
   const cfg = PLAN_CONFIG[plan] ?? {

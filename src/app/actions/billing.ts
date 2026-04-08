@@ -5,7 +5,7 @@ import { authorize } from '@/lib/authz'
 import { redirect } from 'next/navigation'
 import { createPortalSession } from '@/lib/stripe/billing-portal'
 import { getStripeClient, getPriceMap } from '@/lib/stripe/config'
-import type { SubscriptionPlan } from '@/types'
+import { TIER_TRIAL_DAYS, type SubscriptionPlan } from '@/types'
 
 // SCAN-014: Zod validation for createCheckoutSession. TypeScript's
 // SubscriptionPlan type prevents invalid plans at compile time, but
@@ -13,7 +13,7 @@ import type { SubscriptionPlan } from '@/types'
 // guarantee evaporates. Runtime validation is the codebase standard
 // (see .claude/rules/server-actions.md).
 const checkoutPlanSchema = z.object({
-  plan: z.enum(['starter', 'pro', 'enterprise']),
+  plan: z.enum(['owner_operator', 'starter_x', 'pro_x']),
 })
 
 /**
@@ -61,7 +61,13 @@ export async function createCheckoutSession(plan: SubscriptionPlan) {
     return { error: 'Invalid plan selected.' }
   }
 
-  const auth = await authorize('billing.manage', { checkSuspension: false })
+  // Rate limit checkout session creation per .claude/rules/security.md —
+  // createCheckoutSession calls a paid external API (Stripe) and triggers
+  // subscription_data.trial_period_days, so it's an abuse-adjacent action.
+  const auth = await authorize('billing.manage', {
+    checkSuspension: false,
+    rateLimit: { key: 'createCheckoutSession', limit: 10, windowMs: 60_000 },
+  })
   if (!auth.ok) return { error: auth.error }
   const { user } = auth.ctx
 
@@ -82,6 +88,9 @@ export async function createCheckoutSession(plan: SubscriptionPlan) {
       success_url: `${appUrl}/settings?checkout=success`,
       cancel_url: `${appUrl}/settings?checkout=canceled`,
       customer_email: user.email,
+      subscription_data: {
+        trial_period_days: TIER_TRIAL_DAYS,
+      },
       metadata: {
         tenant_id: auth.ctx.tenantId,
         user_id: user.id,

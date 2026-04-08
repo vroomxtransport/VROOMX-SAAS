@@ -138,8 +138,30 @@ export async function PricingJsonLd() {
         position: 1,
         item: {
           '@type': 'Product',
-          name: 'VroomX Starter',
-          description: 'For small carriers getting started with digital dispatch. Up to 5 trucks.',
+          name: 'VroomX Owner-Operator',
+          description: 'Built for the solo driver running their own truck. 1 truck, 1 user.',
+          offers: {
+            '@type': 'Offer',
+            price: '29',
+            priceCurrency: 'USD',
+            priceSpecification: {
+              '@type': 'UnitPriceSpecification',
+              price: '29',
+              priceCurrency: 'USD',
+              unitCode: 'MON',
+            },
+            availability: 'https://schema.org/InStock',
+            url: `${baseUrl}/pricing`,
+          },
+        },
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        item: {
+          '@type': 'Product',
+          name: 'VroomX Starter X',
+          description: 'For small fleets taking on their first drivers. Up to 5 trucks, 3 team members.',
           offers: {
             '@type': 'Offer',
             price: '49',
@@ -157,11 +179,11 @@ export async function PricingJsonLd() {
       },
       {
         '@type': 'ListItem',
-        position: 2,
+        position: 3,
         item: {
           '@type': 'Product',
-          name: 'VroomX Pro',
-          description: 'For growing fleets that need advanced tools and more capacity. Up to 20 trucks.',
+          name: 'VroomX Pro X',
+          description: 'For growing carriers that need fleet-scale dispatch and analytics. Up to 20 trucks, 10 team members.',
           offers: {
             '@type': 'Offer',
             price: '149',
@@ -169,28 +191,6 @@ export async function PricingJsonLd() {
             priceSpecification: {
               '@type': 'UnitPriceSpecification',
               price: '149',
-              priceCurrency: 'USD',
-              unitCode: 'MON',
-            },
-            availability: 'https://schema.org/InStock',
-            url: `${baseUrl}/pricing`,
-          },
-        },
-      },
-      {
-        '@type': 'ListItem',
-        position: 3,
-        item: {
-          '@type': 'Product',
-          name: 'VroomX Enterprise',
-          description: 'For large operations that need unlimited capacity and dedicated support.',
-          offers: {
-            '@type': 'Offer',
-            price: '299',
-            priceCurrency: 'USD',
-            priceSpecification: {
-              '@type': 'UnitPriceSpecification',
-              price: '299',
               priceCurrency: 'USD',
               unitCode: 'MON',
             },

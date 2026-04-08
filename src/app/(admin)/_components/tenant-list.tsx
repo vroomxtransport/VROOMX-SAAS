@@ -15,15 +15,15 @@ import type { EnhancedFilterConfig, SortConfig, DateRange } from '@/types/filter
 
 // ── Plan badge colours ─────────────────────────────────────────────────────────
 const PLAN_COLORS: Record<string, string> = {
-  starter: 'bg-slate-100 text-slate-700 border-slate-200',
-  pro: 'bg-blue-50 text-blue-700 border-blue-200',
-  enterprise: 'bg-violet-50 text-violet-700 border-violet-200',
+  owner_operator: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  starter_x:      'bg-brand/10 text-brand border-brand/20',
+  pro_x:          'bg-blue-50 text-blue-700 border-blue-200',
 }
 
 const PLAN_LABELS: Record<string, string> = {
-  starter: 'Starter',
-  pro: 'Pro',
-  enterprise: 'Enterprise',
+  owner_operator: 'Owner-Operator',
+  starter_x:      'Starter X',
+  pro_x:          'Pro X',
 }
 
 // ── Subscription status badge colours ─────────────────────────────────────────
@@ -58,9 +58,9 @@ const filterConfig: EnhancedFilterConfig[] = [
     label: 'Plan',
     type: 'select',
     options: [
-      { value: 'starter', label: 'Starter' },
-      { value: 'pro', label: 'Pro' },
-      { value: 'enterprise', label: 'Enterprise' },
+      { value: 'owner_operator', label: 'Owner-Operator' },
+      { value: 'starter_x',      label: 'Starter X' },
+      { value: 'pro_x',          label: 'Pro X' },
     ],
   },
   {
@@ -127,7 +127,13 @@ export function TenantList() {
   const searchParams = useSearchParams()
 
   const search = searchParams.get('q') ?? undefined
-  const plan = searchParams.get('plan') ?? undefined
+  // Narrow the URL plan param to the SubscriptionPlan union — fetchTenants
+  // will reject anything else at the Zod boundary, so filter client-side.
+  const rawPlan = searchParams.get('plan')
+  const plan: 'owner_operator' | 'starter_x' | 'pro_x' | undefined =
+    rawPlan === 'owner_operator' || rawPlan === 'starter_x' || rawPlan === 'pro_x'
+      ? rawPlan
+      : undefined
   const status = searchParams.get('status') ?? undefined
   const sortBy = searchParams.get('sortBy') ?? 'created_at'
   const sortDir = (searchParams.get('sortDir') as 'asc' | 'desc') ?? 'desc'

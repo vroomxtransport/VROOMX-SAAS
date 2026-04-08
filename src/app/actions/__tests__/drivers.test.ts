@@ -114,7 +114,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   vi.spyOn(console, 'error').mockImplementation(() => {})
   // Default: tier limit not reached
-  mockedCheckTierLimit.mockResolvedValue({ allowed: true, current: 2, limit: 10, plan: 'pro' })
+  mockedCheckTierLimit.mockResolvedValue({ allowed: true, current: 2, limit: 10, plan: 'pro_x' })
 })
 
 afterEach(() => {
@@ -160,7 +160,7 @@ describe('createDriver', () => {
   it('returns error when tier limit is reached', async () => {
     const mockClient = createMockSupabaseClient()
     mockAuthSuccess(mockClient)
-    mockedCheckTierLimit.mockResolvedValue({ allowed: false, current: 3, limit: 3, plan: 'starter' })
+    mockedCheckTierLimit.mockResolvedValue({ allowed: false, current: 3, limit: 3, plan: 'starter_x' })
 
     const result = await createDriver(validDriverInput())
 
@@ -172,7 +172,7 @@ describe('createDriver', () => {
   it('returns suspension error when limit is 0', async () => {
     const mockClient = createMockSupabaseClient()
     mockAuthSuccess(mockClient)
-    mockedCheckTierLimit.mockResolvedValue({ allowed: false, current: 0, limit: 0, plan: 'trial' })
+    mockedCheckTierLimit.mockResolvedValue({ allowed: false, current: 0, limit: 0, plan: 'owner_operator' })
 
     const result = await createDriver(validDriverInput())
 

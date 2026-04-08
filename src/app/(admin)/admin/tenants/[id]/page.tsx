@@ -12,14 +12,14 @@ interface TenantDetailPageProps {
 }
 
 const PLAN_COLORS: Record<string, string> = {
-  starter: 'bg-slate-100 text-slate-700 border-slate-200',
-  pro: 'bg-blue-50 text-blue-700 border-blue-200',
-  enterprise: 'bg-violet-50 text-violet-700 border-violet-200',
+  owner_operator: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  starter_x:      'bg-brand/10 text-brand border-brand/20',
+  pro_x:          'bg-blue-50 text-blue-700 border-blue-200',
 }
 const PLAN_LABELS: Record<string, string> = {
-  starter: 'Starter',
-  pro: 'Pro',
-  enterprise: 'Enterprise',
+  owner_operator: 'Owner-Operator',
+  starter_x:      'Starter X',
+  pro_x:          'Pro X',
 }
 const STATUS_COLORS: Record<string, string> = {
   active: 'bg-emerald-50 text-emerald-700 border-emerald-200',

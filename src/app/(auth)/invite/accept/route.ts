@@ -90,13 +90,23 @@ export async function GET(request: NextRequest) {
         redirect('/dashboard?error=' + encodeURIComponent('Failed to join team'))
       }
 
+      // Look up the tenant's current plan so we seed app_metadata with the
+      // real value instead of a placeholder. The JWT hook also refreshes this
+      // on next token mint, but setting it correctly now avoids a brief stale
+      // read on the first authenticated request after the invite accept.
+      const { data: inviteTenant } = await admin
+        .from('tenants')
+        .select('plan')
+        .eq('id', invite.tenant_id)
+        .single()
+
       // Update user's app_metadata with new tenant_id and role
       // CRITICAL: This is necessary for JWT hook to include tenant info
       await admin.auth.admin.updateUserById(user.id, {
         app_metadata: {
           tenant_id: invite.tenant_id,
           role: invite.role,
-          plan: 'trial', // Will be updated on next JWT refresh via hook
+          plan: inviteTenant?.plan ?? 'owner_operator',
         },
       })
 
