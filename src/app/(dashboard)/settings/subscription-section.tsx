@@ -69,7 +69,7 @@ function StatusBanner({ subscriptionStatus, gracePeriodEndsAt }: { subscriptionS
 
   return (
     <Card className={cn('border-l-4 shadow-none', c.borderColor, c.bg, 'border-border-subtle')}>
-      <CardContent className="flex items-start gap-3 py-4">
+      <CardContent className="flex items-start gap-3 px-6 py-4">
         {c.icon}
         <div className="min-w-0">
           <p className={cn('text-sm font-semibold', c.text)}>{c.label}</p>
@@ -385,7 +385,7 @@ const FAQ_ITEMS = [
 function BillingFaq() {
   return (
     <Card className="border-border-subtle bg-secondary/20">
-      <CardHeader className="pb-3">
+      <CardHeader className="px-6 pb-3">
         <CardTitle className="flex items-center gap-2 text-sm font-semibold">
           <span className="flex h-7 w-7 items-center justify-center rounded-md bg-muted">
             <HelpCircle className="h-4 w-4 text-muted-foreground" />
@@ -393,7 +393,7 @@ function BillingFaq() {
           Frequently Asked Questions
         </CardTitle>
       </CardHeader>
-      <CardContent className="pt-0">
+      <CardContent className="px-6 pt-0">
         <Accordion type="single" collapsible className="w-full">
           {FAQ_ITEMS.map((item, i) => (
             <AccordionItem key={i} value={`faq-${i}`} className="border-border-subtle">
@@ -519,7 +519,7 @@ export function SubscriptionSection({ currentPlan, subscriptionStatus, hasStripe
 
       {/* Current Billing + Usage */}
       <Card className="border-border-subtle">
-        <CardHeader className="pb-4 border-b border-border-subtle">
+        <CardHeader className="px-6 pb-4 border-b border-border-subtle">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-semibold">Current Billing</CardTitle>
             <div className="flex items-center gap-2">
@@ -530,7 +530,7 @@ export function SubscriptionSection({ currentPlan, subscriptionStatus, hasStripe
             </div>
           </div>
         </CardHeader>
-        <CardContent className="pt-5 space-y-5">
+        <CardContent className="px-6 pt-5 space-y-5">
           {/* Trial countdown */}
           {isTrialing && trialEndsAt && (
             <TrialCountdown trialEndsAt={trialEndsAt} />

@@ -212,7 +212,7 @@ export function RolesSection({ customRoles: initialRoles }: RolesSectionProps) {
   return (
     <Card className="glass-card">
       {/* Section header */}
-      <CardHeader className="pb-4">
+      <CardHeader className="px-6 pb-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20">
@@ -234,7 +234,7 @@ export function RolesSection({ customRoles: initialRoles }: RolesSectionProps) {
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-6">
+      <CardContent className="px-6 space-y-6">
         {/* Built-in Roles */}
         <div className="space-y-2">
           <div className="flex items-center gap-2 mb-3">

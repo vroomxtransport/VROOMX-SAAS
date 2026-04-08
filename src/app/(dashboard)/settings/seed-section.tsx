@@ -74,7 +74,7 @@ export function SeedSection({ isOwner }: SeedSectionProps) {
       <div className="space-y-4">
         {/* Load sample data sub-card */}
         <Card className="widget-card !p-0 border-0 shadow-none">
-          <CardHeader className="pb-4 border-b border-border-subtle">
+          <CardHeader className="px-6 pt-5 pb-4 border-b border-border-subtle">
             <div className="flex items-center gap-3">
               <div className="rounded-lg bg-muted p-2">
                 <Database className="h-5 w-5 text-muted-foreground" />
@@ -88,7 +88,7 @@ export function SeedSection({ isOwner }: SeedSectionProps) {
             </div>
           </CardHeader>
 
-          <CardContent className="pt-5 space-y-5">
+          <CardContent className="px-6 pt-6 pb-6 space-y-5">
             <ul className="space-y-2">
               {SAMPLE_DATA_ITEMS.map((item) => (
                 <li key={item} className="flex items-center gap-2.5 text-sm text-muted-foreground">
@@ -118,7 +118,7 @@ export function SeedSection({ isOwner }: SeedSectionProps) {
 
         {/* Clear sample data sub-card */}
         <Card className="widget-card !p-0 border border-destructive/30 bg-destructive/5 shadow-none">
-          <CardHeader className="pb-4 border-b border-destructive/20">
+          <CardHeader className="px-6 pt-5 pb-4 border-b border-destructive/20">
             <div className="flex items-center gap-3">
               <div className="rounded-lg bg-destructive/10 p-2">
                 <Trash2 className="h-5 w-5 text-destructive" />
@@ -134,7 +134,7 @@ export function SeedSection({ isOwner }: SeedSectionProps) {
             </div>
           </CardHeader>
 
-          <CardContent className="pt-5 space-y-5">
+          <CardContent className="px-6 pt-6 pb-6 space-y-5">
             <div className="flex items-start gap-3 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
               <p className="text-sm text-destructive/80">

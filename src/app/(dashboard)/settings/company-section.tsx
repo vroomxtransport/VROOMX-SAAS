@@ -43,7 +43,7 @@ export function CompanySection({ factoringFeeRate }: CompanySectionProps) {
 
   return (
     <Card className="widget-card !p-0 border-0 shadow-none">
-      <CardHeader className="pb-4 border-b border-border-subtle">
+      <CardHeader className="px-6 pt-5 pb-4 border-b border-border-subtle">
         <div className="flex items-center gap-3">
           <div className="rounded-lg bg-muted p-2">
             <CircleDollarSign className="h-5 w-5 text-muted-foreground" />
@@ -57,7 +57,7 @@ export function CompanySection({ factoringFeeRate }: CompanySectionProps) {
         </div>
       </CardHeader>
 
-      <CardContent className="pt-6 space-y-5">
+      <CardContent className="px-6 pt-6 pb-6 space-y-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div className="space-y-1.5">
             <Label htmlFor="factoring-fee-rate" className="font-medium">
@@ -98,7 +98,7 @@ export function CompanySection({ factoringFeeRate }: CompanySectionProps) {
         </div>
       </CardContent>
 
-      <CardFooter className="flex justify-end pt-4 border-t border-border-subtle">
+      <CardFooter className="flex justify-end px-6 pt-4 pb-5 border-t border-border-subtle">
         <Button onClick={handleSave} disabled={saving}>
           {saving ? (
             <>

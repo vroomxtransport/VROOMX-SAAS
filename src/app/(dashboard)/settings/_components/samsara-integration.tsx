@@ -324,14 +324,14 @@ export function SamsaraIntegration() {
   if (loading) {
     return (
       <Card>
-        <CardHeader>
+        <CardHeader className="px-6">
           <CardTitle className="flex items-center gap-2">
             <Truck className="h-5 w-5" />
             Samsara Integration
           </CardTitle>
           <CardDescription>Loading integration status…</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-6">
           <div className="h-20 animate-pulse rounded-lg bg-muted" />
         </CardContent>
       </Card>
@@ -345,7 +345,7 @@ export function SamsaraIntegration() {
   if (!status || !status.connected) {
     return (
       <Card>
-        <CardHeader>
+        <CardHeader className="px-6">
           <CardTitle className="flex items-center gap-2">
             <Truck className="h-5 w-5" />
             Samsara Integration
@@ -355,7 +355,7 @@ export function SamsaraIntegration() {
             ELD compliance, and safety events.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-6">
           <div className="flex flex-col gap-4 rounded-lg border border-dashed border-border p-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1">
               <p className="text-sm font-medium text-foreground">Not connected</p>
@@ -380,7 +380,7 @@ export function SamsaraIntegration() {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="px-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
@@ -417,7 +417,7 @@ export function SamsaraIntegration() {
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-6">
+      <CardContent className="px-6 space-y-6">
         {/* Sync metadata */}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
           <span>Last sync: <span className="font-medium text-foreground">{lastSync}</span></span>

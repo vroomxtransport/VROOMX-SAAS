@@ -6,7 +6,7 @@ export const metadata = { title: 'Notification Preferences | VroomX' }
 export default function NotificationsPage() {
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="px-6">
         <div className="flex items-center gap-3">
           <div className="rounded-lg bg-muted p-2">
             <Bell className="h-5 w-5 text-muted-foreground" />
@@ -17,7 +17,7 @@ export default function NotificationsPage() {
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-6">
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-16 text-center">
           <div className="rounded-full bg-muted p-3 mb-3">
             <Bell className="h-6 w-6 text-muted-foreground" />

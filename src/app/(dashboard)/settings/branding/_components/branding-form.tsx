@@ -2,11 +2,11 @@
 
 import { useState, useRef, useCallback, useTransition } from 'react'
 import Image from 'next/image'
+import { HexColorPicker } from 'react-colorful'
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { toast } from 'sonner'
 import {
   Palette,
@@ -23,6 +24,8 @@ import {
   Upload,
   FileText,
   Eye,
+  Check,
+  X,
 } from 'lucide-react'
 import { updateBranding, uploadLogo, deleteLogo } from '@/app/actions/tenant-settings'
 
@@ -39,6 +42,25 @@ const HEX_REGEX = /^#[0-9a-fA-F]{6}$/
 
 function isValidHex(value: string): boolean {
   return value === '' || HEX_REGEX.test(value)
+}
+
+const BRAND_PRESETS = [
+  { name: 'Midnight', hex: '#0F172A' },
+  { name: 'Navy',     hex: '#1E3A8A' },
+  { name: 'Cobalt',   hex: '#1D4ED8' },
+  { name: 'Teal',     hex: '#0F766E' },
+  { name: 'Forest',   hex: '#166534' },
+  { name: 'Emerald',  hex: '#047857' },
+  { name: 'Amber',    hex: '#D97706' },
+  { name: 'Orange',   hex: '#FB7232' },
+  { name: 'Rust',     hex: '#B45309' },
+  { name: 'Crimson',  hex: '#B91C1C' },
+] as const
+
+function matchPresetName(hex: string): string {
+  const normalized = hex.toLowerCase()
+  const match = BRAND_PRESETS.find((p) => p.hex.toLowerCase() === normalized)
+  return match?.name ?? 'Custom'
 }
 
 export function BrandingForm({
@@ -139,21 +161,16 @@ export function BrandingForm({
   }
 
   // ── Color helpers ────────────────────────────────────────────────────────────
-  function handlePrimaryColorPicker(e: React.ChangeEvent<HTMLInputElement>) {
-    setPrimaryColor(e.target.value)
-  }
-
   function handlePrimaryColorText(e: React.ChangeEvent<HTMLInputElement>) {
-    const val = e.target.value
-    setPrimaryColor(val)
-  }
-
-  function handleSecondaryColorPicker(e: React.ChangeEvent<HTMLInputElement>) {
-    setSecondaryColor(e.target.value)
+    setPrimaryColor(e.target.value)
   }
 
   function handleSecondaryColorText(e: React.ChangeEvent<HTMLInputElement>) {
     setSecondaryColor(e.target.value)
+  }
+
+  function applyPreset(hex: string) {
+    setPrimaryColor(hex)
   }
 
   // ── Save branding (colors + text) ────────────────────────────────────────────
@@ -198,7 +215,7 @@ export function BrandingForm({
     <form onSubmit={handleSave} className="space-y-6">
       {/* ── Section 1: Logo Upload ─────────────────────────────────────────── */}
       <Card className="widget-card !p-0 border-0 shadow-none">
-        <CardHeader className="pb-4 border-b border-border-subtle">
+        <CardHeader className="px-6 pt-5 pb-4 border-b border-border-subtle">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-muted p-2">
               <Camera className="h-5 w-5 text-muted-foreground" />
@@ -212,7 +229,7 @@ export function BrandingForm({
           </div>
         </CardHeader>
 
-        <CardContent className="pt-6">
+        <CardContent className="px-6 pt-6 pb-6">
           <input
             ref={fileInputRef}
             type="file"
@@ -301,7 +318,7 @@ export function BrandingForm({
 
       {/* ── Section 2: Brand Colors ───────────────────────────────────────── */}
       <Card className="widget-card !p-0 border-0 shadow-none">
-        <CardHeader className="pb-4 border-b border-border-subtle">
+        <CardHeader className="px-6 pt-5 pb-4 border-b border-border-subtle">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-muted p-2">
               <Palette className="h-5 w-5 text-muted-foreground" />
@@ -315,92 +332,195 @@ export function BrandingForm({
           </div>
         </CardHeader>
 
-        <CardContent className="pt-6 space-y-5">
-          {/* Primary color row */}
-          <div className="space-y-1.5">
-            <Label htmlFor="primaryColorText">Primary Color</Label>
-            <div className="flex items-center gap-3">
-              <div className="relative h-9 w-9 shrink-0 rounded-md border border-input overflow-hidden">
-                <input
-                  type="color"
-                  value={isValidHex(primaryColor) ? primaryColor : '#1a2b3f'}
-                  onChange={handlePrimaryColorPicker}
-                  className="absolute inset-0 w-full h-full cursor-pointer opacity-0"
-                  aria-label="Primary color picker"
-                />
-                <div
-                  className="absolute inset-0 rounded-md"
-                  style={{ backgroundColor: isValidHex(primaryColor) ? primaryColor : '#1a2b3f' }}
-                />
-              </div>
-              <Input
-                id="primaryColorText"
-                value={primaryColor}
-                onChange={handlePrimaryColorText}
-                placeholder="#1a2b3f"
-                maxLength={7}
-                className={[
-                  'font-mono uppercase',
-                  primaryColor && !isValidHex(primaryColor) ? 'border-destructive' : '',
-                ].join(' ')}
-              />
+        <CardContent className="px-6 pt-6 pb-6 space-y-7">
+          {/* ── Primary color ──────────────────────────────────────────────── */}
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Primary Color
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Main accent on invoices, documents, and branded exports
+              </p>
             </div>
-            {primaryColor && !isValidHex(primaryColor) && (
-              <p className="text-xs text-destructive">Must be a valid 6-digit hex color (e.g. #1a2b3f)</p>
-            )}
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="group flex items-center gap-4 text-left rounded-lg p-2 -ml-2 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  aria-label={`Change primary color, currently ${primaryColor || '#1A2B3F'}`}
+                >
+                  <div
+                    className="h-[52px] w-[52px] shrink-0 rounded-md border border-border shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] transition-transform group-active:scale-[0.97]"
+                    style={{ backgroundColor: effectivePrimary }}
+                  />
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <span className="font-mono text-lg font-medium tracking-tight uppercase text-foreground">
+                      {primaryColor || '#1A2B3F'}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {matchPresetName(effectivePrimary)}
+                    </span>
+                  </div>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-3" align="start">
+                <HexColorPicker color={effectivePrimary} onChange={setPrimaryColor} />
+                <Input
+                  value={primaryColor}
+                  onChange={handlePrimaryColorText}
+                  placeholder="#1a2b3f"
+                  maxLength={7}
+                  aria-label="Primary color hex value"
+                  className={[
+                    'font-mono uppercase mt-3',
+                    primaryColor && !isValidHex(primaryColor) ? 'border-destructive' : '',
+                  ].join(' ')}
+                />
+                {primaryColor && !isValidHex(primaryColor) && (
+                  <p className="text-xs text-destructive mt-1.5">
+                    Must be a valid 6-digit hex color
+                  </p>
+                )}
+              </PopoverContent>
+            </Popover>
+
+            {/* Preset swatches */}
+            <div className="space-y-2">
+              <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Presets
+              </Label>
+              <div className="grid grid-cols-5 gap-2.5">
+                {BRAND_PRESETS.map((preset) => {
+                  const isActive = preset.hex.toLowerCase() === effectivePrimary.toLowerCase()
+                  return (
+                    <button
+                      key={preset.hex}
+                      type="button"
+                      onClick={() => applyPreset(preset.hex)}
+                      aria-label={`Set primary color to ${preset.name} (${preset.hex})`}
+                      aria-pressed={isActive}
+                      title={`${preset.name} · ${preset.hex}`}
+                      className={[
+                        'group relative h-10 rounded-md border border-border/60',
+                        'shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]',
+                        'transition-all duration-150 active:scale-[0.94]',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                        isActive
+                          ? 'ring-2 ring-offset-2 ring-foreground/80'
+                          : 'hover:ring-1 hover:ring-offset-1 hover:ring-foreground/30',
+                      ].join(' ')}
+                      style={{ backgroundColor: preset.hex }}
+                    >
+                      {isActive && (
+                        <Check
+                          className="absolute inset-0 m-auto h-4 w-4 text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]"
+                          strokeWidth={3}
+                          aria-hidden="true"
+                        />
+                      )}
+                      <span className="sr-only">{preset.name}</span>
+                    </button>
+                  )
+                })}
+              </div>
+              <p className="text-[11px] text-muted-foreground pt-0.5">
+                Click a preset or open the picker for custom colors
+              </p>
+            </div>
           </div>
 
-          {/* Secondary color row */}
-          <div className="space-y-1.5">
-            <Label htmlFor="secondaryColorText">Secondary Color <span className="text-muted-foreground font-normal">(optional)</span></Label>
-            <div className="flex items-center gap-3">
-              <div className="relative h-9 w-9 shrink-0 rounded-md border border-input overflow-hidden">
-                <input
-                  type="color"
-                  value={isValidHex(secondaryColor) && secondaryColor ? secondaryColor : '#6b7280'}
-                  onChange={handleSecondaryColorPicker}
-                  className="absolute inset-0 w-full h-full cursor-pointer opacity-0"
-                  aria-label="Secondary color picker"
-                />
-                <div
-                  className="absolute inset-0 rounded-md"
-                  style={{ backgroundColor: isValidHex(secondaryColor) && secondaryColor ? secondaryColor : '#6b7280' }}
-                />
-              </div>
-              <Input
-                id="secondaryColorText"
-                value={secondaryColor}
-                onChange={handleSecondaryColorText}
-                placeholder="#6b7280"
-                maxLength={7}
-                className={[
-                  'font-mono uppercase',
-                  secondaryColor && !isValidHex(secondaryColor) ? 'border-destructive' : '',
-                ].join(' ')}
-              />
-            </div>
-            {secondaryColor && !isValidHex(secondaryColor) && (
-              <p className="text-xs text-destructive">Must be a valid 6-digit hex color (e.g. #f5a623)</p>
-            )}
-          </div>
+          {/* Divider */}
+          <div className="h-px bg-border/60" />
 
-          {/* Live color swatches */}
-          <div className="flex items-center gap-3 pt-1">
-            <div className="flex items-center gap-2">
-              <div
-                className="h-8 w-16 rounded-md border border-border shadow-sm"
-                style={{ backgroundColor: effectivePrimary }}
-                aria-label={`Primary color swatch: ${effectivePrimary}`}
-              />
-              <span className="text-xs text-muted-foreground">Primary</span>
+          {/* ── Secondary color ────────────────────────────────────────────── */}
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Secondary Color{' '}
+                <span className="font-normal normal-case tracking-normal text-muted-foreground/70">
+                  (optional)
+                </span>
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Used for subtle accents and dividers on invoices
+              </p>
             </div>
-            <div className="flex items-center gap-2">
-              <div
-                className="h-8 w-16 rounded-md border border-border shadow-sm"
-                style={{ backgroundColor: effectiveSecondary }}
-                aria-label={`Secondary color swatch: ${effectiveSecondary}`}
-              />
-              <span className="text-xs text-muted-foreground">Secondary</span>
+
+            <div className="flex items-center gap-3">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="group flex items-center gap-4 text-left rounded-lg p-2 -ml-2 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    aria-label={`Change secondary color, currently ${secondaryColor || 'unset'}`}
+                  >
+                    <div
+                      className={[
+                        'relative h-[52px] w-[52px] shrink-0 rounded-md transition-transform group-active:scale-[0.97]',
+                        secondaryColor
+                          ? 'border border-border shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]'
+                          : 'border border-dashed border-border bg-muted/60',
+                      ].join(' ')}
+                      style={secondaryColor ? { backgroundColor: effectiveSecondary } : undefined}
+                    >
+                      {!secondaryColor && (
+                        <span
+                          className="absolute inset-0 flex items-center justify-center text-lg font-light text-muted-foreground/60"
+                          aria-hidden="true"
+                        >
+                          +
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      <span className="font-mono text-lg font-medium tracking-tight uppercase text-foreground">
+                        {secondaryColor || 'Not set'}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {secondaryColor ? matchPresetName(effectiveSecondary) : 'Click to add'}
+                      </span>
+                    </div>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-3" align="start">
+                  <HexColorPicker
+                    color={effectiveSecondary}
+                    onChange={setSecondaryColor}
+                  />
+                  <Input
+                    value={secondaryColor}
+                    onChange={handleSecondaryColorText}
+                    placeholder="#6b7280"
+                    maxLength={7}
+                    aria-label="Secondary color hex value"
+                    className={[
+                      'font-mono uppercase mt-3',
+                      secondaryColor && !isValidHex(secondaryColor) ? 'border-destructive' : '',
+                    ].join(' ')}
+                  />
+                  {secondaryColor && !isValidHex(secondaryColor) && (
+                    <p className="text-xs text-destructive mt-1.5">
+                      Must be a valid 6-digit hex color
+                    </p>
+                  )}
+                </PopoverContent>
+              </Popover>
+
+              {secondaryColor && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSecondaryColor('')}
+                  className="h-8 text-xs text-muted-foreground hover:text-foreground"
+                  aria-label="Clear secondary color"
+                >
+                  <X className="h-3.5 w-3.5 mr-1" />
+                  Clear
+                </Button>
+              )}
             </div>
           </div>
         </CardContent>
@@ -408,7 +528,7 @@ export function BrandingForm({
 
       {/* ── Section 3: Invoice Text ───────────────────────────────────────── */}
       <Card className="widget-card !p-0 border-0 shadow-none">
-        <CardHeader className="pb-4 border-b border-border-subtle">
+        <CardHeader className="px-6 pt-5 pb-4 border-b border-border-subtle">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-muted p-2">
               <FileText className="h-5 w-5 text-muted-foreground" />
@@ -422,7 +542,7 @@ export function BrandingForm({
           </div>
         </CardHeader>
 
-        <CardContent className="pt-6 space-y-5">
+        <CardContent className="px-6 pt-6 pb-6 space-y-5">
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <Label htmlFor="invoiceHeaderText">Header Text</Label>
@@ -463,7 +583,7 @@ export function BrandingForm({
 
       {/* ── Section 4: Invoice Preview ────────────────────────────────────── */}
       <Card className="widget-card !p-0 border-0 shadow-none">
-        <CardHeader className="pb-4 border-b border-border-subtle">
+        <CardHeader className="px-6 pt-5 pb-4 border-b border-border-subtle">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-muted p-2">
               <Eye className="h-5 w-5 text-muted-foreground" />
@@ -477,7 +597,7 @@ export function BrandingForm({
           </div>
         </CardHeader>
 
-        <CardContent className="pt-6 flex justify-center">
+        <CardContent className="px-6 pt-6 pb-6 flex justify-center">
           <div
             className="w-full max-w-sm bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden text-[11px] font-sans"
             role="img"

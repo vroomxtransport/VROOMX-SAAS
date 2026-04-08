@@ -159,7 +159,7 @@ export function TeamSection({
 
       {/* Invite Form */}
       <Card className="border-blue-200/60 bg-blue-500/5">
-        <CardHeader className="pb-3">
+        <CardHeader className="px-6 pb-3">
           <CardTitle className="flex items-center gap-2 text-sm font-semibold">
             <UserPlus className="h-4 w-4 text-blue-600" />
             Invite Team Member
@@ -172,7 +172,7 @@ export function TeamSection({
             Send an email invitation to add someone to your organization.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-6">
           <form onSubmit={handleInvite} className="space-y-3">
             <Input
               type="email"
@@ -205,7 +205,7 @@ export function TeamSection({
 
       {/* Team Members List */}
       <Card className="border-border-subtle">
-        <CardHeader className="pb-3 border-b border-border-subtle">
+        <CardHeader className="px-6 pb-3 border-b border-border-subtle">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-semibold">
               Active Members
@@ -216,7 +216,7 @@ export function TeamSection({
           </div>
           <CardDescription className="text-xs">People who currently have access to your organization.</CardDescription>
         </CardHeader>
-        <CardContent className="pt-2 pb-2">
+        <CardContent className="px-6 pt-2 pb-2">
           {teamMembers.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
@@ -286,7 +286,7 @@ export function TeamSection({
       {/* Pending Invites */}
       {pendingInvites.length > 0 && (
         <Card className="border-amber-200/60">
-          <CardHeader className="pb-3 border-b border-amber-200/60 bg-amber-500/5 rounded-t-xl">
+          <CardHeader className="px-6 pb-3 border-b border-amber-200/60 bg-amber-500/5 rounded-t-xl">
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                 <Clock className="h-4 w-4 text-amber-600" />
@@ -300,7 +300,7 @@ export function TeamSection({
               Awaiting acceptance. Invites expire after 7 days.
             </CardDescription>
           </CardHeader>
-          <CardContent className="pt-2 pb-2">
+          <CardContent className="px-6 pt-2 pb-2">
             <div className="divide-y divide-border-subtle/60">
               {pendingInvites.map((invite) => {
                 const { label: expiryLabel, urgent } = getExpiryLabel(invite.expires_at)
