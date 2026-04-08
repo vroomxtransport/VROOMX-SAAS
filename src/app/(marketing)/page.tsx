@@ -16,12 +16,12 @@ const pageFaqs = [
   {
     question: 'How is VroomX TMS different from other auto-transport platforms?',
     answer:
-      'Most platforms are load boards with an invoice button. VroomX TMS is a full carrier operating system: dispatch, trip planning, 4 driver pay models with per-order overrides, automated invoicing, factoring integration, compliance tracking, break-even analysis, and per-truck profitability. VroomX shows you Clean Gross and calculates your real driver cost per load — starting at $49/month.',
+      'Most platforms are load boards with an invoice button. VroomX TMS is a full carrier operating system: dispatch, trip planning, 4 driver pay models with per-order overrides, automated invoicing, factoring integration, compliance tracking, break-even analysis, and per-truck profitability. VroomX shows you Clean Gross and calculates your real driver cost per load — starting at $29/month.',
   },
   {
     question: 'Is VroomX TMS overkill for a small carrier?',
     answer:
-      'No. Our Starter plan is $49/month for up to 5 trucks. You get the same Clean Gross visibility as a 50-truck fleet at a price that makes sense for your size. Most of our customers started with one truck.',
+      'No. Our Owner-Operator plan is $29/month for a solo driver, and Starter X is $49/month for up to 5 trucks. You get the same Clean Gross visibility as a 50-truck fleet at a price that makes sense for your size. Most of our customers started with one truck.',
   },
   {
     question: 'How long is the free trial?',
@@ -48,14 +48,14 @@ const pageFaqs = [
 export const metadata: Metadata = {
   title: 'Auto Transport TMS for Carriers | VroomX',
   description:
-    'The first TMS built for auto-transport carriers, not brokers. See Clean Gross on every load, automate driver settlements, and track per-truck profitability. Plans from $49/mo. 14-day free trial.',
+    'The first TMS built for auto-transport carriers, not brokers. See Clean Gross on every load, automate driver settlements, and track per-truck profitability. Plans from $29/mo. 14-day free trial.',
   alternates: {
     canonical: '/',
   },
   openGraph: {
     title: 'Auto Transport TMS for Carriers | VroomX',
     description:
-      'The first TMS built for auto-transport carriers, not brokers. See Clean Gross on every load, automate driver settlements, and track per-truck profitability. Plans from $49/mo. 14-day free trial.',
+      'The first TMS built for auto-transport carriers, not brokers. See Clean Gross on every load, automate driver settlements, and track per-truck profitability. Plans from $29/mo. 14-day free trial.',
     type: 'website',
     siteName: 'VroomX',
   },
@@ -63,7 +63,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Auto Transport TMS for Carriers | VroomX',
     description:
-      'The first TMS built for auto-transport carriers, not brokers. See Clean Gross on every load, automate driver settlements, and track per-truck profitability. Plans from $49/mo.',
+      'The first TMS built for auto-transport carriers, not brokers. See Clean Gross on every load, automate driver settlements, and track per-truck profitability. Plans from $29/mo.',
   },
 }
 

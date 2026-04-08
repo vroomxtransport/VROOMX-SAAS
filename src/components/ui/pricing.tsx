@@ -16,72 +16,78 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import { useRef, useState } from "react";
 
+// Tier data must stay in sync with src/lib/data/plan-features.ts PLAN_DEFINITIONS
+// and src/app/(marketing)/pricing/page.tsx. The slug matches the SubscriptionPlan
+// DB key so the /signup?plan={slug} deep link pre-selects the right tier.
 const plans = [
   {
     name: "Owner-Operator",
+    slug: "owner_operator",
     description:
-      "Everything a solo owner-operator needs to run lean and stay profitable",
-    price: 9.99,
-    yearlyPrice: 95.90,
+      "Built for the solo driver running their own truck and their own books",
+    price: 29,
+    yearlyPrice: Math.round(29 * 12 * 0.8),
     buttonText: "Start Free Trial",
     buttonVariant: "outline" as const,
     features: [
-      { text: "1 truck, 1 driver (you)", icon: <HugeiconsIcon icon={UserIcon} size={20} /> },
-      { text: "Up to 20 orders/month", icon: <HugeiconsIcon icon={Car01Icon} size={20} /> },
+      { text: "1 truck, 1 user (you)", icon: <HugeiconsIcon icon={UserIcon} size={20} /> },
+      { text: "Unlimited orders", icon: <HugeiconsIcon icon={Car01Icon} size={20} /> },
       { text: "Email support", icon: <HugeiconsIcon icon={HeadphonesIcon} size={20} /> },
     ],
     includes: [
-      "Free includes:",
+      "Includes:",
       "Basic dispatch board",
       "Order management",
-      "Invoice generation",
       "Driver mobile app",
-      "Expense tracking",
+      "PDF invoicing",
+      "Load board integrations",
     ],
   },
   {
-    name: "Starter",
+    name: "Starter X",
+    slug: "starter_x",
     description:
-      "Perfect for small carriers just getting started with digital dispatch",
+      "For small fleets taking on their first drivers and building a dispatch workflow",
     price: 49,
-    yearlyPrice: 470,
-    buttonText: "Start Free Trial",
-    buttonVariant: "outline" as const,
-    features: [
-      { text: "Up to 50 orders/month", icon: <HugeiconsIcon icon={Car01Icon} size={20} /> },
-      { text: "5 trucks, 5 drivers", icon: <HugeiconsIcon icon={TruckIcon} size={20} /> },
-      { text: "Email support", icon: <HugeiconsIcon icon={HeadphonesIcon} size={20} /> },
-    ],
-    includes: [
-      "Free includes:",
-      "Basic dispatch board",
-      "Order management",
-      "Driver mobile app",
-      "Invoice generation",
-      "Up to 2 team members",
-    ],
-  },
-  {
-    name: "Pro",
-    description:
-      "Best value for growing fleets that need advanced dispatch and analytics",
-    price: 149,
-    yearlyPrice: 1430,
+    yearlyPrice: Math.round(49 * 12 * 0.8),
     buttonText: "Start Free Trial",
     buttonVariant: "default" as const,
     popular: true,
     features: [
+      { text: "Up to 5 trucks, 3 users", icon: <HugeiconsIcon icon={TruckIcon} size={20} /> },
       { text: "Unlimited orders", icon: <HugeiconsIcon icon={Car01Icon} size={20} /> },
-      { text: "25 trucks, unlimited drivers", icon: <HugeiconsIcon icon={TruckIcon} size={20} /> },
-      { text: "Priority support", icon: <HugeiconsIcon icon={HeadphonesIcon} size={20} /> },
+      { text: "Priority email support", icon: <HugeiconsIcon icon={HeadphonesIcon} size={20} /> },
     ],
     includes: [
-      "Everything in Starter, plus:",
+      "Everything in Owner-Operator, plus:",
       "Kanban dispatch board",
-      "Revenue analytics",
+      "Team roles & permissions",
+      "Financial reports",
       "Broker management",
       "Automated invoicing",
-      "Up to 10 team members",
+    ],
+  },
+  {
+    name: "Pro X",
+    slug: "pro_x",
+    description:
+      "For growing carriers that need fleet-scale dispatch, analytics, and integrations",
+    price: 149,
+    yearlyPrice: Math.round(149 * 12 * 0.8),
+    buttonText: "Start Free Trial",
+    buttonVariant: "outline" as const,
+    features: [
+      { text: "Up to 20 trucks, 10 users", icon: <HugeiconsIcon icon={TruckIcon} size={20} /> },
+      { text: "Unlimited orders", icon: <HugeiconsIcon icon={Car01Icon} size={20} /> },
+      { text: "Phone + priority support", icon: <HugeiconsIcon icon={HeadphonesIcon} size={20} /> },
+    ],
+    includes: [
+      "Everything in Starter X, plus:",
+      "Samsara ELD integration",
+      "Advanced analytics & KPIs",
+      "Driver onboarding pipeline",
+      "Multi-terminal support",
+      "Custom roles & permissions",
     ],
   },
 ];
@@ -271,7 +277,7 @@ export default function PricingSection() {
 
               <CardContent className="pt-0">
                 <Link
-                  href="/signup"
+                  href={`/signup?plan=${plan.slug}`}
                   className={cn(
                     "flex items-center justify-center w-full mb-4 h-12 text-sm font-semibold rounded-xl transition-all",
                     plan.popular

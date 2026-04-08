@@ -6,53 +6,56 @@ import { Button } from '@/components/ui/button'
 
 const plans = [
   {
-    name: 'Starter',
-    price: '$49',
+    name: 'Owner-Operator',
+    slug: 'owner_operator',
+    price: '$29',
     period: '/mo',
     highlighted: false,
-    accent: 'blue' as const,
+    accent: 'emerald' as const,
     features: [
-      'Up to 50 orders/month',
-      '5 trucks',
+      '1 truck, 1 user',
+      'Unlimited orders',
       'Basic dispatch board',
       'Email support',
-    ],
-    cta: 'Get Started',
-  },
-  {
-    name: 'Pro',
-    price: '$149',
-    period: '/mo',
-    highlighted: true,
-    accent: 'brand' as const,
-    features: [
-      'Unlimited orders',
-      '25 trucks',
-      'Kanban + analytics',
-      'Priority support',
     ],
     cta: 'Start Free Trial',
   },
   {
-    name: 'Enterprise',
-    price: '$299',
+    name: 'Starter X',
+    slug: 'starter_x',
+    price: '$49',
+    period: '/mo',
+    highlighted: true,
+    accent: 'brand' as const,
+    features: [
+      'Up to 5 trucks, 3 users',
+      'Unlimited orders',
+      'Financial reports',
+      'Priority email support',
+    ],
+    cta: 'Start Free Trial',
+  },
+  {
+    name: 'Pro X',
+    slug: 'pro_x',
+    price: '$149',
     period: '/mo',
     highlighted: false,
-    accent: 'violet' as const,
+    accent: 'blue' as const,
     features: [
-      'Unlimited everything',
-      'Custom integrations',
-      'Dedicated account manager',
-      'SLA guarantee',
+      'Up to 20 trucks, 10 users',
+      'Samsara ELD integration',
+      'Advanced analytics',
+      'Phone + priority support',
     ],
-    cta: 'Contact Sales',
+    cta: 'Start Free Trial',
   },
 ]
 
 const checkColors = {
-  blue: 'text-blue-500',
+  emerald: 'text-emerald-500',
   brand: 'text-brand',
-  violet: 'text-violet-500',
+  blue: 'text-blue-500',
 }
 
 export function PricingTeaser() {
@@ -101,8 +104,8 @@ export function PricingTeaser() {
                       ))}
                     </div>
                     <div className="mt-8">
-                      <Button className="w-full bg-brand text-brand-foreground hover:bg-brand/90 shadow-sm">
-                        {plan.cta}
+                      <Button className="w-full bg-brand text-brand-foreground hover:bg-brand/90 shadow-sm" asChild>
+                        <Link href={`/signup?plan=${plan.slug}`}>{plan.cta}</Link>
                       </Button>
                     </div>
                   </div>
@@ -135,8 +138,8 @@ export function PricingTeaser() {
                   ))}
                 </div>
                 <div className="mt-8">
-                  <Button variant="outline" className="w-full">
-                    {plan.cta}
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link href={`/signup?plan=${plan.slug}`}>{plan.cta}</Link>
                   </Button>
                 </div>
               </div>

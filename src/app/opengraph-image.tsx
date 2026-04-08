@@ -107,7 +107,7 @@ export default async function Image() {
           }}
         >
           Clean Gross on every load. Automated driver settlements.
-          Per-truck profitability. From $49/mo.
+          Per-truck profitability. From $29/mo.
         </div>
 
         {/* Badge row */}
