@@ -364,7 +364,7 @@ export function ApplicationWizard({
                       className={cn(
                         'rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700',
                         'hover:bg-gray-50 transition-colors',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#192334] focus-visible:ring-offset-1',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#192334)] focus-visible:ring-offset-1',
                         'disabled:opacity-50 disabled:cursor-not-allowed',
                       )}
                     >
@@ -380,9 +380,9 @@ export function ApplicationWizard({
                       onClick={handleNext}
                       disabled={isPending}
                       className={cn(
-                        'rounded-lg px-6 py-2.5 text-sm font-semibold text-white transition-colors',
-                        'bg-[#192334] hover:bg-[#2a3a4f]',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#192334] focus-visible:ring-offset-1',
+                        'rounded-lg px-6 py-2.5 text-sm font-semibold text-white transition-[filter,colors]',
+                        'bg-[var(--brand-primary,#192334)] hover:brightness-110',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#192334)] focus-visible:ring-offset-1',
                         'disabled:opacity-50 disabled:cursor-not-allowed',
                       )}
                     >
@@ -394,9 +394,9 @@ export function ApplicationWizard({
                       onClick={handleSubmit}
                       disabled={isPending}
                       className={cn(
-                        'rounded-lg px-6 py-2.5 text-sm font-semibold text-white transition-colors',
-                        'bg-[#fb7232] hover:bg-[#e55f1a]',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fb7232] focus-visible:ring-offset-1',
+                        'rounded-lg px-6 py-2.5 text-sm font-semibold text-white transition-[filter,colors]',
+                        'bg-[var(--brand-secondary,#fb7232)] hover:brightness-110',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-secondary,#fb7232)] focus-visible:ring-offset-1',
                         'disabled:opacity-50 disabled:cursor-not-allowed',
                       )}
                     >

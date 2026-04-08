@@ -46,8 +46,13 @@ export type PublicTenantPublicFields = {
   state: string | null
   zip: string | null
   logo_storage_path: string | null
+  brand_color_primary: string | null
+  brand_color_secondary: string | null
   is_suspended: boolean
 }
+
+const PUBLIC_TENANT_SELECT =
+  'id, name, slug, address, city, state, zip, logo_storage_path, brand_color_primary, brand_color_secondary, is_suspended'
 
 /**
  * Read only the public-safe tenant fields by slug.
@@ -58,7 +63,7 @@ export async function publicReadTenantBySlug(slug: string): Promise<PublicTenant
   const supabase = createServiceRoleClient()
   const { data } = await supabase
     .from('tenants')
-    .select('id, name, slug, address, city, state, zip, logo_storage_path, is_suspended')
+    .select(PUBLIC_TENANT_SELECT)
     .eq('slug', slug)
     .maybeSingle()
   if (!data || data.is_suspended) return null
@@ -73,11 +78,36 @@ export async function publicReadTenantById(id: string): Promise<PublicTenantPubl
   const supabase = createServiceRoleClient()
   const { data } = await supabase
     .from('tenants')
-    .select('id, name, slug, address, city, state, zip, logo_storage_path, is_suspended')
+    .select(PUBLIC_TENANT_SELECT)
     .eq('id', id)
     .maybeSingle()
   if (!data || data.is_suspended) return null
   return data as PublicTenantPublicFields
+}
+
+/**
+ * Resolve a tenant's logo storage path to a short-lived signed URL.
+ *
+ * The `branding` bucket is private (see supabase/migrations/00030_branding.sql),
+ * so we must mint a signed URL via the service-role client. 1 hour expiry mirrors
+ * the existing invoice PDF pattern (src/app/api/invoices/[orderId]/pdf/route.ts).
+ *
+ * Silent fallback to null on missing path or signing error — a broken logo must
+ * never break the public application page.
+ */
+export async function publicReadTenantLogoUrl(
+  logoStoragePath: string | null,
+): Promise<string | null> {
+  if (!logoStoragePath) return null
+  try {
+    const supabase = createServiceRoleClient()
+    const { data } = await supabase.storage
+      .from('branding')
+      .createSignedUrl(logoStoragePath, 3600)
+    return data?.signedUrl ?? null
+  } catch {
+    return null
+  }
 }
 
 export type PublicAuthSuccess = {

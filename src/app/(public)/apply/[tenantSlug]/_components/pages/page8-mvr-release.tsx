@@ -71,7 +71,7 @@ export function Page8MvrRelease({ tenantName, onConsentSigned }: Page8Props) {
           <button
             type="button"
             onClick={() => void handleSign(typedName)}
-            className="mt-3 rounded-lg bg-[#192334] px-5 py-2 text-sm font-semibold text-white hover:bg-[#2a3a4f] transition-colors focus-visible:ring-2 focus-visible:ring-[#192334] focus-visible:ring-offset-1 focus-visible:outline-none"
+            className="mt-3 rounded-lg bg-[var(--brand-primary,#192334)] px-5 py-2 text-sm font-semibold text-white hover:brightness-110 transition-[filter,colors] focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#192334)] focus-visible:ring-offset-1 focus-visible:outline-none"
           >
             Confirm Signature
           </button>

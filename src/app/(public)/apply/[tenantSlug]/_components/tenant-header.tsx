@@ -6,7 +6,12 @@ interface TenantHeaderProps {
   city: string | null
   state: string | null
   zip: string | null
-  logoStoragePath: string | null
+  /**
+   * Pre-resolved signed URL for the carrier's logo, or null if no logo.
+   * Computed server-side via publicReadTenantLogoUrl() — never construct
+   * storage URLs in this component.
+   */
+  logoUrl: string | null
 }
 
 /**
@@ -21,17 +26,8 @@ export function TenantHeader({
   city,
   state,
   zip,
-  logoStoragePath,
+  logoUrl,
 }: TenantHeaderProps) {
-  // Build logo public URL if path exists
-  let logoUrl: string | null = null
-  if (logoStoragePath) {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    if (supabaseUrl) {
-      logoUrl = `${supabaseUrl}/storage/v1/object/public/documents/${logoStoragePath}`
-    }
-  }
-
   const addressLine = [address, city, state ? `${state}${zip ? ` ${zip}` : ''}` : zip]
     .filter(Boolean)
     .join(', ')
@@ -40,12 +36,20 @@ export function TenantHeader({
     <div className="flex items-center gap-4 py-3 px-0">
       {logoUrl && (
         <div className="shrink-0">
+          {/*
+            unoptimized is LOAD-BEARING for security and correctness — do not remove.
+            Without it, Next.js proxies through /_next/image which (a) caches the
+            signed-URL bytes past their 1h expiry on the CDN, and (b) can leak
+            cached tenant logos across tenants on a shared CDN tier. With it, the
+            browser fetches the signed URL directly and the signature is honored.
+          */}
           <Image
             src={logoUrl}
             alt={`${name} logo`}
             width={56}
             height={56}
             className="h-14 w-14 rounded object-contain bg-white p-1"
+            unoptimized
           />
         </div>
       )}

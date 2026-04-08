@@ -65,7 +65,7 @@ function Section({
       {/* Section header — accordion on mobile, plain on desktop */}
       <button
         type="button"
-        className="flex w-full items-center justify-between py-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fb7232] md:cursor-default"
+        className="flex w-full items-center justify-between py-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-secondary,#fb7232)] md:cursor-default"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
       >
@@ -119,7 +119,7 @@ const inputCls = (error?: string) =>
   cn(
     'w-full rounded-md border bg-white px-3 py-2 text-sm text-gray-900 outline-none transition-colors',
     'placeholder:text-gray-400',
-    'focus:border-[#192334] focus:ring-1 focus:ring-[#192334]',
+    'focus:border-[var(--brand-primary,#192334)] focus:ring-1 focus:ring-[var(--brand-primary,#192334)]',
     error ? 'border-red-400' : 'border-gray-300',
   )
 
@@ -360,7 +360,7 @@ export function Page1MainApplication({ resumeToken, onConsentSigned }: Page1Prop
             <button
               type="button"
               onClick={() => appendAddress({ street: '', city: '', state: 'AL', zip: '', fromDate: '', toDate: '', position: addressFields.length })}
-              className="flex items-center gap-1.5 text-xs font-medium text-[#192334] hover:text-[#fb7232] transition-colors"
+              className="flex items-center gap-1.5 text-xs font-medium text-[#192334] hover:text-[var(--brand-secondary,#fb7232)] transition-colors"
             >
               <Plus className="h-3.5 w-3.5" /> Add Address
             </button>
@@ -522,7 +522,7 @@ export function Page1MainApplication({ resumeToken, onConsentSigned }: Page1Prop
             <button
               type="button"
               onClick={() => appendLicense({ licenseNumber: '', state: 'AL', class: 'A', expires: '' })}
-              className="flex items-center gap-1.5 text-xs font-medium text-[#192334] hover:text-[#fb7232]"
+              className="flex items-center gap-1.5 text-xs font-medium text-[#192334] hover:text-[var(--brand-secondary,#fb7232)]"
             >
               <Plus className="h-3.5 w-3.5" /> Add License
             </button>
@@ -615,7 +615,7 @@ export function Page1MainApplication({ resumeToken, onConsentSigned }: Page1Prop
             <button
               type="button"
               onClick={() => appendAccident({ date: '', nature: '', fatalities: 0, injuries: 0, location: '' })}
-              className="flex items-center gap-1.5 text-xs font-medium text-[#192334] hover:text-[#fb7232]"
+              className="flex items-center gap-1.5 text-xs font-medium text-[#192334] hover:text-[var(--brand-secondary,#fb7232)]"
             >
               <Plus className="h-3.5 w-3.5" /> Add Accident
             </button>
@@ -676,7 +676,7 @@ export function Page1MainApplication({ resumeToken, onConsentSigned }: Page1Prop
             <button
               type="button"
               onClick={() => appendViolation({ date: '', charge: '', disposition: '' })}
-              className="flex items-center gap-1.5 text-xs font-medium text-[#192334] hover:text-[#fb7232]"
+              className="flex items-center gap-1.5 text-xs font-medium text-[#192334] hover:text-[var(--brand-secondary,#fb7232)]"
             >
               <Plus className="h-3.5 w-3.5" /> Add Violation
             </button>
@@ -861,7 +861,7 @@ export function Page1MainApplication({ resumeToken, onConsentSigned }: Page1Prop
             state: 'AL', zip: '', position: '', dateFrom: '', dateTo: '', reasonForLeaving: '',
             equipmentClass: '', subjectToFmcsr: false, safetySensitive: false,
           })}
-          className="flex items-center gap-1.5 text-sm font-medium text-[#192334] hover:text-[#fb7232]"
+          className="flex items-center gap-1.5 text-sm font-medium text-[#192334] hover:text-[var(--brand-secondary,#fb7232)]"
         >
           <Plus className="h-4 w-4" /> Add Employer
         </button>
@@ -894,7 +894,7 @@ export function Page1MainApplication({ resumeToken, onConsentSigned }: Page1Prop
           <button
             type="button"
             onClick={() => void handleCertSign(certTypedName)}
-            className="mt-3 rounded-lg bg-[#192334] px-5 py-2 text-sm font-semibold text-white hover:bg-[#2a3a4f] transition-colors focus-visible:ring-2 focus-visible:ring-[#192334] focus-visible:ring-offset-1 focus-visible:outline-none"
+            className="mt-3 rounded-lg bg-[var(--brand-primary,#192334)] px-5 py-2 text-sm font-semibold text-white hover:brightness-110 transition-[filter,colors] focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#192334)] focus-visible:ring-offset-1 focus-visible:outline-none"
           >
             Confirm Signature
           </button>

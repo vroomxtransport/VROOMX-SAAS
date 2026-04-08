@@ -881,6 +881,7 @@ export async function submitApplication(
  */
 export async function getApplicationStatus(statusToken: string): Promise<
   | {
+      tenantId: string
       status: string
       submittedAt: string | null
       overallPipelineStatus: string | null
@@ -927,7 +928,14 @@ export async function getApplicationStatus(statusToken: string): Promise<
   // rejection_reason is NEVER exposed on the public status endpoint — it may contain
   // sensitive compliance info (failed drug test, MVR disqualifier, etc.).
   // The full reason is delivered only via the adverse-action email (TODO v2).
+  // tenantId is included so the status page route can verify the URL slug
+  // matches the application's actual tenant — defends against cross-tenant
+  // chrome spoofing where a valid statusToken from carrier A is paired with
+  // carrier B's slug to render carrier B's branding around carrier A's status.
+  // tenant_id is an opaque UUID, not PII, and is already implicitly accessible
+  // to anyone holding a valid status token.
   return {
+    tenantId: application.tenant_id,
     status: application.status,
     submittedAt: application.submitted_at,
     overallPipelineStatus: pipeline?.overall_status ?? null,

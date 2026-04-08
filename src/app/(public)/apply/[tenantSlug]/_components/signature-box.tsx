@@ -73,7 +73,7 @@ export function SignatureBox({
                 ? 'border-red-400 ring-1 ring-red-400'
                 : isSigned
                   ? 'border-green-400'
-                  : 'border-gray-300 focus-within:border-[#192334] focus-within:ring-1 focus-within:ring-[#192334]',
+                  : 'border-gray-300 focus-within:border-[var(--brand-primary,#192334)] focus-within:ring-1 focus-within:ring-[var(--brand-primary,#192334)]',
             )}
           >
             {/* Live preview in Caveat / handwriting font */}
@@ -113,7 +113,7 @@ export function SignatureBox({
                 type="button"
                 onClick={handleClear}
                 aria-label="Clear signature"
-                className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-gray-200 text-gray-500 hover:bg-gray-300 focus-visible:ring-2 focus-visible:ring-[#fb7232] transition-colors"
+                className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-gray-200 text-gray-500 hover:bg-gray-300 focus-visible:ring-2 focus-visible:ring-[var(--brand-secondary,#fb7232)] transition-colors"
               >
                 <span aria-hidden="true" className="text-xs leading-none">&times;</span>
               </button>
@@ -155,7 +155,7 @@ export function SignatureBox({
             onChange={(e) => handleDateChange(e.target.value)}
             aria-label="Date signed"
             aria-required="true"
-            className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-[#192334] focus:ring-1 focus:ring-[#192334]"
+            className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-[var(--brand-primary,#192334)] focus:ring-1 focus:ring-[var(--brand-primary,#192334)]"
           />
         </div>
       </div>

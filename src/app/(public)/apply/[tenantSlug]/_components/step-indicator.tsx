@@ -51,7 +51,7 @@ export function StepIndicator({
                 className={cn(
                   'relative flex flex-col items-center gap-1.5 px-4 py-2 text-xs font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
                   // Focus ring uses brand color on dark background
-                  'focus-visible:ring-[#fb7232]',
+                  'focus-visible:ring-[var(--brand-secondary,#fb7232)]',
                   isFuture
                     ? 'cursor-not-allowed text-white/30'
                     : isCompleted
@@ -75,7 +75,7 @@ export function StepIndicator({
                   className={cn(
                     'block h-0.5 w-full rounded-full transition-all duration-200',
                     isCurrent
-                      ? 'bg-[#fb7232]'
+                      ? 'bg-[var(--brand-secondary,#fb7232)]'
                       : isCompleted
                         ? 'bg-white/20'
                         : 'bg-transparent',

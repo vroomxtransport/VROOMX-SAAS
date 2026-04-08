@@ -1,5 +1,11 @@
 import { notFound } from 'next/navigation'
 import { getApplicationStatus } from '@/app/actions/driver-applications'
+import {
+  publicReadTenantBySlug,
+  publicReadTenantLogoUrl,
+} from '@/lib/public-auth'
+import { BrandStyle } from '../../_components/brand-style'
+import { TenantHeader } from '../../_components/tenant-header'
 import Link from 'next/link'
 import { CheckCircle2, Clock, XCircle } from 'lucide-react'
 
@@ -69,6 +75,19 @@ export default async function StatusPage({ params }: Props) {
   const result = await getApplicationStatus(statusToken)
   if ('error' in result) notFound()
 
+  // Load tenant for branding (uniform 404 invariant — suspended tenants return null)
+  const tenant = await publicReadTenantBySlug(tenantSlug)
+  if (!tenant) notFound()
+
+  // Cross-tenant chrome spoofing defense: the URL slug must match the
+  // application's actual tenant. Otherwise an attacker could pair a valid
+  // statusToken from carrier A with carrier B's slug and render carrier B's
+  // branding around carrier A's application status — a phishing primitive.
+  // Uniform 404 to avoid leaking tenant existence.
+  if (tenant.id !== result.tenantId) notFound()
+
+  const logoUrl = await publicReadTenantLogoUrl(tenant.logo_storage_path)
+
   const {
     status,
     submittedAt,
@@ -94,6 +113,23 @@ export default async function StatusPage({ params }: Props) {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-start px-4 py-12" style={{ backgroundColor: '#0C1220' }}>
+      <BrandStyle
+        primary={tenant.brand_color_primary}
+        secondary={tenant.brand_color_secondary}
+      />
+
+      {/* Carrier branding header above the status card */}
+      <div className="w-full max-w-lg mb-6">
+        <TenantHeader
+          name={tenant.name}
+          address={tenant.address}
+          city={tenant.city}
+          state={tenant.state}
+          zip={tenant.zip}
+          logoUrl={logoUrl}
+        />
+      </div>
+
       <div className="w-full max-w-lg">
         {/* Status card */}
         <div className="rounded-xl bg-white px-8 py-10 shadow-2xl">
@@ -114,7 +150,7 @@ export default async function StatusPage({ params }: Props) {
                 ) : step.status === 'rejected' ? (
                   <XCircle className="h-5 w-5 text-red-500" aria-hidden="true" />
                 ) : step.status === 'active' ? (
-                  <Clock className="h-5 w-5 text-[#fb7232] animate-pulse" aria-hidden="true" />
+                  <Clock className="h-5 w-5 text-[var(--brand-secondary,#fb7232)] animate-pulse" aria-hidden="true" />
                 ) : (
                   <div className="h-5 w-5 rounded-full border-2 border-gray-200 bg-white" aria-hidden="true" />
                 )
@@ -137,7 +173,7 @@ export default async function StatusPage({ params }: Props) {
                         step.status === 'done'
                           ? 'text-[#192334]'
                           : step.status === 'active'
-                            ? 'text-[#fb7232]'
+                            ? 'text-[var(--brand-secondary,#fb7232)]'
                             : step.status === 'rejected'
                               ? 'text-red-600'
                               : 'text-gray-400'
@@ -167,7 +203,7 @@ export default async function StatusPage({ params }: Props) {
             </p>
             <Link
               href={`/apply/${tenantSlug}`}
-              className="mt-3 inline-block text-xs text-[#192334] underline hover:text-[#fb7232] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#192334] rounded"
+              className="mt-3 inline-block text-xs text-[#192334] underline hover:text-[var(--brand-secondary,#fb7232)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#192334)] rounded"
             >
               Return to application page
             </Link>
