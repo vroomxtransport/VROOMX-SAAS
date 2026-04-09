@@ -42,7 +42,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { useEffect } from 'react'
 import { useChatUnread } from '@/hooks/use-chat-unread'
+import { ChevronDown } from 'lucide-react'
 
 type NavItem = {
   name: string
@@ -124,7 +126,7 @@ interface SidebarProps {
 
 export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
   const pathname = usePathname()
-  const { isOpen, close, isCollapsed, toggleCollapse } = useSidebarStore()
+  const { isOpen, close, isCollapsed, toggleCollapse, collapsedCategories, toggleCategory, expandCategory } = useSidebarStore()
   const { totalUnread } = useChatUnread(userId)
 
   const filteredCategories = NAV_CATEGORIES.map((category) => ({
@@ -134,6 +136,21 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
       return hasMinRole(userRole, item.minRole)
     }),
   })).filter((category) => category.items.length > 0)
+
+  // Auto-expand category if it contains the active route
+  useEffect(() => {
+    const activeCategory = filteredCategories.find((cat) =>
+      cat.items.some((item) => {
+        const accountingRoutes = ['/financials', '/billing', '/payroll', '/local-driver-payroll']
+        return item.href === '/financials'
+          ? accountingRoutes.some((r) => pathname === r || pathname.startsWith(r + '/'))
+          : pathname === item.href || pathname.startsWith(item.href + '/')
+      })
+    )
+    if (activeCategory && collapsedCategories.includes(activeCategory.label)) {
+      expandCategory(activeCategory.label)
+    }
+  }, [pathname]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -220,23 +237,48 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
 
         {/* Navigation */}
         <nav className={cn("flex-1 overflow-y-auto py-2", isCollapsed ? "lg:space-y-1 lg:py-1 lg:px-1 px-2" : "space-y-3 px-2")}>
-          {filteredCategories.map((category, catIndex) => (
+          {filteredCategories.map((category, catIndex) => {
+            const isMainCategory = category.label === 'Main'
+            const isCategoryCollapsed = !isMainCategory && collapsedCategories.includes(category.label)
+
+            return (
             <div key={category.label}>
               {/* Category label or divider */}
               {isCollapsed ? (
                 catIndex > 0 && (
                   <div className="hidden lg:block mx-3 my-1 border-t border-[var(--sidebar-border-color)]" />
                 )
-              ) : (
+              ) : isMainCategory ? (
                 <div className="mb-1.5 px-3 pt-1">
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--sidebar-category)]">
                     {category.label}
                   </span>
                 </div>
+              ) : (
+                <button
+                  onClick={() => toggleCategory(category.label)}
+                  className="mb-1.5 px-3 pt-1 flex items-center justify-between w-full group/cat"
+                >
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--sidebar-category)] group-hover/cat:text-[var(--sidebar-text-active)] transition-colors">
+                    {category.label}
+                  </span>
+                  <ChevronDown
+                    className={cn(
+                      'h-3 w-3 text-[var(--sidebar-category)] group-hover/cat:text-[var(--sidebar-text-active)] transition-all duration-200',
+                      isCategoryCollapsed && '-rotate-90'
+                    )}
+                  />
+                </button>
               )}
 
-              {/* Nav items */}
-              <div className="space-y-0.5">
+              {/* Nav items — animated collapse */}
+              <div
+                className={cn(
+                  'grid transition-[grid-template-rows] duration-200 ease-in-out',
+                  !isCollapsed && isCategoryCollapsed ? 'grid-rows-[0fr]' : 'grid-rows-[1fr]'
+                )}
+              >
+              <div className="space-y-0.5 overflow-hidden min-h-0">
                 {category.items.map((item) => {
                   // Accounting hub: highlight for /financials, /billing, /payroll, /local-driver-payroll
                   const accountingRoutes = ['/financials', '/billing', '/payroll', '/local-driver-payroll']
@@ -313,8 +355,9 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
                   return <div key={item.href}>{linkContent}</div>
                 })}
               </div>
+              </div>
             </div>
-          ))}
+          )})}
         </nav>
 
         {/* Footer */}
