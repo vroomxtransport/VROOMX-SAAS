@@ -14,19 +14,31 @@ import { type ReactNode, useCallback, useMemo } from 'react'
 import { GripVertical } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-interface DashboardWidgetsProps {
+export interface DashboardWidgetsProps {
   statCards: ReactNode
-  loadsPipeline: ReactNode
-  revenueChart: ReactNode
-  fleetPulse: ReactNode
-  upcomingPickups: ReactNode
-  activityFeed: ReactNode
-  openInvoices: ReactNode
-  topDrivers: ReactNode
-  quickLinks: ReactNode
+  // Shared widgets (optional — not every view uses all of them)
+  loadsPipeline?: ReactNode
+  revenueChart?: ReactNode
+  fleetPulse?: ReactNode
+  upcomingPickups?: ReactNode
+  activityFeed?: ReactNode
+  openInvoices?: ReactNode
+  topDrivers?: ReactNode
+  quickLinks?: ReactNode
+  // Dispatcher-specific
+  dispatchEfficiency?: ReactNode
+  // Accounting-specific
+  arAgingChart?: ReactNode
+  recentPayments?: ReactNode
+  paymentStatusBreakdown?: ReactNode
+  // Owner-specific
+  pnlSummary?: ReactNode
+  brokerScorecardMini?: ReactNode
+  revenueForecast?: ReactNode
 }
 
-const widgetContent: Record<Exclude<WidgetId, 'statCards'>, keyof DashboardWidgetsProps> = {
+/** Maps each non-statCards WidgetId to the corresponding prop name. */
+const widgetContent: Record<Exclude<WidgetId, 'statCards'>, keyof Omit<DashboardWidgetsProps, 'statCards'>> = {
   loadsPipeline: 'loadsPipeline',
   revenueChart: 'revenueChart',
   fleetPulse: 'fleetPulse',
@@ -35,18 +47,37 @@ const widgetContent: Record<Exclude<WidgetId, 'statCards'>, keyof DashboardWidge
   openInvoices: 'openInvoices',
   topDrivers: 'topDrivers',
   quickLinks: 'quickLinks',
+  // New widgets
+  dispatchEfficiency: 'dispatchEfficiency',
+  arAgingChart: 'arAgingChart',
+  recentPayments: 'recentPayments',
+  paymentStatusBreakdown: 'paymentStatusBreakdown',
+  pnlSummary: 'pnlSummary',
+  brokerScorecardMini: 'brokerScorecardMini',
+  revenueForecast: 'revenueForecast',
 }
 
 export function DashboardWidgets(props: DashboardWidgetsProps) {
-  const { widgetLayout, editMode, setGridLayout } = useDashboardStore()
+  const { editMode, setGridLayout } = useDashboardStore()
+  const layout = useDashboardStore((s) => s.viewLayouts[s.activeView])
   const visibleWidgets = useVisibleWidgets()
   const { width, containerRef, mounted } = useContainerWidth({ initialWidth: 1280 })
 
-  const statCardsVisible = widgetLayout.find((w) => w.id === 'statCards')?.visible ?? true
+  const statCardsVisible = layout.find((w) => w.id === 'statCards')?.visible ?? true
+
+  // Filter visible widgets to only those with a provided ReactNode
+  const renderedWidgets = useMemo(
+    () =>
+      visibleWidgets.filter((w) => {
+        const propKey = widgetContent[w.id as Exclude<WidgetId, 'statCards'>]
+        return propKey && props[propKey] != null
+      }),
+    [visibleWidgets, props]
+  )
 
   const lgLayouts = useMemo(
     (): readonly LayoutItem[] =>
-      visibleWidgets.map((w) => ({
+      renderedWidgets.map((w) => ({
         i: w.id,
         x: w.grid.x,
         y: w.grid.y,
@@ -56,18 +87,17 @@ export function DashboardWidgets(props: DashboardWidgetsProps) {
         minH: w.grid.minH,
         static: !editMode,
       })),
-    [visibleWidgets, editMode]
+    [renderedWidgets, editMode]
   )
 
-  // On mobile, stack everything single-column
   const smLayouts = useMemo((): readonly LayoutItem[] => {
     let cumY = 0
-    return visibleWidgets.map((w) => {
+    return renderedWidgets.map((w) => {
       const item = { i: w.id, x: 0, y: cumY, w: 1, h: w.grid.h, minH: w.grid.minH, static: true }
       cumY += w.grid.h
       return item
     })
-  }, [visibleWidgets])
+  }, [renderedWidgets])
 
   const handleLayoutChange = useCallback(
     (layout: Layout, _layouts: ResponsiveLayouts) => {
@@ -82,7 +112,7 @@ export function DashboardWidgets(props: DashboardWidgetsProps) {
       {statCardsVisible && props.statCards}
 
       <div ref={containerRef}>
-        {mounted && visibleWidgets.length > 0 && (
+        {mounted && renderedWidgets.length > 0 && (
           <ResponsiveGridLayout
             width={width}
             layouts={{ lg: lgLayouts, sm: smLayouts }}
@@ -96,7 +126,7 @@ export function DashboardWidgets(props: DashboardWidgetsProps) {
             resizeConfig={{ enabled: editMode, handles: ['se', 's', 'e'] }}
             onLayoutChange={handleLayoutChange}
           >
-            {visibleWidgets.map((widget) => (
+            {renderedWidgets.map((widget) => (
               <div
                 key={widget.id}
                 className={cn(

@@ -15,7 +15,8 @@ import { Pagination } from '@/components/shared/pagination'
 import { EmptyState } from '@/components/shared/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
-import { Plus, UserCircle } from 'lucide-react'
+import { Plus, UserCircle, BarChart3 } from 'lucide-react'
+import Link from 'next/link'
 import { useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { fetchDrivers } from '@/lib/queries/drivers'
@@ -243,6 +244,12 @@ export function DriverList() {
             fetchData={handleCsvExport}
           />
           <ViewToggle viewMode={viewMode} onViewChange={(mode) => setView('drivers', mode)} />
+          <Button asChild variant="outline">
+            <Link href="/drivers/performance">
+              <BarChart3 className="mr-2 h-4 w-4" />
+              Performance
+            </Link>
+          </Button>
           <Button onClick={handleAddDriver}>
             <Plus className="mr-2 h-4 w-4" />
             Add Driver

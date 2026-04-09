@@ -4,24 +4,22 @@ import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Switch } from '@/components/ui/switch'
 import { useDashboardStore, type WidgetId } from '@/stores/dashboard-store'
+import { getWidgetsForView, type DashboardView } from '@/app/(dashboard)/dashboard/_lib/resolve-view'
 import { Settings2, GripVertical } from 'lucide-react'
+import { useMemo } from 'react'
 
-const WIDGET_LABELS: { id: WidgetId; label: string }[] = [
-  { id: 'statCards', label: 'Stats Overview' },
-  { id: 'loadsPipeline', label: 'Loads Pipeline' },
-  { id: 'revenueChart', label: 'Revenue Chart' },
-  { id: 'fleetPulse', label: 'Fleet Pulse' },
-  { id: 'upcomingPickups', label: 'Upcoming Pickups' },
-  { id: 'activityFeed', label: 'Activity Feed' },
-  { id: 'openInvoices', label: 'Open Invoices' },
-  { id: 'topDrivers', label: 'Top Drivers' },
-  { id: 'quickLinks', label: 'Quick Links' },
-]
+interface CustomizeDashboardProps {
+  view: DashboardView
+}
 
-export function CustomizeDashboard() {
-  const { widgetLayout, toggleWidget, editMode, setEditMode, resetDefaults } = useDashboardStore()
+export function CustomizeDashboard({ view }: CustomizeDashboardProps) {
+  const { editMode, setEditMode, resetDefaults, toggleWidget } = useDashboardStore()
+  const layout = useDashboardStore((s) => s.viewLayouts[s.activeView])
 
-  const isVisible = (id: WidgetId) => widgetLayout.find((w) => w.id === id)?.visible ?? true
+  const isVisible = (id: WidgetId) => layout.find((w) => w.id === id)?.visible ?? true
+
+  // Only show widgets valid for the current view
+  const viewWidgets = useMemo(() => getWidgetsForView(view), [view])
 
   return (
     <Popover>
@@ -64,7 +62,7 @@ export function CustomizeDashboard() {
             </button>
           </div>
           <div className="space-y-3">
-            {WIDGET_LABELS.map(({ id, label }) => (
+            {viewWidgets.map(({ id, label }) => (
               <div key={id} className="flex items-center justify-between">
                 <label htmlFor={`widget-${id}`} className="text-sm cursor-pointer">
                   {label}

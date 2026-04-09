@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import Link from 'next/link'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { useBrokers } from '@/hooks/use-brokers'
 import { createClient } from '@/lib/supabase/client'
@@ -16,7 +17,7 @@ import { EmptyState } from '@/components/shared/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Building2, Pencil, Mail, Phone } from 'lucide-react'
+import { Plus, Building2, Pencil, Mail, Phone, BarChart3 } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
 import { PAYMENT_TERMS_LABELS } from '@/types'
 import type { Broker } from '@/types/database'
@@ -160,6 +161,12 @@ export function BrokerList() {
     <div className="space-y-4">
       {/* Header */}
       <PageHeader title="Brokers" subtitle="Manage your broker directory and payment terms.">
+        <Button asChild variant="outline">
+          <Link href="/brokers/scorecard">
+            <BarChart3 className="mr-2 h-4 w-4" />
+            Scorecard
+          </Link>
+        </Button>
         <Button onClick={handleAddBroker}>
           <Plus className="mr-2 h-4 w-4" />
           Add Broker
