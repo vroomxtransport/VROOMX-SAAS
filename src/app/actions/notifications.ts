@@ -13,7 +13,7 @@ export async function markNotificationRead(data: unknown) {
   const parsed = markReadSchema.safeParse(data)
   if (!parsed.success) return { error: 'Invalid notification ID' }
 
-  const auth = await authorize('*')
+  const auth = await authorize('*', { rateLimit: { key: 'markNotifRead', limit: 60, windowMs: 60_000 } })
   if (!auth.ok) return { error: auth.error }
   const { supabase, user } = auth.ctx
 
@@ -28,7 +28,7 @@ export async function markNotificationRead(data: unknown) {
 }
 
 export async function markAllNotificationsRead() {
-  const auth = await authorize('*')
+  const auth = await authorize('*', { rateLimit: { key: 'markAllNotifRead', limit: 10, windowMs: 60_000 } })
   if (!auth.ok) return { error: auth.error }
   const { supabase, user } = auth.ctx
 
@@ -50,7 +50,7 @@ export async function createWebNotification(input: {
   body: string
   link?: string
 }) {
-  const auth = await authorize('*')
+  const auth = await authorize('*', { rateLimit: { key: 'createNotif', limit: 30, windowMs: 60_000 } })
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId } = auth.ctx
 

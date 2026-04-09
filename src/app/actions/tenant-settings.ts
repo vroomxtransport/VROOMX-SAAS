@@ -12,7 +12,7 @@ export async function updateFactoringFeeRate(data: unknown) {
     return { error: parsed.error.flatten().fieldErrors }
   }
 
-  const auth = await authorize('settings.manage')
+  const auth = await authorize('settings.manage', { rateLimit: { key: 'updateSettings', limit: 20, windowMs: 60_000 } })
   if (!auth.ok) return { error: auth.error }
   const { tenantId } = auth.ctx
 
@@ -40,7 +40,7 @@ export async function updateCompanyProfile(data: unknown) {
     return { error: parsed.error.flatten().fieldErrors }
   }
 
-  const auth = await authorize('settings.manage')
+  const auth = await authorize('settings.manage', { rateLimit: { key: 'updateSettings', limit: 20, windowMs: 60_000 } })
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId } = auth.ctx
 
@@ -72,7 +72,7 @@ export async function updateBranding(data: unknown) {
     return { error: parsed.error.flatten().fieldErrors }
   }
 
-  const auth = await authorize('settings.manage')
+  const auth = await authorize('settings.manage', { rateLimit: { key: 'updateSettings', limit: 20, windowMs: 60_000 } })
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId } = auth.ctx
 
@@ -98,7 +98,7 @@ const ALLOWED_LOGO_MIME = new Set(['image/png', 'image/jpeg', 'image/webp', 'ima
 const MAX_LOGO_SIZE = 5 * 1024 * 1024 // 5 MB
 
 export async function uploadLogo(formData: FormData) {
-  const auth = await authorize('settings.manage')
+  const auth = await authorize('settings.manage', { rateLimit: { key: 'uploadLogo', limit: 10, windowMs: 60_000 } })
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId } = auth.ctx
 
@@ -150,7 +150,7 @@ export async function uploadLogo(formData: FormData) {
 }
 
 export async function deleteLogo() {
-  const auth = await authorize('settings.manage')
+  const auth = await authorize('settings.manage', { rateLimit: { key: 'deleteLogo', limit: 10, windowMs: 60_000 } })
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId } = auth.ctx
 

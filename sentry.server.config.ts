@@ -58,10 +58,15 @@ function scrubValue(value: unknown, seen: WeakSet<object> = new WeakSet()): unkn
 
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-  // CFG-005: 10% of server transactions traced. Every server action +
-  // DB query was previously a span sent to Sentry at 100%, which is
-  // both expensive and a leak surface for parameterized query values.
-  tracesSampleRate: 0.1,
+  // CFG-005 + HIGH-4: adaptive sampling. Webhooks and cron are always
+  // traced (low volume, high criticality). Server actions get 50% to
+  // catch auth/payment anomalies. Everything else stays at 10%.
+  tracesSampler: ({ name, parentSampled }) => {
+    if (parentSampled !== undefined) return parentSampled
+    if (name?.includes('/api/webhooks') || name?.includes('/api/cron')) return 1.0
+    if (name?.includes('/api/') || name?.includes('actions')) return 0.5
+    return 0.1
+  },
   // CFG-005: strip cookies, auth headers, and well-known PII keys from
   // every transaction before it leaves the server. Breadcrumbs/spans
   // containing HTTP headers are the primary leak surface on the server.

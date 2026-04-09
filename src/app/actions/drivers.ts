@@ -1,5 +1,6 @@
 'use server'
 
+import { z } from 'zod'
 import { authorize, safeError } from '@/lib/authz'
 import { driverSchema } from '@/lib/validations/driver'
 import { checkTierLimit } from '@/lib/tier'
@@ -73,7 +74,7 @@ export async function updateDriver(id: string, data: unknown) {
     return { error: parsed.error.flatten().fieldErrors }
   }
 
-  const auth = await authorize('drivers.update')
+  const auth = await authorize('drivers.update', { rateLimit: { key: 'updateDriver', limit: 30, windowMs: 60_000 } })
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId } = auth.ctx
 
@@ -119,7 +120,9 @@ export async function updateDriver(id: string, data: unknown) {
 }
 
 export async function deleteDriver(id: string) {
-  const auth = await authorize('drivers.delete')
+  if (!z.string().uuid().safeParse(id).success) return { error: 'Invalid driver ID' }
+
+  const auth = await authorize('drivers.delete', { rateLimit: { key: 'deleteDriver', limit: 10, windowMs: 60_000 } })
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId } = auth.ctx
 
@@ -148,7 +151,9 @@ export async function deleteDriver(id: string) {
 }
 
 export async function updateDriverStatus(id: string, status: 'active' | 'inactive') {
-  const auth = await authorize('drivers.update')
+  if (!z.string().uuid().safeParse(id).success) return { error: 'Invalid driver ID' }
+
+  const auth = await authorize('drivers.update', { rateLimit: { key: 'updateDriverStatus', limit: 20, windowMs: 60_000 } })
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId } = auth.ctx
 

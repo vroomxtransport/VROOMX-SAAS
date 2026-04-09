@@ -113,7 +113,7 @@ export async function updateAlertRule(data: unknown) {
   const parsed = updateAlertRuleSchema.safeParse(data)
   if (!parsed.success) return { error: parsed.error.flatten().fieldErrors }
 
-  const auth = await authorize('alerts.update')
+  const auth = await authorize('alerts.update', { rateLimit: { key: 'updateAlert', limit: 20, windowMs: 60_000 } })
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId } = auth.ctx
 
@@ -155,7 +155,7 @@ export async function deleteAlertRule(data: unknown) {
   const parsed = deleteAlertRuleSchema.safeParse(data)
   if (!parsed.success) return { error: 'Invalid alert rule ID' }
 
-  const auth = await authorize('alerts.delete')
+  const auth = await authorize('alerts.delete', { rateLimit: { key: 'deleteAlert', limit: 10, windowMs: 60_000 } })
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId } = auth.ctx
 
@@ -175,7 +175,7 @@ export async function toggleAlertRule(data: unknown) {
   const parsed = toggleAlertRuleSchema.safeParse(data)
   if (!parsed.success) return { error: 'Invalid input' }
 
-  const auth = await authorize('alerts.update')
+  const auth = await authorize('alerts.update', { rateLimit: { key: 'toggleAlert', limit: 20, windowMs: 60_000 } })
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId } = auth.ctx
 

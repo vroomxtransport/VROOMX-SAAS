@@ -28,7 +28,7 @@ export async function globalSearch(data: unknown) {
   const parsed = searchSchema.safeParse(data)
   if (!parsed.success) return { error: 'Invalid search query' }
 
-  const auth = await authorize('*')
+  const auth = await authorize('*', { rateLimit: { key: 'globalSearch', limit: 30, windowMs: 60_000 } })
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId } = auth.ctx
 

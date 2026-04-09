@@ -2,6 +2,7 @@
 
 import { authorizeAdmin, type AdminAuthContext } from '@/lib/admin-auth'
 import { rateLimit } from '@/lib/rate-limit'
+import { sanitizeSearch } from '@/lib/sanitize-search'
 import { TIER_PRICING, type SubscriptionPlan } from '@/types'
 import { z } from 'zod'
 
@@ -34,7 +35,10 @@ async function logAdminAction(
 export async function fetchPlatformStats() {
   const auth = await authorizeAdmin()
   if (!auth.ok) return { error: auth.error }
-  const { supabase } = auth.ctx
+  const { supabase, user } = auth.ctx
+
+  const rl = await rateLimit(`${user.id}:adminStats`, { limit: 30, windowMs: 60_000 })
+  if (!rl.allowed) return { error: 'Too many requests. Please try again shortly.' }
 
   // Parallel queries for dashboard stats
   const [
@@ -182,7 +186,10 @@ const fetchTenantsSchema = z.object({
 export async function fetchTenants(filters: z.input<typeof fetchTenantsSchema>) {
   const auth = await authorizeAdmin()
   if (!auth.ok) return { error: auth.error }
-  const { supabase } = auth.ctx
+  const { supabase, user } = auth.ctx
+
+  const rl = await rateLimit(`${user.id}:adminTenants`, { limit: 30, windowMs: 60_000 })
+  if (!rl.allowed) return { error: 'Too many requests. Please try again shortly.' }
 
   const parsed = fetchTenantsSchema.safeParse(filters)
   if (!parsed.success) return { error: 'Invalid filters' }
@@ -197,9 +204,12 @@ export async function fetchTenants(filters: z.input<typeof fetchTenantsSchema>) 
 
   // Filters
   if (search) {
-    query = query.or(
-      `name.ilike.%${search}%,slug.ilike.%${search}%,dot_number.ilike.%${search}%`
-    )
+    const s = sanitizeSearch(search)
+    if (s) {
+      query = query.or(
+        `name.ilike.%${s}%,slug.ilike.%${s}%,dot_number.ilike.%${s}%`
+      )
+    }
   }
   if (plan) {
     query = query.eq('plan', plan)
@@ -274,7 +284,10 @@ const tenantIdSchema = z.string().uuid('Invalid tenant ID')
 export async function fetchTenantDetail(tenantId: string) {
   const auth = await authorizeAdmin()
   if (!auth.ok) return { error: auth.error }
-  const { supabase } = auth.ctx
+  const { supabase, user } = auth.ctx
+
+  const rl = await rateLimit(`${user.id}:adminDetail`, { limit: 30, windowMs: 60_000 })
+  if (!rl.allowed) return { error: 'Too many requests. Please try again shortly.' }
 
   const idParsed = tenantIdSchema.safeParse(tenantId)
   if (!idParsed.success) return { error: 'Invalid tenant ID' }
@@ -377,7 +390,10 @@ const fetchAuditLogsSchema = z.object({
 export async function fetchAuditLogs(filters: z.input<typeof fetchAuditLogsSchema>) {
   const auth = await authorizeAdmin()
   if (!auth.ok) return { error: auth.error }
-  const { supabase } = auth.ctx
+  const { supabase, user } = auth.ctx
+
+  const rl = await rateLimit(`${user.id}:adminAudit`, { limit: 30, windowMs: 60_000 })
+  if (!rl.allowed) return { error: 'Too many requests. Please try again shortly.' }
 
   const parsed = fetchAuditLogsSchema.safeParse(filters)
   if (!parsed.success) return { error: 'Invalid filters' }
@@ -395,7 +411,10 @@ export async function fetchAuditLogs(filters: z.input<typeof fetchAuditLogsSchem
   if (startDate) query = query.gte('created_at', startDate)
   if (endDate) query = query.lte('created_at', endDate)
   if (search) {
-    query = query.or(`description.ilike.%${search}%,actor_email.ilike.%${search}%`)
+    const s = sanitizeSearch(search)
+    if (s) {
+      query = query.or(`description.ilike.%${s}%,actor_email.ilike.%${s}%`)
+    }
   }
 
   query = query
@@ -447,7 +466,10 @@ export async function fetchAuditLogs(filters: z.input<typeof fetchAuditLogsSchem
 export async function fetchSubscriptionMetrics() {
   const auth = await authorizeAdmin()
   if (!auth.ok) return { error: auth.error }
-  const { supabase } = auth.ctx
+  const { supabase, user } = auth.ctx
+
+  const rl = await rateLimit(`${user.id}:adminMetrics`, { limit: 30, windowMs: 60_000 })
+  if (!rl.allowed) return { error: 'Too many requests. Please try again shortly.' }
 
   const { data: tenants, error } = await supabase
     .from('tenants')

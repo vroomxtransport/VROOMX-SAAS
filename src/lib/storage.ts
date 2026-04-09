@@ -131,7 +131,8 @@ export function getFileUrl(
 
 /**
  * Get a time-limited signed URL for a file in Supabase Storage.
- * Default expiration: 1 hour (3600 seconds).
+ * Default expiration: 1 hour (3600 seconds). Capped at 3600 to prevent
+ * callers from generating long-lived URLs that could be leaked.
  */
 export async function getSignedUrl(
   supabase: SupabaseClient,
@@ -139,9 +140,10 @@ export async function getSignedUrl(
   storagePath: string,
   expiresIn: number = 3600,
 ): Promise<{ url: string; error: string | null }> {
+  const cappedExpiry = Math.min(Math.max(expiresIn, 60), 3600)
   const { data, error } = await supabase.storage
     .from(bucket)
-    .createSignedUrl(storagePath, expiresIn)
+    .createSignedUrl(storagePath, cappedExpiry)
 
   return {
     url: data?.signedUrl ?? '',

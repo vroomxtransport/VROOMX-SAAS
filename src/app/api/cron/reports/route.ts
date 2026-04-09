@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { verifyCronSecret } from '@/lib/cron-auth'
 import { createClient } from '@supabase/supabase-js'
 import { getResend } from '@/lib/resend/client'
 import { fetchDueScheduledReports } from '@/lib/queries/scheduled-reports'
@@ -8,7 +9,7 @@ import type { ReportConfig, MetricDefinition, DimensionDefinition, DataSource } 
 import { computeNextRunAt } from '@/lib/reports/schedule-utils'
 import type { ScheduleOption } from '@/lib/validations/scheduled-reports'
 
-// Vercel cron: mark as dynamic so it never gets statically cached
+// Ensure this route is never statically cached
 export const dynamic = 'force-dynamic'
 
 // ============================================================================
@@ -61,10 +62,9 @@ function rowsToCsv(
 // Cron handler
 // ============================================================================
 
-export async function GET(request: Request) {
-  // 1. Authenticate cron caller via shared secret
-  const secret = request.headers.get('x-cron-secret')
-  if (!secret || secret !== process.env.CRON_SECRET) {
+export async function POST(request: Request) {
+  // 1. Authenticate cron caller via shared secret (timing-safe — CRIT-3 fix)
+  if (!verifyCronSecret(request.headers.get('x-cron-secret'))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

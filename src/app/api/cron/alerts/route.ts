@@ -16,6 +16,7 @@
 // ============================================================================
 
 import { NextResponse } from 'next/server'
+import { verifyCronSecret } from '@/lib/cron-auth'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { evaluateAlerts } from '@/lib/alerts/alert-evaluator'
 import { getResend } from '@/lib/resend/client'
@@ -26,9 +27,8 @@ import type { AlertRule } from '@/app/actions/alerts'
 const MAX_TENANTS = 500
 
 export async function POST(req: Request) {
-  // Authenticate the cron caller
-  const secret = req.headers.get('x-cron-secret')
-  if (!secret || secret !== process.env.CRON_SECRET) {
+  // Authenticate the cron caller (timing-safe — CRIT-3 fix)
+  if (!verifyCronSecret(req.headers.get('x-cron-secret'))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

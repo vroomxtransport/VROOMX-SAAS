@@ -81,7 +81,7 @@ export async function startPipeline(applicationId: string): Promise<
   const idParsed = z.string().uuid().safeParse(applicationId)
   if (!idParsed.success) return { error: 'Invalid application ID' }
 
-  const auth = await authorize('driver_onboarding.create')
+  const auth = await authorize('driver_onboarding.create', { rateLimit: { key: 'startPipeline', limit: 10, windowMs: 60_000 } })
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId, user } = auth.ctx
 
@@ -210,7 +210,7 @@ export async function updateStepStatus(
   const parsed = updateStepStatusSchema.safeParse({ stepId, status, notes })
   if (!parsed.success) return { error: 'Validation failed' }
 
-  const auth = await authorize('driver_onboarding.update')
+  const auth = await authorize('driver_onboarding.update', { rateLimit: { key: 'updateOnboardingStep', limit: 30, windowMs: 60_000 } })
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId, user } = auth.ctx
 
@@ -327,7 +327,7 @@ export async function uploadStepResult(
   })
   if (!parsed.success) return { error: 'Validation failed' }
 
-  const auth = await authorize('driver_onboarding.update')
+  const auth = await authorize('driver_onboarding.update', { rateLimit: { key: 'uploadStepResult', limit: 20, windowMs: 60_000 } })
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId, user } = auth.ctx
 
@@ -398,7 +398,7 @@ export async function waiveStep(
   const parsed = waiveStepSchema.safeParse({ stepId, reason })
   if (!parsed.success) return { error: 'Validation failed' }
 
-  const auth = await authorize('driver_onboarding.update')
+  const auth = await authorize('driver_onboarding.update', { rateLimit: { key: 'waiveStep', limit: 20, windowMs: 60_000 } })
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId, user } = auth.ctx
 
@@ -477,7 +477,7 @@ export async function assignStep(
   const parsed = assignStepSchema.safeParse({ stepId, userId })
   if (!parsed.success) return { error: 'Validation failed' }
 
-  const auth = await authorize('driver_onboarding.update')
+  const auth = await authorize('driver_onboarding.update', { rateLimit: { key: 'assignStep', limit: 20, windowMs: 60_000 } })
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId, user } = auth.ctx
 
@@ -915,7 +915,7 @@ export async function approvePipeline(
   const idParsed = z.string().uuid().safeParse(pipelineId)
   if (!idParsed.success) return { error: 'Invalid pipeline ID' }
 
-  const auth = await authorize('driver_onboarding.approve')
+  const auth = await authorize('driver_onboarding.approve', { rateLimit: { key: 'approvePipeline', limit: 10, windowMs: 60_000 } })
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId, user } = auth.ctx
 

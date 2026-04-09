@@ -23,6 +23,7 @@
 import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import { authorize, safeError } from '@/lib/authz'
+import { sanitizeSearch } from '@/lib/sanitize-search'
 import {
   publicAuthForResume,
   publicAuthForStatus,
@@ -975,7 +976,7 @@ export async function listApplications(filters?: {
     .safeParse(filters ?? {})
   if (!filtersParsed.success) return { error: 'Invalid filters' }
 
-  const auth = await authorize('driver_applications.read')
+  const auth = await authorize('driver_applications.read', { rateLimit: { key: 'listApplications', limit: 30, windowMs: 60_000 } })
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId } = auth.ctx
 
@@ -997,11 +998,12 @@ export async function listApplications(filters?: {
   }
 
   if (search) {
-    // Sanitize search input (match existing pattern in codebase)
-    const sanitized = search.trim().slice(0, 100)
-    query = query.or(
-      `first_name.ilike.%${sanitized}%,last_name.ilike.%${sanitized}%,email.ilike.%${sanitized}%`
-    )
+    const s = sanitizeSearch(search)
+    if (s) {
+      query = query.or(
+        `first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%`
+      )
+    }
   }
 
   const { data, error, count } = await query

@@ -84,13 +84,59 @@ async function verifyLiveMembership(
   return valid
 }
 
+// ---------------------------------------------------------------------------
+// Custom role permission cache (MED-2)
+// Same pattern as membership cache. 60s TTL keeps DB load flat while
+// ensuring permission changes propagate within a minute.
+// ---------------------------------------------------------------------------
+
+const CUSTOM_ROLE_CACHE_TTL_MS = 60_000
+const CUSTOM_ROLE_CACHE_MAX_ENTRIES = 500
+
+type CustomRoleCacheEntry = { permissions: string[]; expiresAt: number }
+const customRoleCache = new Map<string, CustomRoleCacheEntry>()
+
+async function resolveCustomRolePermissions(
+  supabase: SupabaseClient,
+  tenantId: string,
+  customRoleId: string,
+): Promise<string[]> {
+  const key = `${tenantId}:${customRoleId}`
+  const now = Date.now()
+  const cached = customRoleCache.get(key)
+  if (cached && cached.expiresAt > now) {
+    return cached.permissions
+  }
+
+  const { data: customRole } = await supabase
+    .from('custom_roles')
+    .select('permissions')
+    .eq('id', customRoleId)
+    .eq('tenant_id', tenantId)
+    .single()
+
+  const permissions = Array.isArray(customRole?.permissions)
+    ? (customRole.permissions as unknown[]).filter((p): p is string => typeof p === 'string')
+    : []
+  customRoleCache.set(key, { permissions, expiresAt: now + CUSTOM_ROLE_CACHE_TTL_MS })
+
+  if (customRoleCache.size > CUSTOM_ROLE_CACHE_MAX_ENTRIES) {
+    for (const [k, v] of customRoleCache.entries()) {
+      if (v.expiresAt <= now) customRoleCache.delete(k)
+    }
+  }
+
+  return permissions
+}
+
 /**
- * Test-only: invalidate the membership cache. Used so unit tests don't
+ * Test-only: invalidate caches. Used so unit tests don't
  * leak state across cases. Not exported for production code — prod
  * should rely on the TTL.
  */
 export function __resetMembershipCacheForTests(): void {
   membershipCache.clear()
+  customRoleCache.clear()
 }
 
 /**
@@ -143,17 +189,10 @@ export async function authorize(
   // Resolve permissions
   let permissions = getBuiltInRolePermissions(role)
 
-  // Custom role: fetch from DB
+  // Custom role: fetch from DB (cached with 60s TTL — MED-2)
   if (permissions === null && role.startsWith('custom:')) {
     const customRoleId = role.slice(7) // Remove 'custom:' prefix
-    const { data: customRole } = await supabase
-      .from('custom_roles')
-      .select('permissions')
-      .eq('id', customRoleId)
-      .eq('tenant_id', tenantId)
-      .single()
-
-    permissions = Array.isArray(customRole?.permissions) ? customRole.permissions : []
+    permissions = await resolveCustomRolePermissions(supabase, tenantId, customRoleId)
   }
 
   // Fallback: no permissions if role is unknown

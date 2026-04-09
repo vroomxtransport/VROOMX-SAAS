@@ -39,8 +39,8 @@ function createMockSupabaseClient(overrides: {
   updateResult?: { data: unknown; error: unknown }
   deleteResult?: { error: unknown }
 } = {}) {
-  const insertResult = overrides.insertResult ?? { data: { id: 'driver-1', first_name: 'John', last_name: 'Doe' }, error: null }
-  const updateResult = overrides.updateResult ?? { data: { id: 'driver-1', first_name: 'John', last_name: 'Doe' }, error: null }
+  const insertResult = overrides.insertResult ?? { data: { id: '00000000-0000-4000-a000-000000000001', first_name: 'John', last_name: 'Doe' }, error: null }
+  const updateResult = overrides.updateResult ?? { data: { id: '00000000-0000-4000-a000-000000000001', first_name: 'John', last_name: 'Doe' }, error: null }
   const deleteResult = overrides.deleteResult ?? { error: null }
 
   const client = {
@@ -130,7 +130,7 @@ describe('createDriver', () => {
 
     expect(result).toEqual({
       success: true,
-      data: { id: 'driver-1', first_name: 'John', last_name: 'Doe' },
+      data: { id: '00000000-0000-4000-a000-000000000001', first_name: 'John', last_name: 'Doe' },
     })
     expect(mockedAuthorize).toHaveBeenCalledWith('drivers.create', expect.objectContaining({
       rateLimit: expect.objectContaining({ key: 'createDriver' }),
@@ -217,17 +217,19 @@ describe('updateDriver', () => {
     const mockClient = createMockSupabaseClient()
     mockAuthSuccess(mockClient)
 
-    const result = await updateDriver('driver-1', validDriverInput())
+    const result = await updateDriver('00000000-0000-4000-a000-000000000001', validDriverInput())
 
     expect(result).toEqual({
       success: true,
-      data: expect.objectContaining({ id: 'driver-1' }),
+      data: expect.objectContaining({ id: '00000000-0000-4000-a000-000000000001' }),
     })
-    expect(mockedAuthorize).toHaveBeenCalledWith('drivers.update')
+    expect(mockedAuthorize).toHaveBeenCalledWith('drivers.update', expect.objectContaining({
+      rateLimit: expect.objectContaining({ key: 'updateDriver' }),
+    }))
   })
 
   it('returns field errors for invalid input', async () => {
-    const result = await updateDriver('driver-1', {
+    const result = await updateDriver('00000000-0000-4000-a000-000000000001', {
       firstName: '', // required
       lastName: 'Doe',
     })
@@ -239,7 +241,7 @@ describe('updateDriver', () => {
   it('returns error when unauthorized', async () => {
     mockAuthFailure()
 
-    const result = await updateDriver('driver-1', validDriverInput())
+    const result = await updateDriver('00000000-0000-4000-a000-000000000001', validDriverInput())
 
     expect(result).toEqual({ error: 'Not authenticated' })
   })
@@ -250,7 +252,7 @@ describe('updateDriver', () => {
     })
     mockAuthSuccess(mockClient)
 
-    const result = await updateDriver('driver-1', validDriverInput())
+    const result = await updateDriver('00000000-0000-4000-a000-000000000001', validDriverInput())
 
     expect(result).toEqual({ error: 'An unexpected error occurred. Please try again.' })
   })
@@ -261,17 +263,19 @@ describe('deleteDriver', () => {
     const mockClient = createMockSupabaseClient()
     mockAuthSuccess(mockClient)
 
-    const result = await deleteDriver('driver-1')
+    const result = await deleteDriver('00000000-0000-4000-a000-000000000001')
 
     expect(result).toEqual({ success: true })
-    expect(mockedAuthorize).toHaveBeenCalledWith('drivers.delete')
+    expect(mockedAuthorize).toHaveBeenCalledWith('drivers.delete', expect.objectContaining({
+      rateLimit: expect.objectContaining({ key: 'deleteDriver' }),
+    }))
     expect(mockedRevalidate).toHaveBeenCalledWith('/drivers')
   })
 
   it('returns error when unauthorized', async () => {
     mockAuthFailure()
 
-    const result = await deleteDriver('driver-1')
+    const result = await deleteDriver('00000000-0000-4000-a000-000000000001')
 
     expect(result).toEqual({ error: 'Not authenticated' })
   })
@@ -282,7 +286,7 @@ describe('deleteDriver', () => {
     })
     mockAuthSuccess(mockClient)
 
-    const result = await deleteDriver('driver-1')
+    const result = await deleteDriver('00000000-0000-4000-a000-000000000001')
 
     expect(result).toEqual({ error: 'An unexpected error occurred. Please try again.' })
   })
