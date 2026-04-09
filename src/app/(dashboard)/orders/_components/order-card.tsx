@@ -11,7 +11,20 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Pencil, ArrowRight, UserPlus, UserCog, UserMinus, Trash2, MapPinned } from 'lucide-react'
 import { useDrivers } from '@/hooks/use-drivers'
 import { updateOrder, deleteOrder } from '@/app/actions/orders'
+import { cn } from '@/lib/utils'
 import type { OrderWithRelations } from '@/lib/queries/orders'
+import type { OrderStatus } from '@/types'
+
+// Left border accent color per order status — provides instant visual triage on mobile
+const STATUS_BORDER_CLASSES: Record<OrderStatus, string> = {
+  new: 'border-l-blue-500',
+  assigned: 'border-l-amber-500',
+  picked_up: 'border-l-orange-500',
+  delivered: 'border-l-green-500',
+  invoiced: 'border-l-purple-500',
+  paid: 'border-l-emerald-600',
+  cancelled: 'border-l-red-500',
+}
 
 interface OrderCardProps {
   order: OrderWithRelations
@@ -94,8 +107,10 @@ export function OrderCard({ order, onClick, onEdit }: OrderCardProps) {
     }
   }
 
+  const statusBorderClass = STATUS_BORDER_CLASSES[order.status as OrderStatus] ?? ''
+
   return (
-    <EntityCard onClick={onClick}>
+    <EntityCard onClick={onClick} className={cn('border-l-4', statusBorderClass)}>
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1">
           <div className="group/id flex items-center gap-1.5">
@@ -117,7 +132,7 @@ export function OrderCard({ order, onClick, onEdit }: OrderCardProps) {
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0"
+            className="h-9 w-9 p-0 md:h-8 md:w-8"
             onClick={onEdit}
           >
             <Pencil className="h-4 w-4" />
@@ -184,10 +199,10 @@ export function OrderCard({ order, onClick, onEdit }: OrderCardProps) {
                 <Button
                   variant="ghost"
                   size="xs"
-                  className="gap-1 text-xs text-muted-foreground hover:text-foreground"
+                  className="gap-1 text-xs text-muted-foreground hover:text-foreground min-h-[36px] md:min-h-0"
                   disabled={isAssigning}
                 >
-                  <UserCog className="h-3 w-3" />
+                  <UserCog className="h-3.5 w-3.5" />
                   Reassign
                 </Button>
               </PopoverTrigger>
@@ -199,7 +214,7 @@ export function OrderCard({ order, onClick, onEdit }: OrderCardProps) {
                       key={driver.id}
                       onClick={() => handleAssignDriver(driver.id)}
                       disabled={isAssigning}
-                      className="w-full text-left px-2 py-1.5 text-sm rounded-md hover:bg-accent transition-colors disabled:opacity-50"
+                      className="w-full text-left px-2 py-2.5 md:py-1.5 text-sm rounded-md hover:bg-accent transition-colors disabled:opacity-50"
                     >
                       {driver.first_name} {driver.last_name}
                     </button>
@@ -210,11 +225,11 @@ export function OrderCard({ order, onClick, onEdit }: OrderCardProps) {
             <Button
               variant="ghost"
               size="xs"
-              className="gap-1 text-xs text-muted-foreground hover:text-destructive"
+              className="gap-1 text-xs text-muted-foreground hover:text-destructive min-h-[36px] md:min-h-0"
               onClick={handleUnassignDriver}
               disabled={isAssigning}
             >
-              <UserMinus className="h-3 w-3" />
+              <UserMinus className="h-3.5 w-3.5" />
               Unassign
             </Button>
           </>
@@ -224,10 +239,10 @@ export function OrderCard({ order, onClick, onEdit }: OrderCardProps) {
               <Button
                 variant="ghost"
                 size="xs"
-                className="gap-1 text-xs text-muted-foreground hover:text-foreground"
+                className="gap-1 text-xs text-muted-foreground hover:text-foreground min-h-[36px] md:min-h-0"
                 disabled={isAssigning}
               >
-                <UserPlus className="h-3 w-3" />
+                <UserPlus className="h-3.5 w-3.5" />
                 Assign
               </Button>
             </PopoverTrigger>
@@ -239,7 +254,7 @@ export function OrderCard({ order, onClick, onEdit }: OrderCardProps) {
                     key={driver.id}
                     onClick={() => handleAssignDriver(driver.id)}
                     disabled={isAssigning}
-                    className="w-full text-left px-2 py-1.5 text-sm rounded-md hover:bg-accent transition-colors disabled:opacity-50"
+                    className="w-full text-left px-2 py-2.5 md:py-1.5 text-sm rounded-md hover:bg-accent transition-colors disabled:opacity-50"
                   >
                     {driver.first_name} {driver.last_name}
                   </button>
@@ -254,7 +269,7 @@ export function OrderCard({ order, onClick, onEdit }: OrderCardProps) {
           <Button
             variant="ghost"
             size="xs"
-            className="gap-1 text-xs text-muted-foreground hover:text-foreground"
+            className="gap-1 text-xs text-muted-foreground hover:text-foreground min-h-[36px] md:min-h-0"
             onClick={() => {
               const origin = [order.pickup_location, order.pickup_city, order.pickup_state, order.pickup_zip].filter(Boolean).join(', ')
               const dest = [order.delivery_location, order.delivery_city, order.delivery_state, order.delivery_zip].filter(Boolean).join(', ')
@@ -262,7 +277,7 @@ export function OrderCard({ order, onClick, onEdit }: OrderCardProps) {
               window.open(url, '_blank', 'noopener')
             }}
           >
-            <MapPinned className="h-3 w-3" />
+            <MapPinned className="h-3.5 w-3.5" />
             Map
           </Button>
         )}
@@ -274,7 +289,7 @@ export function OrderCard({ order, onClick, onEdit }: OrderCardProps) {
         <Button
           variant="ghost"
           size="icon-xs"
-          className="text-muted-foreground hover:text-destructive"
+          className="text-muted-foreground hover:text-destructive min-h-[36px] min-w-[36px] md:min-h-0 md:min-w-0"
           onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true) }}
         >
           <Trash2 className="h-3.5 w-3.5" />

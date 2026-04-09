@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useMemo, useTransition } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import {
   DndContext,
@@ -16,6 +17,7 @@ import {
 import { toast } from 'sonner'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTrips } from '@/hooks/use-trips'
+import { useIsMobile } from '@/hooks/use-is-mobile'
 import { TripRow } from './trip-row'
 import { TripFilters } from './trip-filters'
 import { NewTripDialog } from './new-trip-dialog'
@@ -23,7 +25,10 @@ import { ViewToggle } from './view-toggle'
 import { DispatchSummary } from './dispatch-summary'
 import { DispatchKanban } from './dispatch-kanban'
 import { UnassignedOrdersPanel } from './unassigned-orders-panel'
+import { MobileUnassignedSheet } from './mobile-unassigned-sheet'
 import { TripDragOverlay, OrderDragOverlay } from './drag-overlays'
+import { PullToRefresh } from '@/components/shared/pull-to-refresh'
+import { Fab } from '@/components/shared/fab'
 import { Pagination } from '@/components/shared/pagination'
 import { EmptyState } from '@/components/shared/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -38,6 +43,21 @@ import type { TripWithRelations } from '@/lib/queries/trips'
 import type { DateRange } from '@/types/filters'
 import { updateTripStatus, assignOrderToTrip } from '@/app/actions/trips'
 import { cn } from '@/lib/utils'
+
+// Dynamically import the mobile view — avoids bundling embla on desktop
+const MobileDispatchView = dynamic(
+  () => import('./mobile-dispatch-view').then((m) => m.MobileDispatchView),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="space-y-2.5">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-[104px] w-full rounded-xl" />
+        ))}
+      </div>
+    ),
+  },
+)
 
 // Section accent colors (left border) — used by list view
 const SECTION_BORDER_COLORS: Record<TripStatus, string> = {
@@ -59,6 +79,7 @@ export function DispatchBoard() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const queryClient = useQueryClient()
+  const { isMobile } = useIsMobile()
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [pageSize, setPageSize] = useState(25)
@@ -190,6 +211,12 @@ export function DispatchBoard() {
       [sectionStatus]: !prev[sectionStatus],
     }))
   }, [])
+
+  // Pull-to-refresh handler for mobile
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ['trips'] })
+    await queryClient.invalidateQueries({ queryKey: ['unassigned-orders'] })
+  }, [queryClient])
 
   // Group trips by status
   const groupedTrips = useMemo(() => {
@@ -358,19 +385,27 @@ export function DispatchBoard() {
 
       {/* Content */}
       {isPending ? (
-        <div className="space-y-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-4 rounded-lg border border-border-subtle bg-surface px-4 py-3">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-4 w-16" />
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-4 w-12" />
-              <Skeleton className="h-4 flex-1" />
-              <Skeleton className="h-5 w-20 rounded-full" />
-              <Skeleton className="h-4 w-28" />
-            </div>
-          ))}
-        </div>
+        isMobile ? (
+          <div className="space-y-2.5">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-[104px] w-full rounded-xl" />
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4 rounded-lg border border-border-subtle bg-surface px-4 py-3">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-4 w-12" />
+                <Skeleton className="h-4 flex-1" />
+                <Skeleton className="h-5 w-20 rounded-full" />
+                <Skeleton className="h-4 w-28" />
+              </div>
+            ))}
+          </div>
+        )
       ) : isError ? (
         <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
           Failed to load trips: {error?.message ?? 'Unknown error'}
@@ -386,12 +421,23 @@ export function DispatchBoard() {
           }}
         />
       ) : groupedTrips ? (
-        <DndContext
-          sensors={sensors}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          onDragCancel={handleDragCancel}
-        >
+        isMobile ? (
+          /* ── Mobile dispatch view ─────────────────────────────────────── */
+          <PullToRefresh onRefresh={handleRefresh}>
+            {/* Unassigned orders pill — only on mobile */}
+            <div className="flex justify-center mb-3">
+              <MobileUnassignedSheet />
+            </div>
+            <MobileDispatchView groupedTrips={groupedTrips} />
+          </PullToRefresh>
+        ) : (
+          /* ── Desktop/tablet: DnD board + list ─────────────────────────── */
+          <DndContext
+            sensors={sensors}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onDragCancel={handleDragCancel}
+          >
           {/* Board View (desktop only — hidden below lg) */}
           {viewMode === 'board' ? (
             <div>
@@ -456,7 +502,15 @@ export function DispatchBoard() {
             ) : null}
           </DragOverlay>
         </DndContext>
+        )
       ) : null}
+
+      {/* Mobile FAB — New Trip */}
+      <Fab
+        icon={<Plus size={24} />}
+        label="New Trip"
+        onClick={() => setDialogOpen(true)}
+      />
 
       {/* New Trip Dialog */}
       <NewTripDialog

@@ -1,8 +1,19 @@
 import type { NextConfig } from 'next'
 import bundleAnalyzer from '@next/bundle-analyzer'
+import withSerwistInit from '@serwist/next'
+import { withSentryConfig } from '@sentry/nextjs'
 
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
+})
+
+const withSerwist = withSerwistInit({
+  swSrc: 'src/app/sw.ts',
+  swDest: 'public/sw.js',
+  // Disable the service worker in development to avoid confusing caching
+  // behaviour while hot-reloading. The offline fallback and precaching
+  // are production concerns only.
+  disable: process.env.NODE_ENV === 'development',
 })
 
 // Static security headers. Content-Security-Policy is NOT in this list —
@@ -67,9 +78,12 @@ const nextConfig: NextConfig = {
   },
 }
 
-import { withSentryConfig } from '@sentry/nextjs'
-
-export default withSentryConfig(withBundleAnalyzer(nextConfig), {
+// Wrapper order (outermost → innermost):
+//   withSentryConfig → withSerwist → withBundleAnalyzer → nextConfig
+//
+// withSerwist must wrap the core config (not Sentry) so that Sentry's
+// sourcemap upload plugin runs on the already-compiled service worker output.
+export default withSentryConfig(withSerwist(withBundleAnalyzer(nextConfig)), {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
   silent: !process.env.CI,

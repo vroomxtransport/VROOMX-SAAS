@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { authorize, safeError } from '@/lib/authz'
 import { isInternalUrl } from '@/lib/url-safety'
 import { revalidatePath } from 'next/cache'
+import { sendPushNotification } from '@/lib/push/send'
 
 const markReadSchema = z.object({
   id: z.string().uuid(),
@@ -73,5 +74,14 @@ export async function createWebNotification(input: {
   })
 
   if (error) return { error: safeError(error, 'createWebNotification') }
+
+  // Fire-and-forget push notification — don't block the response
+  sendPushNotification(input.userId, tenantId, {
+    title: input.title,
+    body: input.body,
+    link: input.link,
+    tag: `notif-${Date.now()}`,
+  }).catch((err) => console.error('[PUSH] Failed:', err))
+
   return { success: true }
 }

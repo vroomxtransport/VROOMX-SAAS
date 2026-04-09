@@ -3,6 +3,9 @@ import { redirect } from 'next/navigation'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Header } from '@/components/layout/header'
 import { SidebarLayoutWrapper } from '@/components/layout/sidebar-layout-wrapper'
+import { BottomTabBar } from '@/components/layout/bottom-tab-bar'
+import { MoreMenuSheet } from '@/components/layout/more-menu-sheet'
+import { InstallPromptBanner } from '@/components/layout/install-prompt-banner'
 import { QueryProvider } from '@/components/providers/query-provider'
 import { SamsaraSyncProvider } from '@/components/providers/samsara-sync-provider'
 import { AlertTriangle } from 'lucide-react'
@@ -83,7 +86,7 @@ export default async function DashboardLayout({
           userId={user.id}
         />
 
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto pb-16 lg:pb-0">
           {/* Suspension overlay */}
           {tenant.is_suspended && (
             <div className="mx-4 mb-4 mt-4 rounded-xl border border-red-200 bg-red-50 p-4 lg:mx-8">
@@ -131,6 +134,9 @@ export default async function DashboardLayout({
           </div>
         </main>
       </SidebarLayoutWrapper>
+      <BottomTabBar />
+      <MoreMenuSheet userRole={userRole} userId={user.id} />
+      <InstallPromptBanner />
     </div>
     </QueryProvider>
   )

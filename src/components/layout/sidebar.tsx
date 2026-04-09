@@ -4,34 +4,9 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSidebarStore } from '@/stores/sidebar-store'
-import { hasMinRole } from '@/lib/tier'
 import type { TenantRole } from '@/types'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
-  DashboardSquare01Icon,
-  TaskDaily02Icon,
-  MapsLocation01Icon,
-  MessageMultiple02Icon,
-  Car01Icon,
-  Route01Icon,
-  TruckIcon,
-  CaravanIcon,
-  UserSettings01Icon,
-  UserAdd01Icon,
-  DeliveryTruck01Icon,
-  Wrench01Icon,
-  Fuel01Icon,
-  HeadsetIcon,
-  Analytics02Icon,
-  Wallet01Icon,
-  ShieldEnergyIcon,
-  ChartBarLineIcon,
-  Invoice02Icon,
-  DeliveryBox01Icon,
-  Agreement02Icon,
-  PlugSocketIcon,
-  Settings02Icon,
-  Cancel01Icon,
   SidebarLeft01Icon,
   SidebarRight01Icon,
 } from '@hugeicons/core-free-icons'
@@ -45,78 +20,7 @@ import {
 import { useEffect } from 'react'
 import { useChatUnread } from '@/hooks/use-chat-unread'
 import { ChevronDown } from 'lucide-react'
-
-type NavItem = {
-  name: string
-  href: string
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  icon: any
-  minRole?: TenantRole
-  badge?: number
-}
-
-type NavCategory = {
-  label: string
-  items: NavItem[]
-}
-
-const NAV_CATEGORIES: NavCategory[] = [
-  {
-    label: 'Main',
-    items: [
-      { name: 'Dashboard', href: '/dashboard', icon: DashboardSquare01Icon },
-      { name: 'Tasks', href: '/tasks', icon: TaskDaily02Icon },
-      { name: 'Live Map', href: '/live-map', icon: MapsLocation01Icon },
-      { name: 'Team Chat', href: '/team-chat', icon: MessageMultiple02Icon },
-    ],
-  },
-  {
-    label: 'Operations',
-    items: [
-      { name: 'Orders', href: '/orders', icon: Car01Icon },
-      { name: 'Trips', href: '/dispatch', icon: Route01Icon },
-    ],
-  },
-  {
-    label: 'Fleet',
-    items: [
-      { name: 'Trucks', href: '/trucks', icon: TruckIcon },
-      { name: 'Trailers', href: '/trailers', icon: CaravanIcon },
-      { name: 'Drivers', href: '/drivers', icon: UserSettings01Icon, minRole: 'dispatcher' },
-      { name: 'Onboarding', href: '/onboarding', icon: UserAdd01Icon, minRole: 'dispatcher' },
-      { name: 'Local Runs', href: '/local-runs', icon: DeliveryTruck01Icon, minRole: 'dispatcher' },
-      { name: 'Maintenance', href: '/maintenance', icon: Wrench01Icon, minRole: 'dispatcher' },
-      { name: 'Fuel Tracking', href: '/fuel-tracking', icon: Fuel01Icon, minRole: 'dispatcher' },
-    ],
-  },
-  {
-    label: 'People',
-    items: [
-      { name: 'Dispatchers', href: '/dispatchers', icon: HeadsetIcon, minRole: 'admin' },
-      { name: 'Performance', href: '/dispatcher-performance', icon: Analytics02Icon, minRole: 'admin' },
-    ],
-  },
-  {
-    label: 'Safety & Compliance',
-    items: [
-      { name: 'Safety & Compliance', href: '/compliance', icon: ShieldEnergyIcon, minRole: 'admin' },
-    ],
-  },
-  {
-    label: 'Finance',
-    items: [
-      { name: 'Accounting', href: '/financials', icon: ChartBarLineIcon, minRole: 'admin' },
-      { name: 'Brokers', href: '/brokers', icon: Agreement02Icon, minRole: 'dispatcher' },
-    ],
-  },
-  {
-    label: 'System',
-    items: [
-      { name: 'Integrations', href: '/integrations', icon: PlugSocketIcon },
-      { name: 'Settings', href: '/settings', icon: Settings02Icon, minRole: 'admin' },
-    ],
-  },
-]
+import { NAV_CATEGORIES, filterNavByRole } from '@/lib/nav-config'
 
 interface SidebarProps {
   userRole: TenantRole
@@ -126,16 +30,10 @@ interface SidebarProps {
 
 export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
   const pathname = usePathname()
-  const { isOpen, close, isCollapsed, toggleCollapse, collapsedCategories, toggleCategory, expandCategory } = useSidebarStore()
+  const { isCollapsed, toggleCollapse, collapsedCategories, toggleCategory, expandCategory } = useSidebarStore()
   const { totalUnread } = useChatUnread(userId)
 
-  const filteredCategories = NAV_CATEGORIES.map((category) => ({
-    ...category,
-    items: category.items.filter((item) => {
-      if (!item.minRole) return true
-      return hasMinRole(userRole, item.minRole)
-    }),
-  })).filter((category) => category.items.length > 0)
+  const filteredCategories = filterNavByRole(NAV_CATEGORIES, userRole)
 
   // Auto-expand category if it contains the active route
   useEffect(() => {
@@ -154,22 +52,11 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
 
   return (
     <TooltipProvider delayDuration={0}>
-      {/* Mobile overlay */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
-          onClick={close}
-        />
-      )}
-
-      {/* Sidebar */}
+      {/* Sidebar — desktop only, bottom tab bar handles mobile nav */}
       <aside
         className={cn(
-          'sidebar-noise fixed left-0 top-0 z-50 flex h-full flex-col border-r transition-all duration-300 ease-in-out',
+          'sidebar-noise fixed left-0 top-0 z-50 hidden h-full flex-col border-r transition-all duration-300 ease-in-out lg:flex',
           'bg-[var(--sidebar-bg)] border-[var(--sidebar-border-color)]',
-          // Mobile: always w-64, slide in/out
-          'w-64 lg:translate-x-0',
-          isOpen ? 'translate-x-0' : '-translate-x-full',
           // Desktop: collapse to w-16
           isCollapsed ? 'lg:w-16' : 'lg:w-64'
         )}
@@ -195,13 +82,7 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
               />
             )}
           </Link>
-          <button
-            onClick={close}
-            className="lg:hidden shrink-0 rounded-md p-1 text-[var(--sidebar-text)] hover:bg-[var(--sidebar-hover)] transition-colors"
-            aria-label="Close sidebar"
-          >
-            <HugeiconsIcon icon={Cancel01Icon} size={20} />
-          </button>
+{/* Close button removed — mobile nav uses bottom tab bar */}
         </div>
 
         {/* Tenant name */}
@@ -291,7 +172,6 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
                   const linkContent = (
                     <Link
                       href={item.href}
-                      onClick={() => close()}
                       style={{ color: isActive ? 'var(--sidebar-text-active)' : 'var(--sidebar-text)' }}
                       className={cn(
                         'group flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-all duration-150 relative',

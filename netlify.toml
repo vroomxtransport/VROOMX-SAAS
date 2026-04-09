@@ -38,7 +38,7 @@
   #   4. if all clear, also delete the key from `.env.local.example` and
   #      from the Netlify dashboard so it can never re-leak
   # See `.claude/rules/netlify-secrets-scanning.md` for the full procedure.
-  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,NEXT_PUBLIC_APP_URL,NEXT_PUBLIC_SENTRY_DSN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,SENTRY_ORG,SENTRY_PROJECT,SENTRY_AUTH_TOKEN,TEST_USER_EMAIL,TEST_USER_PASSWORD"
+  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,NEXT_PUBLIC_APP_URL,NEXT_PUBLIC_SENTRY_DSN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,SENTRY_ORG,SENTRY_PROJECT,SENTRY_AUTH_TOKEN,TEST_USER_EMAIL,TEST_USER_PASSWORD,NEXT_PUBLIC_VAPID_PUBLIC_KEY"
 
 # CFG-009: deploy-preview safety is configured in the Netlify dashboard,
 # NOT here. Env vars in netlify.toml are visible at build time and in
@@ -77,3 +77,15 @@
   from = "/ingest/*"
   to = "https://us.i.posthog.com/:splat"
   status = 200
+
+# Service worker must never be cached — browsers need the latest version on
+# every navigation to detect SW updates. Cache-Control: max-age=0 forces a
+# network revalidation on every load without blocking the page. The
+# Service-Worker-Allowed header expands the SW scope to "/" so it can
+# intercept all VroomX routes regardless of which subdirectory it is served
+# from within the publish directory.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+    Service-Worker-Allowed = "/"

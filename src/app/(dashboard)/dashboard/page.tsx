@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { StatCard } from '@/components/shared/stat-card'
 import { Truck, IdCard, Car, Activity, ChevronRight, BadgeDollarSign, CheckCircle2, Plus, TrendingUp, DollarSign, Receipt } from 'lucide-react'
 import Link from 'next/link'
@@ -9,11 +8,12 @@ import { resolveView, type DashboardView } from './_lib/resolve-view'
 import { LoadsPipeline } from './_components/loads-pipeline'
 import { FleetPulse } from './_components/fleet-pulse'
 import { UpcomingPickups } from './_components/upcoming-pickups'
-import { CustomizeDashboard } from './_components/customize-dashboard'
-import { DashboardViewSwitcher } from './_components/dashboard-view-switcher'
 import { DispatcherView } from './_components/dispatcher-view'
 import { AccountingView } from './_components/accounting-view'
 import { OwnerView } from './_components/owner-view'
+import { DashboardHeaderActions } from './_components/dashboard-header-actions'
+import { DashboardMobileShell } from './_components/dashboard-mobile-shell'
+import { MobileStatCarousel, MobileStatSlide } from './_components/mobile-stat-carousel'
 import { fetchOutstandingAR, fetchInvoicedMTD, fetchCollectedMTD, fetchCollectionRate } from '@/lib/queries/receivables'
 import { fetchKPIAggregates } from '@/lib/queries/financials'
 import { calculateKPIs } from '@/lib/financial/kpi-calculations'
@@ -248,24 +248,40 @@ export default async function DashboardPage({
     }
 
     if (view === 'dispatcher') {
-      // Dispatcher stat cards — operational focus
       const unassignedCount = pipelineCounts.new ?? 0
       viewContent = (
         <DispatcherView
           statCards={
-            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-              <StatCard label="Active Loads" value={activeLoads} icon={Car} accent="blue" trend={activeLoadsTrend !== 0 ? { value: activeLoadsTrend, label: 'vs last month' } : undefined} />
-              <StatCard label="In-Transit" value={inTransit} icon={Truck} accent="amber" trend={inTransitTrend !== 0 ? { value: inTransitTrend, label: 'vs last month' } : undefined} />
-              <StatCard label="Unassigned" value={unassignedCount} icon={IdCard} accent={unassignedCount > 0 ? 'amber' : 'emerald'} />
-              <StatCard label="Revenue MTD" value={`$${monthlyRevenue.toLocaleString('en-US', { minimumFractionDigits: 0 })}`} icon={Activity} accent="emerald" trend={revenueTrend !== 0 ? { value: revenueTrend, label: 'vs last month' } : undefined} />
-            </div>
+            <>
+              {/* Mobile carousel */}
+              <MobileStatCarousel>
+                <MobileStatSlide>
+                  <StatCard label="Active Loads" value={activeLoads} icon={Car} accent="blue" trend={activeLoadsTrend !== 0 ? { value: activeLoadsTrend, label: 'vs last month' } : undefined} />
+                </MobileStatSlide>
+                <MobileStatSlide>
+                  <StatCard label="In-Transit" value={inTransit} icon={Truck} accent="amber" trend={inTransitTrend !== 0 ? { value: inTransitTrend, label: 'vs last month' } : undefined} />
+                </MobileStatSlide>
+                <MobileStatSlide>
+                  <StatCard label="Unassigned" value={unassignedCount} icon={IdCard} accent={unassignedCount > 0 ? 'amber' : 'emerald'} />
+                </MobileStatSlide>
+                <MobileStatSlide>
+                  <StatCard label="Revenue MTD" value={`$${monthlyRevenue.toLocaleString('en-US', { minimumFractionDigits: 0 })}`} icon={Activity} accent="emerald" trend={revenueTrend !== 0 ? { value: revenueTrend, label: 'vs last month' } : undefined} />
+                </MobileStatSlide>
+              </MobileStatCarousel>
+              {/* Desktop grid */}
+              <div className="hidden md:grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+                <StatCard label="Active Loads" value={activeLoads} icon={Car} accent="blue" trend={activeLoadsTrend !== 0 ? { value: activeLoadsTrend, label: 'vs last month' } : undefined} />
+                <StatCard label="In-Transit" value={inTransit} icon={Truck} accent="amber" trend={inTransitTrend !== 0 ? { value: inTransitTrend, label: 'vs last month' } : undefined} />
+                <StatCard label="Unassigned" value={unassignedCount} icon={IdCard} accent={unassignedCount > 0 ? 'amber' : 'emerald'} />
+                <StatCard label="Revenue MTD" value={`$${monthlyRevenue.toLocaleString('en-US', { minimumFractionDigits: 0 })}`} icon={Activity} accent="emerald" trend={revenueTrend !== 0 ? { value: revenueTrend, label: 'vs last month' } : undefined} />
+              </div>
+            </>
           }
           {...sharedServerWidgets}
         />
       )
     } else {
       // Owner view — executive KPI focus
-      // Fetch KPI aggregates for owner stat cards
       let grossMarginPct = 0
       let netProfitAmount = 0
       try {
@@ -280,12 +296,30 @@ export default async function DashboardPage({
       viewContent = (
         <OwnerView
           statCards={
-            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-              <StatCard label="Revenue MTD" value={`$${monthlyRevenue.toLocaleString('en-US', { minimumFractionDigits: 0 })}`} icon={Activity} accent="emerald" trend={revenueTrend !== 0 ? { value: revenueTrend, label: 'vs last month' } : undefined} />
-              <StatCard label="Net Profit" value={`$${netProfitAmount.toLocaleString('en-US', { minimumFractionDigits: 0 })}`} icon={TrendingUp} accent={netProfitAmount >= 0 ? 'emerald' : 'amber'} />
-              <StatCard label="Gross Margin" value={`${grossMarginPct.toFixed(1)}%`} icon={DollarSign} accent="blue" />
-              <StatCard label="Avg $/Mile" value={`$${avgPerMile.toFixed(2)}`} icon={BadgeDollarSign} accent="violet" trend={perMileTrend !== 0 ? { value: perMileTrend, label: 'vs last month' } : undefined} />
-            </div>
+            <>
+              {/* Mobile carousel */}
+              <MobileStatCarousel>
+                <MobileStatSlide>
+                  <StatCard label="Revenue MTD" value={`$${monthlyRevenue.toLocaleString('en-US', { minimumFractionDigits: 0 })}`} icon={Activity} accent="emerald" trend={revenueTrend !== 0 ? { value: revenueTrend, label: 'vs last month' } : undefined} />
+                </MobileStatSlide>
+                <MobileStatSlide>
+                  <StatCard label="Net Profit" value={`$${netProfitAmount.toLocaleString('en-US', { minimumFractionDigits: 0 })}`} icon={TrendingUp} accent={netProfitAmount >= 0 ? 'emerald' : 'amber'} />
+                </MobileStatSlide>
+                <MobileStatSlide>
+                  <StatCard label="Gross Margin" value={`${grossMarginPct.toFixed(1)}%`} icon={DollarSign} accent="blue" />
+                </MobileStatSlide>
+                <MobileStatSlide>
+                  <StatCard label="Avg $/Mile" value={`$${avgPerMile.toFixed(2)}`} icon={BadgeDollarSign} accent="violet" trend={perMileTrend !== 0 ? { value: perMileTrend, label: 'vs last month' } : undefined} />
+                </MobileStatSlide>
+              </MobileStatCarousel>
+              {/* Desktop grid */}
+              <div className="hidden md:grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+                <StatCard label="Revenue MTD" value={`$${monthlyRevenue.toLocaleString('en-US', { minimumFractionDigits: 0 })}`} icon={Activity} accent="emerald" trend={revenueTrend !== 0 ? { value: revenueTrend, label: 'vs last month' } : undefined} />
+                <StatCard label="Net Profit" value={`$${netProfitAmount.toLocaleString('en-US', { minimumFractionDigits: 0 })}`} icon={TrendingUp} accent={netProfitAmount >= 0 ? 'emerald' : 'amber'} />
+                <StatCard label="Gross Margin" value={`${grossMarginPct.toFixed(1)}%`} icon={DollarSign} accent="blue" />
+                <StatCard label="Avg $/Mile" value={`$${avgPerMile.toFixed(2)}`} icon={BadgeDollarSign} accent="violet" trend={perMileTrend !== 0 ? { value: perMileTrend, label: 'vs last month' } : undefined} />
+              </div>
+            </>
           }
           {...sharedServerWidgets}
         />
@@ -316,12 +350,30 @@ export default async function DashboardPage({
     viewContent = (
       <AccountingView
         statCards={
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-            <StatCard label="Outstanding AR" value={fmtCurrency(outstandingAR)} icon={DollarSign} accent={outstandingAR > 5000 ? 'amber' : 'blue'} />
-            <StatCard label="Invoiced MTD" value={fmtCurrency(invoicedMTD)} icon={Receipt} accent="blue" />
-            <StatCard label="Collected MTD" value={fmtCurrency(collectedMTD)} icon={BadgeDollarSign} accent="emerald" />
-            <StatCard label="Collection Rate" value={`${collectionRate.rate}%`} icon={TrendingUp} accent={collectionRate.rate >= 80 ? 'emerald' : 'amber'} />
-          </div>
+          <>
+            {/* Mobile carousel */}
+            <MobileStatCarousel>
+              <MobileStatSlide>
+                <StatCard label="Outstanding AR" value={fmtCurrency(outstandingAR)} icon={DollarSign} accent={outstandingAR > 5000 ? 'amber' : 'blue'} />
+              </MobileStatSlide>
+              <MobileStatSlide>
+                <StatCard label="Invoiced MTD" value={fmtCurrency(invoicedMTD)} icon={Receipt} accent="blue" />
+              </MobileStatSlide>
+              <MobileStatSlide>
+                <StatCard label="Collected MTD" value={fmtCurrency(collectedMTD)} icon={BadgeDollarSign} accent="emerald" />
+              </MobileStatSlide>
+              <MobileStatSlide>
+                <StatCard label="Collection Rate" value={`${collectionRate.rate}%`} icon={TrendingUp} accent={collectionRate.rate >= 80 ? 'emerald' : 'amber'} />
+              </MobileStatSlide>
+            </MobileStatCarousel>
+            {/* Desktop grid */}
+            <div className="hidden md:grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+              <StatCard label="Outstanding AR" value={fmtCurrency(outstandingAR)} icon={DollarSign} accent={outstandingAR > 5000 ? 'amber' : 'blue'} />
+              <StatCard label="Invoiced MTD" value={fmtCurrency(invoicedMTD)} icon={Receipt} accent="blue" />
+              <StatCard label="Collected MTD" value={fmtCurrency(collectedMTD)} icon={BadgeDollarSign} accent="emerald" />
+              <StatCard label="Collection Rate" value={`${collectionRate.rate}%`} icon={TrendingUp} accent={collectionRate.rate >= 80 ? 'emerald' : 'amber'} />
+            </div>
+          </>
         }
       />
     )
@@ -344,110 +396,96 @@ export default async function DashboardPage({
   }
 
   return (
-    <div className="space-y-4">
-      {showSetupBanner && (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-4">
-          <p className="text-sm font-medium text-emerald-900">
-            Account setup complete! Start by adding your first resources below.
-          </p>
-        </div>
-      )}
+    <DashboardMobileShell view={view}>
+      <div className="space-y-4">
+        {showSetupBanner && (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-4">
+            <p className="text-sm font-medium text-emerald-900">
+              Account setup complete! Start by adding your first resources below.
+            </p>
+          </div>
+        )}
 
-      {/* Page Header */}
-      <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight lg:text-3xl text-foreground">
-            Dashboard
-          </h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            Welcome back, {userName}! Here&apos;s your {VIEW_LABELS[view]} overview.
-          </p>
+        {/* Page Header */}
+        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight lg:text-3xl text-foreground">
+              Dashboard
+            </h1>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Welcome back, {userName}! Here&apos;s your {VIEW_LABELS[view]} overview.
+            </p>
+          </div>
+          <DashboardHeaderActions
+            view={view}
+            accessibleViews={accessibleViews}
+            fullDate={fullDate}
+          />
         </div>
-        <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-          <span className="hidden sm:inline-flex items-center rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground">
-            {fullDate}
-          </span>
-          <DashboardViewSwitcher currentView={view} accessibleViews={accessibleViews} />
-          <Button asChild size="sm" className="!text-white">
-            <Link href="/orders">
-              <Plus className="h-4 w-4" />
-              New Order
-            </Link>
-          </Button>
-          {(view === 'dispatcher' || view === 'owner') && (
-            <Button asChild variant="outline" size="sm">
-              <Link href="/dispatch">
-                <Plus className="h-4 w-4" />
-                New Trip
-              </Link>
-            </Button>
-          )}
-          <CustomizeDashboard view={view} />
-        </div>
+
+        {/* Onboarding card (if needed) */}
+        {showOnboarding && (
+          <Card className="rounded-xl border-brand/20 bg-gradient-to-br from-surface to-[var(--accent-blue-bg)] overflow-hidden">
+            <CardHeader className="flex flex-row items-start justify-between">
+              <div>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--brand)] to-[#2a3a4f]">
+                    <Car className="h-4.5 w-4.5 text-white" />
+                  </div>
+                  <CardTitle>Get Started with VroomX</CardTitle>
+                </div>
+                <CardDescription>Complete these steps to start dispatching loads.</CardDescription>
+                <div className="mt-3 flex items-center gap-3">
+                  <div className="h-2 flex-1 rounded-full bg-border-subtle overflow-hidden">
+                    <div
+                      className="h-2 rounded-full bg-gradient-to-r from-[var(--brand)] to-[#2a3a4f] transition-all duration-500"
+                      style={{ width: `${(completedSteps / 3) * 100}%` }}
+                    />
+                  </div>
+                  <span className="text-xs font-semibold text-brand tabular-nums">{completedSteps}/3</span>
+                </div>
+              </div>
+              <form action={async () => { 'use server'; const { dismissOnboarding } = await import('@/app/actions/onboarding'); await dismissOnboarding(); }}>
+                <button type="submit" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Dismiss
+                </button>
+              </form>
+            </CardHeader>
+            <CardContent>
+              <div className="divide-y divide-border-subtle">
+                {onboardingSteps.map((step) => {
+                  const StepIcon = step.icon
+                  return (
+                    <a
+                      key={step.href}
+                      href={step.href}
+                      className="flex items-center gap-4 py-4 first:pt-0 last:pb-0 transition-colors hover:bg-accent/50 -mx-2 px-2 rounded-lg group"
+                    >
+                      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors ${step.done ? 'bg-emerald-100' : 'bg-[var(--accent-blue-bg)]'}`}>
+                        {step.done ? (
+                          <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                        ) : (
+                          <StepIcon className="h-5 w-5 text-[var(--accent-blue)]" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`font-medium text-foreground ${step.done ? 'line-through opacity-60' : ''}`}>
+                          {step.title}
+                        </p>
+                        <p className="text-sm text-muted-foreground">{step.description}</p>
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground/60 group-hover:text-muted-foreground transition-colors" />
+                    </a>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Role-specific dashboard view */}
+        {viewContent}
       </div>
-
-      {/* Onboarding card (if needed) */}
-      {showOnboarding && (
-        <Card className="rounded-xl border-brand/20 bg-gradient-to-br from-surface to-[var(--accent-blue-bg)] overflow-hidden">
-          <CardHeader className="flex flex-row items-start justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--brand)] to-[#2a3a4f]">
-                  <Car className="h-4.5 w-4.5 text-white" />
-                </div>
-                <CardTitle>Get Started with VroomX</CardTitle>
-              </div>
-              <CardDescription>Complete these steps to start dispatching loads.</CardDescription>
-              <div className="mt-3 flex items-center gap-3">
-                <div className="h-2 flex-1 rounded-full bg-border-subtle overflow-hidden">
-                  <div
-                    className="h-2 rounded-full bg-gradient-to-r from-[var(--brand)] to-[#2a3a4f] transition-all duration-500"
-                    style={{ width: `${(completedSteps / 3) * 100}%` }}
-                  />
-                </div>
-                <span className="text-xs font-semibold text-brand tabular-nums">{completedSteps}/3</span>
-              </div>
-            </div>
-            <form action={async () => { 'use server'; const { dismissOnboarding } = await import('@/app/actions/onboarding'); await dismissOnboarding(); }}>
-              <button type="submit" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Dismiss
-              </button>
-            </form>
-          </CardHeader>
-          <CardContent>
-            <div className="divide-y divide-border-subtle">
-              {onboardingSteps.map((step) => {
-                const StepIcon = step.icon
-                return (
-                  <a
-                    key={step.href}
-                    href={step.href}
-                    className="flex items-center gap-4 py-4 first:pt-0 last:pb-0 transition-colors hover:bg-accent/50 -mx-2 px-2 rounded-lg group"
-                  >
-                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors ${step.done ? 'bg-emerald-100' : 'bg-[var(--accent-blue-bg)]'}`}>
-                      {step.done ? (
-                        <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-                      ) : (
-                        <StepIcon className="h-5 w-5 text-[var(--accent-blue)]" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className={`font-medium text-foreground ${step.done ? 'line-through opacity-60' : ''}`}>
-                        {step.title}
-                      </p>
-                      <p className="text-sm text-muted-foreground">{step.description}</p>
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground/60 group-hover:text-muted-foreground transition-colors" />
-                  </a>
-                )
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Role-specific dashboard view */}
-      {viewContent}
-    </div>
+    </DashboardMobileShell>
   )
 }

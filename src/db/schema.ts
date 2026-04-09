@@ -1142,6 +1142,29 @@ export const webNotifications = pgTable('web_notifications', {
 ])
 
 // ============================================================================
+// Push Subscriptions (Web Push / PWA)
+// ============================================================================
+
+/**
+ * Push Subscriptions Table
+ * Stores Web Push API subscriptions for each user/device.
+ */
+export const pushSubscriptions = pgTable('push_subscriptions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull(),
+  endpoint: text('endpoint').notNull(),
+  p256dh: text('p256dh').notNull(),
+  auth: text('auth').notNull(),
+  userAgent: text('user_agent'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_push_subscriptions_user').on(table.tenantId, table.userId),
+  // unique constraint handled by DB migration
+])
+
+// ============================================================================
 // Order Activity Logs
 // ============================================================================
 

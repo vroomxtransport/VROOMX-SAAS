@@ -5,6 +5,7 @@ interface SidebarStore {
   isOpen: boolean
   isCollapsed: boolean
   collapsedCategories: string[]
+  isMoreSheetOpen: boolean
   toggle: () => void
   open: () => void
   close: () => void
@@ -12,6 +13,8 @@ interface SidebarStore {
   setCollapsed: (collapsed: boolean) => void
   toggleCategory: (label: string) => void
   expandCategory: (label: string) => void
+  toggleMoreSheet: () => void
+  closeMoreSheet: () => void
 }
 
 export const useSidebarStore = create<SidebarStore>()(
@@ -20,6 +23,7 @@ export const useSidebarStore = create<SidebarStore>()(
       isOpen: false,
       isCollapsed: false,
       collapsedCategories: [],
+      isMoreSheetOpen: false,
       toggle: () => set((state) => ({ isOpen: !state.isOpen })),
       open: () => set({ isOpen: true }),
       close: () => set({ isOpen: false }),
@@ -35,6 +39,8 @@ export const useSidebarStore = create<SidebarStore>()(
         set((state) => ({
           collapsedCategories: state.collapsedCategories.filter((l) => l !== label),
         })),
+      toggleMoreSheet: () => set((state) => ({ isMoreSheetOpen: !state.isMoreSheetOpen })),
+      closeMoreSheet: () => set({ isMoreSheetOpen: false }),
     }),
     {
       name: 'vroomx-sidebar',

@@ -78,9 +78,10 @@ export function Pagination({
           Previous
         </Button>
 
+        {/* Page numbers — hidden on mobile */}
         {totalPages > 1 && pageNumbers.map((p, i) =>
           p === 'ellipsis' ? (
-            <span key={`ellipsis-${i}`} className="px-1 text-sm text-muted-foreground">
+            <span key={`ellipsis-${i}`} className="hidden px-1 text-sm text-muted-foreground md:inline">
               ...
             </span>
           ) : (
@@ -90,7 +91,7 @@ export function Pagination({
               size="sm"
               onClick={() => onPageChange(p)}
               className={cn(
-                'h-8 w-8 p-0',
+                'hidden h-8 w-8 p-0 md:inline-flex',
                 p === page && 'pointer-events-none'
               )}
             >
@@ -112,8 +113,9 @@ export function Pagination({
       </div>
 
       <div className="flex items-center gap-4">
+        {/* Page size selector — hidden on mobile */}
         {onPageSizeChange && (
-          <div className="flex items-center gap-2">
+          <div className="hidden items-center gap-2 md:flex">
             <span className="text-sm text-muted-foreground">Rows per page:</span>
             <Select
               value={String(pageSize)}

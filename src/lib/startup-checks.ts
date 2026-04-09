@@ -88,6 +88,10 @@ const REQUIRED_ENV: EnvCheck[] = [
   // warning rather than a hard fail. The warning is printed in
   // assertRequiredEnvVars() below.
   { name: 'PLATFORM_ADMIN_EMAILS', required: false, description: 'Comma-separated admin email allowlist — admin panel locked out if unset' },
+
+  // Web Push (PWA push notifications) — optional, push silently skipped if unset
+  { name: 'NEXT_PUBLIC_VAPID_PUBLIC_KEY', required: false, description: 'VAPID public key for web push notifications' },
+  { name: 'VAPID_PRIVATE_KEY', required: false, description: 'VAPID private key for web push notifications' },
 ]
 
 /**

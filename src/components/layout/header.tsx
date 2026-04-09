@@ -3,7 +3,6 @@
 import { useSidebarStore } from '@/stores/sidebar-store'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
-  Menu01Icon,
   SidebarLeft01Icon,
   SidebarRight01Icon,
 } from '@hugeicons/core-free-icons'
@@ -33,19 +32,12 @@ export function Header({
   subscriptionStatus,
   userId,
 }: HeaderProps) {
-  const { toggle, isCollapsed, toggleCollapse } = useSidebarStore()
+  const { isCollapsed, toggleCollapse } = useSidebarStore()
 
   return (
     <header className="sticky top-0 z-30 flex h-12 items-center justify-between border-b border-border bg-background/80 backdrop-blur-xl px-4 lg:px-6">
       <div className="flex items-center gap-2">
-        {/* Mobile hamburger */}
-        <button
-          onClick={toggle}
-          className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors lg:hidden"
-          aria-label="Toggle sidebar"
-        >
-          <HugeiconsIcon icon={Menu01Icon} size={20} />
-        </button>
+{/* Mobile hamburger removed — bottom tab bar handles mobile nav */}
 
         {/* Desktop collapse toggle */}
         <button

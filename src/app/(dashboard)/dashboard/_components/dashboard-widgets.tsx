@@ -10,9 +10,10 @@ import {
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 import { useDashboardStore, useVisibleWidgets, type WidgetId } from '@/stores/dashboard-store'
-import { type ReactNode, useCallback, useMemo } from 'react'
-import { GripVertical } from 'lucide-react'
+import { type ReactNode, useCallback, useMemo, useState } from 'react'
+import { GripVertical, ChevronDown, ChevronUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useIsMobile } from '@/hooks/use-is-mobile'
 
 export interface DashboardWidgetsProps {
   statCards: ReactNode
@@ -57,11 +58,109 @@ const widgetContent: Record<Exclude<WidgetId, 'statCards'>, keyof Omit<Dashboard
   revenueForecast: 'revenueForecast',
 }
 
+/**
+ * Priority order for mobile dispatcher view.
+ * Widgets not listed here fall to the end in their original order.
+ */
+const MOBILE_PRIORITY: Exclude<WidgetId, 'statCards'>[] = [
+  'upcomingPickups',
+  'loadsPipeline',
+  'fleetPulse',
+  'activityFeed',
+  'dispatchEfficiency',
+  'topDrivers',
+  'revenueChart',
+  'openInvoices',
+  'arAgingChart',
+  'recentPayments',
+  'paymentStatusBreakdown',
+  'pnlSummary',
+  'brokerScorecardMini',
+  'revenueForecast',
+  'quickLinks',
+]
+
+function mobileSort(
+  widgets: ReturnType<typeof useVisibleWidgets>
+): ReturnType<typeof useVisibleWidgets> {
+  return [...widgets].sort((a, b) => {
+    const ai = MOBILE_PRIORITY.indexOf(a.id as Exclude<WidgetId, 'statCards'>)
+    const bi = MOBILE_PRIORITY.indexOf(b.id as Exclude<WidgetId, 'statCards'>)
+    const aIdx = ai === -1 ? 999 : ai
+    const bIdx = bi === -1 ? 999 : bi
+    return aIdx - bIdx
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Mobile widget card with expand/collapse toggle
+// ---------------------------------------------------------------------------
+
+interface MobileWidgetCardProps {
+  widgetId: string
+  children: ReactNode
+}
+
+function MobileWidgetCard({ widgetId, children }: MobileWidgetCardProps) {
+  const [expanded, setExpanded] = useState(false)
+
+  // A few widgets benefit from always being fully visible on mobile
+  const alwaysExpanded = ['upcomingPickups', 'loadsPipeline'].includes(widgetId)
+
+  if (alwaysExpanded) {
+    return (
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        {children}
+      </div>
+    )
+  }
+
+  return (
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <div
+        className={cn(
+          'transition-all duration-300 ease-in-out overflow-hidden',
+          expanded ? 'max-h-[600px]' : 'max-h-[280px]'
+        )}
+      >
+        {children}
+      </div>
+
+      <button
+        onClick={() => setExpanded((prev) => !prev)}
+        className={cn(
+          'w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium',
+          'text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors',
+          'border-t border-border'
+        )}
+        aria-expanded={expanded}
+      >
+        {expanded ? (
+          <>
+            <ChevronUp className="h-3.5 w-3.5" />
+            Show less
+          </>
+        ) : (
+          <>
+            <ChevronDown className="h-3.5 w-3.5" />
+            Show more
+          </>
+        )}
+      </button>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Main component
+// ---------------------------------------------------------------------------
+
 export function DashboardWidgets(props: DashboardWidgetsProps) {
   const { editMode, setGridLayout } = useDashboardStore()
   const layout = useDashboardStore((s) => s.viewLayouts[s.activeView])
   const visibleWidgets = useVisibleWidgets()
   const { width, containerRef, mounted } = useContainerWidth({ initialWidth: 1280 })
+  const { isMobile } = useIsMobile()
 
   const statCardsVisible = layout.find((w) => w.id === 'statCards')?.visible ?? true
 
@@ -74,6 +173,9 @@ export function DashboardWidgets(props: DashboardWidgetsProps) {
       }),
     [visibleWidgets, props]
   )
+
+  // Mobile: sort by priority
+  const mobileWidgets = useMemo(() => mobileSort(renderedWidgets), [renderedWidgets])
 
   const lgLayouts = useMemo(
     (): readonly LayoutItem[] =>
@@ -107,6 +209,36 @@ export function DashboardWidgets(props: DashboardWidgetsProps) {
     [editMode, setGridLayout]
   )
 
+  // ---------------------------------------------------------------------------
+  // Mobile layout — simple vertical stack, no react-grid-layout
+  // ---------------------------------------------------------------------------
+  if (isMobile) {
+    return (
+      <>
+        {statCardsVisible && props.statCards}
+
+        {mobileWidgets.length > 0 && (
+          <div className="space-y-3 mt-3">
+            {mobileWidgets.map((widget) => {
+              const propKey = widgetContent[widget.id as Exclude<WidgetId, 'statCards'>]
+              const content = props[propKey]
+              if (!content) return null
+
+              return (
+                <MobileWidgetCard key={widget.id} widgetId={widget.id}>
+                  {content}
+                </MobileWidgetCard>
+              )
+            })}
+          </div>
+        )}
+      </>
+    )
+  }
+
+  // ---------------------------------------------------------------------------
+  // Desktop layout — react-grid-layout (unchanged)
+  // ---------------------------------------------------------------------------
   return (
     <>
       {statCardsVisible && props.statCards}
