@@ -59,6 +59,9 @@ export const metadata: Metadata = {
   description:
     'VroomX is a modern SaaS transportation management system for auto-transport carriers. Dispatch smarter, deliver faster.',
   metadataBase: safeUrl(process.env.NEXT_PUBLIC_APP_URL, 'http://localhost:3000'),
+  icons: {
+    apple: '/apple-touch-icon.png',
+  },
   robots: {
     index: true,
     follow: true,
@@ -88,9 +91,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className="overflow-x-hidden">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} ${inter.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} ${inter.variable} antialiased overflow-x-hidden`}
       >
         <OrganizationJsonLd />
         <Providers>
