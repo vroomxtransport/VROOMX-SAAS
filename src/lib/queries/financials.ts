@@ -267,6 +267,71 @@ export async function fetchRevenueByMonth(
   return result
 }
 
+export interface DailyRevenuePoint {
+  date: string
+  revenue: number
+  prevRevenue: number
+}
+
+/**
+ * Fetch daily revenue for the last N days, with a parallel "previous period"
+ * of the same length for comparison. Used by the dashboard revenue chart.
+ */
+export async function fetchDailyRevenue(
+  supabase: SupabaseClient,
+  days: number = 30
+): Promise<DailyRevenuePoint[]> {
+  const now = new Date()
+  const periodStart = subDays(now, days - 1)
+  periodStart.setHours(0, 0, 0, 0)
+  const prevPeriodStart = subDays(periodStart, days)
+
+  const [{ data: currentOrders, error: e1 }, { data: prevOrders, error: e2 }] = await Promise.all([
+    supabase
+      .from('orders')
+      .select('revenue, created_at')
+      .gte('created_at', periodStart.toISOString())
+      .lte('created_at', now.toISOString()),
+    supabase
+      .from('orders')
+      .select('revenue, created_at')
+      .gte('created_at', prevPeriodStart.toISOString())
+      .lt('created_at', periodStart.toISOString()),
+  ])
+
+  if (e1) throw e1
+  if (e2) throw e2
+
+  const currentMap = new Map<string, number>()
+  const prevMap = new Map<string, number>()
+
+  for (const o of currentOrders ?? []) {
+    const key = format(new Date(o.created_at), 'yyyy-MM-dd')
+    currentMap.set(key, (currentMap.get(key) ?? 0) + parseFloat(o.revenue ?? '0'))
+  }
+
+  for (const o of prevOrders ?? []) {
+    const key = format(new Date(o.created_at), 'yyyy-MM-dd')
+    prevMap.set(key, (prevMap.get(key) ?? 0) + parseFloat(o.revenue ?? '0'))
+  }
+
+  const result: DailyRevenuePoint[] = []
+  const prevKeys = Array.from(prevMap.keys()).sort()
+
+  for (let i = 0; i < days; i++) {
+    const d = subDays(now, days - 1 - i)
+    const key = format(d, 'yyyy-MM-dd')
+    const prevKey = prevKeys[i]
+    result.push({
+      date: format(d, 'MMM d'),
+      revenue: Math.round((currentMap.get(key) ?? 0) * 100) / 100,
+      prevRevenue: Math.round((prevKey ? prevMap.get(prevKey) ?? 0 : 0) * 100) / 100,
+    })
+  }
+
+  return result
+}
+
 /**
  * Fetch top 5 brokers by total revenue within a date range.
  */

@@ -17,32 +17,6 @@ import { OpenInvoices } from './_components/open-invoices'
 import { TopDrivers } from './_components/top-drivers'
 import { QuickLinks } from './_components/quick-links'
 
-// Sample data for pipeline recent orders
-const SAMPLE_RECENT_ORDERS = [
-  { orderNumber: 'ORD-1047', vehicle: '2024 Tesla Model Y', route: 'Dallas, TX → Miami, FL', status: 'picked_up', revenue: 1850 },
-  { orderNumber: 'ORD-1046', vehicle: '2023 BMW X5', route: 'Los Angeles, CA → Phoenix, AZ', status: 'new', revenue: 950 },
-  { orderNumber: 'ORD-1045', vehicle: '2022 Ford F-150', route: 'Houston, TX → Atlanta, GA', status: 'assigned', revenue: 1200 },
-  { orderNumber: 'ORD-1044', vehicle: '2024 Porsche 911', route: 'Chicago, IL → Denver, CO', status: 'delivered', revenue: 2100 },
-  { orderNumber: 'ORD-1043', vehicle: '2023 Honda Civic', route: 'San Diego, CA → Seattle, WA', status: 'new', revenue: 1450 },
-]
-
-// Sample upcoming pickups
-function getSamplePickups() {
-  const today = new Date()
-  const tomorrow = new Date(today)
-  tomorrow.setDate(tomorrow.getDate() + 1)
-  const dayAfter = new Date(today)
-  dayAfter.setDate(dayAfter.getDate() + 2)
-
-  return [
-    { orderNumber: 'ORD-1047', vehicle: '2024 Tesla Model Y', location: 'Dallas, TX', driverName: 'Mike R.', pickupDate: today.toISOString() },
-    { orderNumber: 'ORD-1045', vehicle: '2022 Ford F-150', location: 'Houston, TX', driverName: 'Sarah K.', pickupDate: today.toISOString() },
-    { orderNumber: 'ORD-1046', vehicle: '2023 BMW X5', location: 'Los Angeles, CA', driverName: null, pickupDate: tomorrow.toISOString() },
-    { orderNumber: 'ORD-1048', vehicle: '2024 Mercedes GLE', location: 'Phoenix, AZ', driverName: 'Tom B.', pickupDate: tomorrow.toISOString() },
-    { orderNumber: 'ORD-1049', vehicle: '2023 Audi Q7', location: 'Denver, CO', driverName: null, pickupDate: dayAfter.toISOString() },
-  ]
-}
-
 export default async function DashboardPage({
   searchParams,
 }: {
@@ -103,41 +77,70 @@ export default async function DashboardPage({
   const activeLoads = activeOrdersResult.count ?? 0
   const inTransit = inTransitResult.count ?? 0
 
-  // Fetch month-to-date revenue
+  // Fetch month-to-date revenue + previous month for trend comparison
   const startOfMonth = new Date()
   startOfMonth.setDate(1)
   startOfMonth.setHours(0, 0, 0, 0)
 
-  const { data: revenueData } = await supabase
-    .from('orders')
-    .select('revenue')
-    .eq('tenant_id', tenantId)
-    .gte('created_at', startOfMonth.toISOString())
+  const startOfPrevMonth = new Date(startOfMonth)
+  startOfPrevMonth.setMonth(startOfPrevMonth.getMonth() - 1)
+
+  const [
+    { data: revenueData },
+    { data: prevRevenueData },
+    milesResult,
+    prevMilesResult,
+    prevActiveResult,
+    prevInTransitResult,
+  ] = await Promise.all([
+    supabase.from('orders').select('revenue').eq('tenant_id', tenantId).gte('created_at', startOfMonth.toISOString()),
+    supabase.from('orders').select('revenue').eq('tenant_id', tenantId).gte('created_at', startOfPrevMonth.toISOString()).lt('created_at', startOfMonth.toISOString()),
+    supabase.from('orders').select('distance_miles').eq('tenant_id', tenantId).gte('created_at', startOfMonth.toISOString()).not('distance_miles', 'is', null),
+    supabase.from('orders').select('distance_miles, revenue').eq('tenant_id', tenantId).gte('created_at', startOfPrevMonth.toISOString()).lt('created_at', startOfMonth.toISOString()).not('distance_miles', 'is', null),
+    supabase.from('orders').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['new', 'assigned', 'picked_up']).gte('created_at', startOfPrevMonth.toISOString()).lt('created_at', startOfMonth.toISOString()),
+    supabase.from('orders').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'picked_up').gte('created_at', startOfPrevMonth.toISOString()).lt('created_at', startOfMonth.toISOString()),
+  ])
 
   const monthlyRevenue = (revenueData || []).reduce(
     (sum, o) => sum + parseFloat(o.revenue || '0'), 0
   )
+  const prevMonthlyRevenue = (prevRevenueData || []).reduce(
+    (sum, o) => sum + parseFloat(o.revenue || '0'), 0
+  )
 
-  // Calculate avg $/mile using real distance_miles from orders (gracefully handles missing column)
   let totalMiles = 0
-  const milesResult = await supabase
-    .from('orders')
-    .select('distance_miles')
-    .eq('tenant_id', tenantId)
-    .gte('created_at', startOfMonth.toISOString())
-    .not('distance_miles', 'is', null)
-
   if (!milesResult.error && milesResult.data) {
     totalMiles = milesResult.data.reduce(
       (sum, o) => sum + parseFloat(o.distance_miles || '0'), 0
     )
   }
-  // Use real miles if available, otherwise fall back to estimate
-  const avgPerMile = totalMiles > 0
-    ? (monthlyRevenue / totalMiles).toFixed(2)
-    : orderCount > 0
-      ? (monthlyRevenue / Math.max(orderCount * 450, 1)).toFixed(2)
-      : '0.00'
+
+  let prevTotalMiles = 0
+  let prevMonthRevForMiles = 0
+  if (!prevMilesResult.error && prevMilesResult.data) {
+    prevTotalMiles = prevMilesResult.data.reduce(
+      (sum, o) => sum + parseFloat(o.distance_miles || '0'), 0
+    )
+    prevMonthRevForMiles = prevMilesResult.data.reduce(
+      (sum, o) => sum + parseFloat(o.revenue || '0'), 0
+    )
+  }
+
+  const avgPerMile = totalMiles > 0 ? monthlyRevenue / totalMiles : 0
+  const prevAvgPerMile = prevTotalMiles > 0 ? prevMonthRevForMiles / prevTotalMiles : 0
+
+  const prevActiveLoads = prevActiveResult.count ?? 0
+  const prevInTransit = prevInTransitResult.count ?? 0
+
+  function trendPct(current: number, previous: number): number {
+    if (previous === 0) return current > 0 ? 100 : 0
+    return Math.round(((current - previous) / previous) * 100)
+  }
+
+  const activeLoadsTrend = trendPct(activeLoads, prevActiveLoads)
+  const inTransitTrend = trendPct(inTransit, prevInTransit)
+  const revenueTrend = trendPct(monthlyRevenue, prevMonthlyRevenue)
+  const perMileTrend = trendPct(avgPerMile, prevAvgPerMile)
 
   // Pipeline counts — fetch order counts per status
   const { data: pipelineData } = await supabase
@@ -152,11 +155,59 @@ export default async function DashboardPage({
     }
   }
 
-  // If no real data, use sample counts for visual appeal
-  const hasPipelineData = Object.values(pipelineCounts).some((v) => v > 0)
-  const displayPipelineCounts = hasPipelineData
-    ? pipelineCounts
-    : { new: 12, assigned: 8, picked_up: 23, delivered: 4, invoiced: 6, paid: 14 }
+  // Fetch 5 most recent orders for pipeline widget
+  const { data: recentOrdersRaw } = await supabase
+    .from('orders')
+    .select('order_number, vehicles, vehicle_year, vehicle_make, vehicle_model, pickup_city, pickup_state, delivery_city, delivery_state, status, revenue')
+    .eq('tenant_id', tenantId)
+    .order('created_at', { ascending: false })
+    .limit(5)
+
+  const recentOrders = (recentOrdersRaw || []).map((o) => {
+    const vehicles = o.vehicles as Array<{ year?: number; make?: string; model?: string }> | null
+    const firstVehicle = vehicles?.[0]
+    const vehicle = firstVehicle
+      ? [firstVehicle.year, firstVehicle.make, firstVehicle.model].filter(Boolean).join(' ')
+      : [o.vehicle_year, o.vehicle_make, o.vehicle_model].filter(Boolean).join(' ') || 'N/A'
+    const origin = [o.pickup_city, o.pickup_state].filter(Boolean).join(', ') || 'N/A'
+    const dest = [o.delivery_city, o.delivery_state].filter(Boolean).join(', ') || 'N/A'
+    return {
+      orderNumber: o.order_number || 'N/A',
+      vehicle,
+      route: `${origin} → ${dest}`,
+      status: o.status || 'new',
+      revenue: parseFloat(o.revenue || '0'),
+    }
+  })
+
+  // Fetch upcoming pickups (assigned/new orders with future pickup dates)
+  const todayStr = new Date().toISOString().split('T')[0]
+  const { data: pickupsRaw } = await supabase
+    .from('orders')
+    .select('order_number, vehicles, vehicle_year, vehicle_make, vehicle_model, pickup_city, pickup_state, pickup_date, driver:drivers(first_name, last_name)')
+    .eq('tenant_id', tenantId)
+    .in('status', ['new', 'assigned'])
+    .gte('pickup_date', todayStr)
+    .order('pickup_date', { ascending: true })
+    .limit(10)
+
+  const upcomingPickups = (pickupsRaw || []).map((o) => {
+    const vehicles = o.vehicles as Array<{ year?: number; make?: string; model?: string }> | null
+    const firstVehicle = vehicles?.[0]
+    const vehicle = firstVehicle
+      ? [firstVehicle.year, firstVehicle.make, firstVehicle.model].filter(Boolean).join(' ')
+      : [o.vehicle_year, o.vehicle_make, o.vehicle_model].filter(Boolean).join(' ') || 'N/A'
+    const driverArr = o.driver as unknown as Array<{ first_name: string; last_name: string }> | null
+    const driver = driverArr?.[0] ?? null
+    const driverName = driver ? `${driver.first_name} ${driver.last_name}` : null
+    return {
+      orderNumber: o.order_number || 'N/A',
+      vehicle,
+      location: [o.pickup_city, o.pickup_state].filter(Boolean).join(', ') || 'N/A',
+      driverName,
+      pickupDate: o.pickup_date ? new Date(o.pickup_date).toISOString() : new Date().toISOString(),
+    }
+  })
 
   // Fleet pulse data
   const { count: activeTrucks } = await supabase
@@ -205,11 +256,10 @@ export default async function DashboardPage({
   ]
   const completedSteps = onboardingSteps.filter((s) => s.done).length
 
-  // Use sample fleet pulse data when no real data exists
   const fleetData = {
-    trucks: { active: activeTrucks ?? (truckCount > 0 ? 0 : 6), total: truckCount || 8 },
-    drivers: { onTrip: driversOnTrip ?? (driverCount > 0 ? 0 : 4), total: driverCount || 5 },
-    capacity: { used: inTransit > 0 ? inTransit * 3 : 47, total: truckCount > 0 ? truckCount * 7 : 72 },
+    trucks: { active: activeTrucks ?? 0, total: truckCount },
+    drivers: { onTrip: driversOnTrip ?? 0, total: driverCount },
+    capacity: { used: inTransit, total: activeLoads || inTransit },
   }
 
   const dayOfWeek = new Date().toLocaleDateString('en-US', { weekday: 'long' })
@@ -335,16 +385,16 @@ export default async function DashboardPage({
       <DashboardWidgets
         statCards={
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-            <StatCard label="Active Loads" value={activeLoads || 47} icon={Car} accent="blue" trend={{ value: 12, label: 'vs last month' }} />
-            <StatCard label="In-Transit" value={inTransit || 23} icon={Truck} accent="amber" trend={{ value: 8, label: 'vs last month' }} />
-            <StatCard label="Revenue MTD" value={monthlyRevenue > 0 ? `$${monthlyRevenue.toLocaleString('en-US', { minimumFractionDigits: 0 })}` : '$128,450'} icon={Activity} accent="emerald" trend={{ value: 18, label: 'vs last month' }} />
-            <StatCard label="Avg $/Mile" value={avgPerMile !== '0.00' ? `$${avgPerMile}` : '$2.47'} icon={BadgeDollarSign} accent="violet" trend={{ value: -3, label: 'vs last month' }} />
+            <StatCard label="Active Loads" value={activeLoads} icon={Car} accent="blue" trend={activeLoadsTrend !== 0 ? { value: activeLoadsTrend, label: 'vs last month' } : undefined} />
+            <StatCard label="In-Transit" value={inTransit} icon={Truck} accent="amber" trend={inTransitTrend !== 0 ? { value: inTransitTrend, label: 'vs last month' } : undefined} />
+            <StatCard label="Revenue MTD" value={`$${monthlyRevenue.toLocaleString('en-US', { minimumFractionDigits: 0 })}`} icon={Activity} accent="emerald" trend={revenueTrend !== 0 ? { value: revenueTrend, label: 'vs last month' } : undefined} />
+            <StatCard label="Avg $/Mile" value={`$${avgPerMile.toFixed(2)}`} icon={BadgeDollarSign} accent="violet" trend={perMileTrend !== 0 ? { value: perMileTrend, label: 'vs last month' } : undefined} />
           </div>
         }
         loadsPipeline={
           <LoadsPipeline
-            pipelineCounts={displayPipelineCounts}
-            recentOrders={SAMPLE_RECENT_ORDERS}
+            pipelineCounts={pipelineCounts}
+            recentOrders={recentOrders}
           />
         }
         revenueChart={<RevenueChart />}
@@ -355,7 +405,7 @@ export default async function DashboardPage({
             capacity={fleetData.capacity}
           />
         }
-        upcomingPickups={<UpcomingPickups pickups={getSamplePickups()} />}
+        upcomingPickups={<UpcomingPickups pickups={upcomingPickups} />}
         activityFeed={<ActivityFeed />}
         openInvoices={<OpenInvoices />}
         topDrivers={<TopDrivers />}

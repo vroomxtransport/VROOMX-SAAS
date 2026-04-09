@@ -98,6 +98,10 @@ function ProgressRow({
 }
 
 export function FleetPulse({ trucks, drivers, capacity }: FleetPulseProps) {
+  const inactiveTrucks = trucks.total - trucks.active
+  const availableDrivers = drivers.total - drivers.onTrip
+  const capacityPct = capacity.total > 0 ? Math.round((capacity.used / capacity.total) * 100) : 0
+
   return (
     <div className="widget-card h-full flex flex-col">
       <div className="widget-header">
@@ -121,7 +125,7 @@ export function FleetPulse({ trucks, drivers, capacity }: FleetPulseProps) {
           current={trucks.active}
           total={trucks.total}
           color="blue"
-          trend="+2 since last week"
+          trend={inactiveTrucks > 0 ? `${inactiveTrucks} inactive / maintenance` : undefined}
         />
         <ProgressRow
           icon={Users}
@@ -130,16 +134,16 @@ export function FleetPulse({ trucks, drivers, capacity }: FleetPulseProps) {
           current={drivers.onTrip}
           total={drivers.total}
           color="violet"
-          trend="3 available for dispatch"
+          trend={availableDrivers > 0 ? `${availableDrivers} available for dispatch` : undefined}
         />
         <ProgressRow
           icon={Layers}
           label="Capacity"
-          sublabel="Slots in use"
+          sublabel="In-transit loads"
           current={capacity.used}
           total={capacity.total}
           color="amber"
-          trend="Peak hours: 2PM-6PM"
+          trend={capacity.total > 0 ? `${capacityPct}% utilization` : undefined}
         />
       </div>
     </div>

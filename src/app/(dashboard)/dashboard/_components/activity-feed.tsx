@@ -1,3 +1,8 @@
+'use client'
+
+import { useQuery } from '@tanstack/react-query'
+import { createClient } from '@/lib/supabase/client'
+import { formatDistanceToNow } from 'date-fns'
 import { cn } from '@/lib/utils'
 import {
   Package,
@@ -10,6 +15,8 @@ import {
   Wrench,
   UserPlus,
   CreditCard,
+  Activity,
+  type LucideIcon,
 } from 'lucide-react'
 
 type EventType = 'order' | 'trip' | 'invoice' | 'driver' | 'maintenance'
@@ -38,36 +45,81 @@ const EVENT_ICON_COLORS: Record<EventType, string> = {
   maintenance: 'text-red-500',
 }
 
-const ACTIVITY_EVENTS = [
-  { text: 'Order ORD-1047 marked as Picked Up', time: '2 hours ago', icon: Package, type: 'order' as EventType },
-  { text: 'Trip T-0089 started (Driver: Mike R.)', time: '3 hours ago', icon: Truck, type: 'trip' as EventType },
-  { text: 'Invoice #INV-0034 sent to ABC Transport', time: '5 hours ago', icon: FileText, type: 'invoice' as EventType },
-  { text: 'New order ORD-1048 created', time: '6 hours ago', icon: PlusCircle, type: 'order' as EventType },
-  { text: 'Payment of $1,200 recorded on ORD-1041', time: 'Yesterday', icon: DollarSign, type: 'invoice' as EventType },
-  { text: 'Driver Sarah K. completed Trip T-0087', time: 'Yesterday', icon: CheckCircle2, type: 'order' as EventType },
-  { text: 'Order ORD-1042 delivered to Phoenix, AZ', time: 'Yesterday', icon: MapPin, type: 'order' as EventType },
-  { text: 'Truck #105 status changed to Maintenance', time: '2 days ago', icon: Wrench, type: 'maintenance' as EventType },
-  { text: 'New driver Tom B. added to fleet', time: '2 days ago', icon: UserPlus, type: 'driver' as EventType },
-  { text: 'Invoice #INV-0033 paid - $2,400 received', time: '3 days ago', icon: CreditCard, type: 'invoice' as EventType },
-]
+const ACTION_MAP: Record<string, { icon: LucideIcon; type: EventType }> = {
+  status_change: { icon: Package, type: 'order' },
+  created: { icon: PlusCircle, type: 'order' },
+  assigned: { icon: Truck, type: 'trip' },
+  picked_up: { icon: Truck, type: 'trip' },
+  delivered: { icon: MapPin, type: 'order' },
+  invoiced: { icon: FileText, type: 'invoice' },
+  invoice_sent: { icon: FileText, type: 'invoice' },
+  payment_recorded: { icon: DollarSign, type: 'invoice' },
+  paid: { icon: CreditCard, type: 'invoice' },
+  completed: { icon: CheckCircle2, type: 'order' },
+  driver_assigned: { icon: UserPlus, type: 'driver' },
+  maintenance: { icon: Wrench, type: 'maintenance' },
+}
 
-function getTimeGroup(time: string): string {
-  if (time.includes('hours ago') || time.includes('hour ago') || time.includes('minutes ago') || time.includes('just now')) {
-    return 'Today'
-  }
-  if (time === 'Yesterday') {
-    return 'Yesterday'
-  }
+const DEFAULT_ACTION = { icon: Package, type: 'order' as EventType }
+
+function getTimeGroup(date: Date): string {
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+  const eventDay = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+
+  if (eventDay >= today) return 'Today'
+  if (eventDay >= yesterday) return 'Yesterday'
   return 'Earlier'
 }
 
+function formatTime(dateStr: string): string {
+  try {
+    return formatDistanceToNow(new Date(dateStr), { addSuffix: true })
+  } catch {
+    return ''
+  }
+}
+
+async function fetchActivityLogs(supabase: ReturnType<typeof createClient>) {
+  const { data, error } = await supabase
+    .from('order_activity_logs')
+    .select('id, action, description, created_at, metadata')
+    .order('created_at', { ascending: false })
+    .limit(15)
+
+  if (error) throw error
+  return data ?? []
+}
+
 export function ActivityFeed() {
-  // Pre-compute group headers to avoid reassignment during render
-  const eventsWithGroups = ACTIVITY_EVENTS.map((event, idx) => {
-    const group = getTimeGroup(event.time)
-    const prevGroup = idx > 0 ? getTimeGroup(ACTIVITY_EVENTS[idx - 1].time) : ''
-    return { ...event, group, showGroupHeader: group !== prevGroup }
+  const supabase = createClient()
+
+  const { data: logs = [], isLoading } = useQuery({
+    queryKey: ['dashboard', 'activity-feed'],
+    queryFn: () => fetchActivityLogs(supabase),
+    staleTime: 30_000,
   })
+
+  const events = logs.map((log) => {
+    const mapping = ACTION_MAP[log.action] ?? DEFAULT_ACTION
+    const date = new Date(log.created_at)
+    return {
+      id: log.id,
+      text: log.description,
+      time: formatTime(log.created_at),
+      icon: mapping.icon,
+      type: mapping.type,
+      date,
+      group: getTimeGroup(date),
+    }
+  })
+
+  const eventsWithGroups = events.map((event, idx) => ({
+    ...event,
+    showGroupHeader: idx === 0 || event.group !== events[idx - 1].group,
+  }))
 
   return (
     <div className="widget-card h-full flex flex-col">
@@ -85,53 +137,64 @@ export function ActivityFeed() {
         </span>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-hidden relative">
-        <div className="absolute left-[15px] top-6 bottom-0 w-0.5 bg-gradient-to-b from-brand via-border-subtle/50 to-transparent" />
-        <div className="space-y-0">
-          {eventsWithGroups.map((event, idx) => {
-            const Icon = event.icon
-            return (
-              <div key={idx}>
-                {event.showGroupHeader && (
-                  <div className="flex items-center gap-3 py-2 first:pt-0">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">{event.group}</span>
-                    <div className="flex-1 h-px bg-border-subtle/60" />
-                  </div>
-                )}
-                <div className="group relative flex items-start gap-3 rounded-xl py-2 pl-0 pr-1 transition-colors hover:bg-muted/40">
-                  <div className="relative z-10 flex w-[30px] shrink-0 items-center justify-center">
-                    <span
-                      className={cn(
-                        'h-[9px] w-[9px] rounded-full ring-4 ring-surface',
-                        EVENT_COLORS[event.type],
-                        idx === 0 && 'animate-pulse'
-                      )}
-                    />
-                  </div>
-                  <div className="flex-1 flex items-start justify-between gap-3 min-w-0">
-                    <div className="flex items-start gap-2.5 min-w-0">
-                      <div className={cn('rounded-lg p-1.5 shrink-0 transition-transform group-hover:scale-110', EVENT_ICON_BG[event.type])}>
-                        <Icon className={cn('h-3.5 w-3.5', EVENT_ICON_COLORS[event.type])} />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm text-foreground leading-snug">{event.text}</p>
-                        {idx === 0 && (
-                          <span className="mt-1 inline-flex rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-semibold text-brand">
-                            New
-                          </span>
-                        )}
-                      </div>
+      {isLoading ? (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+        </div>
+      ) : eventsWithGroups.length === 0 ? (
+        <div className="flex-1 flex flex-col items-center justify-center gap-2 text-muted-foreground">
+          <Activity className="h-7 w-7 opacity-40" />
+          <p className="text-sm">No recent activity</p>
+        </div>
+      ) : (
+        <div className="flex-1 min-h-0 overflow-hidden relative">
+          <div className="absolute left-[15px] top-6 bottom-0 w-0.5 bg-gradient-to-b from-brand via-border-subtle/50 to-transparent" />
+          <div className="space-y-0">
+            {eventsWithGroups.map((event, idx) => {
+              const Icon = event.icon
+              return (
+                <div key={event.id}>
+                  {event.showGroupHeader && (
+                    <div className="flex items-center gap-3 py-2 first:pt-0">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">{event.group}</span>
+                      <div className="flex-1 h-px bg-border-subtle/60" />
                     </div>
-                    <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0 pt-0.5">
-                      {event.time}
-                    </span>
+                  )}
+                  <div className="group relative flex items-start gap-3 rounded-xl py-2 pl-0 pr-1 transition-colors hover:bg-muted/40">
+                    <div className="relative z-10 flex w-[30px] shrink-0 items-center justify-center">
+                      <span
+                        className={cn(
+                          'h-[9px] w-[9px] rounded-full ring-4 ring-surface',
+                          EVENT_COLORS[event.type],
+                          idx === 0 && 'animate-pulse'
+                        )}
+                      />
+                    </div>
+                    <div className="flex-1 flex items-start justify-between gap-3 min-w-0">
+                      <div className="flex items-start gap-2.5 min-w-0">
+                        <div className={cn('rounded-lg p-1.5 shrink-0 transition-transform group-hover:scale-110', EVENT_ICON_BG[event.type])}>
+                          <Icon className={cn('h-3.5 w-3.5', EVENT_ICON_COLORS[event.type])} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm text-foreground leading-snug">{event.text}</p>
+                          {idx === 0 && (
+                            <span className="mt-1 inline-flex rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-semibold text-brand">
+                              New
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0 pt-0.5">
+                        {event.time}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

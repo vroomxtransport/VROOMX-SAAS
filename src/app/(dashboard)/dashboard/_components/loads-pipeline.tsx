@@ -97,39 +97,43 @@ export function LoadsPipeline({ pipelineCounts, recentOrders }: LoadsPipelinePro
         <div className="border-l-2 border-brand/50 pl-3 mb-2">
           <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Recent Orders</h4>
         </div>
-        <div className="overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border-subtle">
-                <th className="pb-2 text-left text-xs font-medium text-foreground/80">Order #</th>
-                <th className="pb-2 text-left text-xs font-medium text-foreground/80 hidden sm:table-cell">Vehicle</th>
-                <th className="pb-2 text-left text-xs font-medium text-foreground/80 hidden md:table-cell">Route</th>
-                <th className="pb-2 text-left text-xs font-medium text-foreground/80">Status</th>
-                <th className="pb-2 text-right text-xs font-medium text-foreground/80">Revenue</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border-subtle">
-              {recentOrders.map((order) => (
-                <tr
-                  key={order.orderNumber}
-                  className="group transition-colors hover:bg-[var(--accent-blue-bg)]"
-                >
-                  <td className="py-2 font-semibold text-foreground group-hover:text-brand transition-colors">
-                    {order.orderNumber}
-                  </td>
-                  <td className="py-2 text-muted-foreground hidden sm:table-cell">{order.vehicle}</td>
-                  <td className="py-2 text-muted-foreground hidden md:table-cell">{order.route}</td>
-                  <td className="py-2">
-                    <StatusBadge status={order.status} type="order" />
-                  </td>
-                  <td className="py-2 text-right font-medium tabular-nums text-foreground">
-                    ${order.revenue.toLocaleString()}
-                  </td>
+        {recentOrders.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-4">No orders yet. Create your first order to see it here.</p>
+        ) : (
+          <div className="overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border-subtle">
+                  <th className="pb-2 text-left text-xs font-medium text-foreground/80">Order #</th>
+                  <th className="pb-2 text-left text-xs font-medium text-foreground/80 hidden sm:table-cell">Vehicle</th>
+                  <th className="pb-2 text-left text-xs font-medium text-foreground/80 hidden md:table-cell">Route</th>
+                  <th className="pb-2 text-left text-xs font-medium text-foreground/80">Status</th>
+                  <th className="pb-2 text-right text-xs font-medium text-foreground/80">Revenue</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-border-subtle">
+                {recentOrders.map((order) => (
+                  <tr
+                    key={order.orderNumber}
+                    className="group transition-colors hover:bg-[var(--accent-blue-bg)]"
+                  >
+                    <td className="py-2 font-semibold text-foreground group-hover:text-brand transition-colors">
+                      {order.orderNumber}
+                    </td>
+                    <td className="py-2 text-muted-foreground hidden sm:table-cell">{order.vehicle}</td>
+                    <td className="py-2 text-muted-foreground hidden md:table-cell">{order.route}</td>
+                    <td className="py-2">
+                      <StatusBadge status={order.status} type="order" />
+                    </td>
+                    <td className="py-2 text-right font-medium tabular-nums text-foreground">
+                      ${order.revenue.toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   )
