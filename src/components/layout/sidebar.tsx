@@ -25,10 +25,10 @@ import {
   Analytics02Icon,
   Wallet01Icon,
   ShieldEnergyIcon,
-  MoneyBag02Icon,
+  ChartBarLineIcon,
   Invoice02Icon,
   DeliveryBox01Icon,
-  Building06Icon,
+  Agreement02Icon,
   PlugSocketIcon,
   Settings02Icon,
   Cancel01Icon,
@@ -103,11 +103,8 @@ const NAV_CATEGORIES: NavCategory[] = [
   {
     label: 'Finance',
     items: [
-      { name: 'Financials', href: '/financials', icon: MoneyBag02Icon, minRole: 'admin' },
-      { name: 'Billing', href: '/billing', icon: Invoice02Icon, minRole: 'admin' },
-      { name: 'Payroll', href: '/payroll', icon: Wallet01Icon, minRole: 'admin' },
-      { name: 'Local Driver Pay', href: '/local-driver-payroll', icon: DeliveryBox01Icon, minRole: 'admin' },
-      { name: 'Brokers', href: '/brokers', icon: Building06Icon, minRole: 'dispatcher' },
+      { name: 'Accounting', href: '/financials', icon: ChartBarLineIcon, minRole: 'admin' },
+      { name: 'Brokers', href: '/brokers', icon: Agreement02Icon, minRole: 'dispatcher' },
     ],
   },
   {
@@ -241,7 +238,11 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
               {/* Nav items */}
               <div className="space-y-0.5">
                 {category.items.map((item) => {
-                  const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+                  // Accounting hub: highlight for /financials, /billing, /payroll, /local-driver-payroll
+                  const accountingRoutes = ['/financials', '/billing', '/payroll', '/local-driver-payroll']
+                  const isActive = item.href === '/financials'
+                    ? accountingRoutes.some((r) => pathname === r || pathname.startsWith(r + '/'))
+                    : pathname === item.href || pathname.startsWith(item.href + '/')
                   // Inject live unread count for Team Chat
                   const badge = item.href === '/team-chat' && totalUnread > 0 ? totalUnread : undefined
 

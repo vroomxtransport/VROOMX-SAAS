@@ -25,6 +25,7 @@ import { RecentPaymentsTable } from './_components/recent-payments-table'
 import { ReadyToInvoice } from './_components/ready-to-invoice'
 import { HelpTooltip } from '@/components/help-tooltip'
 import { PageHeader } from '@/components/shared/page-header'
+import { FinancialsNav } from '@/app/(dashboard)/financials/_components/financials-nav'
 
 // Safe wrapper that logs and returns a fallback on error
 async function safeQuery<T>(name: string, fn: () => Promise<T>, fallback: T): Promise<T> {
@@ -70,12 +71,13 @@ export default async function BillingPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <PageHeader title="Billing" subtitle="Invoicing, payments, receivables, and collections">
+      <PageHeader title="Accounting" subtitle="Invoicing, payments, receivables, and collections">
         <HelpTooltip
           content="Track outstanding invoices and payment collection. Send invoices to brokers for delivered loads, then track aging and collection."
           side="right"
         />
       </PageHeader>
+      <FinancialsNav />
 
       {/* Row 1: Billing KPI Cards */}
       <BillingKPICards
