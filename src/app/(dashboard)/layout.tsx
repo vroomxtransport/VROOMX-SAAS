@@ -86,7 +86,7 @@ export default async function DashboardLayout({
           userId={user.id}
         />
 
-        <main className="flex-1 overflow-y-auto pb-16 lg:pb-0">
+        <main className="flex-1 overflow-y-auto pb-[var(--bottom-tab-height)] lg:pb-0">
           {/* Suspension overlay */}
           {tenant.is_suspended && (
             <div className="mx-4 mb-4 mt-4 rounded-xl border border-red-200 bg-red-50 p-4 lg:mx-8">

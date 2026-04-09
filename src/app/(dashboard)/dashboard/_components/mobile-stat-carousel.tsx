@@ -31,7 +31,7 @@ interface MobileStatCarouselProps {
 export function MobileStatCarousel({ children }: MobileStatCarouselProps) {
   return (
     <div
-      className="md:hidden flex overflow-x-auto snap-x snap-mandatory gap-3 -mx-3 px-3 pb-2 scrollbar-none"
+      className="md:hidden flex overflow-x-auto snap-x snap-mandatory gap-3 -mx-4 px-4 pb-2 scrollbar-none"
       // Native momentum scrolling on iOS
       style={{ WebkitOverflowScrolling: 'touch' }}
     >

@@ -54,7 +54,7 @@ export function MobileFilterSheet({
 
       {/* Sheet */}
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetContent side="bottom" className="max-h-[85vh] rounded-t-2xl flex flex-col">
+        <SheetContent side="bottom" className="max-h-[85dvh] rounded-t-2xl flex flex-col pb-[env(safe-area-inset-bottom,0px)]">
           <SheetHeader className="pb-4">
             <SheetTitle className="text-base font-semibold">{title}</SheetTitle>
           </SheetHeader>

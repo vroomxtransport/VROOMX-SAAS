@@ -35,7 +35,7 @@ export function MobileOrderStatusTabs({
     <div
       ref={scrollRef}
       className={cn(
-        'flex gap-1.5 overflow-x-auto snap-x snap-mandatory',
+        'flex gap-1.5 overflow-x-auto snap-x snap-mandatory px-1',
         // Hide scrollbar cross-browser while keeping it functional
         'scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]',
         'pb-0.5' // breathing room for active shadows

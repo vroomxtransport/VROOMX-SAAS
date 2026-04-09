@@ -84,7 +84,7 @@ export function DashboardHeaderActions({
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-52">
+        <DropdownMenuContent align="end" className="w-52 max-w-[calc(100vw-2rem)]">
           {showTripButton && (
             <DropdownMenuItem asChild>
               <Link href="/dispatch" className="flex items-center gap-2 cursor-pointer">

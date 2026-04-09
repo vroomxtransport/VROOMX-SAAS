@@ -189,7 +189,7 @@ export function OrderCard({ order, onClick, onEdit }: OrderCardProps) {
 
       {/* Quick Actions */}
       <div
-        className="flex items-center gap-1.5 pt-2 mt-2 border-t border-border"
+        className="flex items-center gap-1.5 pt-2 mt-2 border-t border-border flex-wrap"
         onClick={(e) => e.stopPropagation()}
       >
         {order.driver ? (

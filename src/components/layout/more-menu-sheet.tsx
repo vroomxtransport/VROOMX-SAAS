@@ -29,7 +29,7 @@ export function MoreMenuSheet({ userRole, userId }: MoreMenuSheetProps) {
 
   return (
     <Sheet open={isMoreSheetOpen} onOpenChange={(open) => !open && closeMoreSheet()}>
-      <SheetContent side="bottom" className="max-h-[70vh] rounded-t-2xl px-0">
+      <SheetContent side="bottom" className="max-h-[70dvh] rounded-t-2xl px-0 pb-[env(safe-area-inset-bottom,0px)]">
         <SheetHeader className="px-6 pb-2">
           <SheetTitle className="text-base font-semibold">More</SheetTitle>
         </SheetHeader>

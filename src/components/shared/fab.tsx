@@ -35,7 +35,7 @@ export function Fab({ onClick, icon, label, actions, className }: FabProps) {
   }
 
   return (
-    <div className={cn('fixed bottom-20 right-4 z-40 lg:hidden', className)}>
+    <div className={cn('fixed bottom-20 right-3 z-40 sm:right-4 lg:hidden', className)}>
       {/* Speed-dial actions */}
       <AnimatePresence>
         {isOpen && hasSpeedDial && (
@@ -49,7 +49,7 @@ export function Fab({ onClick, icon, label, actions, className }: FabProps) {
               onClick={() => setIsOpen(false)}
             />
             {/* Action buttons */}
-            <div className="absolute bottom-16 right-0 flex flex-col-reverse items-end gap-3 pb-2">
+            <div className="absolute bottom-16 right-0 flex flex-col-reverse items-end gap-3 pb-2 max-w-[calc(100vw-2rem)]">
               {actions!.map((action, i) => (
                 <motion.button
                   key={action.label}

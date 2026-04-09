@@ -137,7 +137,7 @@ export function MobileFleetSheet({
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
             className="overflow-hidden bg-background border-t border-border-subtle"
           >
-            <div className="flex h-full flex-col">
+            <div className="flex h-full flex-col pb-[var(--bottom-tab-height)]">
               {/* Stats grid */}
               <div className="grid grid-cols-4 gap-1.5 border-b border-border-subtle p-3">
                 <StatPill label="Moving" value={stats.moving} color={STATUS_COLORS.moving} />

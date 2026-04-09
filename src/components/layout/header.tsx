@@ -60,7 +60,7 @@ export function Header({
       </div>
 
       {/* Center: Command search */}
-      <div className="flex-1 flex justify-center px-4">
+      <div className="flex-1 flex justify-center px-4 min-w-0">
         <CommandSearch />
       </div>
 

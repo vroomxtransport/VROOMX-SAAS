@@ -71,7 +71,7 @@ export function MobileDispatchView({ groupedTrips }: MobileDispatchViewProps) {
     <div className="flex flex-col min-h-0">
       {/* Horizontal scrollable tab bar */}
       <div
-        className="flex overflow-x-auto gap-1 pb-1 mb-3 no-scrollbar"
+        className="flex overflow-x-auto gap-1 pb-1 mb-3 px-1 no-scrollbar"
         role="tablist"
         aria-label="Trip status tabs"
       >

@@ -82,7 +82,7 @@ function UnassignedOrdersBottomSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="h-[80dvh] rounded-t-2xl px-0 pb-0 flex flex-col"
+        className="h-[80dvh] rounded-t-2xl px-0 pb-[env(safe-area-inset-bottom,0px)] flex flex-col"
       >
         <SheetHeader className="px-4 pb-3 border-b border-border-subtle shrink-0">
           <SheetTitle className="text-base">Unassigned Orders</SheetTitle>

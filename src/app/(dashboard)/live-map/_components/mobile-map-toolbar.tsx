@@ -149,7 +149,7 @@ export function MobileMapToolbar({
             <SheetTitle className="text-sm">Filter Fleet</SheetTitle>
           </SheetHeader>
 
-          <div className="space-y-4 px-4 pb-4">
+          <div className="space-y-4 px-4 pb-4 overflow-y-auto max-h-[60dvh]">
             {/* Type filter */}
             <div className="space-y-1.5">
               <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
@@ -224,7 +224,7 @@ export function MobileMapToolbar({
             <SheetTitle className="text-sm">Map Options</SheetTitle>
           </SheetHeader>
 
-          <div className="space-y-4 px-4 pb-4">
+          <div className="space-y-4 px-4 pb-4 overflow-y-auto max-h-[60dvh]">
             {/* Map style */}
             <div className="space-y-1.5">
               <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
