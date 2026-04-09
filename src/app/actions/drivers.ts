@@ -6,7 +6,10 @@ import { driverSchema } from '@/lib/validations/driver'
 import { checkTierLimit } from '@/lib/tier'
 import { getResend } from '@/lib/resend/client'
 import { logAuditEvent } from '@/lib/audit-log'
+import { getAuditContext } from '@/lib/audit-context'
 import { revalidatePath } from 'next/cache'
+import { dispatchWebhookEvent } from '@/lib/webhooks/webhook-dispatcher'
+import { sanitizePayload } from '@/lib/webhooks/payload-sanitizer'
 
 export async function createDriver(data: unknown) {
   const parsed = driverSchema.safeParse(data)
@@ -17,6 +20,8 @@ export async function createDriver(data: unknown) {
   const auth = await authorize('drivers.create', { rateLimit: { key: 'createDriver', limit: 30, windowMs: 60_000 } })
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId } = auth.ctx
+
+  const auditCtx = await getAuditContext()
 
   // Tier limit check: block if user limit reached
   const tierCheck = await checkTierLimit(supabase, tenantId, 'users')
@@ -62,6 +67,8 @@ export async function createDriver(data: unknown) {
     actorId: auth.ctx.user.id,
     actorEmail: auth.ctx.user.email,
     metadata: { driverType: parsed.data.driverType, payType: parsed.data.payType },
+    changeDiff: { before: {}, after: driver },
+    ...auditCtx,
   }).catch(() => {})
 
   revalidatePath('/drivers')
@@ -77,6 +84,16 @@ export async function updateDriver(id: string, data: unknown) {
   const auth = await authorize('drivers.update', { rateLimit: { key: 'updateDriver', limit: 30, windowMs: 60_000 } })
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId } = auth.ctx
+
+  const auditCtx = await getAuditContext()
+
+  // Snapshot old record for change diff
+  const { data: oldDriver } = await supabase
+    .from('drivers')
+    .select('*')
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
+    .single()
 
   const { data: driver, error } = await supabase
     .from('drivers')
@@ -113,6 +130,8 @@ export async function updateDriver(id: string, data: unknown) {
     description: `Driver ${parsed.data.firstName} ${parsed.data.lastName} updated`,
     actorId: auth.ctx.user.id,
     actorEmail: auth.ctx.user.email,
+    changeDiff: oldDriver ? { before: oldDriver, after: driver } : undefined,
+    ...auditCtx,
   }).catch(() => {})
 
   revalidatePath('/drivers')
@@ -125,6 +144,16 @@ export async function deleteDriver(id: string) {
   const auth = await authorize('drivers.delete', { rateLimit: { key: 'deleteDriver', limit: 10, windowMs: 60_000 } })
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId } = auth.ctx
+
+  const auditCtx = await getAuditContext()
+
+  // Snapshot record before delete for change diff
+  const { data: deletedDriver } = await supabase
+    .from('drivers')
+    .select('*')
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
+    .single()
 
   const { error } = await supabase
     .from('drivers')
@@ -144,6 +173,8 @@ export async function deleteDriver(id: string) {
     description: 'Driver deleted',
     actorId: auth.ctx.user.id,
     actorEmail: auth.ctx.user.email,
+    changeDiff: deletedDriver ? { before: deletedDriver, after: {} } : undefined,
+    ...auditCtx,
   }).catch(() => {})
 
   revalidatePath('/drivers')
@@ -168,6 +199,10 @@ export async function updateDriverStatus(id: string, status: 'active' | 'inactiv
   if (error) {
     return { error: safeError(error, 'updateDriverStatus') }
   }
+
+  dispatchWebhookEvent(tenantId, 'driver.status_changed', sanitizePayload({
+    driver_id: id, status,
+  })).catch(() => {})
 
   revalidatePath('/drivers')
   return { success: true, data: driver }

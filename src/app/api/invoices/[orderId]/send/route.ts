@@ -4,6 +4,8 @@ import { getResend } from '@/lib/resend/client'
 import { getSignedUrl } from '@/lib/storage'
 import { logOrderActivity } from '@/lib/activity-log'
 import { syncInvoiceToQB } from '@/lib/quickbooks/sync'
+import { dispatchWebhookEvent } from '@/lib/webhooks/webhook-dispatcher'
+import { sanitizePayload } from '@/lib/webhooks/payload-sanitizer'
 import { InvoiceDocument } from '@/lib/pdf/invoice-template'
 import { InvoiceEmail } from '@/components/email/invoice-email'
 
@@ -158,6 +160,10 @@ export async function POST(
       actorId: user.id,
       actorEmail: user.email,
     }).catch(() => {})
+
+    dispatchWebhookEvent(tenantId, 'invoice.created', sanitizePayload({
+      order_id: orderId, invoice_number: invoiceNumber,
+    })).catch(() => {})
 
     return Response.json({ success: true, emailId: data?.id })
   } catch (err) {

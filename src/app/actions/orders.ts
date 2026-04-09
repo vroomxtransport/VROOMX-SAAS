@@ -8,6 +8,8 @@ import { logOrderActivity } from '@/lib/activity-log'
 import { recalculateTripFinancials } from '@/app/actions/trips'
 import { uploadFile, deleteFile } from '@/lib/storage'
 import { revalidatePath } from 'next/cache'
+import { dispatchWebhookEvent } from '@/lib/webhooks/webhook-dispatcher'
+import { sanitizePayload } from '@/lib/webhooks/payload-sanitizer'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { OrderStatus } from '@/types'
 
@@ -107,6 +109,11 @@ export async function createOrder(data: unknown) {
     actorId: auth.ctx.user.id,
     actorEmail: auth.ctx.user.email,
   }).catch(() => {})
+
+  dispatchWebhookEvent(tenantId, 'order.created', sanitizePayload({
+    id: order.id, order_number: order.order_number, status: order.status,
+    broker_id: order.broker_id, revenue: order.revenue, broker_fee: order.broker_fee,
+  })).catch(() => {})
 
   // Auto-create local drives if pickup/delivery states match a terminal
   void autoCreateLocalDrives(supabase, tenantId, order).catch(() => {})
@@ -331,6 +338,10 @@ export async function updateOrder(id: string, data: unknown) {
     metadata: { changedFields },
   }).catch(() => {})
 
+  dispatchWebhookEvent(tenantId, 'order.updated', sanitizePayload({
+    id, ...Object.fromEntries(Object.entries(parsed.data).filter(([k]) => k !== 'id')),
+  })).catch(() => {})
+
   revalidatePath('/orders')
   return { success: true, data: order }
 }
@@ -445,6 +456,10 @@ export async function updateOrderStatus(
     actorEmail: auth.ctx.user.email,
     metadata: { oldStatus, newStatus },
   }).catch(() => {})
+
+  dispatchWebhookEvent(tenantId, 'order.status_changed', sanitizePayload({
+    id, status: newStatus, previous_status: oldStatus,
+  })).catch(() => {})
 
   revalidatePath(`/orders/${id}`)
   revalidatePath('/orders')

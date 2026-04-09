@@ -5,6 +5,8 @@ import { recordPaymentSchema } from '@/lib/validations/payment'
 import { logOrderActivity } from '@/lib/activity-log'
 import { syncPaymentToQB } from '@/lib/quickbooks/sync'
 import { revalidatePath } from 'next/cache'
+import { dispatchWebhookEvent } from '@/lib/webhooks/webhook-dispatcher'
+import { sanitizePayload } from '@/lib/webhooks/payload-sanitizer'
 
 export async function recordPayment(orderId: string, data: unknown) {
   const parsed = recordPaymentSchema.safeParse(data)
@@ -104,6 +106,10 @@ export async function recordPayment(orderId: string, data: unknown) {
     actorEmail: auth.ctx.user.email,
     metadata: { amount: parsed.data.amount, paymentDate: parsed.data.paymentDate, newPaymentStatus },
   }).catch(() => {})
+
+  dispatchWebhookEvent(tenantId, 'payment.received', sanitizePayload({
+    order_id: orderId, amount: parsed.data.amount, payment_date: parsed.data.paymentDate,
+  })).catch(() => {})
 
   revalidatePath(`/orders/${orderId}`)
   revalidatePath('/billing')

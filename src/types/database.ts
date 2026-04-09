@@ -577,6 +577,54 @@ export interface OrderActivityLog {
 }
 
 // ============================================================================
+// Audit Log Compliance Interfaces (SOC 2 Type II)
+// ============================================================================
+
+export interface AuditLog {
+  id: string
+  tenant_id: string
+  entity_type: string
+  entity_id: string
+  action: string
+  description: string
+  actor_id: string
+  actor_email: string | null
+  metadata: Record<string, unknown> | null
+  severity: 'info' | 'warning' | 'critical'
+  change_diff: { before: Record<string, unknown>; after: Record<string, unknown> } | null
+  integrity_hash: string | null
+  previous_hash: string | null
+  ip_address: string | null
+  user_agent: string | null
+  created_at: string
+}
+
+export interface AuditAlertConfig {
+  id: string
+  tenant_id: string
+  entity_type: string
+  action: string
+  severity: string
+  enabled: boolean
+  notify_in_app: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface AuditArchive {
+  id: string
+  tenant_id: string
+  archive_month: string
+  date_range_start: string
+  date_range_end: string
+  record_count: number
+  storage_path: string
+  file_size_bytes: number | null
+  checksum: string
+  created_at: string
+}
+
+// ============================================================================
 // Dispatcher Payroll Interfaces
 // ============================================================================
 
@@ -1005,4 +1053,35 @@ export interface DriverOnboardingStep {
   completed_at: string | null
   created_at: string
   updated_at: string
+}
+
+// ============================================================================
+// Outbound Webhook System Interfaces
+// ============================================================================
+
+export interface WebhookEndpoint {
+  id: string
+  tenant_id: string
+  url: string
+  secret: string
+  events: string[]
+  description: string | null
+  enabled: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface WebhookDelivery {
+  id: string
+  tenant_id: string
+  endpoint_id: string
+  event_type: string
+  payload: Record<string, unknown>
+  status: 'pending' | 'success' | 'failed' | 'exhausted'
+  response_code: number | null
+  response_body: string | null
+  attempts: number
+  max_attempts: number
+  next_retry_at: string | null
+  created_at: string
 }

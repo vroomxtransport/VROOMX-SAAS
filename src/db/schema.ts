@@ -1240,10 +1240,18 @@ export const auditLogs = pgTable('audit_logs', {
   actorId: uuid('actor_id').notNull(),
   actorEmail: text('actor_email'),
   metadata: jsonb('metadata'),
+  severity: text('severity').notNull().default('info'),
+  changeDiff: jsonb('change_diff'),
+  integrityHash: text('integrity_hash'),
+  previousHash: text('previous_hash'),
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
   index('idx_audit_logs_tenant_entity').on(table.tenantId, table.entityType, table.entityId),
   index('idx_audit_logs_tenant_created').on(table.tenantId, table.createdAt),
+  index('idx_audit_logs_tenant_severity').on(table.tenantId, table.severity, table.createdAt),
+  index('idx_audit_logs_tenant_hash_chain').on(table.tenantId, table.createdAt),
 ])
 
 // ============================================================================
@@ -1427,6 +1435,51 @@ export const platformAuditLogs = pgTable('platform_audit_logs', {
 // Platform Audit Logs
 export type DrizzlePlatformAuditLog = typeof platformAuditLogs.$inferSelect
 export type NewPlatformAuditLog = typeof platformAuditLogs.$inferInsert
+
+// ============================================================================
+// Audit Alert Configs (SOC 2 — per-tenant alert preferences)
+// ============================================================================
+
+export const auditAlertConfigs = pgTable('audit_alert_configs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  entityType: text('entity_type').notNull(),
+  action: text('action').notNull(),
+  severity: text('severity').notNull().default('critical'),
+  enabled: boolean('enabled').notNull().default(true),
+  notifyInApp: boolean('notify_in_app').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  unique('audit_alert_configs_tenant_entity_action').on(table.tenantId, table.entityType, table.action),
+  index('idx_audit_alert_configs_tenant').on(table.tenantId),
+])
+
+export type DrizzleAuditAlertConfig = typeof auditAlertConfigs.$inferSelect
+export type NewAuditAlertConfig = typeof auditAlertConfigs.$inferInsert
+
+// ============================================================================
+// Audit Archives (SOC 2 — archived log batch metadata)
+// ============================================================================
+
+export const auditArchives = pgTable('audit_archives', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  archiveMonth: text('archive_month').notNull(),
+  dateRangeStart: timestamp('date_range_start', { withTimezone: true }).notNull(),
+  dateRangeEnd: timestamp('date_range_end', { withTimezone: true }).notNull(),
+  recordCount: integer('record_count').notNull().default(0),
+  storagePath: text('storage_path').notNull(),
+  fileSizeBytes: integer('file_size_bytes'),
+  checksum: text('checksum').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  unique('audit_archives_tenant_month').on(table.tenantId, table.archiveMonth),
+  index('idx_audit_archives_tenant').on(table.tenantId, table.archiveMonth),
+])
+
+export type DrizzleAuditArchive = typeof auditArchives.$inferSelect
+export type NewAuditArchive = typeof auditArchives.$inferInsert
 
 // ============================================================================
 // Samsara ELD/Telematics Integration Tables
@@ -1783,3 +1836,55 @@ export const scheduledReports = pgTable('scheduled_reports', {
 
 export type DrizzleScheduledReport = typeof scheduledReports.$inferSelect
 export type NewScheduledReport = typeof scheduledReports.$inferInsert
+
+// ============================================================================
+// Outbound Webhook System
+// ============================================================================
+
+/**
+ * Webhook Endpoints Table
+ * Tenant-configured HTTPS targets for outbound event delivery.
+ * Each endpoint has a shared secret used to sign payloads (HMAC-SHA256).
+ */
+export const webhookEndpoints = pgTable('webhook_endpoints', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  url: text('url').notNull(),
+  secret: text('secret').notNull(),
+  events: jsonb('events').notNull().default([]),
+  description: text('description'),
+  enabled: boolean('enabled').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_webhook_endpoints_tenant_enabled').on(table.tenantId, table.enabled),
+])
+
+/**
+ * Webhook Deliveries Table
+ * Per-delivery audit trail with retry state machine.
+ * status transitions: pending → success | failed → (on exhaustion) exhausted
+ */
+export const webhookDeliveries = pgTable('webhook_deliveries', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  endpointId: uuid('endpoint_id').notNull().references(() => webhookEndpoints.id, { onDelete: 'cascade' }),
+  eventType: text('event_type').notNull(),
+  payload: jsonb('payload').notNull(),
+  status: text('status').notNull().default('pending'),
+  responseCode: integer('response_code'),
+  responseBody: text('response_body'),
+  attempts: integer('attempts').notNull().default(0),
+  maxAttempts: integer('max_attempts').notNull().default(5),
+  nextRetryAt: timestamp('next_retry_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_webhook_deliveries_endpoint').on(table.endpointId),
+  index('idx_webhook_deliveries_tenant_created').on(table.tenantId, table.createdAt),
+])
+
+// Webhook System Types
+export type DrizzleWebhookEndpoint = typeof webhookEndpoints.$inferSelect
+export type NewWebhookEndpoint = typeof webhookEndpoints.$inferInsert
+export type DrizzleWebhookDelivery = typeof webhookDeliveries.$inferSelect
+export type NewWebhookDelivery = typeof webhookDeliveries.$inferInsert

@@ -4,7 +4,10 @@ import { authorize, safeError } from '@/lib/authz'
 import { tripSchema } from '@/lib/validations/trip'
 import { logOrderActivity } from '@/lib/activity-log'
 import { logAuditEvent } from '@/lib/audit-log'
+import { getAuditContext } from '@/lib/audit-context'
 import { revalidatePath } from 'next/cache'
+import { dispatchWebhookEvent } from '@/lib/webhooks/webhook-dispatcher'
+import { sanitizePayload } from '@/lib/webhooks/payload-sanitizer'
 import { calculateTripFinancials } from '@/lib/financial/trip-calculations'
 import { z } from 'zod'
 import type { OrderStatus, TripStatus } from '@/types'
@@ -28,6 +31,8 @@ export async function createTrip(data: unknown) {
   const auth = await authorize('trips.create', { rateLimit: { key: 'createTrip', limit: 30, windowMs: 60_000 } })
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId } = auth.ctx
+
+  const auditCtx = await getAuditContext()
 
   const v = parsed.data
 
@@ -58,7 +63,14 @@ export async function createTrip(data: unknown) {
     actorId: auth.ctx.user.id,
     actorEmail: auth.ctx.user.email,
     metadata: { driverId: v.driver_id, truckId: v.truck_id },
+    changeDiff: { before: {}, after: trip },
+    ...auditCtx,
   }).catch(() => {})
+
+  dispatchWebhookEvent(tenantId, 'trip.created', sanitizePayload({
+    id: trip.id, trip_number: trip.trip_number, status: trip.status,
+    driver_id: trip.driver_id, truck_id: trip.truck_id,
+  })).catch(() => {})
 
   revalidatePath('/dispatch')
   return { success: true, data: trip }
@@ -101,6 +113,10 @@ export async function updateTrip(id: string, data: unknown) {
   if (v.carrier_pay !== undefined) {
     await recalculateTripFinancials(id)
   }
+
+  dispatchWebhookEvent(tenantId, 'trip.updated', sanitizePayload({
+    id: trip.id, trip_number: trip.trip_number,
+  })).catch(() => {})
 
   revalidatePath('/dispatch')
   revalidatePath(`/trips/${id}`)
@@ -147,6 +163,8 @@ export async function updateTripStatus(id: string, newStatus: TripStatus) {
   const auth = await authorize('trips.update')
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId } = auth.ctx
+
+  const auditCtx = await getAuditContext()
 
   // Fetch current status before update for audit trail
   const { data: currentTrip } = await supabase
@@ -201,6 +219,8 @@ export async function updateTripStatus(id: string, newStatus: TripStatus) {
     actorId: auth.ctx.user.id,
     actorEmail: auth.ctx.user.email,
     metadata: { from: previousStatus, to: newStatus },
+    changeDiff: { before: { status: previousStatus }, after: { status: newStatus } },
+    ...auditCtx,
   }).catch(() => {})
 
   // Auto-sync order statuses based on trip status change
@@ -215,6 +235,11 @@ export async function updateTripStatus(id: string, newStatus: TripStatus) {
       return { error: safeError(syncError, 'updateTripStatus.syncOrders') }
     }
   }
+
+  // Dispatch webhook after order sync succeeds (not before — avoids stale events)
+  dispatchWebhookEvent(tenantId, 'trip.status_changed', sanitizePayload({
+    id, status: newStatus, previous_status: previousStatus,
+  })).catch(() => {})
 
   // Auto-create pending local deliveries for qualifying orders
   if (newStatus === 'at_terminal') {
@@ -360,6 +385,8 @@ export async function assignOrderToTrip(orderId: string, tripId: string) {
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId } = auth.ctx
 
+  const auditCtx = await getAuditContext()
+
   // Get the order's current trip_id (old trip) before reassignment
   const { data: currentOrder, error: fetchError } = await supabase
     .from('orders')
@@ -444,6 +471,8 @@ export async function assignOrderToTrip(orderId: string, tripId: string) {
     actorId: auth.ctx.user.id,
     actorEmail: auth.ctx.user.email,
     metadata: { orderId },
+    changeDiff: { before: { trip_id: oldTripId ?? null }, after: { trip_id: tripId } },
+    ...auditCtx,
   }).catch(() => {})
 
   revalidatePath('/dispatch')
@@ -460,6 +489,8 @@ export async function unassignOrderFromTrip(orderId: string) {
   const auth = await authorize('trips.update')
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId } = auth.ctx
+
+  const auditCtx = await getAuditContext()
 
   // Get the order's current trip_id
   const { data: currentOrder, error: fetchError } = await supabase
@@ -521,6 +552,8 @@ export async function unassignOrderFromTrip(orderId: string) {
     actorId: auth.ctx.user.id,
     actorEmail: auth.ctx.user.email,
     metadata: { orderId },
+    changeDiff: { before: { trip_id: oldTripId }, after: { trip_id: null } },
+    ...auditCtx,
   }).catch(() => {})
 
   // Remove unassigned order's stops from route_sequence

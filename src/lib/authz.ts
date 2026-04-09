@@ -33,6 +33,9 @@ const SENSITIVE_PERMISSIONS = new Set<string>([
   'settings.manage',
   'custom_roles.manage',
   'integrations.manage',
+  'webhooks.create',  // WH-007: webhook ops are integration-sensitive
+  'webhooks.update',
+  'webhooks.delete',
 ])
 
 // Short TTL so revoked users lose access within ~30s but the DB isn't
