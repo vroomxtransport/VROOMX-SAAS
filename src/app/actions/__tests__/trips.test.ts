@@ -17,8 +17,11 @@ vi.mock('@/lib/activity-log', () => ({
   logOrderActivity: vi.fn().mockResolvedValue(undefined),
 }))
 
-vi.mock('@/app/actions/notifications', () => ({
-  createWebNotification: vi.fn().mockResolvedValue(undefined),
+vi.mock('@/lib/notifications/load-events', () => ({
+  notifyAssignedTeamForOrderAssigned: vi.fn().mockResolvedValue(undefined),
+  notifyAssignedTeamForOrderStatusChange: vi.fn().mockResolvedValue(undefined),
+  notifyAssignedTeamForOrderUnassigned: vi.fn().mockResolvedValue(undefined),
+  notifyAssignedTeamForTripStatusChange: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock('@/lib/financial/trip-calculations', () => ({
@@ -35,10 +38,30 @@ vi.mock('@/lib/financial/trip-calculations', () => ({
 
 import { authorize } from '@/lib/authz'
 import { revalidatePath } from 'next/cache'
-import { createTrip, updateTrip, deleteTrip, updateTripStatus } from '../trips'
+import {
+  notifyAssignedTeamForOrderAssigned,
+  notifyAssignedTeamForOrderStatusChange,
+  notifyAssignedTeamForOrderUnassigned,
+  notifyAssignedTeamForTripStatusChange,
+} from '@/lib/notifications/load-events'
+import { createTrip, updateTrip, deleteTrip, updateTripStatus, assignOrderToTrip, unassignOrderFromTrip } from '../trips'
 
 const mockedAuthorize = vi.mocked(authorize)
 const mockedRevalidate = vi.mocked(revalidatePath)
+const mockedNotifyAssignedTeamForOrderAssigned = vi.mocked(notifyAssignedTeamForOrderAssigned)
+const mockedNotifyAssignedTeamForOrderStatusChange = vi.mocked(notifyAssignedTeamForOrderStatusChange)
+const mockedNotifyAssignedTeamForOrderUnassigned = vi.mocked(notifyAssignedTeamForOrderUnassigned)
+const mockedNotifyAssignedTeamForTripStatusChange = vi.mocked(notifyAssignedTeamForTripStatusChange)
+
+type SelectResult = { data: unknown; error: unknown }
+type SelectChain = {
+  eq: ReturnType<typeof vi.fn>
+  single: ReturnType<typeof vi.fn>
+  order: ReturnType<typeof vi.fn>
+  in: ReturnType<typeof vi.fn>
+  gt: ReturnType<typeof vi.fn>
+  then: (resolve: (value: SelectResult) => void) => void
+}
 
 // ---------------------------------------------------------------------------
 // Mock Supabase client factory
@@ -65,20 +88,18 @@ function createMockSupabaseClient(overrides: {
   const ordersUpdateResult = overrides.ordersUpdateResult ?? { error: null }
 
   // Generic chain builder for select queries
-  const makeSelectChain = (result: { data: unknown; error: unknown }) => ({
-    eq: vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnValue({
-        single: vi.fn().mockResolvedValue(result),
-        order: vi.fn().mockResolvedValue(result),
-      }),
-      single: vi.fn().mockResolvedValue(result),
-      order: vi.fn().mockResolvedValue(result),
-      gt: vi.fn().mockReturnValue({
-        in: vi.fn().mockResolvedValue({ data: [], error: null }),
-      }),
+  const makeSelectChain = (result: { data: unknown; error: unknown }) => {
+    const chain = {} as SelectChain
+    chain.eq = vi.fn().mockReturnValue(chain)
+    chain.single = vi.fn().mockResolvedValue(result)
+    chain.order = vi.fn().mockResolvedValue(result)
+    chain.in = vi.fn().mockResolvedValue(result)
+    chain.gt = vi.fn().mockReturnValue({
       in: vi.fn().mockResolvedValue({ data: [], error: null }),
-    }),
-  })
+    })
+    chain.then = (resolve: (value: { data: unknown; error: unknown }) => void) => resolve(result)
+    return chain
+  }
 
   const client = {
     from: vi.fn().mockImplementation((table: string) => {
@@ -243,7 +264,21 @@ describe('createTrip', () => {
 describe('updateTrip', () => {
   it('returns success with valid partial update', async () => {
     const mockClient = createMockSupabaseClient()
-    mockAuthSuccess(mockClient)
+    mockedAuthorize
+      .mockResolvedValueOnce({
+        ok: true,
+        ctx: {
+          supabase: mockClient as never,
+          tenantId: 'tenant-456',
+          user: { id: 'user-123', email: 'test@example.com' },
+          role: 'admin',
+          permissions: ['*'],
+        },
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        error: 'Not authenticated',
+      })
 
     const result = await updateTrip('trip-1', { notes: 'Updated notes' })
 
@@ -287,14 +322,8 @@ describe('updateTrip', () => {
         },
       })
       .mockResolvedValueOnce({
-        ok: true,
-        ctx: {
-          supabase: mockClient as never,
-          tenantId: 'tenant-456',
-          user: { id: 'user-123', email: 'test@example.com' },
-          role: 'admin',
-          permissions: ['*'],
-        },
+        ok: false,
+        error: 'Not authenticated',
       })
 
     const result = await updateTrip('trip-1', { carrier_pay: 2000 })
@@ -380,6 +409,16 @@ describe('updateTripStatus', () => {
       data: expect.objectContaining({ id: 'trip-1' }),
     })
     expect(mockedAuthorize).toHaveBeenCalledWith('trips.update')
+    expect(mockedNotifyAssignedTeamForTripStatusChange).toHaveBeenCalledWith({
+      supabase: mockClient,
+      tenantId: 'tenant-456',
+      actorUserId: 'user-123',
+    }, {
+      tripId: 'trip-1',
+      oldStatus: 'unknown',
+      newStatus: 'in_progress',
+    })
+    expect(mockedNotifyAssignedTeamForOrderStatusChange).not.toHaveBeenCalled()
   })
 
   it('rejects invalid trip status', async () => {
@@ -427,22 +466,18 @@ describe('updateTripStatus', () => {
 
   it('accepts at_terminal status with local drives logic', async () => {
     // at_terminal triggers additional queries for qualifying orders + local_drives
-    const makeDeepChain = (result: { data: unknown; error: unknown }) => ({
-      eq: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue(result),
-          order: vi.fn().mockResolvedValue(result),
-          gt: vi.fn().mockReturnValue({
-            in: vi.fn().mockResolvedValue({ data: [], error: null }),
-          }),
-        }),
-        single: vi.fn().mockResolvedValue(result),
-        gt: vi.fn().mockReturnValue({
-          in: vi.fn().mockResolvedValue({ data: [], error: null }),
-        }),
+    const makeDeepChain = (result: { data: unknown; error: unknown }) => {
+      const chain = {} as SelectChain
+      chain.eq = vi.fn().mockReturnValue(chain)
+      chain.single = vi.fn().mockResolvedValue(result)
+      chain.order = vi.fn().mockResolvedValue(result)
+      chain.in = vi.fn().mockResolvedValue(result)
+      chain.gt = vi.fn().mockReturnValue({
         in: vi.fn().mockResolvedValue({ data: [], error: null }),
-      }),
-    })
+      })
+      chain.then = (resolve: (value: { data: unknown; error: unknown }) => void) => resolve(result)
+      return chain
+    }
 
     const mockClient = {
       from: vi.fn().mockImplementation((table: string) => {
@@ -493,5 +528,124 @@ describe('updateTripStatus', () => {
     const result = await updateTripStatus('trip-1', 'at_terminal')
 
     expect(result).toHaveProperty('success', true)
+  })
+})
+
+describe('assignOrderToTrip and unassignOrderFromTrip notification behavior', () => {
+  it('creates assigned-team notifications when assigning an order to a trip', async () => {
+    const mockClient = createMockSupabaseClient({
+      selectResult: { data: { route_sequence: [] }, error: null },
+      updateResult: { data: null, error: null },
+      ordersSelectResult: { data: { trip_id: null }, error: null },
+    })
+    mockedAuthorize
+      .mockResolvedValueOnce({
+        ok: true,
+        ctx: {
+          supabase: mockClient as never,
+          tenantId: 'tenant-456',
+          user: { id: 'user-123', email: 'test@example.com' },
+          role: 'admin',
+          permissions: ['*'],
+        },
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        error: 'Not authenticated',
+      })
+
+    const result = await assignOrderToTrip('order-1', 'trip-1')
+
+    expect(result).toEqual({ success: true })
+    expect(mockedNotifyAssignedTeamForOrderAssigned).toHaveBeenCalledWith({
+      supabase: mockClient,
+      tenantId: 'tenant-456',
+      actorUserId: 'user-123',
+    }, {
+      orderId: 'order-1',
+      tripId: 'trip-1',
+    })
+  })
+
+  it('notifies both old and new trip audiences when reassigning an order', async () => {
+    const mockClient = createMockSupabaseClient({
+      selectResult: { data: { route_sequence: [] }, error: null },
+      updateResult: { data: null, error: null },
+      ordersSelectResult: { data: { trip_id: 'trip-old' }, error: null },
+    })
+    mockedAuthorize
+      .mockResolvedValueOnce({
+        ok: true,
+        ctx: {
+          supabase: mockClient as never,
+          tenantId: 'tenant-456',
+          user: { id: 'user-123', email: 'test@example.com' },
+          role: 'admin',
+          permissions: ['*'],
+        },
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        error: 'Not authenticated',
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        error: 'Not authenticated',
+      })
+
+    const result = await assignOrderToTrip('order-1', 'trip-1')
+
+    expect(result).toEqual({ success: true })
+    expect(mockedNotifyAssignedTeamForOrderUnassigned).toHaveBeenCalledWith({
+      supabase: mockClient,
+      tenantId: 'tenant-456',
+      actorUserId: 'user-123',
+    }, {
+      orderId: 'order-1',
+      tripId: 'trip-old',
+    })
+    expect(mockedNotifyAssignedTeamForOrderAssigned).toHaveBeenCalledWith({
+      supabase: mockClient,
+      tenantId: 'tenant-456',
+      actorUserId: 'user-123',
+    }, {
+      orderId: 'order-1',
+      tripId: 'trip-1',
+    })
+  })
+
+  it('creates assigned-team notifications when unassigning an order from a trip', async () => {
+    const mockClient = createMockSupabaseClient({
+      selectResult: { data: { trip_number: 'TRP-001', route_sequence: [] }, error: null },
+      updateResult: { data: null, error: null },
+      ordersSelectResult: { data: { trip_id: 'trip-old' }, error: null },
+    })
+    mockedAuthorize
+      .mockResolvedValueOnce({
+        ok: true,
+        ctx: {
+          supabase: mockClient as never,
+          tenantId: 'tenant-456',
+          user: { id: 'user-123', email: 'test@example.com' },
+          role: 'admin',
+          permissions: ['*'],
+        },
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        error: 'Not authenticated',
+      })
+
+    const result = await unassignOrderFromTrip('order-1')
+
+    expect(result).toEqual({ success: true })
+    expect(mockedNotifyAssignedTeamForOrderUnassigned).toHaveBeenCalledWith({
+      supabase: mockClient,
+      tenantId: 'tenant-456',
+      actorUserId: 'user-123',
+    }, {
+      orderId: 'order-1',
+      tripId: 'trip-old',
+    })
   })
 })

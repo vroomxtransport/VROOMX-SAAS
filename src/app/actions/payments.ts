@@ -3,7 +3,7 @@
 import { authorize, safeError } from '@/lib/authz'
 import { recordPaymentSchema } from '@/lib/validations/payment'
 import { logOrderActivity } from '@/lib/activity-log'
-import { createWebNotification } from '@/app/actions/notifications'
+import { notifyAssignedTeamForPaymentRecorded } from '@/lib/notifications/load-events'
 import { syncPaymentToQB } from '@/lib/quickbooks/sync'
 import { revalidatePath } from 'next/cache'
 
@@ -106,13 +106,14 @@ export async function recordPayment(orderId: string, data: unknown) {
     metadata: { amount: parsed.data.amount, paymentDate: parsed.data.paymentDate, newPaymentStatus },
   }).catch(() => {})
 
-  // Fire-and-forget notification
-  void createWebNotification({
-    userId: auth.ctx.user.id,
-    type: 'payment_received',
-    title: 'Payment Recorded',
-    body: `$${parsed.data.amount.toFixed(2)} payment recorded on order ${order.order_number}`,
-    link: `/orders/${orderId}`,
+  void notifyAssignedTeamForPaymentRecorded({
+    supabase,
+    tenantId,
+    actorUserId: auth.ctx.user.id,
+  }, {
+    orderId,
+    amount: parsed.data.amount,
+    paymentStatus: newPaymentStatus,
   }).catch(() => {})
 
   revalidatePath(`/orders/${orderId}`)

@@ -4,6 +4,7 @@ import { getResend } from '@/lib/resend/client'
 import { getSignedUrl } from '@/lib/storage'
 import { logOrderActivity } from '@/lib/activity-log'
 import { syncInvoiceToQB } from '@/lib/quickbooks/sync'
+import { notifyAssignedTeamForInvoiceSent } from '@/lib/notifications/load-events'
 import { InvoiceDocument } from '@/lib/pdf/invoice-template'
 import { InvoiceEmail } from '@/components/email/invoice-email'
 
@@ -128,6 +129,8 @@ export async function POST(
       updateFields.status = 'invoiced'
     }
 
+    let didAdvanceToInvoiced = false
+
     if (Object.keys(updateFields).length > 0) {
       const { error: updateError } = await supabase
         .from('orders')
@@ -139,6 +142,8 @@ export async function POST(
         console.error('Failed to update order status:', updateError)
         // Email was sent successfully, so still return success
         // but log the status update failure
+      } else {
+        didAdvanceToInvoiced = updateFields.status === 'invoiced'
       }
     }
 
@@ -154,6 +159,16 @@ export async function POST(
       actorId: user.id,
       actorEmail: user.email,
     }).catch(() => {})
+
+    if (didAdvanceToInvoiced) {
+      void notifyAssignedTeamForInvoiceSent({
+        supabase,
+        tenantId,
+        actorUserId: user.id,
+      }, {
+        orderId,
+      }).catch(() => {})
+    }
 
     return Response.json({ success: true, emailId: data?.id })
   } catch (err) {

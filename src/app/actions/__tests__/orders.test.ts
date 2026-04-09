@@ -21,16 +21,25 @@ vi.mock('@/lib/activity-log', () => ({
   logOrderActivity: vi.fn().mockResolvedValue(undefined),
 }))
 
-vi.mock('@/app/actions/notifications', () => ({
-  createWebNotification: vi.fn().mockResolvedValue(undefined),
+vi.mock('@/lib/notifications/load-events', () => ({
+  notifyAssignedTeamForOrderStatusChange: vi.fn().mockResolvedValue(undefined),
 }))
 
 import { authorize } from '@/lib/authz'
 import { revalidatePath } from 'next/cache'
+import { notifyAssignedTeamForOrderStatusChange } from '@/lib/notifications/load-events'
 import { createOrder, updateOrder, deleteOrder, updateOrderStatus } from '../orders'
 
 const mockedAuthorize = vi.mocked(authorize)
 const mockedRevalidate = vi.mocked(revalidatePath)
+const mockedNotifyAssignedTeamForOrderStatusChange = vi.mocked(notifyAssignedTeamForOrderStatusChange)
+
+type SelectResult = { data: unknown; error: unknown }
+type SelectChain = {
+  eq: ReturnType<typeof vi.fn>
+  single: ReturnType<typeof vi.fn>
+  then: (resolve: (value: SelectResult) => void) => void
+}
 
 // ---------------------------------------------------------------------------
 // Mock Supabase client factory
@@ -46,6 +55,13 @@ function createMockSupabaseClient(overrides: {
   const updateResult = overrides.updateResult ?? { data: { id: 'order-1', order_number: 'ORD-001', status: 'new' }, error: null }
   const deleteResult = overrides.deleteResult ?? { error: null }
   const selectResult = overrides.selectResult ?? { data: { status: 'new' }, error: null }
+  const makeSelectChain = (result: { data: unknown; error: unknown }) => {
+    const chain = {} as SelectChain
+    chain.eq = vi.fn().mockReturnValue(chain)
+    chain.single = vi.fn().mockResolvedValue(result)
+    chain.then = (resolve: (value: { data: unknown; error: unknown }) => void) => resolve(result)
+    return chain
+  }
 
   const client = {
     from: vi.fn().mockReturnValue({
@@ -68,13 +84,7 @@ function createMockSupabaseClient(overrides: {
           eq: vi.fn().mockResolvedValue(deleteResult),
         }),
       }),
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue(selectResult),
-          }),
-        }),
-      }),
+      select: vi.fn().mockReturnValue(makeSelectChain(selectResult)),
     }),
   }
   return client
@@ -320,6 +330,15 @@ describe('updateOrderStatus', () => {
       success: true,
       data: expect.objectContaining({ status: 'assigned' }),
     })
+    expect(mockedNotifyAssignedTeamForOrderStatusChange).toHaveBeenCalledWith({
+      supabase: mockClient,
+      tenantId: 'tenant-456',
+      actorUserId: 'user-123',
+    }, {
+      orderId: 'order-1',
+      oldStatus: 'new',
+      newStatus: 'assigned',
+    })
   })
 
   it('rejects invalid status', async () => {
@@ -349,6 +368,15 @@ describe('updateOrderStatus', () => {
     expect(result).toEqual({
       success: true,
       data: expect.objectContaining({ status: 'cancelled' }),
+    })
+    expect(mockedNotifyAssignedTeamForOrderStatusChange).toHaveBeenCalledWith({
+      supabase: mockClient,
+      tenantId: 'tenant-456',
+      actorUserId: 'user-123',
+    }, {
+      orderId: 'order-1',
+      oldStatus: 'assigned',
+      newStatus: 'cancelled',
     })
   })
 

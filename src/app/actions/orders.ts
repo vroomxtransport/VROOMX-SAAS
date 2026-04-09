@@ -5,10 +5,11 @@ import { authorize, safeError } from '@/lib/authz'
 import { createOrderSchema } from '@/lib/validations/order'
 import { geocodeAndSaveOrder } from '@/lib/geocoding-helpers'
 import { logOrderActivity } from '@/lib/activity-log'
-import { createWebNotification } from '@/app/actions/notifications'
+import { notifyAssignedTeamForOrderStatusChange } from '@/lib/notifications/load-events'
 import { recalculateTripFinancials } from '@/app/actions/trips'
 import { uploadFile, deleteFile } from '@/lib/storage'
 import { revalidatePath } from 'next/cache'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { OrderStatus } from '@/types'
 
 const ATTACHMENT_BUCKET = 'attachments'
@@ -17,9 +18,6 @@ const uuidSchema = z.string().uuid()
 
 // Status workflow: defines the linear progression of order statuses
 const STATUS_ORDER: OrderStatus[] = ['new', 'assigned', 'picked_up', 'delivered', 'invoiced', 'paid']
-
-// Statuses that allow cancellation (before delivery)
-const CANCELLABLE_STATUSES: OrderStatus[] = ['new', 'assigned', 'picked_up']
 
 const VALID_STATUSES: OrderStatus[] = ['new', 'assigned', 'picked_up', 'delivered', 'invoiced', 'paid', 'cancelled']
 
@@ -123,9 +121,8 @@ export async function createOrder(data: unknown) {
  * state matches an active terminal's auto_create_states configuration.
  * Fire-and-forget — errors are logged but don't block order creation.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function autoCreateLocalDrives(
-  supabase: any,
+  supabase: SupabaseClient,
   tenantId: string,
   order: {
     id: string
@@ -450,13 +447,14 @@ export async function updateOrderStatus(
     metadata: { oldStatus, newStatus },
   }).catch(() => {})
 
-  // Fire-and-forget notification
-  void createWebNotification({
-    userId: auth.ctx.user.id,
-    type: 'order_status',
-    title: `Order ${order.order_number} → ${newStatus}`,
-    body: `Order status changed to ${newStatus}`,
-    link: `/orders/${id}`,
+  void notifyAssignedTeamForOrderStatusChange({
+    supabase,
+    tenantId,
+    actorUserId: auth.ctx.user.id,
+  }, {
+    orderId: id,
+    oldStatus,
+    newStatus,
   }).catch(() => {})
 
   revalidatePath(`/orders/${id}`)
@@ -689,6 +687,16 @@ export async function rollbackOrderStatus(id: string) {
     actorId: auth.ctx.user.id,
     actorEmail: auth.ctx.user.email,
     metadata: { oldStatus: currentStatus, newStatus: previousStatus },
+  }).catch(() => {})
+
+  void notifyAssignedTeamForOrderStatusChange({
+    supabase,
+    tenantId,
+    actorUserId: auth.ctx.user.id,
+  }, {
+    orderId: id,
+    oldStatus: currentStatus,
+    newStatus: previousStatus,
   }).catch(() => {})
 
   revalidatePath(`/orders/${id}`)
