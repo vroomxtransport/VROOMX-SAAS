@@ -21,18 +21,12 @@ vi.mock('@/lib/activity-log', () => ({
   logOrderActivity: vi.fn().mockResolvedValue(undefined),
 }))
 
-vi.mock('@/lib/notifications/load-events', () => ({
-  notifyAssignedTeamForOrderStatusChange: vi.fn().mockResolvedValue(undefined),
-}))
-
 import { authorize } from '@/lib/authz'
 import { revalidatePath } from 'next/cache'
-import { notifyAssignedTeamForOrderStatusChange } from '@/lib/notifications/load-events'
 import { createOrder, updateOrder, deleteOrder, updateOrderStatus } from '../orders'
 
 const mockedAuthorize = vi.mocked(authorize)
 const mockedRevalidate = vi.mocked(revalidatePath)
-const mockedNotifyAssignedTeamForOrderStatusChange = vi.mocked(notifyAssignedTeamForOrderStatusChange)
 
 type SelectResult = { data: unknown; error: unknown }
 type SelectChain = {
@@ -330,15 +324,6 @@ describe('updateOrderStatus', () => {
       success: true,
       data: expect.objectContaining({ status: 'assigned' }),
     })
-    expect(mockedNotifyAssignedTeamForOrderStatusChange).toHaveBeenCalledWith({
-      supabase: mockClient,
-      tenantId: 'tenant-456',
-      actorUserId: 'user-123',
-    }, {
-      orderId: 'order-1',
-      oldStatus: 'new',
-      newStatus: 'assigned',
-    })
   })
 
   it('rejects invalid status', async () => {
@@ -368,15 +353,6 @@ describe('updateOrderStatus', () => {
     expect(result).toEqual({
       success: true,
       data: expect.objectContaining({ status: 'cancelled' }),
-    })
-    expect(mockedNotifyAssignedTeamForOrderStatusChange).toHaveBeenCalledWith({
-      supabase: mockClient,
-      tenantId: 'tenant-456',
-      actorUserId: 'user-123',
-    }, {
-      orderId: 'order-1',
-      oldStatus: 'assigned',
-      newStatus: 'cancelled',
     })
   })
 

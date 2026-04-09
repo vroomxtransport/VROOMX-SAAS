@@ -5,7 +5,6 @@ import { authorize, safeError } from '@/lib/authz'
 import { createOrderSchema } from '@/lib/validations/order'
 import { geocodeAndSaveOrder } from '@/lib/geocoding-helpers'
 import { logOrderActivity } from '@/lib/activity-log'
-import { notifyAssignedTeamForOrderStatusChange } from '@/lib/notifications/load-events'
 import { recalculateTripFinancials } from '@/app/actions/trips'
 import { uploadFile, deleteFile } from '@/lib/storage'
 import { revalidatePath } from 'next/cache'
@@ -447,16 +446,6 @@ export async function updateOrderStatus(
     metadata: { oldStatus, newStatus },
   }).catch(() => {})
 
-  void notifyAssignedTeamForOrderStatusChange({
-    supabase,
-    tenantId,
-    actorUserId: auth.ctx.user.id,
-  }, {
-    orderId: id,
-    oldStatus,
-    newStatus,
-  }).catch(() => {})
-
   revalidatePath(`/orders/${id}`)
   revalidatePath('/orders')
   return { success: true, data: order }
@@ -687,16 +676,6 @@ export async function rollbackOrderStatus(id: string) {
     actorId: auth.ctx.user.id,
     actorEmail: auth.ctx.user.email,
     metadata: { oldStatus: currentStatus, newStatus: previousStatus },
-  }).catch(() => {})
-
-  void notifyAssignedTeamForOrderStatusChange({
-    supabase,
-    tenantId,
-    actorUserId: auth.ctx.user.id,
-  }, {
-    orderId: id,
-    oldStatus: currentStatus,
-    newStatus: previousStatus,
   }).catch(() => {})
 
   revalidatePath(`/orders/${id}`)

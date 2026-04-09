@@ -4,12 +4,6 @@ import { authorize, safeError } from '@/lib/authz'
 import { tripSchema } from '@/lib/validations/trip'
 import { logOrderActivity } from '@/lib/activity-log'
 import { logAuditEvent } from '@/lib/audit-log'
-import {
-  notifyAssignedTeamForOrderAssigned,
-  notifyAssignedTeamForOrderStatusChange,
-  notifyAssignedTeamForOrderUnassigned,
-  notifyAssignedTeamForTripStatusChange,
-} from '@/lib/notifications/load-events'
 import { revalidatePath } from 'next/cache'
 import { calculateTripFinancials } from '@/lib/financial/trip-calculations'
 import { z } from 'zod'
@@ -355,30 +349,6 @@ export async function updateTripStatus(id: string, newStatus: TripStatus) {
     }
   }
 
-  void notifyAssignedTeamForTripStatusChange({
-    supabase,
-    tenantId,
-    actorUserId: auth.ctx.user.id,
-  }, {
-    tripId: id,
-    oldStatus: previousStatus,
-    newStatus,
-  }).catch(() => {})
-
-  if (orderStatus) {
-    for (const syncedOrder of syncedOrders) {
-      void notifyAssignedTeamForOrderStatusChange({
-        supabase,
-        tenantId,
-        actorUserId: auth.ctx.user.id,
-      }, {
-        orderId: syncedOrder.id,
-        oldStatus: syncedOrder.status,
-        newStatus: orderStatus as OrderStatus,
-      }).catch(() => {})
-    }
-  }
-
   revalidatePath('/dispatch')
   revalidatePath(`/trips/${id}`)
   revalidatePath('/orders')
@@ -418,15 +388,6 @@ export async function assignOrderToTrip(orderId: string, tripId: string) {
   // Recalculate old trip financials if the order was previously assigned
   if (oldTripId && oldTripId !== tripId) {
     await recalculateTripFinancials(oldTripId)
-
-    void notifyAssignedTeamForOrderUnassigned({
-      supabase,
-      tenantId,
-      actorUserId: auth.ctx.user.id,
-    }, {
-      orderId,
-      tripId: oldTripId,
-    }).catch(() => {})
   }
 
   // Recalculate new trip financials
@@ -483,15 +444,6 @@ export async function assignOrderToTrip(orderId: string, tripId: string) {
     actorId: auth.ctx.user.id,
     actorEmail: auth.ctx.user.email,
     metadata: { orderId },
-  }).catch(() => {})
-
-  void notifyAssignedTeamForOrderAssigned({
-    supabase,
-    tenantId,
-    actorUserId: auth.ctx.user.id,
-  }, {
-    orderId,
-    tripId,
   }).catch(() => {})
 
   revalidatePath('/dispatch')
@@ -569,15 +521,6 @@ export async function unassignOrderFromTrip(orderId: string) {
     actorId: auth.ctx.user.id,
     actorEmail: auth.ctx.user.email,
     metadata: { orderId },
-  }).catch(() => {})
-
-  void notifyAssignedTeamForOrderUnassigned({
-    supabase,
-    tenantId,
-    actorUserId: auth.ctx.user.id,
-  }, {
-    orderId,
-    tripId: oldTripId,
   }).catch(() => {})
 
   // Remove unassigned order's stops from route_sequence

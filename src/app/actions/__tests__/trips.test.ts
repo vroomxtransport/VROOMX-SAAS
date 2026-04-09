@@ -17,13 +17,6 @@ vi.mock('@/lib/activity-log', () => ({
   logOrderActivity: vi.fn().mockResolvedValue(undefined),
 }))
 
-vi.mock('@/lib/notifications/load-events', () => ({
-  notifyAssignedTeamForOrderAssigned: vi.fn().mockResolvedValue(undefined),
-  notifyAssignedTeamForOrderStatusChange: vi.fn().mockResolvedValue(undefined),
-  notifyAssignedTeamForOrderUnassigned: vi.fn().mockResolvedValue(undefined),
-  notifyAssignedTeamForTripStatusChange: vi.fn().mockResolvedValue(undefined),
-}))
-
 vi.mock('@/lib/financial/trip-calculations', () => ({
   calculateTripFinancials: vi.fn().mockReturnValue({
     revenue: 3000,
@@ -38,20 +31,10 @@ vi.mock('@/lib/financial/trip-calculations', () => ({
 
 import { authorize } from '@/lib/authz'
 import { revalidatePath } from 'next/cache'
-import {
-  notifyAssignedTeamForOrderAssigned,
-  notifyAssignedTeamForOrderStatusChange,
-  notifyAssignedTeamForOrderUnassigned,
-  notifyAssignedTeamForTripStatusChange,
-} from '@/lib/notifications/load-events'
 import { createTrip, updateTrip, deleteTrip, updateTripStatus, assignOrderToTrip, unassignOrderFromTrip } from '../trips'
 
 const mockedAuthorize = vi.mocked(authorize)
 const mockedRevalidate = vi.mocked(revalidatePath)
-const mockedNotifyAssignedTeamForOrderAssigned = vi.mocked(notifyAssignedTeamForOrderAssigned)
-const mockedNotifyAssignedTeamForOrderStatusChange = vi.mocked(notifyAssignedTeamForOrderStatusChange)
-const mockedNotifyAssignedTeamForOrderUnassigned = vi.mocked(notifyAssignedTeamForOrderUnassigned)
-const mockedNotifyAssignedTeamForTripStatusChange = vi.mocked(notifyAssignedTeamForTripStatusChange)
 
 type SelectResult = { data: unknown; error: unknown }
 type SelectChain = {
@@ -409,16 +392,6 @@ describe('updateTripStatus', () => {
       data: expect.objectContaining({ id: 'trip-1' }),
     })
     expect(mockedAuthorize).toHaveBeenCalledWith('trips.update')
-    expect(mockedNotifyAssignedTeamForTripStatusChange).toHaveBeenCalledWith({
-      supabase: mockClient,
-      tenantId: 'tenant-456',
-      actorUserId: 'user-123',
-    }, {
-      tripId: 'trip-1',
-      oldStatus: 'unknown',
-      newStatus: 'in_progress',
-    })
-    expect(mockedNotifyAssignedTeamForOrderStatusChange).not.toHaveBeenCalled()
   })
 
   it('rejects invalid trip status', async () => {
@@ -557,17 +530,9 @@ describe('assignOrderToTrip and unassignOrderFromTrip notification behavior', ()
     const result = await assignOrderToTrip('order-1', 'trip-1')
 
     expect(result).toEqual({ success: true })
-    expect(mockedNotifyAssignedTeamForOrderAssigned).toHaveBeenCalledWith({
-      supabase: mockClient,
-      tenantId: 'tenant-456',
-      actorUserId: 'user-123',
-    }, {
-      orderId: 'order-1',
-      tripId: 'trip-1',
-    })
   })
 
-  it('notifies both old and new trip audiences when reassigning an order', async () => {
+  it('reassigns an order from one trip to another', async () => {
     const mockClient = createMockSupabaseClient({
       selectResult: { data: { route_sequence: [] }, error: null },
       updateResult: { data: null, error: null },
@@ -596,22 +561,6 @@ describe('assignOrderToTrip and unassignOrderFromTrip notification behavior', ()
     const result = await assignOrderToTrip('order-1', 'trip-1')
 
     expect(result).toEqual({ success: true })
-    expect(mockedNotifyAssignedTeamForOrderUnassigned).toHaveBeenCalledWith({
-      supabase: mockClient,
-      tenantId: 'tenant-456',
-      actorUserId: 'user-123',
-    }, {
-      orderId: 'order-1',
-      tripId: 'trip-old',
-    })
-    expect(mockedNotifyAssignedTeamForOrderAssigned).toHaveBeenCalledWith({
-      supabase: mockClient,
-      tenantId: 'tenant-456',
-      actorUserId: 'user-123',
-    }, {
-      orderId: 'order-1',
-      tripId: 'trip-1',
-    })
   })
 
   it('creates assigned-team notifications when unassigning an order from a trip', async () => {
@@ -639,13 +588,5 @@ describe('assignOrderToTrip and unassignOrderFromTrip notification behavior', ()
     const result = await unassignOrderFromTrip('order-1')
 
     expect(result).toEqual({ success: true })
-    expect(mockedNotifyAssignedTeamForOrderUnassigned).toHaveBeenCalledWith({
-      supabase: mockClient,
-      tenantId: 'tenant-456',
-      actorUserId: 'user-123',
-    }, {
-      orderId: 'order-1',
-      tripId: 'trip-old',
-    })
   })
 })

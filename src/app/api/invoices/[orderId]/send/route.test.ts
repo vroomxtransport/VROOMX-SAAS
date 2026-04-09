@@ -24,10 +24,6 @@ vi.mock('@/lib/quickbooks/sync', () => ({
   syncInvoiceToQB: vi.fn().mockResolvedValue(undefined),
 }))
 
-vi.mock('@/lib/notifications/load-events', () => ({
-  notifyAssignedTeamForInvoiceSent: vi.fn().mockResolvedValue(undefined),
-}))
-
 vi.mock('@/lib/pdf/invoice-template', () => ({
   InvoiceDocument: vi.fn().mockReturnValue(null),
 }))
@@ -38,12 +34,10 @@ vi.mock('@/components/email/invoice-email', () => ({
 
 import { authorize } from '@/lib/authz'
 import { getResend } from '@/lib/resend/client'
-import { notifyAssignedTeamForInvoiceSent } from '@/lib/notifications/load-events'
 import { POST } from './route'
 
 const mockedAuthorize = vi.mocked(authorize)
 const mockedGetResend = vi.mocked(getResend)
-const mockedNotifyAssignedTeamForInvoiceSent = vi.mocked(notifyAssignedTeamForInvoiceSent)
 
 function createMockSupabaseClient(overrides?: {
   orderUpdateError?: unknown
@@ -137,16 +131,9 @@ describe('POST /api/invoices/[orderId]/send', () => {
     })
 
     expect(response.status).toBe(200)
-    expect(mockedNotifyAssignedTeamForInvoiceSent).toHaveBeenCalledWith({
-      supabase,
-      tenantId: 'tenant-1',
-      actorUserId: 'user-1',
-    }, {
-      orderId: 'order-1',
-    })
   })
 
-  it('does not send invoice notifications when the order update fails', async () => {
+  it('returns success even when the order update fails (email was already sent)', async () => {
     const supabase = createMockSupabaseClient({
       orderUpdateError: { message: 'update failed' },
     })
@@ -164,6 +151,5 @@ describe('POST /api/invoices/[orderId]/send', () => {
     })
 
     expect(response.status).toBe(200)
-    expect(mockedNotifyAssignedTeamForInvoiceSent).not.toHaveBeenCalled()
   })
 })
