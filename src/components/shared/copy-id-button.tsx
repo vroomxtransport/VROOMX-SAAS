@@ -39,27 +39,27 @@ export function CopyIdButton({ value, className }: CopyIdButtonProps) {
           <Button
             variant="ghost"
             size="icon"
-            className={cn('h-6 w-6 shrink-0 disabled:opacity-100', className)}
+            className={cn('relative h-6 w-6 shrink-0 disabled:opacity-100', className)}
             onClick={handleCopy}
             aria-label={copied ? 'Copied' : 'Copy order ID'}
             disabled={copied}
           >
-            <div
+            <span
               className={cn(
-                'transition-all',
+                'absolute inset-0 flex items-center justify-center transition-all',
                 copied ? 'scale-100 opacity-100' : 'scale-0 opacity-0'
               )}
             >
               <HugeiconsIcon icon={Tick02Icon} size={14} className="text-emerald-500" aria-hidden="true" />
-            </div>
-            <div
+            </span>
+            <span
               className={cn(
-                'absolute transition-all',
+                'absolute inset-0 flex items-center justify-center transition-all',
                 copied ? 'scale-0 opacity-0' : 'scale-100 opacity-100'
               )}
             >
               <HugeiconsIcon icon={Copy01Icon} size={14} aria-hidden="true" />
-            </div>
+            </span>
           </Button>
         </TooltipTrigger>
         <TooltipContent className="px-2 py-1 text-xs">
