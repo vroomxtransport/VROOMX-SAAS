@@ -78,7 +78,9 @@ export async function confirmPdfImport(orders: unknown) {
       delivery_contact_phone: order.deliveryContactPhone || null,
       delivery_date: order.deliveryDate || null,
       revenue: String(order.revenue),
-      carrier_pay: String(order.carrierPay),
+      // carrier_pay is computed from driver config — leave at 0 on import.
+      // Assigning a driver later via updateOrder triggers the recompute.
+      carrier_pay: '0',
       broker_fee: String(order.brokerFee),
       local_fee: String(order.localFee ?? 0),
       distance_miles: order.distanceMiles ? String(order.distanceMiles) : null,

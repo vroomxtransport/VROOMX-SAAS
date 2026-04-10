@@ -84,7 +84,6 @@ const ORDER_FIELDS: OrderField[] = [
   { key: 'delivery_date', label: 'Delivery Date', required: false, group: 'Delivery' },
   // Pricing
   { key: 'revenue', label: 'Revenue', required: false, group: 'Pricing' },
-  { key: 'carrier_pay', label: 'Carrier Pay', required: false, group: 'Pricing' },
   { key: 'broker_fee', label: 'Broker Fee', required: false, group: 'Pricing' },
   { key: 'payment_type', label: 'Payment Type', required: false, group: 'Pricing' },
 ]
@@ -303,7 +302,6 @@ export function CSVImportDialog({ open, onOpenChange }: CSVImportDialogProps) {
       }
 
       if (row.revenue && isNaN(Number(row.revenue))) rowErrors.push('Invalid revenue')
-      if (row.carrier_pay && isNaN(Number(row.carrier_pay))) rowErrors.push('Invalid carrier pay')
 
       if (rowErrors.length > 0) {
         errors.set(idx, rowErrors)

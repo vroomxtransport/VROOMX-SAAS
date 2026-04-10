@@ -69,7 +69,6 @@ Each order object should have these fields (use null for missing values):
 - deliveryContactPhone: string or null
 - deliveryDate: string or null (YYYY-MM-DD format)
 - revenue: number (total price/rate for this vehicle, 0 if not found)
-- carrierPay: number (carrier pay amount, same as revenue if not specified separately)
 - brokerFee: number (broker fee, 0 if not found)
 - distanceMiles: number or null
 - paymentType: "COD" | "COP" | "CHECK" | "BILL" | "SPLIT" | null
@@ -149,7 +148,6 @@ export function parseExtractedOrders(rawText: string): PDFExtractionResult {
       deliveryContactPhone: obj.deliveryContactPhone ?? '',
       deliveryDate: obj.deliveryDate ?? '',
       revenue: obj.revenue ?? 0,
-      carrierPay: obj.carrierPay ?? 0,
       brokerFee: obj.brokerFee ?? 0,
       localFee: 0,
       distanceMiles: obj.distanceMiles ?? undefined,

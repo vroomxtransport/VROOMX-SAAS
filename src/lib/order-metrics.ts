@@ -20,15 +20,23 @@ export function computeRevenuePerMile(
   return Math.round((rev / miles) * 100) / 100
 }
 
-export function computeCarrierPayPerMile(
-  carrierPay: string | number,
+/**
+ * Compute Driver Pay / Mile for an order.
+ *
+ * Note: the underlying DB column is still named `carrier_pay` but now
+ * holds the computed driver-pay value (see
+ * `src/lib/financial/driver-pay.ts`). This function name reflects the
+ * new semantic; callers should pass `order.carrier_pay` as `driverPay`.
+ */
+export function computeDriverPayPerMile(
+  driverPay: string | number,
   distanceMiles: string | null | undefined
 ): number | null {
   const miles = parseDistanceMiles(distanceMiles)
   if (!miles) return null
-  const cp = typeof carrierPay === 'string' ? parseFloat(carrierPay) : carrierPay
-  if (isNaN(cp)) return null
-  return Math.round((cp / miles) * 100) / 100
+  const dp = typeof driverPay === 'string' ? parseFloat(driverPay) : driverPay
+  if (isNaN(dp)) return null
+  return Math.round((dp / miles) * 100) / 100
 }
 
 export function formatMiles(miles: number | null): string {

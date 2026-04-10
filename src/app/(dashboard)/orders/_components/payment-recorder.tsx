@@ -21,7 +21,13 @@ import { cn } from '@/lib/utils'
 
 interface PaymentRecorderProps {
   orderId: string
-  carrierPay: number
+  /**
+   * Total amount the broker owes for this order (revenue). Used as the
+   * baseline for outstanding-balance math. Previously this prop was
+   * `carrierPay`, which was semantically wrong — receivables track
+   * money owed TO the company, which is revenue, not driver pay.
+   */
+  revenue: number
   amountPaid: number
   paymentStatus: PaymentStatus
   paymentType?: string | null
@@ -56,7 +62,7 @@ function getTodayString(): string {
 
 export function PaymentRecorder({
   orderId,
-  carrierPay,
+  revenue,
   amountPaid,
   paymentStatus,
   paymentType,
@@ -71,19 +77,20 @@ export function PaymentRecorder({
 
   const isSplit = paymentType === 'SPLIT' && billingAmount != null && codAmount != null
 
-  // For SPLIT orders, calculate COD and billing portions separately
+  // For SPLIT orders, calculate COD and billing portions separately.
+  // Non-split: the whole revenue is billed as one line.
   const codValue = isSplit ? codAmount : 0
-  const billingValue = isSplit ? billingAmount : carrierPay
+  const billingValue = isSplit ? billingAmount : revenue
   const codCollected = isSplit ? Math.min(amountPaid, codValue) >= codValue : false
   const billingPaid = isSplit ? Math.max(0, amountPaid - codValue) : amountPaid
   const billingRemaining = Math.max(0, Math.round((billingValue - billingPaid) * 100) / 100)
 
   const remaining = Math.max(
     0,
-    Math.round((carrierPay - amountPaid) * 100) / 100
+    Math.round((revenue - amountPaid) * 100) / 100
   )
   const percentPaid =
-    carrierPay > 0 ? Math.min(100, (amountPaid / carrierPay) * 100) : 0
+    revenue > 0 ? Math.min(100, (amountPaid / revenue) * 100) : 0
 
   const handleCodCollected = () => {
     startCodTransition(async () => {
@@ -160,7 +167,7 @@ export function PaymentRecorder({
             )}
           </div>
           <p className="text-sm text-muted-foreground">
-            Paid: {formatCurrency(amountPaid)} / {formatCurrency(carrierPay)}
+            Paid: {formatCurrency(amountPaid)} / {formatCurrency(revenue)}
           </p>
         </div>
 

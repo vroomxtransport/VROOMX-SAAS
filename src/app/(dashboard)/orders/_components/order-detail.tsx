@@ -33,7 +33,7 @@ import {
 import { PAYMENT_TYPE_LABELS } from '@/types'
 import type { OrderStatus, TripStatus, PaymentStatus } from '@/types'
 import type { OrderWithRelations } from '@/lib/queries/orders'
-import { parseDistanceMiles, computeRevenuePerMile, computeCarrierPayPerMile, formatMiles, formatPerMile } from '@/lib/order-metrics'
+import { parseDistanceMiles, computeRevenuePerMile, computeDriverPayPerMile, formatMiles, formatPerMile } from '@/lib/order-metrics'
 
 interface OrderDetailProps {
   order: OrderWithRelations
@@ -78,7 +78,7 @@ export function OrderDetail({ order }: OrderDetailProps) {
 
   const distanceMiles = parseDistanceMiles(order.distance_miles)
   const revenuePerMile = computeRevenuePerMile(order.revenue, order.distance_miles)
-  const carrierPayPerMile = computeCarrierPayPerMile(order.carrier_pay, order.distance_miles)
+  const driverPayPerMile = computeDriverPayPerMile(order.carrier_pay, order.distance_miles)
 
   const vehicleInfo = [
     order.vehicle_year,
@@ -237,8 +237,8 @@ export function OrderDetail({ order }: OrderDetailProps) {
                 <span className="text-sm font-medium tabular-nums text-foreground">{formatPerMile(revenuePerMile)}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Carrier Pay / Mile</span>
-                <span className="text-sm font-medium tabular-nums text-foreground">{formatPerMile(carrierPayPerMile)}</span>
+                <span className="text-sm text-muted-foreground">Driver Pay / Mile</span>
+                <span className="text-sm font-medium tabular-nums text-foreground">{formatPerMile(driverPayPerMile)}</span>
               </div>
             </div>
 
@@ -248,7 +248,7 @@ export function OrderDetail({ order }: OrderDetailProps) {
                 <span className="text-sm font-medium tabular-nums text-foreground">{formatCurrency(revenue)}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Carrier Pay</span>
+                <span className="text-sm text-muted-foreground">Driver Pay</span>
                 <span className="text-sm font-medium tabular-nums text-foreground">{formatCurrency(carrierPay)}</span>
               </div>
               <div className="flex items-center justify-between">
@@ -314,7 +314,7 @@ export function OrderDetail({ order }: OrderDetailProps) {
               </div>
               <PaymentRecorder
                 orderId={order.id}
-                carrierPay={carrierPay}
+                revenue={revenue}
                 amountPaid={parseFloat(order.amount_paid ?? '0')}
                 paymentStatus={order.payment_status as PaymentStatus}
                 paymentType={order.payment_type ?? null}

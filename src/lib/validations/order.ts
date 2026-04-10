@@ -61,9 +61,13 @@ export const orderLocationSchema = z.object({
 })
 
 // Step 3: Pricing and broker assignment
+//
+// Note: `carrier_pay` is no longer a user input — the server action computes
+// it from the assigned driver's pay config (see `src/lib/financial/driver-pay.ts`)
+// and writes it to the `carrier_pay` column. The column now holds the
+// historical driver-pay value for the order. See the comment in server actions.
 export const orderPricingSchema = z.object({
   revenue: z.coerce.number().min(0, 'Revenue must be 0 or more').max(10_000_000),
-  carrierPay: z.coerce.number().min(0, 'Carrier pay must be 0 or more').max(10_000_000),
   brokerFee: z.coerce.number().min(0, 'Broker fee must be 0 or more').max(10_000_000).default(0),
   localFee: z.coerce.number().min(0, 'Local fee must be 0 or more').max(10_000_000).default(0),
   driverPayRateOverride: z.coerce.number().min(0, 'Rate must be 0 or more').max(100, 'Rate cannot exceed 100%').optional(),
@@ -79,16 +83,20 @@ export const createOrderSchema = orderVehiclesSchema
   .merge(orderLocationSchema)
   .merge(orderPricingSchema)
 
-// Schema with cross-field refinement for SPLIT payment validation (use in form resolver)
+// Schema with cross-field refinement for SPLIT payment validation (use in form resolver).
+// SPLIT payments divide the broker's total payment (revenue) into a COD
+// portion collected at pickup/delivery and a billing portion invoiced
+// afterwards: billing_amount = revenue - cod_amount. The COD can never
+// exceed the total the broker is paying.
 export const createOrderSchemaWithRefinements = createOrderSchema.refine(
   (data) => {
     if (data.paymentType === 'SPLIT' && data.codAmount != null) {
-      return data.codAmount <= data.carrierPay
+      return data.codAmount <= data.revenue
     }
     return true
   },
   {
-    message: 'COD amount cannot exceed carrier pay',
+    message: 'COD amount cannot exceed revenue',
     path: ['codAmount'],
   }
 )

@@ -10,10 +10,19 @@ import { uploadFile, deleteFile } from '@/lib/storage'
 import { revalidatePath } from 'next/cache'
 import { dispatchWebhookEvent } from '@/lib/webhooks/webhook-dispatcher'
 import { sanitizePayload } from '@/lib/webhooks/payload-sanitizer'
+import { computeOrderDriverPay, type DriverLike } from '@/lib/financial/driver-pay'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { OrderStatus } from '@/types'
 
 const ATTACHMENT_BUCKET = 'attachments'
+
+// Max time createOrder / updateOrder will wait for the Mapbox geocoding +
+// distance calculation before returning. Typical Mapbox calls complete in
+// ~1-2 seconds; this budget gives us margin for one retry while still
+// keeping the worst-case server-action latency reasonable. If the budget
+// expires the geocoding promise keeps running in the background and the
+// realtime subscription will pick up the eventual DB update.
+const GEOCODE_AWAIT_BUDGET_MS = 6_000
 
 const uuidSchema = z.string().uuid()
 
@@ -21,6 +30,77 @@ const uuidSchema = z.string().uuid()
 const STATUS_ORDER: OrderStatus[] = ['new', 'assigned', 'picked_up', 'delivered', 'invoiced', 'paid']
 
 const VALID_STATUSES: OrderStatus[] = ['new', 'assigned', 'picked_up', 'delivered', 'invoiced', 'paid', 'cancelled']
+
+/**
+ * Compute the per-order driver pay from the currently-stored row and the
+ * assigned driver's config, then UPDATE the `carrier_pay` column with the
+ * result. Used by createOrder and updateOrder after the initial insert /
+ * update + geocoding pass so the column reflects `driver pay for this
+ * order`, locked at the time of the write.
+ *
+ * Returns the freshly-fetched row (after the carrier_pay update). If no
+ * driver is assigned, writes 0 and returns the row.
+ */
+async function applyComputedDriverPay(
+  supabase: SupabaseClient,
+  tenantId: string,
+  orderId: string,
+  row: {
+    driver_id: string | null
+    revenue: string
+    broker_fee: string
+    local_fee: string
+    distance_miles: string | null
+    driver_pay_rate_override: string | null
+    vehicles: unknown
+  }
+): Promise<Record<string, unknown>> {
+  // Fetch driver config if one is assigned.
+  let driverConfig: DriverLike | null = null
+  if (row.driver_id) {
+    const { data: driver } = await supabase
+      .from('drivers')
+      .select('pay_type, pay_rate')
+      .eq('id', row.driver_id)
+      .eq('tenant_id', tenantId)
+      .single()
+    if (driver && driver.pay_type && driver.pay_rate != null) {
+      driverConfig = {
+        payType: driver.pay_type,
+        payRate: parseFloat(driver.pay_rate),
+      }
+    }
+  }
+
+  // Build the OrderLike shape the calculator expects.
+  const vehicleCount = Array.isArray(row.vehicles) ? row.vehicles.length : 1
+  const driverPay = computeOrderDriverPay(driverConfig, {
+    revenue: parseFloat(row.revenue),
+    brokerFee: parseFloat(row.broker_fee),
+    localFee: parseFloat(row.local_fee),
+    distanceMiles: row.distance_miles ? parseFloat(row.distance_miles) : null,
+    driverPayRateOverride: row.driver_pay_rate_override ? parseFloat(row.driver_pay_rate_override) : null,
+    vehicleCount,
+  })
+
+  // Store the rounded computed value (2 decimal places matches the
+  // numeric(12,2) column precision).
+  const rounded = Math.round(driverPay * 100) / 100
+  await supabase
+    .from('orders')
+    .update({ carrier_pay: String(rounded) })
+    .eq('id', orderId)
+    .eq('tenant_id', tenantId)
+
+  // Re-fetch so the returned object has the final carrier_pay value.
+  const { data: refreshed } = await supabase
+    .from('orders')
+    .select('*')
+    .eq('id', orderId)
+    .eq('tenant_id', tenantId)
+    .single()
+  return (refreshed ?? row) as Record<string, unknown>
+}
 
 export async function createOrder(data: unknown) {
   const parsed = createOrderSchema.safeParse(data)
@@ -69,13 +149,19 @@ export async function createOrder(data: unknown) {
       delivery_contact_phone: v.deliveryContactPhone || null,
       delivery_date: v.deliveryDate || null,
       revenue: String(v.revenue),
-      carrier_pay: String(v.carrierPay),
+      // carrier_pay is computed server-side after insert + geocoding below
+      // (see applyComputedDriverPay). Initial placeholder of '0' is written
+      // here and overwritten once we know the final distance and driver.
+      carrier_pay: '0',
       broker_fee: String(v.brokerFee),
       local_fee: String(v.localFee),
       driver_pay_rate_override: v.driverPayRateOverride ? String(v.driverPayRateOverride) : null,
       payment_type: v.paymentType,
       cod_amount: v.paymentType === 'SPLIT' && v.codAmount != null ? String(v.codAmount) : null,
-      billing_amount: v.paymentType === 'SPLIT' && v.codAmount != null ? String(v.carrierPay - v.codAmount) : null,
+      // SPLIT payments divide the broker's revenue into a COD portion
+      // (collected at pickup/delivery) and a billing portion (invoiced
+      // later): billing = revenue - cod. Unrelated to driver pay.
+      billing_amount: v.paymentType === 'SPLIT' && v.codAmount != null ? String(v.revenue - v.codAmount) : null,
       broker_id: v.brokerId || null,
       driver_id: v.driverId || null,
       distance_miles: v.distanceMiles ? String(v.distanceMiles) : null,
@@ -88,8 +174,14 @@ export async function createOrder(data: unknown) {
     return { error: safeError(error, 'createOrder') }
   }
 
-  // Fire-and-forget geocoding — coordinates appear via realtime invalidation
-  geocodeAndSaveOrder(supabase, order.id, tenantId, {
+  // Geocoding: await briefly so the response includes coordinates +
+  // distance_miles. Previously this was pure fire-and-forget, which
+  // forced the user to reload the page to see the calculated distance
+  // and RPM values. We bound the wait at GEOCODE_AWAIT_BUDGET_MS to
+  // protect against Mapbox slowdowns — if the budget expires the
+  // geocoding promise keeps running in the background and the realtime
+  // subscription will pick up the eventual DB update.
+  const geocodePromise = geocodeAndSaveOrder(supabase, order.id, tenantId, {
     pickupLocation: v.pickupLocation,
     pickupCity: v.pickupCity,
     pickupState: v.pickupState,
@@ -98,7 +190,28 @@ export async function createOrder(data: unknown) {
     deliveryCity: v.deliveryCity,
     deliveryState: v.deliveryState,
     deliveryZip: v.deliveryZip,
-  }).catch((err) => console.error('[geocoding] createOrder fire-and-forget failed:', err))
+  }).catch((err) => console.error('[geocoding] createOrder failed:', err))
+
+  await Promise.race([
+    geocodePromise,
+    new Promise<void>((resolve) => setTimeout(resolve, GEOCODE_AWAIT_BUDGET_MS)),
+  ])
+
+  // Re-fetch the row to pick up coordinates + distance_miles written by
+  // the geocoding pass. If the budget expired first, this returns the
+  // original row state and realtime will catch the eventual update.
+  const { data: refreshed } = await supabase
+    .from('orders')
+    .select('*')
+    .eq('id', order.id)
+    .eq('tenant_id', tenantId)
+    .single()
+  const rowAfterGeocode = refreshed ?? order
+
+  // Compute and store driver pay now that distance_miles is populated.
+  // This guarantees that when the user sees the order for the first time,
+  // the Driver Pay value is already locked in (not "—" awaiting recalc).
+  const finalOrder = await applyComputedDriverPay(supabase, tenantId, order.id, rowAfterGeocode)
 
   // Fire-and-forget activity log
   logOrderActivity(supabase, {
@@ -116,10 +229,10 @@ export async function createOrder(data: unknown) {
   })).catch(() => {})
 
   // Auto-create local drives if pickup/delivery states match a terminal
-  void autoCreateLocalDrives(supabase, tenantId, order).catch(() => {})
+  void autoCreateLocalDrives(supabase, tenantId, finalOrder as Parameters<typeof autoCreateLocalDrives>[2]).catch(() => {})
 
   revalidatePath('/orders')
-  return { success: true, data: order }
+  return { success: true, data: finalOrder }
 }
 
 /**
@@ -265,17 +378,20 @@ export async function updateOrder(id: string, data: unknown) {
   if (v.deliveryContactPhone !== undefined) updateData.delivery_contact_phone = v.deliveryContactPhone || null
   if (v.deliveryDate !== undefined) updateData.delivery_date = v.deliveryDate || null
   if (v.revenue !== undefined) updateData.revenue = String(v.revenue)
-  if (v.carrierPay !== undefined) updateData.carrier_pay = String(v.carrierPay)
+  // carrier_pay is not accepted from the form — it's recomputed below
+  // from the driver config after the main update completes.
   if (v.brokerFee !== undefined) updateData.broker_fee = String(v.brokerFee)
   if (v.localFee !== undefined) updateData.local_fee = String(v.localFee)
   if (v.driverPayRateOverride !== undefined) updateData.driver_pay_rate_override = v.driverPayRateOverride ? String(v.driverPayRateOverride) : null
   if (v.paymentType !== undefined) updateData.payment_type = v.paymentType
-  // Split payment: auto-calculate billing_amount from carrier_pay - cod_amount
+  // Split payment: billing_amount = revenue - cod_amount. Revenue may come
+  // from the current update or the existing stored value; if neither is
+  // present we can't recompute the billing amount and leave it as-is.
   const effectivePaymentType = v.paymentType ?? updateData.payment_type
-  const effectiveCarrierPay = v.carrierPay ?? (updateData.carrier_pay ? parseFloat(updateData.carrier_pay as string) : undefined)
-  if (effectivePaymentType === 'SPLIT' && v.codAmount != null && effectiveCarrierPay != null) {
+  const effectiveRevenue = v.revenue ?? (updateData.revenue ? parseFloat(updateData.revenue as string) : undefined)
+  if (effectivePaymentType === 'SPLIT' && v.codAmount != null && effectiveRevenue != null) {
     updateData.cod_amount = String(v.codAmount)
-    updateData.billing_amount = String(effectiveCarrierPay - v.codAmount)
+    updateData.billing_amount = String(effectiveRevenue - v.codAmount)
   } else if (v.paymentType !== undefined && v.paymentType !== 'SPLIT') {
     updateData.cod_amount = null
     updateData.billing_amount = null
@@ -309,9 +425,12 @@ export async function updateOrder(id: string, data: unknown) {
     return { error: safeError(error, 'updateOrder') }
   }
 
-  // Re-geocode if address fields changed
+  // Re-geocode if address fields changed. Awaited (with budget) so the
+  // updated row that we return downstream already includes the new
+  // coordinates + distance — same UX rationale as createOrder.
+  let rowAfterGeocode: typeof order = order
   if (pickupAddressChanged || deliveryAddressChanged) {
-    geocodeAndSaveOrder(supabase, id, tenantId, {
+    const geocodePromise = geocodeAndSaveOrder(supabase, id, tenantId, {
       pickupLocation: order.pickup_location,
       pickupCity: order.pickup_city,
       pickupState: order.pickup_state,
@@ -320,14 +439,41 @@ export async function updateOrder(id: string, data: unknown) {
       deliveryCity: order.delivery_city,
       deliveryState: order.delivery_state,
       deliveryZip: order.delivery_zip,
-    }).catch((err) => console.error('[geocoding] updateOrder fire-and-forget failed:', err))
+    }).catch((err) => console.error('[geocoding] updateOrder failed:', err))
+
+    await Promise.race([
+      geocodePromise,
+      new Promise<void>((resolve) => setTimeout(resolve, GEOCODE_AWAIT_BUDGET_MS)),
+    ])
+
+    const { data: refreshed } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('id', id)
+      .eq('tenant_id', tenantId)
+      .single()
+    if (refreshed) rowAfterGeocode = refreshed
   }
 
-  // Recalculate trip financials if order is assigned and financial fields changed
-  const financialFields = ['revenue', 'carrier_pay', 'broker_fee', 'local_fee', 'driver_pay_rate_override', 'distance_miles']
+  // Recompute driver pay whenever an input to the formula changed. Inputs
+  // are: driver_id, revenue, broker_fee, local_fee, distance_miles (via
+  // geocoding), vehicles, driver_pay_rate_override. Cheaper to just always
+  // recompute here — the formula is pure and deterministic.
+  const driverPayInputs = ['driver_id', 'revenue', 'broker_fee', 'local_fee', 'driver_pay_rate_override', 'vehicles']
+  const distanceChangedByGeocoding = rowAfterGeocode.distance_miles !== order.distance_miles
+  const needsDriverPayRecompute =
+    Object.keys(updateData).some((k) => driverPayInputs.includes(k)) || distanceChangedByGeocoding
+  const finalOrder = needsDriverPayRecompute
+    ? await applyComputedDriverPay(supabase, tenantId, id, rowAfterGeocode)
+    : rowAfterGeocode
+
+  // Recalculate trip financials if order is assigned and either financial
+  // fields changed (including the newly computed carrier_pay), driver
+  // changed, or geocoding wrote a new distance_miles.
+  const financialFields = ['revenue', 'carrier_pay', 'broker_fee', 'local_fee', 'driver_pay_rate_override', 'distance_miles', 'driver_id']
   const hasFinancialChange = Object.keys(updateData).some(k => financialFields.includes(k))
-  if (order.trip_id && hasFinancialChange) {
-    void recalculateTripFinancials(order.trip_id).catch(() => {})
+  if (finalOrder.trip_id && (hasFinancialChange || distanceChangedByGeocoding || needsDriverPayRecompute)) {
+    void recalculateTripFinancials(finalOrder.trip_id).catch(() => {})
   }
 
   // Fire-and-forget activity log
@@ -347,7 +493,7 @@ export async function updateOrder(id: string, data: unknown) {
   })).catch(() => {})
 
   revalidatePath('/orders')
-  return { success: true, data: order }
+  return { success: true, data: finalOrder }
 }
 
 export async function deleteOrder(id: string) {
@@ -497,7 +643,6 @@ export interface CsvOrderRow {
   delivery_contact_phone?: string
   delivery_date?: string
   revenue?: string | number
-  carrier_pay?: string | number
   broker_fee?: string | number
   payment_type?: string
   cod_amount?: string | number
@@ -565,11 +710,10 @@ export async function batchCreateOrders(
     }
 
     const revenue = r.revenue ? Number(r.revenue) : 0
-    const carrierPay = r.carrier_pay ? Number(r.carrier_pay) : 0
     const brokerFee = r.broker_fee ? Number(r.broker_fee) : 0
 
-    if (isNaN(revenue) || isNaN(carrierPay) || isNaN(brokerFee)) {
-      result.errors.push({ row: i + 1, message: 'Invalid numeric value for revenue, carrier_pay, or broker_fee' })
+    if (isNaN(revenue) || isNaN(brokerFee)) {
+      result.errors.push({ row: i + 1, message: 'Invalid numeric value for revenue or broker_fee' })
       continue
     }
 
@@ -605,12 +749,15 @@ export async function batchCreateOrders(
       delivery_contact_phone: r.delivery_contact_phone?.trim() || null,
       delivery_date: r.delivery_date?.trim() || null,
       revenue: String(revenue),
-      carrier_pay: String(carrierPay),
+      // carrier_pay is computed from driver config; imports start at 0
+      // and can be updated later when a driver is assigned via updateOrder.
+      carrier_pay: '0',
       broker_fee: String(brokerFee),
       payment_type: paymentType,
       ...(paymentType === 'SPLIT' && r.cod_amount ? {
         cod_amount: String(parseFloat(String(r.cod_amount))),
-        billing_amount: String(carrierPay - parseFloat(String(r.cod_amount))),
+        // SPLIT: billing = revenue - cod (unrelated to driver pay)
+        billing_amount: String(revenue - parseFloat(String(r.cod_amount))),
       } : {}),
     })
 

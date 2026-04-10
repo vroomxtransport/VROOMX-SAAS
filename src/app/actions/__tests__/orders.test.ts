@@ -48,7 +48,26 @@ function createMockSupabaseClient(overrides: {
   const insertResult = overrides.insertResult ?? { data: { id: 'order-1', order_number: 'ORD-001' }, error: null }
   const updateResult = overrides.updateResult ?? { data: { id: 'order-1', order_number: 'ORD-001', status: 'new' }, error: null }
   const deleteResult = overrides.deleteResult ?? { error: null }
-  const selectResult = overrides.selectResult ?? { data: { status: 'new' }, error: null }
+  // Default select() returns a full-shaped order row so that refetch
+  // calls after createOrder/updateOrder (added by the auto-computed
+  // driver-pay refactor) resolve to an object with id + financial
+  // fields, not just { status: 'new' }.
+  const selectResult = overrides.selectResult ?? {
+    data: {
+      id: 'order-1',
+      order_number: 'ORD-001',
+      status: 'new',
+      driver_id: null,
+      revenue: '1500',
+      broker_fee: '100',
+      local_fee: '0',
+      carrier_pay: '0',
+      distance_miles: null,
+      driver_pay_rate_override: null,
+      vehicles: [{ year: 2024, make: 'Honda', model: 'Civic' }],
+    },
+    error: null,
+  }
   const makeSelectChain = (result: { data: unknown; error: unknown }) => {
     const chain = {} as SelectChain
     chain.eq = vi.fn().mockReturnValue(chain)
@@ -100,7 +119,6 @@ function validOrderInput() {
     deliveryCity: 'Atlanta',
     deliveryState: 'GA',
     revenue: 1500,
-    carrierPay: 1200,
     brokerFee: 100,
     localFee: 0,
     paymentType: 'COP' as const,
@@ -147,9 +165,11 @@ describe('createOrder', () => {
 
     const result = await createOrder(validOrderInput())
 
+    // createOrder now returns the full refreshed row (after geocoding +
+    // driver-pay recompute), not the raw insert result.
     expect(result).toEqual({
       success: true,
-      data: { id: 'order-1', order_number: 'ORD-001' },
+      data: expect.objectContaining({ id: 'order-1', order_number: 'ORD-001' }),
     })
     expect(mockedAuthorize).toHaveBeenCalledWith('orders.create', expect.objectContaining({
       rateLimit: expect.objectContaining({ key: 'createOrder' }),
@@ -195,7 +215,9 @@ describe('createOrder', () => {
 
     await createOrder(validOrderInput())
 
-    // Verify .from('orders').insert() was called with stringified financials
+    // Verify .from('orders').insert() was called with stringified financials.
+    // carrier_pay is initialized to '0' and overwritten later by the
+    // applyComputedDriverPay post-insert step — it is no longer a form input.
     const fromCall = mockClient.from
     expect(fromCall).toHaveBeenCalledWith('orders')
     const insertFn = fromCall.mock.results[0].value.insert
@@ -203,7 +225,7 @@ describe('createOrder', () => {
       expect.objectContaining({
         tenant_id: 'tenant-456',
         revenue: '1500',
-        carrier_pay: '1200',
+        carrier_pay: '0',
         broker_fee: '100',
         local_fee: '0',
       }),
@@ -222,7 +244,10 @@ describe('updateOrder', () => {
       success: true,
       data: expect.objectContaining({ id: 'order-1' }),
     })
-    expect(mockedAuthorize).toHaveBeenCalledWith('orders.update')
+    // updateOrder now passes a rate limit config to authorize().
+    expect(mockedAuthorize).toHaveBeenCalledWith('orders.update', expect.objectContaining({
+      rateLimit: expect.objectContaining({ key: 'updateOrder' }),
+    }))
   })
 
   it('returns field errors for invalid input', async () => {
@@ -246,9 +271,10 @@ describe('updateOrder', () => {
     const mockClient = createMockSupabaseClient()
     mockAuthSuccess(mockClient)
 
+    // carrierPay is no longer accepted by the form schema — it's
+    // recomputed server-side from the driver config after update.
     await updateOrder('order-1', {
       revenue: 3000,
-      carrierPay: 2500,
       brokerFee: 200,
       localFee: 50,
     })
@@ -259,7 +285,6 @@ describe('updateOrder', () => {
     expect(updateFn).toHaveBeenCalledWith(
       expect.objectContaining({
         revenue: '3000',
-        carrier_pay: '2500',
         broker_fee: '200',
         local_fee: '50',
       }),

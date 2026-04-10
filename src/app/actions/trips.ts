@@ -599,10 +599,16 @@ export async function recalculateTripFinancials(tripId: string) {
     return { error: 'Trip not found' }
   }
 
-  // Fetch trip's orders for revenue and route summary
+  // Fetch trip's orders for revenue and route summary.
+  //
+  // `carrier_pay` is included because it now holds the stored per-order
+  // driver-pay value (see `applyComputedDriverPay` in
+  // src/app/actions/orders.ts). The trip-level `driver_pay` is the SUM of
+  // these stored values — historical accuracy — rather than a re-compute
+  // from the driver's current rate.
   const { data: orders, error: ordersError } = await supabase
     .from('orders')
-    .select('revenue, broker_fee, local_fee, distance_miles, driver_pay_rate_override, vehicles, pickup_state, delivery_state, created_at')
+    .select('revenue, carrier_pay, broker_fee, local_fee, distance_miles, driver_pay_rate_override, vehicles, pickup_state, delivery_state, created_at')
     .eq('trip_id', tripId)
     .eq('tenant_id', tenantId)
     .order('created_at', { ascending: true })
@@ -637,6 +643,7 @@ export async function recalculateTripFinancials(tripId: string) {
   // Parse order data: financial fields + route fields
   const rawOrders = (orders ?? []).map((o) => ({
     revenue: parseFloat(o.revenue || '0'),
+    driverPayStored: parseFloat(o.carrier_pay || '0'),
     brokerFee: parseFloat(o.broker_fee || '0'),
     localFee: parseFloat(o.local_fee || '0'),
     distanceMiles: o.distance_miles ? parseFloat(o.distance_miles) : null,
@@ -645,6 +652,12 @@ export async function recalculateTripFinancials(tripId: string) {
     pickup_state: o.pickup_state as string | null,
     delivery_state: o.delivery_state as string | null,
   }))
+
+  // Sum of stored per-order driver pay. This is the source of truth for
+  // the trip-level driver_pay — locked at the time each order was
+  // created or re-assigned, so historical driver-rate changes don't
+  // retroactively alter past trip earnings.
+  const storedDriverPaySum = rawOrders.reduce((sum, o) => sum + o.driverPayStored, 0)
 
   // OrderFinancials for calculateTripFinancials
   const orderFinancials = rawOrders.map((o) => ({
@@ -708,8 +721,11 @@ export async function recalculateTripFinancials(tripId: string) {
     destinationSummary = deliveryStates.length > 0 ? deliveryStates.join(', ') : null
   }
 
-  // Adjust net profit to include local operations expense
-  const adjustedNetProfit = financials.netProfit - localOpsExpense
+  // Override the recomputed driver pay with the sum of stored per-order
+  // values. `financials.netProfit` subtracted the recomputed amount, so
+  // we adjust by the delta before also subtracting local ops expense.
+  const driverPayDelta = storedDriverPaySum - financials.driverPay
+  const adjustedNetProfit = financials.netProfit - driverPayDelta - localOpsExpense
 
   // Update trip with denormalized financial values and route summary
   const { error: updateError } = await supabase
@@ -718,7 +734,7 @@ export async function recalculateTripFinancials(tripId: string) {
       total_revenue: String(financials.revenue),
       total_broker_fees: String(financials.brokerFees),
       total_local_fees: String(financials.localFees),
-      driver_pay: String(financials.driverPay),
+      driver_pay: String(storedDriverPaySum),
       total_expenses: String(financials.expenses),
       local_operations_expense: String(localOpsExpense),
       net_profit: String(adjustedNetProfit),

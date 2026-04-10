@@ -23,6 +23,7 @@ import { PAYMENT_TYPES, PAYMENT_TYPE_LABELS } from '@/types'
 import type { PaymentType } from '@/types'
 import { HelpTooltip } from '@/components/help-tooltip'
 import type { CreateOrderInput } from '@/lib/validations/order'
+import { computeOrderDriverPay } from '@/lib/financial/driver-pay'
 
 export function PricingStep() {
   const form = useFormContext<CreateOrderInput>()
@@ -30,26 +31,50 @@ export function PricingStep() {
   const { data: driversData } = useDrivers({ status: 'active', pageSize: 100 })
 
   const revenue = form.watch('revenue') ?? 0
-  const carrierPay = form.watch('carrierPay') ?? 0
   const brokerFee = form.watch('brokerFee') ?? 0
   const localFee = form.watch('localFee') ?? 0
   const driverId = form.watch('driverId')
+  const driverPayRateOverride = form.watch('driverPayRateOverride')
   const paymentType = form.watch('paymentType')
   const codAmount = form.watch('codAmount')
-  const margin = Number(revenue) - Number(carrierPay) - Number(brokerFee) - Number(localFee)
+  const vehicles = form.watch('vehicles')
+  const distanceMiles = form.watch('distanceMiles')
 
-  const isSplit = paymentType === 'SPLIT'
-  const numericCarrierPay = Number(carrierPay)
-  const numericCodAmount = Number(codAmount) || 0
-  const billingAmount = isSplit ? Math.max(0, numericCarrierPay - numericCodAmount) : 0
-
-  // Find selected driver for showing default pay rate
+  // Find selected driver so we can live-preview the computed driver pay.
   const selectedDriver = driversData?.drivers.find((d) => d.id === driverId)
+
+  // Live driver pay preview: mirrors the server-side computation done in
+  // `applyComputedDriverPay`. For per_mile drivers the real distance is
+  // filled in by Mapbox after save, but we use whatever is in the form
+  // state (usually 0 at create time) so the preview is still defined.
+  const computedDriverPay = selectedDriver
+    ? computeOrderDriverPay(
+        { payType: selectedDriver.pay_type, payRate: Number(selectedDriver.pay_rate) },
+        {
+          revenue: Number(revenue) || 0,
+          brokerFee: Number(brokerFee) || 0,
+          localFee: Number(localFee) || 0,
+          distanceMiles: distanceMiles ? Number(distanceMiles) : null,
+          driverPayRateOverride: driverPayRateOverride ? Number(driverPayRateOverride) : null,
+          vehicleCount: Array.isArray(vehicles) ? vehicles.length : 1,
+        }
+      )
+    : 0
+
+  // Margin: revenue − broker fee − local fee − driver pay.
+  const margin = Number(revenue) - Number(brokerFee) - Number(localFee) - computedDriverPay
+
+  // SPLIT payment: COD collected at pickup/delivery, rest invoiced later.
+  // Billing = revenue − cod (not driver pay — that's a separate concept).
+  const isSplit = paymentType === 'SPLIT'
+  const numericRevenue = Number(revenue) || 0
+  const numericCodAmount = Number(codAmount) || 0
+  const billingAmount = isSplit ? Math.max(0, numericRevenue - numericCodAmount) : 0
 
   return (
     <div className="space-y-4">
       {/* Financial fields */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         <FormField
           control={form.control}
           name="revenue"
@@ -58,35 +83,6 @@ export function PricingStep() {
               <FormLabel className="flex items-center gap-1">
                 Revenue *
                 <HelpTooltip content="Total amount the customer or broker pays for this transport." side="top" />
-              </FormLabel>
-              <FormControl>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="0.00"
-                    className="pl-7"
-                    {...field}
-                    value={field.value as number ?? 0}
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
-                  />
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="carrierPay"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="flex items-center gap-1">
-                Carrier Pay *
-                <HelpTooltip content="Amount paid to the carrier or driver for hauling this vehicle." side="top" />
               </FormLabel>
               <FormControl>
                 <div className="relative">
@@ -164,36 +160,6 @@ export function PricingStep() {
         />
       </div>
 
-      {/* Distance */}
-      <FormField
-        control={form.control}
-        name="distanceMiles"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel className="flex items-center gap-1">
-              Distance (miles)
-              <HelpTooltip content="Total route distance in miles. Used for per-mile driver pay and financial KPIs." side="top" />
-            </FormLabel>
-            <FormControl>
-              <div className="relative">
-                <Input
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  placeholder="Auto-calculated on save"
-                  {...field}
-                  value={field.value as number ?? ''}
-                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">mi</span>
-              </div>
-            </FormControl>
-            <p className="text-xs text-muted-foreground">Leave blank to auto-calculate from addresses after save</p>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
       {/* Driver Pay Rate Override — only shown when a driver is selected */}
       {selectedDriver && (
         <FormField
@@ -224,6 +190,30 @@ export function PricingStep() {
             </FormItem>
           )}
         />
+      )}
+
+      {/* Driver Pay preview — auto-computed from driver config. Only
+          shown when a driver is selected; hidden otherwise to avoid
+          cluttering the form with $0 placeholders. */}
+      {selectedDriver && (
+        <div className="rounded-md border border-border-subtle bg-accent/30 p-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-sm font-medium text-foreground">Driver Pay</span>
+              <p className="text-xs text-muted-foreground">
+                Auto-calculated from driver&apos;s pay type
+                {selectedDriver.pay_type === 'per_mile' && ' × distance (filled on save)'}
+              </p>
+            </div>
+            <span className="text-sm font-semibold tabular-nums text-foreground">
+              {new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+              }).format(computedDriverPay)}
+            </span>
+          </div>
+        </div>
       )}
 
       {/* Margin summary */}
@@ -296,7 +286,7 @@ export function PricingStep() {
                         type="number"
                         step="0.01"
                         min="0"
-                        max={numericCarrierPay}
+                        max={numericRevenue}
                         placeholder="0.00"
                         className="pl-7"
                         {...field}
