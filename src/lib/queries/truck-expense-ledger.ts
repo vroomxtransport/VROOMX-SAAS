@@ -1,0 +1,500 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
+
+// ============================================================================
+// Types
+// ============================================================================
+
+export type TruckExpenseSourceTable =
+  | 'trip_expenses'
+  | 'business_expenses'
+  | 'fuel_entries'
+  | 'maintenance_records'
+
+export type TruckExpenseSourceBadge = 'manual' | 'samsara' | 'quickbooks' | 'efs'
+
+/**
+ * Normalized category — flattens the three distinct per-table enums into one
+ * UI-facing vocabulary. Each source row's native category maps to one of these
+ * via {@link normalizeCategory}.
+ */
+export type NormalizedExpenseCategory =
+  | 'fuel'
+  | 'tolls'
+  | 'repairs'
+  | 'lodging'
+  | 'maintenance'
+  | 'insurance'
+  | 'truck_lease'
+  | 'registration'
+  | 'dispatch'
+  | 'parking'
+  | 'rent'
+  | 'telematics'
+  | 'salary'
+  | 'office_supplies'
+  | 'software'
+  | 'professional_services'
+  | 'misc'
+
+export interface TruckExpenseEntry {
+  /** Composite key `${sourceTable}:${sourceId}` — guarantees React list-key uniqueness across source tables. */
+  id: string
+  sourceTable: TruckExpenseSourceTable
+  sourceId: string
+  truckId: string
+  scope: 'trip' | 'truck' | 'business_allocated'
+  category: NormalizedExpenseCategory
+  amount: number
+  /** ISO date string `YYYY-MM-DD`. Sorted descending by this field in {@link getTruckExpenses}. */
+  occurredAt: string
+  description: string
+  metadata: Record<string, unknown>
+  /** `false` for integration-sourced rows (future waves). Manual entries are editable. */
+  editable: boolean
+  sourceBadge: TruckExpenseSourceBadge
+}
+
+export interface ExpenseSummary {
+  fuel: number
+  tolls: number
+  repairs: number
+  lodging: number
+  maintenance: number
+  insurance: number
+  truck_lease: number
+  registration: number
+  fixed_other: number
+  other: number
+  total: number
+}
+
+/** Inclusive date range in ISO `YYYY-MM-DD` format. */
+export interface LedgerDateRange {
+  from: string
+  to: string
+}
+
+// ============================================================================
+// Public API
+// ============================================================================
+
+/**
+ * Fetch every expense touching a single truck across all source tables, within
+ * the given date range. Runs the four source queries in parallel and merges
+ * the results into a single normalized ledger sorted by occurred_at DESC.
+ *
+ * Tenant isolation is enforced by RLS on each source table — consistent with
+ * the rest of `src/lib/queries/*`.
+ *
+ * @param supabase  An authenticated Supabase client (from `authorize().ctx`)
+ * @param truckId   UUID of the truck
+ * @param dateRange Inclusive ISO date range
+ */
+export async function getTruckExpenses(
+  supabase: SupabaseClient,
+  truckId: string,
+  dateRange: LedgerDateRange,
+): Promise<TruckExpenseEntry[]> {
+  const [tripExp, bizExp, fuelExp, maintExp] = await Promise.all([
+    fetchTripExpensesForTruck(supabase, truckId, dateRange),
+    fetchBusinessExpensesForTruck(supabase, truckId, dateRange),
+    fetchFuelEntriesForTruck(supabase, truckId, dateRange),
+    fetchMaintenanceRecordsForTruck(supabase, truckId, dateRange),
+  ])
+
+  return [...tripExp, ...bizExp, ...fuelExp, ...maintExp].sort((a, b) =>
+    b.occurredAt.localeCompare(a.occurredAt),
+  )
+}
+
+/**
+ * Roll entries up into a category summary. Any normalized category that
+ * doesn't have an explicit bucket on {@link ExpenseSummary} is grouped under
+ * `other`, so the returned total always equals the sum of the named buckets.
+ */
+export function summarizeTruckExpenses(entries: TruckExpenseEntry[]): ExpenseSummary {
+  const summary: ExpenseSummary = {
+    fuel: 0,
+    tolls: 0,
+    repairs: 0,
+    lodging: 0,
+    maintenance: 0,
+    insurance: 0,
+    truck_lease: 0,
+    registration: 0,
+    fixed_other: 0,
+    other: 0,
+    total: 0,
+  }
+
+  for (const entry of entries) {
+    summary.total += entry.amount
+    switch (entry.category) {
+      case 'fuel':
+        summary.fuel += entry.amount
+        break
+      case 'tolls':
+        summary.tolls += entry.amount
+        break
+      case 'repairs':
+        summary.repairs += entry.amount
+        break
+      case 'lodging':
+        summary.lodging += entry.amount
+        break
+      case 'maintenance':
+        summary.maintenance += entry.amount
+        break
+      case 'insurance':
+        summary.insurance += entry.amount
+        break
+      case 'truck_lease':
+        summary.truck_lease += entry.amount
+        break
+      case 'registration':
+        summary.registration += entry.amount
+        break
+      case 'dispatch':
+      case 'parking':
+      case 'rent':
+      case 'telematics':
+      case 'salary':
+      case 'office_supplies':
+      case 'software':
+      case 'professional_services':
+        summary.fixed_other += entry.amount
+        break
+      case 'misc':
+        summary.other += entry.amount
+        break
+      default: {
+        // Exhaustiveness guard — adding a new NormalizedExpenseCategory
+        // without a matching arm will fail typecheck here.
+        const _exhaustive: never = entry.category
+        void _exhaustive
+        summary.other += entry.amount
+      }
+    }
+  }
+
+  return roundSummary(summary)
+}
+
+// ============================================================================
+// Source adapters — one per source table
+// ============================================================================
+
+async function fetchTripExpensesForTruck(
+  supabase: SupabaseClient,
+  truckId: string,
+  range: LedgerDateRange,
+): Promise<TruckExpenseEntry[]> {
+  // trip_expenses has no truck_id column — filter by trip_id where the
+  // trip belongs to this truck. Two-step keeps the query simple and reliable.
+  //
+  // Bound the trips query to the period so a high-mileage fleet doesn't
+  // return thousands of historical trip IDs and hit Supabase's .in() array
+  // limit, silently dropping trip expenses. Overlap: a trip contributes an
+  // expense in the period iff start_date <= range.to AND end_date >= range.from.
+  const { data: trips, error: tripsError } = await supabase
+    .from('trips')
+    .select('id')
+    .eq('truck_id', truckId)
+    .lte('start_date', range.to)
+    .gte('end_date', range.from)
+
+  if (tripsError) throw tripsError
+  const tripIds = (trips ?? []).map((t) => t.id as string).filter(Boolean)
+  if (tripIds.length === 0) return []
+
+  const { data, error } = await supabase
+    .from('trip_expenses')
+    .select('id, trip_id, category, custom_label, amount, notes, expense_date, created_at')
+    .in('trip_id', tripIds)
+    .gte('expense_date', range.from)
+    .lte('expense_date', range.to)
+
+  if (error) throw error
+
+  return (data ?? []).map((row) => {
+    const occurredAt = (row.expense_date as string | null) ?? (row.created_at as string).slice(0, 10)
+    return {
+      id: `trip_expenses:${row.id}`,
+      sourceTable: 'trip_expenses' as const,
+      sourceId: row.id as string,
+      truckId,
+      scope: 'trip' as const,
+      category: normalizeTripExpenseCategory(row.category as string),
+      amount: parseMoney(row.amount),
+      occurredAt,
+      description: (row.custom_label as string | null) ?? categoryLabel(row.category as string),
+      metadata: {
+        trip_id: row.trip_id,
+        notes: row.notes,
+      },
+      editable: true,
+      sourceBadge: 'manual' as const,
+    }
+  })
+}
+
+async function fetchBusinessExpensesForTruck(
+  supabase: SupabaseClient,
+  truckId: string,
+  range: LedgerDateRange,
+): Promise<TruckExpenseEntry[]> {
+  // Fetch truck-assigned rows whose effective window overlaps the period.
+  // Overlap: effective_from <= range.to AND (effective_to IS NULL OR effective_to >= range.from)
+  const { data, error } = await supabase
+    .from('business_expenses')
+    .select('id, name, category, recurrence, amount, effective_from, effective_to, notes')
+    .eq('truck_id', truckId)
+    .lte('effective_from', range.to)
+    .or(`effective_to.is.null,effective_to.gte.${range.from}`)
+
+  if (error) throw error
+
+  const periodStart = new Date(range.from)
+  const periodEnd = new Date(range.to)
+
+  const entries: TruckExpenseEntry[] = []
+
+  for (const row of data ?? []) {
+    const fullAmount = parseMoney(row.amount)
+    const expenseStart = new Date(row.effective_from as string)
+    const expenseEnd = row.effective_to ? new Date(row.effective_to as string) : null
+
+    // Clip the expense's window to the period
+    const overlapStart = expenseStart > periodStart ? expenseStart : periodStart
+    const overlapEnd = expenseEnd && expenseEnd < periodEnd ? expenseEnd : periodEnd
+    const overlapMonths = monthsBetween(overlapStart, overlapEnd)
+    if (overlapMonths <= 0) continue
+
+    let prorated: number
+    switch (row.recurrence as string) {
+      case 'monthly':
+        prorated = fullAmount * overlapMonths
+        break
+      case 'quarterly':
+        prorated = (fullAmount / 3) * overlapMonths
+        break
+      case 'annual':
+        prorated = (fullAmount / 12) * overlapMonths
+        break
+      case 'one_time':
+        // Only include if the effective_from actually lands in the period
+        if (expenseStart >= periodStart && expenseStart <= periodEnd) {
+          prorated = fullAmount
+        } else {
+          prorated = 0
+        }
+        break
+      default:
+        prorated = 0
+    }
+
+    if (prorated <= 0) continue
+
+    const occurredAt = (row.effective_from as string).slice(0, 10)
+    entries.push({
+      id: `business_expenses:${row.id}`,
+      sourceTable: 'business_expenses' as const,
+      sourceId: row.id as string,
+      truckId,
+      scope: 'business_allocated' as const,
+      category: normalizeBusinessExpenseCategory(row.category as string),
+      amount: Math.round(prorated * 100) / 100,
+      occurredAt,
+      description: (row.name as string) ?? categoryLabel(row.category as string),
+      metadata: {
+        recurrence: row.recurrence,
+        effective_from: row.effective_from,
+        effective_to: row.effective_to,
+        notes: row.notes,
+        prorated: true,
+        full_amount: fullAmount,
+        overlap_months: overlapMonths,
+      },
+      editable: true,
+      sourceBadge: 'manual' as const,
+    })
+  }
+
+  return entries
+}
+
+async function fetchFuelEntriesForTruck(
+  supabase: SupabaseClient,
+  truckId: string,
+  range: LedgerDateRange,
+): Promise<TruckExpenseEntry[]> {
+  const { data, error } = await supabase
+    .from('fuel_entries')
+    .select('id, date, gallons, cost_per_gallon, total_cost, odometer, location, state, notes')
+    .eq('truck_id', truckId)
+    .gte('date', range.from)
+    .lte('date', range.to)
+
+  if (error) throw error
+
+  return (data ?? []).map((row) => ({
+    id: `fuel_entries:${row.id}`,
+    sourceTable: 'fuel_entries' as const,
+    sourceId: row.id as string,
+    truckId,
+    scope: 'truck' as const,
+    category: 'fuel' as const,
+    amount: parseMoney(row.total_cost),
+    occurredAt: row.date as string,
+    description: (row.location as string | null) ?? 'Fuel purchase',
+    metadata: {
+      gallons: parseMoney(row.gallons),
+      cost_per_gallon: parseMoney(row.cost_per_gallon),
+      odometer: row.odometer,
+      state: row.state,
+      notes: row.notes,
+    },
+    editable: true,
+    sourceBadge: 'manual' as const,
+  }))
+}
+
+async function fetchMaintenanceRecordsForTruck(
+  supabase: SupabaseClient,
+  truckId: string,
+  range: LedgerDateRange,
+): Promise<TruckExpenseEntry[]> {
+  const { data, error } = await supabase
+    .from('maintenance_records')
+    .select('id, maintenance_type, status, description, vendor, cost, scheduled_date, completed_date, odometer, notes')
+    .eq('truck_id', truckId)
+    .eq('status', 'completed')
+    .gte('completed_date', `${range.from}T00:00:00.000Z`)
+    .lte('completed_date', `${range.to}T23:59:59.999Z`)
+
+  if (error) throw error
+
+  return (data ?? []).map((row) => {
+    const completed = row.completed_date as string | null
+    const occurredAt = completed ? completed.slice(0, 10) : range.to
+    return {
+      id: `maintenance_records:${row.id}`,
+      sourceTable: 'maintenance_records' as const,
+      sourceId: row.id as string,
+      truckId,
+      scope: 'truck' as const,
+      category: 'maintenance' as const,
+      amount: parseMoney(row.cost),
+      occurredAt,
+      description:
+        (row.description as string | null) ??
+        maintenanceTypeLabel(row.maintenance_type as string),
+      metadata: {
+        maintenance_type: row.maintenance_type,
+        vendor: row.vendor,
+        odometer: row.odometer,
+        scheduled_date: row.scheduled_date,
+        notes: row.notes,
+      },
+      editable: true,
+      sourceBadge: 'manual' as const,
+    }
+  })
+}
+
+// ============================================================================
+// Helpers — pure, exported for direct unit testing
+// ============================================================================
+
+export function normalizeTripExpenseCategory(category: string): NormalizedExpenseCategory {
+  switch (category) {
+    case 'fuel':
+    case 'tolls':
+    case 'repairs':
+    case 'lodging':
+    case 'misc':
+      return category
+    default:
+      return 'misc'
+  }
+}
+
+export function normalizeBusinessExpenseCategory(category: string): NormalizedExpenseCategory {
+  switch (category) {
+    case 'insurance':
+    case 'truck_lease':
+    case 'registration':
+    case 'dispatch':
+    case 'parking':
+    case 'rent':
+    case 'telematics':
+    case 'salary':
+    case 'office_supplies':
+    case 'software':
+    case 'professional_services':
+      return category
+    case 'tolls_fixed':
+      return 'tolls'
+    default:
+      return 'misc'
+  }
+}
+
+/** Inclusive-month counter: same-month dates count as 1. Uses UTC methods so
+ *  timezone offsets on `new Date('YYYY-MM-DD')` (which parses as UTC midnight)
+ *  don't cause off-by-one arithmetic in local timezones west of UTC. */
+export function monthsBetween(start: Date, end: Date): number {
+  if (end < start) return 0
+  const months =
+    (end.getUTCFullYear() - start.getUTCFullYear()) * 12 +
+    (end.getUTCMonth() - start.getUTCMonth()) +
+    1
+  return Math.max(months, 0)
+}
+
+function parseMoney(value: unknown): number {
+  if (value === null || value === undefined) return 0
+  const n = typeof value === 'number' ? value : parseFloat(String(value))
+  return Number.isFinite(n) ? n : 0
+}
+
+function categoryLabel(category: string): string {
+  return category
+    .split('_')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ')
+}
+
+function maintenanceTypeLabel(type: string): string {
+  switch (type) {
+    case 'preventive':
+      return 'Preventive maintenance'
+    case 'repair':
+      return 'Repair'
+    case 'inspection':
+      return 'Inspection'
+    case 'tire':
+      return 'Tire service'
+    case 'oil_change':
+      return 'Oil change'
+    default:
+      return 'Maintenance'
+  }
+}
+
+function roundSummary(s: ExpenseSummary): ExpenseSummary {
+  const r = (n: number) => Math.round(n * 100) / 100
+  return {
+    fuel: r(s.fuel),
+    tolls: r(s.tolls),
+    repairs: r(s.repairs),
+    lodging: r(s.lodging),
+    maintenance: r(s.maintenance),
+    insurance: r(s.insurance),
+    truck_lease: r(s.truck_lease),
+    registration: r(s.registration),
+    fixed_other: r(s.fixed_other),
+    other: r(s.other),
+    total: r(s.total),
+  }
+}
