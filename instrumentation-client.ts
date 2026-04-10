@@ -1,5 +1,20 @@
 import * as Sentry from '@sentry/nextjs'
 
+// Permissive event shape — see sentry.server.config.ts for rationale.
+type ScrubbableEvent = {
+  extra?: unknown
+  contexts?: unknown
+  user?: unknown
+  request?: {
+    url?: string
+    cookies?: Record<string, string>
+    headers?: Record<string, string>
+    data?: unknown
+  }
+  spans?: Array<{ data?: unknown } & Record<string, unknown>>
+  breadcrumbs?: Array<{ data?: Record<string, unknown> } & Record<string, unknown>>
+}
+
 // CFG-003: PII scrubber shared between beforeSend and beforeSendTransaction.
 // The original config captured 100% of traces and 100% of errored session
 // replays with zero scrubbing, shipping order objects (broker email, VIN,
@@ -22,9 +37,45 @@ const PII_KEY_PATTERNS = [
   /api[_-]?key/i,
   /secret/i,
   /token/i,
+  /authorization/i,
+  /cookie/i,
 ]
 
 const SCRUBBED = '[Filtered]'
+
+// MAPBOX-01: Keys whose string values are URLs. We strip the query string
+// from these values before they reach Sentry so that third-party API tokens
+// passed as query params never leak into breadcrumbs or span attributes.
+// Defense-in-depth mirror of the server-side scrubber in
+// sentry.server.config.ts — client bundles don't currently hit Mapbox
+// directly, but this closes the class of bug for future integrations.
+// Includes `url.full` / `http.target` for parity even though browser SDK
+// uses `http.url` — keeps drift between configs to zero.
+const URL_KEY_PATTERNS = [
+  /^url$/i,
+  /^http\.url$/i,
+  /^request\.url$/i,
+  /^url\.full$/i,
+  /^http\.target$/i,
+]
+
+// MAPBOX-06: Keys whose string values are RAW query strings. Sentry's
+// browser fetch instrumentation writes the parsed query string under a
+// separate `http.query` key, bypassing the `url` strip above. The whole
+// VALUE is sensitive here, so we replace with [Filtered].
+const QUERY_KEY_PATTERNS = [
+  /^http\.query$/i,
+  /^http\.fragment$/i,
+  /^url\.query$/i,
+  /^url\.fragment$/i,
+  /^query[_.-]?string$/i,
+]
+
+function stripQueryString(urlString: string): string {
+  const idx = urlString.indexOf('?')
+  if (idx === -1) return urlString
+  return urlString.slice(0, idx)
+}
 
 // scrubValue walks the event payload recursively and replaces any value
 // whose key matches a PII pattern with '[Filtered]'. The `seen` WeakSet
@@ -48,6 +99,10 @@ function scrubValue(value: unknown, seen: WeakSet<object> = new WeakSet()): unkn
     for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
       if (PII_KEY_PATTERNS.some((re) => re.test(k))) {
         out[k] = SCRUBBED
+      } else if (QUERY_KEY_PATTERNS.some((re) => re.test(k)) && typeof v === 'string') {
+        out[k] = SCRUBBED
+      } else if (URL_KEY_PATTERNS.some((re) => re.test(k)) && typeof v === 'string') {
+        out[k] = stripQueryString(v)
       } else {
         out[k] = scrubValue(v, seen)
       }
@@ -55,6 +110,57 @@ function scrubValue(value: unknown, seen: WeakSet<object> = new WeakSet()): unkn
     return out
   }
   return value
+}
+
+// MAPBOX-07: Centralized event scrubber covering ALL leak surfaces.
+// See sentry.server.config.ts::scrubEvent for the full rationale.
+function scrubEvent<T>(input: T): T {
+  const event = input as unknown as ScrubbableEvent
+  if (event.extra) {
+    event.extra = scrubValue(event.extra)
+  }
+  if (event.contexts) {
+    event.contexts = scrubValue(event.contexts)
+  }
+  if (event.user) {
+    event.user = scrubValue(event.user)
+  }
+  if (event.request) {
+    if (event.request.cookies) {
+      for (const key of Object.keys(event.request.cookies)) {
+        event.request.cookies[key] = SCRUBBED
+      }
+    }
+    if (event.request.headers) {
+      for (const key of Object.keys(event.request.headers)) {
+        const lower = key.toLowerCase()
+        if (lower === 'cookie' || lower === 'authorization' || lower === 'x-api-key') {
+          event.request.headers[key] = SCRUBBED
+        }
+      }
+    }
+    if (event.request.data) {
+      event.request.data = scrubValue(event.request.data)
+    }
+    if (typeof event.request.url === 'string') {
+      event.request.url = stripQueryString(event.request.url)
+    }
+  }
+  if (Array.isArray(event.spans)) {
+    event.spans = event.spans.map((s) => {
+      if (s && typeof s === 'object' && s.data) {
+        return { ...s, data: scrubValue(s.data) }
+      }
+      return s
+    })
+  }
+  if (Array.isArray(event.breadcrumbs)) {
+    event.breadcrumbs = event.breadcrumbs.map((b) => ({
+      ...b,
+      data: b.data ? (scrubValue(b.data) as Record<string, unknown>) : b.data,
+    }))
+  }
+  return input
 }
 
 Sentry.init({
@@ -88,28 +194,19 @@ Sentry.init({
     'Script error.',
     'Non-Error promise rejection captured',
   ],
-  // CFG-003: strip PII from captured error events before they leave the
-  // browser. Walks event.extra, event.contexts, event.request.data and
-  // event.user looking for keys matching PII_KEY_PATTERNS.
+  // CFG-003 + MAPBOX-01/06/07: strip PII and tokens from captured error
+  // events before they leave the browser. Covers all leak surfaces:
+  // event.extra, event.contexts, event.request.{data,url}, event.user,
+  // event.spans[*].data, event.breadcrumbs[*].data.
   beforeSend(event) {
-    if (event.extra) event.extra = scrubValue(event.extra) as typeof event.extra
-    if (event.contexts) event.contexts = scrubValue(event.contexts) as typeof event.contexts
-    if (event.request?.data) {
-      event.request.data = scrubValue(event.request.data)
-    }
-    if (event.user) {
-      event.user = scrubValue(event.user) as typeof event.user
-    }
-    // Breadcrumbs carry a `data` field with HTTP request URLs, response
-    // bodies, console args, etc. — a TMS log line like "Loading order {vin:...}"
-    // would leak PII here bypassing the event-level scrubber.
-    if (event.breadcrumbs) {
-      event.breadcrumbs = event.breadcrumbs.map((b) => ({
-        ...b,
-        data: b.data ? (scrubValue(b.data) as Record<string, unknown>) : b.data,
-      }))
-    }
-    return event
+    return scrubEvent(event)
+  },
+  // MAPBOX-07: scrub transaction events the same way as errors.
+  // Previously transactions bypassed all scrubbing, so any HTTP span
+  // attached to a sampled transaction (10% rate) would ship http.url
+  // and http.query unscrubbed.
+  beforeSendTransaction(event) {
+    return scrubEvent(event)
   },
 })
 

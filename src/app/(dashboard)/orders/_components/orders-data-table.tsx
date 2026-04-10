@@ -20,6 +20,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { updateOrder, deleteOrder } from '@/app/actions/orders'
 import type { OrderWithRelations } from '@/lib/queries/orders'
 import type { SortConfig } from '@/types/filters'
+import { parseDistanceMiles, computeRevenuePerMile } from '@/lib/order-metrics'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -264,6 +265,32 @@ export function OrdersDataTable({ orders, sort, onSort, onRowClick, onEdit }: Or
             <span className="truncate">{from || 'TBD'}</span>
             <ArrowRight className="h-3 w-3 shrink-0 opacity-60" />
             <span className="truncate">{to || 'TBD'}</span>
+          </div>
+        )
+      },
+    },
+    {
+      id: 'miles',
+      header: () => <SortableHeader label="Miles" field="distance_miles" sort={sort} onSort={onSort} />,
+      accessorFn: (row) => {
+        const d = parseFloat(row.distance_miles ?? '0')
+        return isNaN(d) ? 0 : d
+      },
+      size: 80,
+      minSize: 55,
+      cell: ({ row }) => {
+        const d = parseDistanceMiles(row.original.distance_miles)
+        const rpm = computeRevenuePerMile(row.original.revenue, row.original.distance_miles)
+        return (
+          <div className="text-right">
+            <span className="text-sm tabular-nums text-foreground">
+              {d !== null ? d.toLocaleString() : '--'}
+            </span>
+            {rpm !== null && (
+              <p className="text-[10px] text-muted-foreground tabular-nums">
+                ${rpm.toFixed(2)}/mi
+              </p>
+            )}
           </div>
         )
       },

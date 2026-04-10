@@ -290,6 +290,12 @@ export function OrderList() {
       delivery: [o.delivery_city, o.delivery_state].filter(Boolean).join(', '),
       revenue: o.revenue ?? '0',
       broker_fee: o.broker_fee ?? '0',
+      distance_miles: o.distance_miles ?? '',
+      revenue_per_mile: (() => {
+        const d = parseFloat(o.distance_miles ?? '0')
+        const r = parseFloat(o.revenue)
+        return d > 0 ? (r / d).toFixed(2) : ''
+      })(),
       created_at: o.created_at ? new Date(o.created_at).toLocaleDateString() : '',
     }))
   }, [search, status, brokerId, driverId, paymentStatuses, dateRange, sort])

@@ -14,6 +14,7 @@ import { updateOrder, deleteOrder } from '@/app/actions/orders'
 import { cn } from '@/lib/utils'
 import type { OrderWithRelations } from '@/lib/queries/orders'
 import type { OrderStatus } from '@/types'
+import { parseDistanceMiles, computeRevenuePerMile, formatPerMile } from '@/lib/order-metrics'
 
 // Left border accent color per order status — provides instant visual triage on mobile
 const STATUS_BORDER_CLASSES: Record<OrderStatus, string> = {
@@ -73,6 +74,8 @@ export function OrderCard({ order, onClick, onEdit }: OrderCardProps) {
   const route = formatRoute(order)
   const driverName = formatDriverName(order.driver)
   const revenue = parseFloat(order.revenue)
+  const distanceMiles = parseDistanceMiles(order.distance_miles)
+  const revenuePerMile = computeRevenuePerMile(order.revenue, order.distance_miles)
 
   async function handleAssignDriver(driverId: string) {
     setIsAssigning(true)
@@ -145,6 +148,9 @@ export function OrderCard({ order, onClick, onEdit }: OrderCardProps) {
           <span className="truncate">{route.from}</span>
           <ArrowRight className="h-3 w-3 flex-shrink-0 text-muted-foreground/60" />
           <span className="truncate">{route.to}</span>
+          {distanceMiles !== null && (
+            <span className="shrink-0 text-muted-foreground/60">&middot; {distanceMiles.toLocaleString()} mi</span>
+          )}
         </div>
       )}
 
@@ -170,6 +176,9 @@ export function OrderCard({ order, onClick, onEdit }: OrderCardProps) {
           <span className="text-sm font-semibold text-foreground">
             {revenue > 0 ? formatCurrency(revenue) : '--'}
           </span>
+          {revenuePerMile !== null && (
+            <span className="text-xs text-muted-foreground ml-1">({formatPerMile(revenuePerMile)})</span>
+          )}
           {order.payment_type === 'SPLIT' && order.cod_amount && order.billing_amount && (
             <div className="mt-0.5 flex items-center gap-1.5 text-xs">
               <span className="text-emerald-600">

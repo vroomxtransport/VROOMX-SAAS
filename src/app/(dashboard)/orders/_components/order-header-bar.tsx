@@ -11,10 +11,12 @@ import {
   MapPin,
   Building2,
   Receipt,
+  Route,
 } from 'lucide-react'
 import { PAYMENT_TYPE_LABELS } from '@/types'
 import type { OrderStatus } from '@/types'
 import type { OrderWithRelations } from '@/lib/queries/orders'
+import { parseDistanceMiles, computeRevenuePerMile, formatMiles, formatPerMile } from '@/lib/order-metrics'
 
 interface OrderHeaderBarProps {
   order: OrderWithRelations
@@ -62,6 +64,8 @@ export function OrderHeaderBar({ order, onEdit, onDelete, canDelete }: OrderHead
   const distance = order.pickup_state && order.delivery_state
     ? `${order.pickup_state} → ${order.delivery_state}`
     : null
+  const distanceMiles = parseDistanceMiles(order.distance_miles)
+  const revenuePerMile = computeRevenuePerMile(order.revenue, order.distance_miles)
 
   return (
     <div className="rounded-xl border border-border-subtle bg-surface overflow-hidden">
@@ -131,6 +135,22 @@ export function OrderHeaderBar({ order, onEdit, onDelete, canDelete }: OrderHead
               </div>
             </div>
           )}
+
+          <div className="flex items-center gap-2">
+            <Route className="h-4 w-4 text-muted-foreground" />
+            <div>
+              <p className="text-xs text-muted-foreground">Distance</p>
+              <p className="text-sm font-semibold tabular-nums">{formatMiles(distanceMiles)}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <div>
+              <p className="text-xs text-muted-foreground">Rev/Mile</p>
+              <p className="text-sm font-semibold tabular-nums">{formatPerMile(revenuePerMile)}</p>
+            </div>
+          </div>
 
           <div className="flex items-center gap-2">
             <Building2 className="h-4 w-4 text-muted-foreground" />

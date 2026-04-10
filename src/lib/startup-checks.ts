@@ -92,6 +92,11 @@ const REQUIRED_ENV: EnvCheck[] = [
   // Web Push (PWA push notifications) — optional, push silently skipped if unset
   { name: 'NEXT_PUBLIC_VAPID_PUBLIC_KEY', required: false, description: 'VAPID public key for web push notifications' },
   { name: 'VAPID_PRIVATE_KEY', required: false, description: 'VAPID private key for web push notifications' },
+
+  // Mapbox — optional, geocoding + distance calc skipped if unset. Orders
+  // continue to work without it; distance_miles stays null until entered
+  // manually. Warning printed below.
+  { name: 'MAPBOX_ACCESS_TOKEN', required: false, description: 'Mapbox token for geocoding + driving-distance calculation on orders' },
 ]
 
 /**
@@ -136,6 +141,11 @@ export function assertRequiredEnvVars(): void {
     if (!process.env.PLATFORM_ADMIN_EMAILS) {
       console.warn(
         '[startup] PLATFORM_ADMIN_EMAILS unset — /admin panel is locked out for all users',
+      )
+    }
+    if (!process.env.MAPBOX_ACCESS_TOKEN) {
+      console.warn(
+        '[startup] MAPBOX_ACCESS_TOKEN unset — order geocoding + driving-distance auto-calc disabled',
       )
     }
     return

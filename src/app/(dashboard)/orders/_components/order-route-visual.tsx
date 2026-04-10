@@ -2,6 +2,7 @@
 
 import { ExternalLink, MapPin, Phone, Calendar } from 'lucide-react'
 import type { OrderWithRelations } from '@/lib/queries/orders'
+import { parseDistanceMiles, formatMiles } from '@/lib/order-metrics'
 
 interface OrderRouteVisualProps {
   order: OrderWithRelations
@@ -51,6 +52,7 @@ export function OrderRouteVisual({ order }: OrderRouteVisualProps) {
 
   const pickupOverdue = isDatePast(order.pickup_date) && !order.actual_pickup_date
   const deliveryOverdue = isDatePast(order.delivery_date) && !order.actual_delivery_date
+  const distanceMiles = parseDistanceMiles(order.distance_miles)
 
   return (
     <div className="rounded-xl border border-border-subtle bg-surface p-6">
@@ -66,7 +68,6 @@ export function OrderRouteVisual({ order }: OrderRouteVisualProps) {
         <div className="flex items-start gap-4">
           <div className="flex flex-col items-center pt-1">
             <div className="h-4 w-4 rounded-full bg-emerald-500 ring-4 ring-emerald-100" />
-            <div className="border-l-2 border-dashed border-border-subtle ml-0 h-10" />
           </div>
           <div className="flex-1 pb-2">
             <p className="text-xs font-semibold uppercase text-muted-foreground">Pickup</p>
@@ -120,6 +121,20 @@ export function OrderRouteVisual({ order }: OrderRouteVisualProps) {
               )}
             </div>
           </div>
+        </div>
+
+        {/* Distance connector row */}
+        <div className="flex items-center gap-4 py-2">
+          <div className="flex flex-col items-center w-4 flex-shrink-0">
+            <div className="border-l-2 border-dashed border-border-subtle h-6" />
+          </div>
+          {distanceMiles !== null ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-accent/60 border border-border-subtle px-2.5 py-0.5 text-[11px] font-semibold tabular-nums text-muted-foreground">
+              {formatMiles(distanceMiles)}
+            </span>
+          ) : (
+            <span className="text-[11px] text-muted-foreground/60 italic">Distance pending…</span>
+          )}
         </div>
 
         {/* Delivery point */}

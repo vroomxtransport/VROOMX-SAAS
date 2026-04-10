@@ -33,7 +33,7 @@ export interface OrdersResult {
 const ORDER_ALLOWED_SORT_COLUMNS = [
   'created_at', 'order_number', 'status', 'payment_status',
   'carrier_pay', 'broker_fee', 'local_fee', 'pickup_city', 'delivery_city',
-  'invoice_date',
+  'invoice_date', 'revenue', 'distance_miles',
 ]
 const ORDER_DEFAULT_SORT = 'created_at'
 

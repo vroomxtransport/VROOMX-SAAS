@@ -28,10 +28,12 @@ import {
   User,
   Receipt,
   ExternalLink,
+  Route,
 } from 'lucide-react'
 import { PAYMENT_TYPE_LABELS } from '@/types'
 import type { OrderStatus, TripStatus, PaymentStatus } from '@/types'
 import type { OrderWithRelations } from '@/lib/queries/orders'
+import { parseDistanceMiles, computeRevenuePerMile, computeCarrierPayPerMile, formatMiles, formatPerMile } from '@/lib/order-metrics'
 
 interface OrderDetailProps {
   order: OrderWithRelations
@@ -73,6 +75,10 @@ export function OrderDetail({ order }: OrderDetailProps) {
   const driverPayRateOverride = order.driver_pay_rate_override ? parseFloat(order.driver_pay_rate_override) : null
   const margin = revenue - carrierPay - brokerFee - localFee
   const marginPercent = revenue > 0 ? (margin / revenue) * 100 : 0
+
+  const distanceMiles = parseDistanceMiles(order.distance_miles)
+  const revenuePerMile = computeRevenuePerMile(order.revenue, order.distance_miles)
+  const carrierPayPerMile = computeCarrierPayPerMile(order.carrier_pay, order.distance_miles)
 
   const vehicleInfo = [
     order.vehicle_year,
@@ -212,6 +218,28 @@ export function OrderDetail({ order }: OrderDetailProps) {
               >
                 {marginPercent >= 0 ? '+' : ''}{marginPercent.toFixed(1)}%
               </p>
+            </div>
+
+            {/* Route & Per-Mile */}
+            <div className="border-t border-border-subtle pt-3 mb-4 space-y-2">
+              <div className="flex items-center gap-1.5 mb-2">
+                <Route className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-xs font-semibold uppercase text-muted-foreground">Per-Mile</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Distance</span>
+                <span className="text-sm font-medium tabular-nums text-foreground" title={distanceMiles === null ? 'Auto-calculates when both addresses have coordinates' : undefined}>
+                  {formatMiles(distanceMiles)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Revenue / Mile</span>
+                <span className="text-sm font-medium tabular-nums text-foreground">{formatPerMile(revenuePerMile)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Carrier Pay / Mile</span>
+                <span className="text-sm font-medium tabular-nums text-foreground">{formatPerMile(carrierPayPerMile)}</span>
+              </div>
             </div>
 
             <div className="space-y-3">

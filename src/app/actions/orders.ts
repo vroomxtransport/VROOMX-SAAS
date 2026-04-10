@@ -225,7 +225,11 @@ export async function updateOrder(id: string, data: unknown) {
     return { error: parsed.error.flatten().fieldErrors }
   }
 
-  const auth = await authorize('orders.update')
+  // Rate-limit updates to bound Mapbox cost. Each address-touching update
+  // can fire up to 3 Mapbox calls (geocode pickup + geocode delivery +
+  // directions), so without a cap an authenticated user could exhaust the
+  // tenant's free tier in minutes via scripted edits.
+  const auth = await authorize('orders.update', { rateLimit: { key: 'updateOrder', limit: 60, windowMs: 60_000 } })
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId } = auth.ctx
 
