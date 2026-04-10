@@ -210,7 +210,10 @@ export function ProfitByTruckTable({ data }: ProfitByTruckTableProps) {
                 return (
                   <tr key={truck.truckId} className="border-b border-border-subtle/50 last:border-0 bg-card hover:bg-muted/30 transition-colors">
                     <td className="py-2 pr-3">
-                      <Link href="/trucks" className="font-medium text-brand hover:underline transition-colors">
+                      <Link
+                        href={`/trucks/${truck.truckId}/financials`}
+                        className="font-medium text-brand hover:underline transition-colors"
+                      >
                         {truck.unitNumber}
                       </Link>
                     </td>

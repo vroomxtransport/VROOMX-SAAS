@@ -26,6 +26,7 @@ import {
   Truck,
   Hash,
   FileText,
+  LineChart,
 } from 'lucide-react'
 import { TRUCK_TYPE_LABELS } from '@/types'
 import type { TruckType, TruckStatus } from '@/types'
@@ -135,6 +136,10 @@ export default function TruckDetailPage({ params }: TruckDetailPageProps) {
                 </SelectContent>
               </Select>
             </div>
+            <Button variant="outline" onClick={() => router.push(`/trucks/${id}/financials`)}>
+              <LineChart className="mr-2 h-4 w-4" />
+              View P&amp;L
+            </Button>
             <Button variant="outline" onClick={() => setDrawerOpen(true)}>
               <Pencil className="mr-2 h-4 w-4" />
               Edit

@@ -108,6 +108,77 @@ export async function getTruckExpenses(
 }
 
 /**
+ * Fetch the last 12 months of revenue / expenses / profit for one truck,
+ * bucketed by month (YYYY-MM). Revenue comes from trips.total_revenue
+ * (denormalized). Expenses come from the unified ledger so the numbers
+ * match the ledger table exactly.
+ *
+ * Returns an array of 12 points, oldest first, with zero-filled months.
+ */
+export async function getTruckMonthlyPnl(
+  supabase: SupabaseClient,
+  truckId: string,
+): Promise<Array<{ month: string; revenue: number; expenses: number; profit: number }>> {
+  const now = new Date()
+  const windowStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 11, 1))
+  const windowStartStr = windowStart.toISOString().slice(0, 10)
+  // windowEnd is the last day of the CURRENT month so in-progress-month trips are included.
+  const windowEndStr = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0))
+    .toISOString()
+    .slice(0, 10)
+
+  // Pre-seed 12 zero-filled month buckets
+  const buckets = new Map<string, { month: string; revenue: number; expenses: number; profit: number }>()
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(Date.UTC(windowStart.getUTCFullYear(), windowStart.getUTCMonth() + i, 1))
+    const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
+    const label = d.toLocaleDateString('en-US', { month: 'short', year: '2-digit', timeZone: 'UTC' })
+    buckets.set(key, { month: label, revenue: 0, expenses: 0, profit: 0 })
+  }
+
+  // Revenue from trips. Use overlap (start_date <= windowEnd AND end_date >= windowStart)
+  // so a multi-day trip that started BEFORE the 12-month window but delivers
+  // inside it still contributes its revenue. Bucketing is always by start_date;
+  // boundary-crossing trips therefore put revenue in an earlier bucket which may
+  // not exist (is silently dropped) — the overlap fetch is the best we can do
+  // without splitting trip revenue across months, and matches the overlap logic
+  // in fetchTripExpensesForTruck so expenses and revenue stay in lockstep.
+  const { data: trips, error: tripsError } = await supabase
+    .from('trips')
+    .select('total_revenue, start_date')
+    .eq('truck_id', truckId)
+    .lte('start_date', windowEndStr)
+    .gte('end_date', windowStartStr)
+  if (tripsError) throw tripsError
+
+  for (const t of trips ?? []) {
+    if (!t.start_date) continue
+    const key = (t.start_date as string).slice(0, 7)
+    const bucket = buckets.get(key)
+    if (bucket) {
+      bucket.revenue += parseFloat((t.total_revenue as string | null) ?? '0')
+    }
+  }
+
+  // Expenses from the unified ledger
+  const entries = await getTruckExpenses(supabase, truckId, { from: windowStartStr, to: windowEndStr })
+  for (const entry of entries) {
+    const key = entry.occurredAt.slice(0, 7)
+    const bucket = buckets.get(key)
+    if (bucket) {
+      bucket.expenses += entry.amount
+    }
+  }
+
+  return Array.from(buckets.values()).map((b) => ({
+    ...b,
+    revenue: Math.round(b.revenue * 100) / 100,
+    expenses: Math.round(b.expenses * 100) / 100,
+    profit: Math.round((b.revenue - b.expenses) * 100) / 100,
+  }))
+}
+
+/**
  * Roll entries up into a category summary. Any normalized category that
  * doesn't have an explicit bucket on {@link ExpenseSummary} is grouped under
  * `other`, so the returned total always equals the sum of the named buckets.
