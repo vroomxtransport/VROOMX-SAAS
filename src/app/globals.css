@@ -307,6 +307,11 @@
   100% { transform: translateX(-50%); }
 }
 
+@keyframes marquee-reverse {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+
 @keyframes border-rotate {
   0% { --border-angle: 0deg; }
   100% { --border-angle: 360deg; }
@@ -415,6 +420,13 @@
     animation: marquee 30s linear infinite;
   }
   .animate-marquee:hover {
+    animation-play-state: paused;
+  }
+
+  .animate-marquee-reverse {
+    animation: marquee-reverse 30s linear infinite;
+  }
+  .animate-marquee-reverse:hover {
     animation-play-state: paused;
   }
 

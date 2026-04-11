@@ -42,7 +42,11 @@ export function MarketingHeader() {
               alt="VroomX TMS"
               width={200}
               height={56}
-              className="h-[132px] w-auto brightness-0"
+              priority
+              className={cn(
+                'h-12 w-auto transition-[filter] duration-300',
+                scrolled ? 'brightness-0' : 'brightness-100',
+              )}
             />
           </Link>
 
@@ -110,7 +114,7 @@ export function MarketingHeader() {
                   alt="VroomX TMS"
                   width={180}
                   height={56}
-                  className="h-[132px] w-auto brightness-0"
+                  className="h-12 w-auto brightness-0"
                 />
               </div>
               <div className="grid gap-y-1 overflow-y-auto px-4 pt-4 pb-5">

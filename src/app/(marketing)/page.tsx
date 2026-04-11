@@ -5,6 +5,7 @@ import { PainAgitationSection } from '@/components/marketing/pain-agitation-sect
 import { FinancialIntelligence } from '@/components/marketing/financial-intelligence'
 import { Feature197 } from '@/components/ui/accordion-feature-section'
 import { DriverAppSection } from '@/components/marketing/driver-app-section'
+import { IntegrationsSection } from '@/components/marketing/integrations-section'
 import { Testimonials } from '@/components/marketing/testimonials'
 import PricingSection from '@/components/ui/pricing'
 import { FAQSection } from '@/components/marketing/faq-section'
@@ -45,7 +46,7 @@ const pageFaqs = [
 ]
 
 export const metadata: Metadata = {
-  title: 'Auto Transport TMS for Carriers | VroomX',
+  title: { absolute: 'Auto Transport TMS for Carriers | VroomX' },
   description:
     'The first TMS built for auto-transport carriers, not brokers. See Clean Gross on every load, automate driver settlements, and track per-truck profitability. Plans from $29/mo. 14-day free trial.',
   alternates: {
@@ -76,6 +77,7 @@ export default function LandingPage() {
       <Feature197 />
       <FinancialIntelligence />
       <DriverAppSection />
+      <IntegrationsSection />
       <PainAgitationSection />
       <Testimonials />
       <section className="border-t border-border">
