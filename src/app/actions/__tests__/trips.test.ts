@@ -99,7 +99,46 @@ function createMockSupabaseClient(overrides: {
         }
       }
 
-      // Default: trips table (or trip_expenses, etc.)
+      // CodeAuditX #3 BUG-2: trip_expenses and local_drives are read by
+      // recalculateTripFinancials. They must return arrays so .reduce()
+      // works. Before the CAS refactor, the default branch below returned
+      // a single trip row, which blew up inside recalc.
+      if (table === 'trip_expenses' || table === 'local_drives') {
+        return {
+          insert: vi.fn().mockReturnValue({
+            select: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({ data: null, error: null }),
+            }),
+          }),
+          update: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+                select: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({ data: null, error: null }),
+                }),
+              }),
+            }),
+          }),
+          delete: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({ error: null }),
+            }),
+          }),
+          select: vi.fn().mockReturnValue(
+            makeSelectChain({ data: [], error: null })
+          ),
+        }
+      }
+
+      // Default: trips table
+      //
+      // CodeAuditX #3 BUG-2: the update chain now supports BOTH paths:
+      //   1. .update().eq(id).eq(tenant).select().single() — updateTrip, etc.
+      //   2. .update().eq(id).eq(tenant).eq(version).select('id') — recalc CAS
+      // The second .eq() returns an object with both .select (path 1) and .eq
+      // (path 2), so whichever chain the production code walks, it terminates
+      // in a success-shaped response.
       return {
         insert: vi.fn().mockReturnValue({
           select: vi.fn().mockReturnValue({
@@ -109,8 +148,16 @@ function createMockSupabaseClient(overrides: {
         update: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
+              // Path 1 (updateTrip's own UPDATE): .select().single()
               select: vi.fn().mockReturnValue({
                 single: vi.fn().mockResolvedValue(updateResult),
+              }),
+              // Path 2 (recalc CAS): .eq(version).select('id') → Promise<array>
+              eq: vi.fn().mockReturnValue({
+                select: vi.fn().mockResolvedValue({
+                  data: [{ id: 'trip-1' }],
+                  error: null,
+                }),
               }),
             }),
           }),
@@ -121,7 +168,7 @@ function createMockSupabaseClient(overrides: {
           }),
         }),
         select: vi.fn().mockReturnValue(
-          makeSelectChain(overrides.selectResult ?? { data: { id: 'trip-1', carrier_pay: '1000', driver: null }, error: null })
+          makeSelectChain(overrides.selectResult ?? { data: { id: 'trip-1', version: 0, carrier_pay: '1000', driver: null }, error: null })
         ),
       }
     }),
@@ -246,22 +293,13 @@ describe('createTrip', () => {
 
 describe('updateTrip', () => {
   it('returns success with valid partial update', async () => {
+    // CodeAuditX #3 BUG-2: use mockAuthSuccess (persistent mockResolvedValue)
+    // instead of mockResolvedValueOnce queues, which leak between tests and
+    // were the root cause of this test failing intermittently after the
+    // recalculateTripFinancials CAS refactor. Notes-only update does not
+    // trigger recalc, so only updateTrip's own authorize is called.
     const mockClient = createMockSupabaseClient()
-    mockedAuthorize
-      .mockResolvedValueOnce({
-        ok: true,
-        ctx: {
-          supabase: mockClient as never,
-          tenantId: 'tenant-456',
-          user: { id: 'user-123', email: 'test@example.com' },
-          role: 'admin',
-          permissions: ['*'],
-        },
-      })
-      .mockResolvedValueOnce({
-        ok: false,
-        error: 'Not authenticated',
-      })
+    mockAuthSuccess(mockClient)
 
     const result = await updateTrip('trip-1', { notes: 'Updated notes' })
 
@@ -290,24 +328,16 @@ describe('updateTrip', () => {
   })
 
   it('triggers recalculation when carrier_pay changes', async () => {
-    // For updateTrip: first authorize for updateTrip itself, then authorize for recalc
+    // CodeAuditX #3 BUG-2: the original test used a mockResolvedValueOnce
+    // queue with the 2nd value deliberately failing — that silently swallowed
+    // the recalc error under the old fire-and-forget behavior. After the
+    // CAS retry refactor, updateTrip now propagates recalc errors, so the
+    // test needs both authorize calls to succeed for the happy path.
+    // mockAuthSuccess uses persistent mockResolvedValue so both the outer
+    // updateTrip('trips.update') authorize and the inner
+    // recalculateTripFinancials('trips.view') authorize resolve to ok=true.
     const mockClient = createMockSupabaseClient()
-    // First call: updateTrip authorize, subsequent calls: recalculate authorize
-    mockedAuthorize
-      .mockResolvedValueOnce({
-        ok: true,
-        ctx: {
-          supabase: mockClient as never,
-          tenantId: 'tenant-456',
-          user: { id: 'user-123', email: 'test@example.com' },
-          role: 'admin',
-          permissions: ['*'],
-        },
-      })
-      .mockResolvedValueOnce({
-        ok: false,
-        error: 'Not authenticated',
-      })
+    mockAuthSuccess(mockClient)
 
     const result = await updateTrip('trip-1', { carrier_pay: 2000 })
 

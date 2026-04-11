@@ -258,7 +258,13 @@ export async function addTruckExpense(data: unknown) {
 
         // Trip financials depend on trip_expenses — keep the denormalized
         // fields in sync just like createTripExpense does.
-        await recalculateTripFinancials(v.tripId as string)
+        // CodeAuditX #3 BUG-2: surface CAS-exhaustion errors.
+        {
+          const recalc = await recalculateTripFinancials(v.tripId as string)
+          if ('error' in recalc && recalc.error) {
+            return { error: recalc.error }
+          }
+        }
         void syncExpenseToQB(supabase, tenantId, entry.id as string, 'trip').catch((e: unknown) => {
           // Fire-and-forget: don't fail the user's add-expense flow if QB
           // push throws an unhandled error before recordQBExpenseError

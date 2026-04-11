@@ -472,8 +472,16 @@ export async function updateOrder(id: string, data: unknown) {
   // changed, or geocoding wrote a new distance_miles.
   const financialFields = ['revenue', 'carrier_pay', 'broker_fee', 'local_fee', 'driver_pay_rate_override', 'distance_miles', 'driver_id']
   const hasFinancialChange = Object.keys(updateData).some(k => financialFields.includes(k))
+  // CodeAuditX Critical #3: await (was fire-and-forget). recalculateTripFinancials
+  // now runs a CAS retry loop and returns a real error on exhaustion, so we
+  // wait for it to commit before returning. Cost: ~1 extra Supabase round-trip
+  // per order update. Benefit: consistency — the UI sees the new totals on the
+  // next fetch, and retry exhaustion surfaces instead of being silently swallowed.
   if (finalOrder.trip_id && (hasFinancialChange || distanceChangedByGeocoding || needsDriverPayRecompute)) {
-    void recalculateTripFinancials(finalOrder.trip_id).catch(() => {})
+    const recalc = await recalculateTripFinancials(finalOrder.trip_id)
+    if ('error' in recalc && recalc.error) {
+      return { error: recalc.error }
+    }
   }
 
   // Fire-and-forget activity log
@@ -531,9 +539,13 @@ export async function deleteOrder(id: string) {
     return { error: safeError(error, 'deleteOrder') }
   }
 
-  // Recalculate trip financials if order was assigned to a trip
+  // CodeAuditX Critical #3: await (was fire-and-forget). See the matching
+  // comment in updateOrder above for the rationale.
   if (tripId) {
-    void recalculateTripFinancials(tripId).catch(() => {})
+    const recalc = await recalculateTripFinancials(tripId)
+    if ('error' in recalc && recalc.error) {
+      return { error: recalc.error }
+    }
   }
 
   revalidatePath('/orders')

@@ -344,6 +344,11 @@ export const trips = pgTable('trips', {
   routeSequence: jsonb('route_sequence'),
   // Metadata
   notes: text('notes'),
+  // Optimistic concurrency control counter — bumped by
+  // recalculateTripFinancials() via compare-and-swap. Prevents lost updates
+  // on the denormalized financial totals when concurrent order/expense
+  // changes trigger parallel recalculations on the same trip.
+  version: integer('version').notNull().default(0),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [

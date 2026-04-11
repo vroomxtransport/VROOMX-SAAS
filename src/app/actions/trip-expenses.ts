@@ -36,8 +36,14 @@ export async function createTripExpense(tripId: string, data: unknown) {
     return { error: safeError(error, 'createTripExpense') }
   }
 
-  // Recalculate trip financials after adding expense
-  await recalculateTripFinancials(tripId)
+  // Recalculate trip financials after adding expense.
+  // CodeAuditX #3 BUG-2: surface CAS-exhaustion errors.
+  {
+    const recalc = await recalculateTripFinancials(tripId)
+    if ('error' in recalc && recalc.error) {
+      return { error: recalc.error }
+    }
+  }
 
   // Fire-and-forget: sync expense to QuickBooks
   void syncExpenseToQB(supabase, tenantId, expense.id, 'trip').catch(() => {})
@@ -79,8 +85,14 @@ export async function updateTripExpense(id: string, tripId: string, data: unknow
     return { error: safeError(error, 'updateTripExpense') }
   }
 
-  // Recalculate trip financials after updating expense
-  await recalculateTripFinancials(tripId)
+  // Recalculate trip financials after updating expense.
+  // CodeAuditX #3 BUG-2: surface CAS-exhaustion errors.
+  {
+    const recalc = await recalculateTripFinancials(tripId)
+    if ('error' in recalc && recalc.error) {
+      return { error: recalc.error }
+    }
+  }
 
   revalidatePath(`/trips/${tripId}`)
   revalidatePath('/dispatch')
@@ -102,8 +114,14 @@ export async function deleteTripExpense(id: string, tripId: string) {
     return { error: safeError(error, 'deleteTripExpense') }
   }
 
-  // Recalculate trip financials after removing expense
-  await recalculateTripFinancials(tripId)
+  // Recalculate trip financials after removing expense.
+  // CodeAuditX #3 BUG-2: surface CAS-exhaustion errors.
+  {
+    const recalc = await recalculateTripFinancials(tripId)
+    if ('error' in recalc && recalc.error) {
+      return { error: recalc.error }
+    }
+  }
 
   revalidatePath(`/trips/${tripId}`)
   revalidatePath('/dispatch')
