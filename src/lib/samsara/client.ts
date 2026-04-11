@@ -2,6 +2,7 @@ import type {
   SamsaraVehicle,
   SamsaraDriver,
   SamsaraLocation,
+  SamsaraOdometerSnapshot,
   SamsaraHOSClock,
   SamsaraSafetyEvent,
   SamsaraPaginatedResponse,
@@ -166,6 +167,18 @@ export class SamsaraClient {
   async getVehicleLocations(): Promise<SamsaraLocation[]> {
     return this.fetchAll<SamsaraLocation>('/fleet/vehicles/stats', {
       types: 'gps',
+    })
+  }
+
+  /**
+   * Fetch the current odometer reading (OBD meters) for all vehicles in the
+   * fleet. Samsara returns the latest known value plus a timestamp. Vehicles
+   * that have never reported odometer data will be present in the list with
+   * `obdOdometerMeters` undefined — callers should skip those.
+   */
+  async getVehicleOdometers(): Promise<SamsaraOdometerSnapshot[]> {
+    return this.fetchAll<SamsaraOdometerSnapshot>('/fleet/vehicles/stats', {
+      types: 'obdOdometerMeters',
     })
   }
 

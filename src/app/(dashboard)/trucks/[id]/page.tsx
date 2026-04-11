@@ -2,7 +2,7 @@
 
 import { use, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTruck } from '@/hooks/use-trucks'
+import { useTruck, useLatestOdometer } from '@/hooks/use-trucks'
 import { deleteTruck, updateTruckStatus } from '@/app/actions/trucks'
 import { TruckDrawer } from '../_components/truck-drawer'
 import { TrailerSection } from './_components/trailer-section'
@@ -27,10 +27,38 @@ import {
   Hash,
   FileText,
   LineChart,
+  Gauge,
 } from 'lucide-react'
 import { TRUCK_TYPE_LABELS } from '@/types'
 import type { TruckType, TruckStatus } from '@/types'
+import type { OdometerSource } from '@/lib/queries/trucks'
 import { useQueryClient } from '@tanstack/react-query'
+
+function formatOdometerAge(iso: string): string {
+  // Clamp to 0 so a small clock skew (incoming timestamp slightly ahead of
+  // the client) never produces a "-1m ago" string.
+  const ms = Math.max(0, Date.now() - new Date(iso).getTime())
+  const minutes = Math.floor(ms / 60_000)
+  if (minutes < 1) return 'just now'
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  if (days < 30) return `${days}d ago`
+  const months = Math.floor(days / 30)
+  return `${months}mo ago`
+}
+
+function odometerSourceLabel(source: OdometerSource): string {
+  switch (source) {
+    case 'samsara':
+      return 'from Samsara'
+    case 'fuel_entry':
+      return 'from fuel entry'
+    case 'maintenance':
+      return 'from maintenance'
+  }
+}
 
 interface TruckDetailPageProps {
   params: Promise<{ id: string }>
@@ -41,6 +69,7 @@ export default function TruckDetailPage({ params }: TruckDetailPageProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
   const { data: truck, isLoading } = useTruck(id)
+  const { data: odometer } = useLatestOdometer(id)
 
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -180,6 +209,26 @@ export default function TruckDetailPage({ params }: TruckDetailPageProps) {
                 <dd className="text-sm text-foreground">{vehicleLine}</dd>
               </div>
             )}
+            <div>
+              <dt className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                <Gauge className="h-3 w-3" />
+                Odometer
+              </dt>
+              <dd className="text-sm text-foreground">
+                {odometer ? (
+                  <span>
+                    <span className="font-medium tabular-nums">
+                      {odometer.miles.toLocaleString()} mi
+                    </span>
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      {formatOdometerAge(odometer.readingAt)} · {odometerSourceLabel(odometer.source)}
+                    </span>
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground/60">No readings yet</span>
+                )}
+              </dd>
+            </div>
           </dl>
         </div>
 

@@ -37,6 +37,20 @@ export interface SamsaraLocation {
   }
 }
 
+/**
+ * Odometer snapshot from the Samsara `/fleet/vehicles/stats?types=obdOdometerMeters`
+ * endpoint. `value` is the raw OBD reading in meters; `time` is the timestamp
+ * Samsara captured the reading.
+ */
+export interface SamsaraOdometerSnapshot {
+  id: string
+  name: string
+  obdOdometerMeters?: {
+    value: number
+    time: string
+  }
+}
+
 export interface SamsaraHOSClock {
   driverId: string
   driverName: string

@@ -1039,6 +1039,108 @@ export async function syncSafetyEvents() {
 }
 
 // ============================================================================
+// syncOdometers — Pull odometer readings for mapped vehicles
+// ============================================================================
+
+/**
+ * Pull the latest odometer reading from Samsara for each mapped vehicle and
+ * update `samsara_vehicles.last_odometer_meters` + `last_odometer_time`.
+ * Idempotent — runs every full sync.
+ *
+ * Defense-in-depth: the UPDATE is scoped by BOTH samsara_vehicle_id AND
+ * tenant_id, so a malformed Samsara response cannot overwrite another
+ * tenant's row even if the upstream ID happens to collide. Vehicles that
+ * have never reported OBD data are silently skipped.
+ */
+export async function syncOdometers() {
+  const auth = await authorize('integrations.manage', {
+    rateLimit: { key: 'syncOdometers', limit: 30, windowMs: 60_000 },
+  })
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
+
+  try {
+    const clientResult = await getClientForTenant(supabase, tenantId)
+    if ('error' in clientResult) return { error: clientResult.error }
+    const { client } = clientResult
+
+    // Build the set of samsara vehicle IDs this tenant has synced. We only
+    // write to rows that already exist in the tenant's samsara_vehicles
+    // table — any id Samsara returns that isn't in this set is ignored.
+    const { data: tenantVehicles, error: vehiclesError } = await supabase
+      .from('samsara_vehicles')
+      .select('samsara_vehicle_id')
+      .eq('tenant_id', tenantId)
+
+    if (vehiclesError) {
+      return {
+        error: safeError(
+          { message: vehiclesError.message },
+          'syncOdometers/vehicles',
+        ),
+      }
+    }
+
+    const allowedIds = new Set(
+      (tenantVehicles ?? []).map((v) => v.samsara_vehicle_id as string),
+    )
+    if (allowedIds.size === 0) {
+      return { success: true, data: { updated: 0, skipped: 0 } }
+    }
+
+    const snapshots = await client.getVehicleOdometers()
+
+    let updated = 0
+    let skipped = 0
+    for (const snap of snapshots) {
+      if (!allowedIds.has(snap.id)) {
+        skipped++
+        continue
+      }
+      if (!snap.obdOdometerMeters) {
+        skipped++
+        continue
+      }
+      // Skip OBD-0 readings — some trucks emit 0 before the ECU establishes
+      // a baseline; showing "0 mi" in the UI is worse than showing nothing.
+      if (snap.obdOdometerMeters.value <= 0) {
+        skipped++
+        continue
+      }
+
+      const { error: updateError } = await supabase
+        .from('samsara_vehicles')
+        .update({
+          last_odometer_meters: snap.obdOdometerMeters.value,
+          last_odometer_time: snap.obdOdometerMeters.time,
+        })
+        .eq('tenant_id', tenantId)
+        .eq('samsara_vehicle_id', snap.id)
+
+      if (updateError) {
+        safeError(
+          { message: updateError.message },
+          `syncOdometers/update:${snap.id}`,
+        )
+        skipped++
+        continue
+      }
+      updated++
+    }
+
+    revalidatePath('/trucks')
+    return { success: true, data: { updated, skipped } }
+  } catch (err) {
+    return {
+      error: safeError(
+        { message: err instanceof Error ? err.message : 'Unknown error' },
+        'syncOdometers',
+      ),
+    }
+  }
+}
+
+// ============================================================================
 // triggerFullSync — Run all syncs sequentially to respect Samsara rate limits
 // ============================================================================
 
@@ -1060,6 +1162,7 @@ export async function triggerFullSync() {
       vehicles: { synced: 0, mapped: 0 },
       drivers: { synced: 0, mapped: 0 },
       locations: { updated: 0 },
+      odometers: { updated: 0, skipped: 0 },
       hos: { updated: 0 },
       safetyEvents: { inserted: 0 },
     }
@@ -1087,6 +1190,13 @@ export async function triggerFullSync() {
       results.locations = locationResult.data
     }
 
+    const odometerResult = await syncOdometers()
+    if ('error' in odometerResult) {
+      warnings.push(`Odometers: ${odometerResult.error}`)
+    } else if (odometerResult.data) {
+      results.odometers = odometerResult.data
+    }
+
     const hosResult = await syncHOS()
     if ('error' in hosResult) {
       warnings.push(`HOS: ${hosResult.error}`)
@@ -1102,7 +1212,7 @@ export async function triggerFullSync() {
     }
 
     // If ALL syncs failed, return error
-    if (warnings.length === 5) {
+    if (warnings.length === 6) {
       return { error: 'All sync operations failed. Please check your API key and try again.' }
     }
 

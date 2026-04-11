@@ -2,7 +2,12 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { fetchTrucks, fetchTruck, type TruckFilters } from '@/lib/queries/trucks'
+import {
+  fetchTrucks,
+  fetchTruck,
+  getLatestOdometer,
+  type TruckFilters,
+} from '@/lib/queries/trucks'
 import { useEffect } from 'react'
 
 export function useTrucks(filters: TruckFilters = {}) {
@@ -48,5 +53,21 @@ export function useTruck(id: string | undefined) {
     queryFn: () => fetchTruck(supabase, id!),
     enabled: !!id,
     staleTime: 30_000,
+  })
+}
+
+/**
+ * Resolves the most recent odometer reading across Samsara, fuel entries,
+ * and completed maintenance records. Cached 60s — stale-while-revalidate
+ * is fine since odometer doesn't need real-time accuracy in the UI.
+ */
+export function useLatestOdometer(truckId: string | undefined) {
+  const supabase = createClient()
+
+  return useQuery({
+    queryKey: ['truck-odometer', truckId],
+    queryFn: () => getLatestOdometer(supabase, truckId!),
+    enabled: !!truckId,
+    staleTime: 60_000,
   })
 }

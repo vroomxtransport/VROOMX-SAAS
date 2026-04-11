@@ -429,6 +429,8 @@ export interface FuelEntry {
   location: string | null
   state: string | null
   notes: string | null
+  source: string
+  source_external_id: string | null
   driver?: Driver
   truck?: Truck
   created_at: string

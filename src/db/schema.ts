@@ -808,12 +808,21 @@ export const fuelEntries = pgTable('fuel_entries', {
   location: text('location'),
   state: text('state'),
   notes: text('notes'),
+  // Wave 3: origin of the row. 'manual' for user-entered, 'samsara' for
+  // Samsara Fuel sync, 'efs'/'comdata'/'fleetone' etc. for fuel cards.
+  // Backfilled to 'manual' for pre-existing rows by the migration.
+  source: text('source').notNull().default('manual'),
+  // Stable external id used to dedupe integration writes. NULL for manual
+  // rows. Uniqueness is enforced by a partial index created in the
+  // migration file 20260410000000_fuel_entries_source.sql.
+  sourceExternalId: text('source_external_id'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
   index('idx_fuel_entries_tenant_id').on(table.tenantId),
   index('idx_fuel_entries_tenant_truck').on(table.tenantId, table.truckId),
   index('idx_fuel_entries_tenant_date').on(table.tenantId, table.date),
+  index('idx_fuel_entries_tenant_truck_source').on(table.tenantId, table.truckId, table.source),
 ])
 
 /**
@@ -1550,6 +1559,7 @@ export const samsaraVehicles = pgTable('samsara_vehicles', {
   lastHeading: doublePrecision('last_heading'),
   lastLocationTime: timestamp('last_location_time', { withTimezone: true }),
   lastOdometerMeters: doublePrecision('last_odometer_meters'),
+  lastOdometerTime: timestamp('last_odometer_time', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
