@@ -3,6 +3,7 @@
 import { z } from 'zod'
 import { authorize, safeError } from '@/lib/authz'
 import { logAuditEvent } from '@/lib/audit-log'
+import { sanitizeSearch } from '@/lib/sanitize-search'
 import { issueNonce } from '@/lib/oauth-nonce'
 import { revalidatePath } from 'next/cache'
 import { getSamsaraAuthUrl, refreshAccessToken } from '@/lib/samsara/oauth'
@@ -679,8 +680,17 @@ export async function syncDrivers() {
       if (!upserted.driver_id && sDriver.name) {
         const nameParts = sDriver.name.trim().split(/\s+/)
         if (nameParts.length >= 2) {
-          const firstName = nameParts[0]
-          const lastName = nameParts.slice(1).join(' ')
+          // C-1: sanitizeSearch strips PostgREST filter metacharacters and SQL LIKE
+          // wildcards (%) before the value reaches .ilike(). The Samsara-side driver
+          // name is attacker-controlled (a tenant's Samsara operator can set it to
+          // arbitrary strings), so we must treat it as untrusted user input.
+          const firstName = sanitizeSearch(nameParts[0])
+          const lastName = sanitizeSearch(nameParts.slice(1).join(' '))
+
+          // If sanitization strips the name to empty (e.g. the Samsara-side name
+          // was entirely special characters), skip auto-mapping. Operator can
+          // still map manually from the integrations UI.
+          if (!firstName || !lastName) continue
 
           const { data: matchedDriver } = await supabase
             .from('drivers')
