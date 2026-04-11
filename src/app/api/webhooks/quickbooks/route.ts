@@ -66,22 +66,61 @@ export async function POST(request: NextRequest) {
   for (const notification of payload.eventNotifications ?? []) {
     const realmId = notification.realmId
 
-    // Look up which tenant owns this realm
-    const { data: integration } = await supabase
+    // Look up which tenant owns this realm.
+    //
+    // CodeAuditX #4 (two fixes):
+    //
+    //   (a) Latent column bug — the prior code filtered on `status = 'active'`
+    //       but the schema column is `sync_status` (see
+    //       src/db/schema.ts::quickbooksIntegrations). PostgREST returned
+    //       `42703: column does not exist` on every call, and the webhook
+    //       silently dropped every event because the destructure ignored
+    //       the error. Verified via information_schema lookup against the
+    //       live DB on 2026-04-11 (no `status` column, `sync_status` only).
+    //
+    //   (b) Capture `id` and `sync_status` so that assertIntegrationActive()
+    //       below can cheaply re-verify the integration before each
+    //       downstream entity handler, closing the TOCTOU window where a
+    //       tenant could disable their integration between this initial
+    //       lookup and the handler call (C-2).
+    const { data: integration, error: lookupError } = await supabase
       .from('quickbooks_integrations')
-      .select('tenant_id')
+      .select('id, tenant_id, sync_status')
       .eq('realm_id', realmId)
-      .eq('status', 'active')
+      .eq('sync_status', 'active')
       .single()
 
-    if (!integration) {
-      console.warn('[QB_WEBHOOK] No active integration for realmId:', realmId)
+    if (lookupError || !integration) {
+      // PGRST116 = 0 rows matched (no active integration for this realm)
+      // — log at info level because it's the normal "unknown realm" case.
+      // Anything else is an actual query error worth surfacing.
+      if (lookupError && lookupError.code !== 'PGRST116') {
+        console.error(
+          '[QB_WEBHOOK] Integration lookup failed for realmId:',
+          realmId,
+          lookupError.message
+        )
+      } else {
+        console.warn('[QB_WEBHOOK] No active integration for realmId:', realmId)
+      }
       continue
     }
 
     const entities = notification.dataChangeEvent?.entities ?? []
 
     for (const entity of entities) {
+      // C-2: re-verify integration is still active before each entity handler.
+      // If the tenant disabled/deleted their QB integration between the
+      // initial lookup above and this iteration, stop processing their events.
+      const stillActive = await assertIntegrationActive(supabase, integration.id)
+      if (!stillActive) {
+        console.warn(
+          '[QB_WEBHOOK] Integration became inactive mid-batch, skipping remaining entities for realmId:',
+          realmId
+        )
+        break
+      }
+
       await processEntity(supabase, integration.tenant_id, realmId, entity)
     }
   }
@@ -113,14 +152,26 @@ async function processEntity(
   if (existing) return
 
   // Record the event before processing (insert-first prevents duplicates
-  // if the handler is slow and QB retries)
+  // if the handler is slow and QB retries).
+  //
+  // CodeAuditX #4 (bonus latent bug, same class as the sync_status fix above):
+  // the prior insert wrote `event_type: 'Payment.Create'` to a column that
+  // doesn't exist in `quickbooks_webhook_events`. The schema has `entity_type`
+  // and `operation` as SEPARATE NOT NULL columns (plus `entity_id` and
+  // `payload` which are also NOT NULL). Every insert would have failed with
+  // either `42703` or `23502` on the first real webhook. Verified against
+  // live DB schema on 2026-04-11. Surfaced by the security-auditor agent
+  // reviewing the primary C-2 fix.
   const { error: insertError } = await supabase
     .from('quickbooks_webhook_events')
     .insert({
       tenant_id: tenantId,
       event_id: eventKey,
-      event_type: `${entity.name}.${entity.operation}`,
       realm_id: realmId,
+      entity_type: entity.name,
+      entity_id: entity.id,
+      operation: entity.operation,
+      payload: entity,
       processed_at: new Date().toISOString(),
     })
 
@@ -214,4 +265,40 @@ async function processEntity(
       error instanceof Error ? error.message : 'Unknown error'
     )
   }
+}
+
+// ---------------------------------------------------------------------------
+// CodeAuditX #4 (C-2): re-verify an integration is still active before
+// firing an entity handler. Guards against the TOCTOU window where a tenant
+// disables or deletes their QB integration between the realm_id → tenant_id
+// lookup at the top of POST() and the per-entity loop. Keyed on integration
+// `id` rather than `tenant_id` because `id` is the primary key and cheaper
+// to look up than a composite filter.
+//
+// Returns true iff the integration still exists with sync_status='active'.
+// Any other state (row missing, paused, disconnected, query error) →
+// returns false, caller should skip remaining entities for this realm.
+// ---------------------------------------------------------------------------
+
+async function assertIntegrationActive(
+  supabase: ReturnType<typeof createServiceRoleClient>,
+  integrationId: string
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('quickbooks_integrations')
+    .select('sync_status')
+    .eq('id', integrationId)
+    .maybeSingle()
+
+  if (error) {
+    console.error(
+      '[QB_WEBHOOK] assertIntegrationActive lookup failed:',
+      error.message
+    )
+    return false
+  }
+
+  if (!data) return false
+
+  return (data as { sync_status: string }).sync_status === 'active'
 }
