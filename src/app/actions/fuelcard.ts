@@ -515,7 +515,7 @@ export async function matchTransaction(data: unknown) {
     // Verify the transaction belongs to this tenant
     const { data: txn, error: txnError } = await supabase
       .from('fuelcard_transactions')
-      .select('id, gallons, price_per_gallon, total_amount, transaction_date, location_name, state, odometer, product_type, matched_truck_id')
+      .select('id, external_transaction_id, gallons, price_per_gallon, total_amount, transaction_date, location_name, state, odometer, product_type, matched_truck_id')
       .eq('id', parsed.data.transactionId)
       .eq('tenant_id', tenantId)
       .single()
@@ -557,8 +557,14 @@ export async function matchTransaction(data: unknown) {
       const totalCost = parseFloat(txn.total_amount as string) || gallons * costPerGallon
 
       if (gallons > 0 && costPerGallon > 0) {
-        try {
-        await supabase
+        // Match must use the SAME `source` + `source_external_id` combo that
+        // the sync path writes, otherwise:
+        //   (a) the ledger renders a "Manual" badge instead of "MSFuelCard"
+        //   (b) the Wave 3 partial unique index on
+        //       (tenant_id, source, source_external_id) doesn't dedupe the
+        //       row, so a subsequent sync of the same transaction can create
+        //       a duplicate fuel_entries row
+        const { error: insertError } = await supabase
           .from('fuel_entries')
           .insert({
             tenant_id: tenantId,
@@ -571,12 +577,16 @@ export async function matchTransaction(data: unknown) {
             odometer: txn.odometer as number | null,
             location: txn.location_name as string | null,
             state: txn.state as string | null,
-            notes: `Auto-imported from fuel card (${txn.product_type})`,
-            source: 'fuelcard',
+            notes: null,
+            source: 'msfuelcard',
+            source_external_id: txn.external_transaction_id as string,
           })
-      } catch {
-        // Non-critical — don't fail the match
-      }
+        // 23505 unique_violation is expected if the same transaction was
+        // already materialized by a prior sync or match — swallow it.
+        if (insertError && insertError.code !== '23505') {
+          // Non-critical — log but don't fail the match UI flow.
+          safeError({ message: insertError.message }, 'matchTransaction/fuel_entries_insert')
+        }
       }
     }
 

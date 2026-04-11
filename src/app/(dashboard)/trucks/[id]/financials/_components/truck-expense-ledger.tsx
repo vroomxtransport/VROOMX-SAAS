@@ -43,6 +43,7 @@ const SOURCE_BADGE_STYLES: Record<string, string> = {
   samsara: 'border-blue-200 bg-blue-50 text-blue-700',
   quickbooks: 'border-green-200 bg-green-50 text-green-700',
   efs: 'border-orange-200 bg-orange-50 text-orange-700',
+  msfuelcard: 'border-amber-200 bg-amber-50 text-amber-700',
 }
 
 const SOURCE_BADGE_LABELS: Record<string, string> = {
@@ -50,6 +51,7 @@ const SOURCE_BADGE_LABELS: Record<string, string> = {
   samsara: 'Samsara',
   quickbooks: 'QuickBooks',
   efs: 'EFS',
+  msfuelcard: 'MSFuelCard',
 }
 
 function formatCategoryLabel(category: NormalizedExpenseCategory): string {

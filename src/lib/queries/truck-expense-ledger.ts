@@ -10,7 +10,7 @@ export type TruckExpenseSourceTable =
   | 'fuel_entries'
   | 'maintenance_records'
 
-export type TruckExpenseSourceBadge = 'manual' | 'samsara' | 'quickbooks' | 'efs'
+export type TruckExpenseSourceBadge = 'manual' | 'samsara' | 'quickbooks' | 'efs' | 'msfuelcard'
 
 /**
  * Normalized category — flattens the three distinct per-table enums into one
@@ -401,7 +401,7 @@ async function fetchFuelEntriesForTruck(
 ): Promise<TruckExpenseEntry[]> {
   const { data, error } = await supabase
     .from('fuel_entries')
-    .select('id, date, gallons, cost_per_gallon, total_cost, odometer, location, state, notes')
+    .select('id, date, gallons, cost_per_gallon, total_cost, odometer, location, state, notes, source, source_external_id')
     .eq('truck_id', truckId)
     .gte('date', range.from)
     .lte('date', range.to)
@@ -424,9 +424,13 @@ async function fetchFuelEntriesForTruck(
       odometer: row.odometer,
       state: row.state,
       notes: row.notes,
+      source_external_id: row.source_external_id,
     },
-    editable: true,
-    sourceBadge: 'manual' as const,
+    // Integration-sourced rows are not editable in the ledger — edits
+    // should flow back through the integration, not through the manual
+    // add-expense form.
+    editable: (row.source as string | null) == null || row.source === 'manual',
+    sourceBadge: normalizeSourceBadge(row.source as string | null),
   }))
 }
 
@@ -487,6 +491,28 @@ export function normalizeTripExpenseCategory(category: string): NormalizedExpens
       return category
     default:
       return 'misc'
+  }
+}
+
+/**
+ * Map the raw `fuel_entries.source` column (free-form text) onto the
+ * narrower {@link TruckExpenseSourceBadge} union. Unknown values fall back
+ * to 'manual' so the badge rendering never crashes on a legacy row.
+ */
+export function normalizeSourceBadge(source: string | null): TruckExpenseSourceBadge {
+  switch (source) {
+    case 'samsara':
+    case 'quickbooks':
+    case 'efs':
+    case 'msfuelcard':
+      return source
+    case null:
+    case undefined:
+    case '':
+    case 'manual':
+      return 'manual'
+    default:
+      return 'manual'
   }
 }
 

@@ -4,6 +4,27 @@ import type { FuelTransaction, FuelSyncResult, FuelAnomalyFlag } from './types'
 
 // ============================================================================
 // Fuel Card Sync Orchestration
+//
+// ⚠️ TENANT ISOLATION — READ BEFORE ADDING NEW QUERIES ⚠️
+//
+// This module is called from two places with DIFFERENT Supabase clients:
+//
+//   1. `src/app/actions/fuelcard.ts::syncFuelTransactions` — passes a session
+//      client bound to the caller's JWT. RLS automatically filters every
+//      query by the caller's tenant_id — a missing `.eq('tenant_id', ...)`
+//      is still safe because RLS enforces it.
+//
+//   2. `src/app/api/cron/fuelcard-sync/route.ts` — passes a SERVICE-ROLE
+//      client that BYPASSES RLS. Without an explicit `.eq('tenant_id', ...)`
+//      on every query, a bug could leak cross-tenant data.
+//
+// Rule: EVERY .from(...) query in this file MUST include
+// `.eq('tenant_id', tenantId)` and every INSERT/UPDATE must include
+// `tenant_id: tenantId` in the payload. No exceptions. The service-role
+// callsite is the reason.
+//
+// The security-auditor agent audited this file in Wave 4 and every query
+// currently complies. If you add a new one, keep it that way.
 // ============================================================================
 
 /**
@@ -151,22 +172,44 @@ export async function syncFuelTransactions(
       if (matchedTruckId) result.matched++
       if (anomaly.flagged) result.flagged++
 
-      // 3f. If matched, also create a fuel_entries record for unified tracking
+      // 3f. If matched, also create a fuel_entries record for unified tracking.
+      //
+      // Tag with `source='msfuelcard'` and `source_external_id=transactionId`
+      // so the Wave 2 ledger renders a "MSFuelCard" badge and re-syncs are
+      // idempotent via the partial unique index on
+      // (tenant_id, source, source_external_id) added in Wave 3. The
+      // fuelcard_transactions dedup at step 3a normally prevents re-entry
+      // into this branch, but the partial unique index is the last line of
+      // defense if the outer dedup is bypassed (e.g. fuelcard_transactions
+      // row deleted while the fuel_entries row remains).
       if (matchedTruckId && !anomaly.flagged) {
         const totalCost = txn.gallons * txn.pricePerGallon
-        await supabase.from('fuel_entries').insert({
-          tenant_id: tenantId,
-          truck_id: matchedTruckId,
-          driver_id: matchedDriverId,
-          date: txn.transactionDate.split('T')[0], // date only
-          gallons: String(txn.gallons),
-          cost_per_gallon: String(txn.pricePerGallon),
-          total_cost: String(totalCost),
-          odometer: txn.odometer ?? null,
-          location: txn.locationName || null,
-          state: txn.state || null,
-          notes: `Auto-synced from fuel card (${txn.cardNumber})`,
-        })
+        const { error: fuelInsertError } = await supabase
+          .from('fuel_entries')
+          .insert({
+            tenant_id: tenantId,
+            truck_id: matchedTruckId,
+            driver_id: matchedDriverId,
+            date: txn.transactionDate.split('T')[0], // date only
+            gallons: String(txn.gallons),
+            cost_per_gallon: String(txn.pricePerGallon),
+            total_cost: String(totalCost),
+            odometer: txn.odometer ?? null,
+            location: txn.locationName || null,
+            state: txn.state || null,
+            notes: null,
+            source: 'msfuelcard',
+            source_external_id: txn.transactionId,
+          })
+
+        // Swallow 23505 (unique_violation) — a re-sync after a transient
+        // split between fuelcard_transactions and fuel_entries is expected
+        // and should not surface as a sync error. Other codes bubble up.
+        if (fuelInsertError && fuelInsertError.code !== '23505') {
+          result.errors.push(
+            `Transaction ${txn.transactionId}: fuel_entries insert failed`,
+          )
+        }
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error'
