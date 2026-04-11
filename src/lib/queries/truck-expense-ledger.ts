@@ -109,21 +109,30 @@ export async function getTruckExpenses(
   truckId: string,
   dateRange: LedgerDateRange,
 ): Promise<TruckExpenseEntry[]> {
-  // Run the five parallel queries in one shot: the four source adapters
-  // plus a single quickbooks_entity_map fetch for this tenant. The QB
-  // status merge happens client-side after all five resolve, so the
-  // ledger renders with QB state on first paint — no N+1.
-  const [tripExp, bizExp, fuelExp, maintExp, qbMap, qbConnected] =
-    await Promise.all([
-      fetchTripExpensesForTruck(supabase, truckId, dateRange),
-      fetchBusinessExpensesForTruck(supabase, truckId, dateRange),
-      fetchFuelEntriesForTruck(supabase, truckId, dateRange),
-      fetchMaintenanceRecordsForTruck(supabase, truckId, dateRange),
-      fetchQBExpenseStatus(supabase),
-      isQBConnected(supabase),
-    ])
+  // Phase 1: run the four source adapters + the connection check in parallel.
+  // We need the source IDs first so we can scope the QB status lookup to
+  // only the rows actually on this ledger page — otherwise the Wave 5
+  // `fetchQBExpenseStatus` would fetch every entity_map row for the tenant
+  // across all time, which becomes a latent DoS vector on long-history
+  // tenants (years × hundreds of fuel entries = thousands of map rows per
+  // ledger render). Bounding by the visible source IDs keeps the query
+  // O(visible rows), not O(tenant history).
+  const [tripExp, bizExp, fuelExp, maintExp, qbConnected] = await Promise.all([
+    fetchTripExpensesForTruck(supabase, truckId, dateRange),
+    fetchBusinessExpensesForTruck(supabase, truckId, dateRange),
+    fetchFuelEntriesForTruck(supabase, truckId, dateRange),
+    fetchMaintenanceRecordsForTruck(supabase, truckId, dateRange),
+    isQBConnected(supabase),
+  ])
 
   const merged = [...tripExp, ...bizExp, ...fuelExp, ...maintExp]
+  const sourceIds = merged.map((e) => e.sourceId)
+
+  // Phase 2: fetch QB status ONLY for the visible source IDs. Short-circuit
+  // if the ledger is empty — no point querying entity_map for nothing.
+  const qbMap =
+    sourceIds.length > 0 ? await fetchQBExpenseStatus(supabase, sourceIds) : new Map()
+
   applyQBStatus(merged, qbMap, qbConnected)
 
   return merged.sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))
@@ -153,21 +162,34 @@ function sourceTableToEntityType(table: TruckExpenseSourceTable): string {
 }
 
 /**
- * Fetch every QB expense entity_map row for this tenant. Scoped via RLS;
- * no explicit `.eq('tenant_id', ...)` needed because this is the query
- * layer pattern. Each row's entity_type tells us which source table it
- * points at (expense_trip / expense_business / expense_fuel /
- * expense_maintenance).
+ * Fetch QB expense entity_map rows for a specific set of source IDs.
+ *
+ * Tenant isolation: scoped via RLS; no explicit `.eq('tenant_id', ...)`
+ * is needed because this is the query layer pattern used throughout
+ * `src/lib/queries/*`. **DO NOT** call this function with a service-role
+ * Supabase client — RLS is the only line of defense here, and a
+ * service-role client bypasses it. If a cron or batch job ever needs
+ * to call `getTruckExpenses`, wrap it in a session-bound client first
+ * (or split the QB-status lookup into a tenant-scoped variant).
  *
  * The returned map is keyed by `${entity_type}:${vroomx_id}` — the
  * entity_type is part of the key so a UUID that somehow appeared in two
  * different source tables (UUID collisions are astronomically unlikely
  * but the key-disambiguation is free) wouldn't let one subtype's status
  * paint another's ledger row.
+ *
+ * @param sourceIds  The source IDs to look up. MUST be the visible
+ *                   ledger-page source IDs, not a wildcard — scoping
+ *                   by this set keeps the query O(visible rows) and
+ *                   avoids pulling the entire tenant history into
+ *                   memory on every ledger render.
  */
 async function fetchQBExpenseStatus(
   supabase: SupabaseClient,
+  sourceIds: string[],
 ): Promise<Map<string, { qbId: string | null; syncError: string | null }>> {
+  if (sourceIds.length === 0) return new Map()
+
   const { data, error } = await supabase
     .from('quickbooks_entity_map')
     .select('vroomx_id, qb_id, sync_error, entity_type')
@@ -177,6 +199,7 @@ async function fetchQBExpenseStatus(
       'expense_fuel',
       'expense_maintenance',
     ])
+    .in('vroomx_id', sourceIds)
 
   if (error) {
     // Swallow — QB status is an adornment, not core ledger data.

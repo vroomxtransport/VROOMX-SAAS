@@ -11,6 +11,7 @@ import type {
   TruckExpenseSourceTable,
 } from '@/lib/queries/truck-expense-ledger'
 import { retryQbSync } from '@/app/actions/truck-expenses'
+import { useCurrentUserPermissions } from '@/hooks/use-current-user-permissions'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
@@ -111,6 +112,12 @@ const PAGE_SIZE = 20
 
 export function TruckExpenseLedger({ entries, isLoading, onAddExpense }: TruckExpenseLedgerProps) {
   const queryClient = useQueryClient()
+  // Gate the QB retry button on the same permission the retryQbSync
+  // server action requires. A user with fuel.create / trip_expenses.create
+  // can see an expense row in error state but can't retry it — hiding the
+  // button prevents a deceptive "Insufficient permissions" toast.
+  const { can: canPermission } = useCurrentUserPermissions()
+  const canRetryQB = canPermission('integrations.manage')
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all')
   const [page, setPage] = useState(0)
@@ -185,6 +192,7 @@ export function TruckExpenseLedger({ entries, isLoading, onAddExpense }: TruckEx
           <div className="relative hidden sm:block">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input
+              aria-label="Search expenses"
               placeholder="Search expenses..."
               value={search}
               onChange={(e) => {
@@ -195,6 +203,8 @@ export function TruckExpenseLedger({ entries, isLoading, onAddExpense }: TruckEx
             />
             {search && (
               <button
+                type="button"
+                aria-label="Clear search"
                 onClick={() => {
                   setSearch('')
                   setPage(0)
@@ -206,6 +216,7 @@ export function TruckExpenseLedger({ entries, isLoading, onAddExpense }: TruckEx
             )}
           </div>
           <select
+            aria-label="Filter by category"
             value={categoryFilter}
             onChange={(e) => {
               setCategoryFilter(e.target.value as CategoryFilter)
@@ -272,22 +283,22 @@ export function TruckExpenseLedger({ entries, isLoading, onAddExpense }: TruckEx
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="py-2 pr-3 text-left text-xs font-medium text-muted-foreground">
+                    <th scope="col" className="py-2 pr-3 text-left text-xs font-medium text-muted-foreground">
                       Date
                     </th>
-                    <th className="py-2 px-3 text-left text-xs font-medium text-muted-foreground">
+                    <th scope="col" className="py-2 px-3 text-left text-xs font-medium text-muted-foreground">
                       Category
                     </th>
-                    <th className="py-2 px-3 text-left text-xs font-medium text-muted-foreground">
+                    <th scope="col" className="py-2 px-3 text-left text-xs font-medium text-muted-foreground">
                       Description
                     </th>
-                    <th className="py-2 px-3 text-left text-xs font-medium text-muted-foreground">
+                    <th scope="col" className="py-2 px-3 text-left text-xs font-medium text-muted-foreground">
                       Source
                     </th>
-                    <th className="py-2 px-3 text-left text-xs font-medium text-muted-foreground">
+                    <th scope="col" className="py-2 px-3 text-left text-xs font-medium text-muted-foreground">
                       QB
                     </th>
-                    <th className="py-2 pl-3 text-right text-xs font-medium text-muted-foreground">
+                    <th scope="col" className="py-2 pl-3 text-right text-xs font-medium text-muted-foreground">
                       Amount
                     </th>
                   </tr>
@@ -367,7 +378,7 @@ export function TruckExpenseLedger({ entries, isLoading, onAddExpense }: TruckEx
                                   {QB_BADGE_LABELS[entry.qbSyncStatus]}
                                 </span>
                               )}
-                              {entry.qbSyncStatus === 'error' && (
+                              {entry.qbSyncStatus === 'error' && canRetryQB && (
                                 <button
                                   onClick={() => { void handleRetry(entry) }}
                                   disabled={isRetrying}

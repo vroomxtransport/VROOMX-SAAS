@@ -650,11 +650,15 @@ export async function syncExpenseToQB(
         { onConflict: 'tenant_id,entity_type,vroomx_id' },
       )
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown QB sync error'
+    const rawMessage = err instanceof Error ? err.message : 'Unknown QB sync error'
+    // Sanitize BEFORE logging — QB Detail fields can contain customer
+    // data, account numbers, and token fragments. The server-log path
+    // reaches Sentry / Netlify logs and was previously unsanitized.
+    const safeMessage = sanitizeQBErrorMessage(rawMessage)
     console.error(
-      `[QB sync] Failed to sync ${expenseSource} expense ${expenseId}: ${message}`,
+      `[QB sync] Failed to sync ${expenseSource} expense ${expenseId}: ${safeMessage}`,
     )
-    await recordQBExpenseError(supabase, tenantId, entityType, expenseId, message)
+    await recordQBExpenseError(supabase, tenantId, entityType, expenseId, rawMessage)
   }
 }
 

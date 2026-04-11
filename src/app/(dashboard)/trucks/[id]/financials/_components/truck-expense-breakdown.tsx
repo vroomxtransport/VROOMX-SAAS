@@ -75,7 +75,13 @@ export function TruckExpenseBreakdown({ summary }: TruckExpenseBreakdownProps) {
         </p>
       </div>
 
-      <div className="space-y-2.5">
+      <div
+        className="space-y-2.5"
+        role="img"
+        aria-label={`Expense breakdown: ${rows
+          .map((r) => `${r.label} $${r.value.toLocaleString('en-US', { maximumFractionDigits: 0 })}`)
+          .join(', ')}. Total $${summary.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.`}
+      >
         {rows.map((row) => {
           const widthPct = (row.value / max) * 100
           const sharePct = summary.total > 0 ? (row.value / summary.total) * 100 : 0

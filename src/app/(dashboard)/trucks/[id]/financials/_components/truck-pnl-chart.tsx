@@ -72,7 +72,11 @@ export function TruckPnlChart({ data }: TruckPnlChartProps) {
         </p>
       ) : (
         <>
-          <div className="h-[240px]">
+          <div
+            className="h-[240px]"
+            role="img"
+            aria-label={`12-month revenue and expense trend chart. Total revenue ${totalRevenue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}, total expenses ${totalExpenses.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}, net profit ${totalProfit.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}.`}
+          >
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                 <defs>
