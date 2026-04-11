@@ -29,6 +29,25 @@ export interface TopBroker {
 
 export type FinancialPeriod = 'mtd' | 'qtd' | 'ytd' | 'last30' | 'last90'
 
+/**
+ * P&L accounting basis.
+ *
+ * - `accrual`: revenue is recognized when the order is delivered/invoiced
+ *   (by `orders.created_at`). Matches GAAP and the pre-Wave-6 behavior.
+ *
+ * - `cash`: revenue is recognized when the customer actually pays (by
+ *   `payments.payment_date`). Broker fees, local fees, and carrier pay
+ *   are attributed proportionally based on `payment.amount / order.revenue`,
+ *   so a partial payment on a $5,000 order flows through 10% of the
+ *   broker fee, not 100%.
+ *
+ * Everything else (driver pay, trip expenses, fixed expenses) is sourced
+ * from tables whose "date" column already represents the cash date, so
+ * cash and accrual produce the same expense numbers. Only the revenue
+ * side of the waterfall differs between the two modes.
+ */
+export type PnLBasis = 'accrual' | 'cash'
+
 export interface KPIAggregates {
   totalRevenue: number
   totalBrokerFees: number
@@ -417,10 +436,17 @@ async function safeFetchMiles(
 
 /**
  * Fetch all aggregated KPI data for a given period.
+ *
+ * @param basis  Accounting basis for the revenue side of the waterfall.
+ *               Defaults to 'accrual' (pre-Wave-6 behavior). Passing 'cash'
+ *               replaces the order-based revenue sum with a payments-based
+ *               one and proportionally scales broker fee / local fee /
+ *               carrier pay by each payment's share of its order's revenue.
  */
 export async function fetchKPIAggregates(
   supabase: SupabaseClient,
-  dateRange?: DateRange
+  dateRange?: DateRange,
+  basis: PnLBasis = 'accrual',
 ): Promise<KPIAggregates> {
   const { startDate: periodStart, endDate: periodEnd } = getDateBounds(dateRange)
   const startISO = periodStart.toISOString()
@@ -428,13 +454,30 @@ export async function fetchKPIAggregates(
   const startDate = format(periodStart, 'yyyy-MM-dd')
   const endDate = format(periodEnd, 'yyyy-MM-dd')
 
+  // Accrual-mode orders query — revenue by order.created_at
+  // Cash-mode payments query — revenue by payment.payment_date, joined
+  // against the owning order so we can proportionally scale the deductions.
+  //
+  // Tenant isolation on the cash-mode embedded join: Supabase PostgREST
+  // applies the `orders` table's own RLS policy on the `orders!inner`
+  // embed, so cross-tenant leakage is blocked at the DB layer even though
+  // this query doesn't add an explicit `.eq('payments.tenant_id', ...)`.
+  // This matches the `src/lib/queries/*` convention of relying on RLS.
+  const revenueQuery = basis === 'cash'
+    ? supabase
+        .from('payments')
+        .select('amount, payment_date, order:orders!inner(id, revenue, broker_fee, local_fee, carrier_pay)')
+        .gte('payment_date', startDate)
+        .lte('payment_date', endDate)
+    : supabase
+        .from('orders')
+        .select('revenue, broker_fee, local_fee, carrier_pay')
+        .gte('created_at', startISO)
+        .lte('created_at', endISO)
+
   // Parallel queries — distance_miles fetched separately to gracefully handle missing column
-  const [ordersRes, milesData, tripsRes, expensesRes, trucksRes] = await Promise.all([
-    supabase
-      .from('orders')
-      .select('revenue, broker_fee, local_fee, carrier_pay')
-      .gte('created_at', startISO)
-      .lte('created_at', endISO),
+  const [revenueRes, milesData, tripsRes, expensesRes, trucksRes] = await Promise.all([
+    revenueQuery,
     safeFetchMiles(supabase, { column: 'created_at', op: 'gte', value: startISO }, endISO),
     supabase
       .from('trips')
@@ -452,12 +495,11 @@ export async function fetchKPIAggregates(
       .eq('truck_status', 'active'),
   ])
 
-  if (ordersRes.error) throw ordersRes.error
+  if (revenueRes.error) throw revenueRes.error
   if (tripsRes.error) throw tripsRes.error
   if (expensesRes.error) throw expensesRes.error
   if (trucksRes.error) throw trucksRes.error
 
-  const orders = ordersRes.data ?? []
   const trips = tripsRes.data ?? []
   const expenses = expensesRes.data ?? []
 
@@ -465,11 +507,74 @@ export async function fetchKPIAggregates(
   let totalBrokerFees = 0
   let totalLocalFees = 0
   let totalCarrierPay = 0
-  for (const o of orders) {
-    totalRevenue += parseFloat(o.revenue ?? '0')
-    totalBrokerFees += parseFloat(o.broker_fee ?? '0')
-    totalLocalFees += parseFloat(o.local_fee ?? '0')
-    totalCarrierPay += parseFloat(o.carrier_pay ?? '0')
+  let orderCount = 0
+
+  if (basis === 'cash') {
+    // Each row is a payment joined to its order. Attribute the order's
+    // deductions proportionally by payment_amount / order_revenue.
+    interface CashRow {
+      amount: string | null
+      order: {
+        id: string
+        revenue: string | null
+        broker_fee: string | null
+        local_fee: string | null
+        carrier_pay: string | null
+      } | {
+        id: string
+        revenue: string | null
+        broker_fee: string | null
+        local_fee: string | null
+        carrier_pay: string | null
+      }[] | null
+    }
+    const rows = (revenueRes.data ?? []) as unknown as CashRow[]
+    // Distinct-order count keyed by order.id (not revenue amount — two
+    // distinct orders can legitimately share the same dollar amount).
+    const seenOrderIds = new Set<string>()
+    for (const row of rows) {
+      const paymentAmount = parseFloat(row.amount ?? '0')
+      // Supabase returns the embedded relation as an array when the FK
+      // is non-unique, a single object when unique. Defensively handle both.
+      const orderRaw = Array.isArray(row.order) ? row.order[0] ?? null : row.order
+      if (!orderRaw) continue
+
+      const orderRevenue = parseFloat(orderRaw.revenue ?? '0')
+      // Ratio is the payment's share of the total order revenue.
+      //
+      // Edge cases:
+      //   - orderRevenue === 0: data-quality issue. Fall back to ratio=0
+      //     so the payment's cash DOES flow into totalRevenue but NO
+      //     phantom deductions get attributed to a zero-revenue order.
+      //   - paymentAmount > orderRevenue (overpayment or duplicate):
+      //     clamp ratio to 1.0 so deductions don't scale beyond the
+      //     order's real broker/local/carrier fees. The excess cash
+      //     still flows into totalRevenue as pure revenue.
+      const rawRatio = orderRevenue > 0 ? paymentAmount / orderRevenue : 0
+      const ratio = Math.min(rawRatio, 1)
+
+      totalRevenue += paymentAmount
+      totalBrokerFees += parseFloat(orderRaw.broker_fee ?? '0') * ratio
+      totalLocalFees += parseFloat(orderRaw.local_fee ?? '0') * ratio
+      totalCarrierPay += parseFloat(orderRaw.carrier_pay ?? '0') * ratio
+
+      if (orderRaw.id) seenOrderIds.add(orderRaw.id)
+    }
+    orderCount = seenOrderIds.size
+  } else {
+    const orders = (revenueRes.data ?? []) as Array<{
+      revenue: string | null
+      broker_fee: string | null
+      local_fee: string | null
+      carrier_pay: string | null
+    }>
+    for (const o of orders) {
+      totalRevenue += parseFloat(o.revenue ?? '0')
+      totalBrokerFees += parseFloat(o.broker_fee ?? '0')
+      totalLocalFees += parseFloat(o.local_fee ?? '0')
+      totalCarrierPay += parseFloat(o.carrier_pay ?? '0')
+    }
+    orderCount = orders.length
   }
 
   // Miles from separate query (gracefully 0 if column doesn't exist yet)
@@ -504,7 +609,7 @@ export async function fetchKPIAggregates(
     totalTripExpenses: Math.round(totalTripExpenses * 100) / 100,
     totalCarrierPay: Math.round(totalCarrierPay * 100) / 100,
     totalMiles: Math.round(totalMiles * 10) / 10,
-    orderCount: orders.length,
+    orderCount,
     truckCount: trucksRes.count ?? 0,
     completedTripCount,
     expensesByCategory: {
@@ -747,15 +852,27 @@ export async function fetchMonthlyKPITrend(
  */
 export async function fetchPnLData(
   supabase: SupabaseClient,
-  dateRange?: DateRange
+  dateRange?: DateRange,
+  basis: PnLBasis = 'accrual',
 ): Promise<PnLInput> {
   const { startDate: periodStart, endDate: periodEnd } = getDateBounds(dateRange)
   const startDate = format(periodStart, 'yyyy-MM-dd')
   const endDate = format(periodEnd, 'yyyy-MM-dd')
 
-  // Fetch KPI aggregates (orders, trips, expenses, trucks) and fixed expenses in parallel
+  // Fetch KPI aggregates (orders, trips, expenses, trucks) and fixed expenses in parallel.
+  //
+  // `carsHauled` is intentionally always fetched on an accrual basis
+  // (by order.created_at), even in cash mode. Consistent with how trips /
+  // driver_pay / trip_expenses / fixed_expenses are all accrual-native:
+  // only the top-line revenue waterfall changes between basis modes. The
+  // downstream `appc` (avg pay per car) metric will therefore reflect
+  // accrual car count against cash revenue when basis='cash' — slightly
+  // understating APPC for the period if there are unpaid orders. This is
+  // a documented trade-off; the alternative (joining payments to orders
+  // for a cash-basis car count) adds significant query complexity for
+  // a secondary KPI.
   const [kpi, fixedExpenses, carsHauledRes] = await Promise.all([
-    fetchKPIAggregates(supabase, dateRange),
+    fetchKPIAggregates(supabase, dateRange, basis),
     fetchFixedExpensesForPeriod(supabase, startDate, endDate),
     supabase
       .from('orders')

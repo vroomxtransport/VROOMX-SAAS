@@ -3,17 +3,30 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { fetchPnLData, fetchMonthlyPnLTrend, type MonthlyPnLItem } from '@/lib/queries/financials'
+import {
+  fetchPnLData,
+  fetchMonthlyPnLTrend,
+  type MonthlyPnLItem,
+  type PnLBasis,
+} from '@/lib/queries/financials'
 import { calculatePnL, calculateUnitMetrics, type PnLOutput, type UnitMetrics, type PnLInput } from '@/lib/financial/pnl-calculations'
 import type { DateRange } from '@/types/filters'
 
-export function usePnLData(dateRange?: DateRange) {
+export type { PnLBasis } from '@/lib/queries/financials'
+
+/**
+ * Wave 6: `basis` toggles between 'accrual' (default, revenue by order
+ * created_at) and 'cash' (revenue by payment date, deductions scaled
+ * proportionally). The query key includes basis so both modes are cached
+ * independently and switching is instant after first fetch.
+ */
+export function usePnLData(dateRange?: DateRange, basis: PnLBasis = 'accrual') {
   const supabase = createClient()
   const queryClient = useQueryClient()
 
   const query = useQuery({
-    queryKey: ['pnl', dateRange?.from, dateRange?.to],
-    queryFn: () => fetchPnLData(supabase, dateRange),
+    queryKey: ['pnl', dateRange?.from, dateRange?.to, basis],
+    queryFn: () => fetchPnLData(supabase, dateRange, basis),
     staleTime: 60_000,
   })
 
@@ -25,7 +38,9 @@ export function usePnLData(dateRange?: DateRange) {
     return { pnl, metrics, input: query.data }
   }, [query.data])
 
-  // Realtime invalidation on relevant tables
+  // Realtime invalidation on relevant tables. The `payments` subscription
+  // is specifically for cash-basis mode — a new payment shifts the cash
+  // waterfall without changing any order or trip row.
   useEffect(() => {
     const channel = supabase
       .channel('pnl-changes')
@@ -39,6 +54,9 @@ export function usePnLData(dateRange?: DateRange) {
         queryClient.invalidateQueries({ queryKey: ['pnl'] })
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'business_expenses' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['pnl'] })
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, () => {
         queryClient.invalidateQueries({ queryKey: ['pnl'] })
       })
       .subscribe()
