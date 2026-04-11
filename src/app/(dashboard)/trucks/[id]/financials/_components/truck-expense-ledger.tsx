@@ -1,14 +1,25 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import type {
   TruckExpenseEntry,
   NormalizedExpenseCategory,
+  QBSyncStatus,
+  TruckExpenseSourceTable,
 } from '@/lib/queries/truck-expense-ledger'
+import { retryQbSync } from '@/app/actions/truck-expenses'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Search, X, Plus } from 'lucide-react'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import { Search, X, Plus, Loader2, RefreshCw } from 'lucide-react'
 
 interface TruckExpenseLedgerProps {
   entries: TruckExpenseEntry[]
@@ -54,6 +65,36 @@ const SOURCE_BADGE_LABELS: Record<string, string> = {
   msfuelcard: 'MSFuelCard',
 }
 
+const QB_BADGE_STYLES: Record<QBSyncStatus, string> = {
+  'n/a': '',
+  pending: 'bg-slate-100 text-slate-700',
+  synced: 'bg-emerald-100 text-emerald-700',
+  error: 'bg-rose-100 text-rose-700',
+}
+
+const QB_BADGE_LABELS: Record<QBSyncStatus, string> = {
+  'n/a': '',
+  pending: 'Pending',
+  synced: 'Synced',
+  error: 'Error',
+}
+
+/** Maps sourceTable → expenseSource arg expected by retryQbSync. */
+function toExpenseSource(
+  sourceTable: TruckExpenseSourceTable,
+): 'trip' | 'business' | 'fuel' | 'maintenance' {
+  switch (sourceTable) {
+    case 'trip_expenses':
+      return 'trip'
+    case 'business_expenses':
+      return 'business'
+    case 'fuel_entries':
+      return 'fuel'
+    case 'maintenance_records':
+      return 'maintenance'
+  }
+}
+
 function formatCategoryLabel(category: NormalizedExpenseCategory): string {
   return category
     .split('_')
@@ -69,9 +110,12 @@ function formatDate(iso: string): string {
 const PAGE_SIZE = 20
 
 export function TruckExpenseLedger({ entries, isLoading, onAddExpense }: TruckExpenseLedgerProps) {
+  const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all')
   const [page, setPage] = useState(0)
+  // Per-row retry in-flight state keyed by entry.id
+  const [retrying, setRetrying] = useState<Record<string, boolean>>({})
 
   // Reset page to 0 when the entries reference changes (e.g. parent changed
   // the date range). Uses the "adjusting state during render" pattern from
@@ -109,6 +153,26 @@ export function TruckExpenseLedger({ entries, isLoading, onAddExpense }: TruckEx
     for (const e of entries) set.add(e.category)
     return Array.from(set).sort()
   }, [entries])
+
+  async function handleRetry(entry: TruckExpenseEntry) {
+    setRetrying((prev) => ({ ...prev, [entry.id]: true }))
+    try {
+      const result = await retryQbSync({
+        expenseId: entry.sourceId,
+        expenseSource: toExpenseSource(entry.sourceTable),
+        truckId: entry.truckId,
+      })
+      if ('error' in result && result.error) {
+        const msg = typeof result.error === 'string' ? result.error : 'Retry failed'
+        toast.error(msg)
+        return
+      }
+      toast.success('Retry queued')
+      queryClient.invalidateQueries({ queryKey: ['truck-expenses', entry.truckId] })
+    } finally {
+      setRetrying((prev) => ({ ...prev, [entry.id]: false }))
+    }
+  }
 
   return (
     <div className="widget-card">
@@ -176,6 +240,7 @@ export function TruckExpenseLedger({ entries, isLoading, onAddExpense }: TruckEx
               <div className="h-5 flex-1 animate-pulse rounded bg-muted" />
               <div className="h-5 w-16 animate-pulse rounded bg-muted" />
               <div className="h-5 w-16 animate-pulse rounded bg-muted" />
+              <div className="h-5 w-16 animate-pulse rounded bg-muted" />
             </div>
           ))}
         </div>
@@ -203,70 +268,131 @@ export function TruckExpenseLedger({ entries, isLoading, onAddExpense }: TruckEx
       ) : (
         <>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="py-2 pr-3 text-left text-xs font-medium text-muted-foreground">
-                    Date
-                  </th>
-                  <th className="py-2 px-3 text-left text-xs font-medium text-muted-foreground">
-                    Category
-                  </th>
-                  <th className="py-2 px-3 text-left text-xs font-medium text-muted-foreground">
-                    Description
-                  </th>
-                  <th className="py-2 px-3 text-left text-xs font-medium text-muted-foreground">
-                    Source
-                  </th>
-                  <th className="py-2 pl-3 text-right text-xs font-medium text-muted-foreground">
-                    Amount
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {pageRows.map((entry) => (
-                  <tr
-                    key={entry.id}
-                    className="border-b border-border/50 transition-colors last:border-0 hover:bg-muted/30"
-                  >
-                    <td className="py-2 pr-3 tabular-nums text-foreground whitespace-nowrap">
-                      {formatDate(entry.occurredAt)}
-                    </td>
-                    <td className="py-2 px-3">
-                      <span
-                        className={cn(
-                          'inline-block rounded-full px-2 py-0.5 text-[11px] font-medium',
-                          CATEGORY_BADGE_COLORS[entry.category],
-                        )}
-                      >
-                        {formatCategoryLabel(entry.category)}
-                      </span>
-                    </td>
-                    <td className="py-2 px-3 text-foreground max-w-[320px] truncate">
-                      {entry.description}
-                      {entry.scope === 'business_allocated' && (
-                        <span className="ml-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                          prorated
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-2 px-3">
-                      <span
-                        className={cn(
-                          'inline-block rounded-md border px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide',
-                          SOURCE_BADGE_STYLES[entry.sourceBadge] ?? SOURCE_BADGE_STYLES.manual,
-                        )}
-                      >
-                        {SOURCE_BADGE_LABELS[entry.sourceBadge] ?? entry.sourceBadge}
-                      </span>
-                    </td>
-                    <td className="py-2 pl-3 text-right tabular-nums font-medium text-foreground whitespace-nowrap">
-                      ${entry.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </td>
+            <TooltipProvider>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="py-2 pr-3 text-left text-xs font-medium text-muted-foreground">
+                      Date
+                    </th>
+                    <th className="py-2 px-3 text-left text-xs font-medium text-muted-foreground">
+                      Category
+                    </th>
+                    <th className="py-2 px-3 text-left text-xs font-medium text-muted-foreground">
+                      Description
+                    </th>
+                    <th className="py-2 px-3 text-left text-xs font-medium text-muted-foreground">
+                      Source
+                    </th>
+                    <th className="py-2 px-3 text-left text-xs font-medium text-muted-foreground">
+                      QB
+                    </th>
+                    <th className="py-2 pl-3 text-right text-xs font-medium text-muted-foreground">
+                      Amount
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {pageRows.map((entry) => {
+                    const isRetrying = retrying[entry.id] === true
+                    const qbError =
+                      entry.qbSyncError && entry.qbSyncError.length > 100
+                        ? entry.qbSyncError.slice(0, 100) + '…'
+                        : entry.qbSyncError
+
+                    return (
+                      <tr
+                        key={entry.id}
+                        className="border-b border-border/50 transition-colors last:border-0 hover:bg-muted/30"
+                      >
+                        <td className="py-2 pr-3 tabular-nums text-foreground whitespace-nowrap">
+                          {formatDate(entry.occurredAt)}
+                        </td>
+                        <td className="py-2 px-3">
+                          <span
+                            className={cn(
+                              'inline-block rounded-full px-2 py-0.5 text-[11px] font-medium',
+                              CATEGORY_BADGE_COLORS[entry.category],
+                            )}
+                          >
+                            {formatCategoryLabel(entry.category)}
+                          </span>
+                        </td>
+                        <td className="py-2 px-3 text-foreground max-w-[320px] truncate">
+                          {entry.description}
+                          {entry.scope === 'business_allocated' && (
+                            <span className="ml-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                              prorated
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-2 px-3">
+                          <span
+                            className={cn(
+                              'inline-block rounded-md border px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide',
+                              SOURCE_BADGE_STYLES[entry.sourceBadge] ?? SOURCE_BADGE_STYLES.manual,
+                            )}
+                          >
+                            {SOURCE_BADGE_LABELS[entry.sourceBadge] ?? entry.sourceBadge}
+                          </span>
+                        </td>
+                        <td className="py-2 px-3">
+                          {entry.qbSyncStatus === 'n/a' ? (
+                            <span className="text-[11px] text-muted-foreground">—</span>
+                          ) : (
+                            <div className="flex items-center gap-1.5">
+                              {entry.qbSyncStatus === 'error' && qbError ? (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span
+                                      className={cn(
+                                        'inline-block rounded-full px-2 py-0.5 text-[11px] font-medium cursor-default',
+                                        QB_BADGE_STYLES[entry.qbSyncStatus],
+                                      )}
+                                    >
+                                      {QB_BADGE_LABELS[entry.qbSyncStatus]}
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="max-w-[240px] text-xs">
+                                    {qbError}
+                                  </TooltipContent>
+                                </Tooltip>
+                              ) : (
+                                <span
+                                  className={cn(
+                                    'inline-block rounded-full px-2 py-0.5 text-[11px] font-medium',
+                                    QB_BADGE_STYLES[entry.qbSyncStatus],
+                                  )}
+                                >
+                                  {QB_BADGE_LABELS[entry.qbSyncStatus]}
+                                </span>
+                              )}
+                              {entry.qbSyncStatus === 'error' && (
+                                <button
+                                  onClick={() => { void handleRetry(entry) }}
+                                  disabled={isRetrying}
+                                  aria-label="Retry QuickBooks sync"
+                                  className="inline-flex items-center justify-center rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+                                >
+                                  {isRetrying ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <RefreshCw className="h-3 w-3" />
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-2 pl-3 text-right tabular-nums font-medium text-foreground whitespace-nowrap">
+                          ${entry.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </TooltipProvider>
           </div>
 
           {totalPages > 1 && (

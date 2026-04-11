@@ -36,6 +36,17 @@ export type NormalizedExpenseCategory =
   | 'professional_services'
   | 'misc'
 
+/**
+ * QuickBooks sync state for an expense row, derived from the
+ * quickbooks_entity_map table in the post-Wave-5 schema:
+ *
+ *   - `n/a`     → no QB integration connected (UI should hide the badge)
+ *   - `pending` → integration connected but no entity_map row yet
+ *   - `synced`  → entity_map row with qb_id NOT NULL
+ *   - `error`   → entity_map row with qb_id NULL + sync_error set
+ */
+export type QBSyncStatus = 'n/a' | 'pending' | 'synced' | 'error'
+
 export interface TruckExpenseEntry {
   /** Composite key `${sourceTable}:${sourceId}` — guarantees React list-key uniqueness across source tables. */
   id: string
@@ -52,6 +63,9 @@ export interface TruckExpenseEntry {
   /** `false` for integration-sourced rows (future waves). Manual entries are editable. */
   editable: boolean
   sourceBadge: TruckExpenseSourceBadge
+  /** Wave 5: QB push status — populated by {@link getTruckExpenses} via a parallel query. */
+  qbSyncStatus: QBSyncStatus
+  qbSyncError: string | null
 }
 
 export interface ExpenseSummary {
@@ -95,16 +109,140 @@ export async function getTruckExpenses(
   truckId: string,
   dateRange: LedgerDateRange,
 ): Promise<TruckExpenseEntry[]> {
-  const [tripExp, bizExp, fuelExp, maintExp] = await Promise.all([
-    fetchTripExpensesForTruck(supabase, truckId, dateRange),
-    fetchBusinessExpensesForTruck(supabase, truckId, dateRange),
-    fetchFuelEntriesForTruck(supabase, truckId, dateRange),
-    fetchMaintenanceRecordsForTruck(supabase, truckId, dateRange),
-  ])
+  // Run the five parallel queries in one shot: the four source adapters
+  // plus a single quickbooks_entity_map fetch for this tenant. The QB
+  // status merge happens client-side after all five resolve, so the
+  // ledger renders with QB state on first paint — no N+1.
+  const [tripExp, bizExp, fuelExp, maintExp, qbMap, qbConnected] =
+    await Promise.all([
+      fetchTripExpensesForTruck(supabase, truckId, dateRange),
+      fetchBusinessExpensesForTruck(supabase, truckId, dateRange),
+      fetchFuelEntriesForTruck(supabase, truckId, dateRange),
+      fetchMaintenanceRecordsForTruck(supabase, truckId, dateRange),
+      fetchQBExpenseStatus(supabase),
+      isQBConnected(supabase),
+    ])
 
-  return [...tripExp, ...bizExp, ...fuelExp, ...maintExp].sort((a, b) =>
-    b.occurredAt.localeCompare(a.occurredAt),
-  )
+  const merged = [...tripExp, ...bizExp, ...fuelExp, ...maintExp]
+  applyQBStatus(merged, qbMap, qbConnected)
+
+  return merged.sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))
+}
+
+// ---------------------------------------------------------------------------
+// QB sync status merge
+// ---------------------------------------------------------------------------
+
+/**
+ * Maps a `TruckExpenseSourceTable` to the matching QB entity_type subtype
+ * stored in `quickbooks_entity_map`. Must stay in sync with
+ * `sourceToEntityType` in src/lib/quickbooks/sync.ts — the sync writes
+ * these values and the ledger reads them.
+ */
+function sourceTableToEntityType(table: TruckExpenseSourceTable): string {
+  switch (table) {
+    case 'trip_expenses':
+      return 'expense_trip'
+    case 'business_expenses':
+      return 'expense_business'
+    case 'fuel_entries':
+      return 'expense_fuel'
+    case 'maintenance_records':
+      return 'expense_maintenance'
+  }
+}
+
+/**
+ * Fetch every QB expense entity_map row for this tenant. Scoped via RLS;
+ * no explicit `.eq('tenant_id', ...)` needed because this is the query
+ * layer pattern. Each row's entity_type tells us which source table it
+ * points at (expense_trip / expense_business / expense_fuel /
+ * expense_maintenance).
+ *
+ * The returned map is keyed by `${entity_type}:${vroomx_id}` — the
+ * entity_type is part of the key so a UUID that somehow appeared in two
+ * different source tables (UUID collisions are astronomically unlikely
+ * but the key-disambiguation is free) wouldn't let one subtype's status
+ * paint another's ledger row.
+ */
+async function fetchQBExpenseStatus(
+  supabase: SupabaseClient,
+): Promise<Map<string, { qbId: string | null; syncError: string | null }>> {
+  const { data, error } = await supabase
+    .from('quickbooks_entity_map')
+    .select('vroomx_id, qb_id, sync_error, entity_type')
+    .in('entity_type', [
+      'expense_trip',
+      'expense_business',
+      'expense_fuel',
+      'expense_maintenance',
+    ])
+
+  if (error) {
+    // Swallow — QB status is an adornment, not core ledger data.
+    return new Map()
+  }
+
+  const map = new Map<string, { qbId: string | null; syncError: string | null }>()
+  for (const row of data ?? []) {
+    const key = `${row.entity_type as string}:${row.vroomx_id as string}`
+    map.set(key, {
+      qbId: row.qb_id as string | null,
+      syncError: row.sync_error as string | null,
+    })
+  }
+  return map
+}
+
+/**
+ * Whether the tenant has an active QuickBooks integration. When false,
+ * the ledger renders a `n/a` QB status for every row instead of a
+ * confusing `pending` that will never resolve.
+ */
+async function isQBConnected(supabase: SupabaseClient): Promise<boolean> {
+  // `.limit(1)` before `.maybeSingle()` is defense-in-depth — the
+  // quickbooks_integrations table already has a UNIQUE (tenant_id)
+  // constraint, but if a future RLS regression ever let a second row
+  // through we'd rather resolve to "not connected" than crash the whole
+  // ledger with "Results contain more than one row".
+  const { data, error } = await supabase
+    .from('quickbooks_integrations')
+    .select('sync_status')
+    .limit(1)
+    .maybeSingle()
+
+  if (error || !data) return false
+  const status = data.sync_status as string
+  return status !== 'disconnected' && status !== 'paused'
+}
+
+/**
+ * Mutate each entry's qbSyncStatus / qbSyncError based on the entity_map
+ * lookup. Entries without a map row stay as `pending` (new expenses that
+ * the fire-and-forget push hasn't completed yet) when QB is connected,
+ * or `n/a` when it isn't.
+ */
+function applyQBStatus(
+  entries: TruckExpenseEntry[],
+  map: Map<string, { qbId: string | null; syncError: string | null }>,
+  connected: boolean,
+): void {
+  for (const entry of entries) {
+    const key = `${sourceTableToEntityType(entry.sourceTable)}:${entry.sourceId}`
+    const hit = map.get(key)
+    if (hit) {
+      if (hit.qbId) {
+        entry.qbSyncStatus = 'synced'
+        entry.qbSyncError = null
+      } else {
+        entry.qbSyncStatus = 'error'
+        entry.qbSyncError = hit.syncError
+      }
+    } else {
+      entry.qbSyncStatus = connected ? 'pending' : 'n/a'
+      entry.qbSyncError = null
+    }
+  }
 }
 
 /**
@@ -305,6 +443,8 @@ async function fetchTripExpensesForTruck(
       },
       editable: true,
       sourceBadge: 'manual' as const,
+      qbSyncStatus: 'pending' as const,
+      qbSyncError: null,
     }
   })
 }
@@ -388,6 +528,8 @@ async function fetchBusinessExpensesForTruck(
       },
       editable: true,
       sourceBadge: 'manual' as const,
+      qbSyncStatus: 'pending' as const,
+      qbSyncError: null,
     })
   }
 
@@ -431,6 +573,8 @@ async function fetchFuelEntriesForTruck(
     // add-expense form.
     editable: (row.source as string | null) == null || row.source === 'manual',
     sourceBadge: normalizeSourceBadge(row.source as string | null),
+    qbSyncStatus: 'pending' as const,
+    qbSyncError: null,
   }))
 }
 
@@ -473,6 +617,8 @@ async function fetchMaintenanceRecordsForTruck(
       },
       editable: true,
       sourceBadge: 'manual' as const,
+      qbSyncStatus: 'pending' as const,
+      qbSyncError: null,
     }
   })
 }

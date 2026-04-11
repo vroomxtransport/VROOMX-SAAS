@@ -1662,6 +1662,12 @@ export const quickbooksIntegrations = pgTable('quickbooks_integrations', {
   lastSyncAt: timestamp('last_sync_at', { withTimezone: true }),
   lastError: text('last_error'),
   webhookVerifierToken: text('webhook_verifier_token'),
+  // Wave 5: QB Account refs used by syncExpenseToQB + syncInvoiceToQB.
+  // Declared on the Drizzle schema in Wave 5 but referenced by code since
+  // before that (latent bug — actions/quickbooks.ts has been reading/writing
+  // these forever without a migration backing them).
+  expenseAccountId: text('expense_account_id'),
+  incomeAccountId: text('income_account_id'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
@@ -1679,7 +1685,11 @@ export const quickbooksEntityMap = pgTable('quickbooks_entity_map', {
   tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
   entityType: text('entity_type').notNull(),
   vroomxId: uuid('vroomx_id').notNull(),
-  qbId: text('qb_id').notNull(),
+  // Wave 5: nullable to represent a failed sync attempt. A row with
+  // qb_id NOT NULL is a successful sync; qb_id NULL + sync_error NOT NULL
+  // is a durable error state the ledger UI surfaces with a "Retry" button.
+  // Absence of a row means "never attempted" (pending).
+  qbId: text('qb_id'),
   qbSyncToken: text('qb_sync_token'),
   lastSyncedAt: timestamp('last_synced_at', { withTimezone: true }).notNull().defaultNow(),
   syncError: text('sync_error'),
@@ -1689,6 +1699,9 @@ export const quickbooksEntityMap = pgTable('quickbooks_entity_map', {
   index('idx_qb_entity_map_tenant').on(table.tenantId),
   index('idx_qb_entity_map_lookup').on(table.tenantId, table.entityType, table.vroomxId),
   index('idx_qb_entity_map_qb_id').on(table.tenantId, table.entityType, table.qbId),
+  // Wave 5: ledger join path — match by (tenant_id, vroomx_id) across all
+  // four expense subtypes in a single query.
+  index('idx_qb_entity_map_tenant_vroomx').on(table.tenantId, table.vroomxId),
   unique('uq_qb_entity_map').on(table.tenantId, table.entityType, table.vroomxId),
 ])
 

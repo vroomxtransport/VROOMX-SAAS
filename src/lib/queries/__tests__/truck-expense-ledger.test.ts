@@ -119,6 +119,8 @@ describe('summarizeTruckExpenses', () => {
     metadata: {},
     editable: true,
     sourceBadge: 'manual',
+    qbSyncStatus: 'n/a',
+    qbSyncError: null,
     ...overrides,
   })
 
@@ -497,5 +499,176 @@ describe('getTruckExpenses', () => {
     expect(summary.maintenance).toBe(250)
     expect(summary.insurance).toBe(500)
     expect(summary.total).toBe(1250)
+  })
+
+  // ==========================================================================
+  // Wave 5: QB sync status merge
+  // ==========================================================================
+
+  describe('QB sync status merge', () => {
+    it("defaults every row to 'n/a' when no QB integration is connected", async () => {
+      const supabase = buildMockSupabase({
+        fuel_entries: {
+          data: [
+            {
+              id: 'fe-1',
+              date: '2026-03-20',
+              gallons: '100',
+              cost_per_gallon: '4',
+              total_cost: '400',
+              odometer: null,
+              location: null,
+              state: null,
+              notes: null,
+            },
+          ],
+          error: null,
+        },
+        // .maybeSingle() returns data:null when no row exists in real Supabase
+        quickbooks_integrations: { data: null, error: null },
+      })
+
+      const entries = await getTruckExpenses(supabase, TRUCK_ID, RANGE)
+      expect(entries).toHaveLength(1)
+      expect(entries[0].qbSyncStatus).toBe('n/a')
+      expect(entries[0].qbSyncError).toBeNull()
+    })
+
+    it("defaults to 'pending' when QB is connected but no entity_map row exists yet", async () => {
+      const supabase = buildMockSupabase({
+        fuel_entries: {
+          data: [
+            {
+              id: 'fe-1',
+              date: '2026-03-20',
+              gallons: '100',
+              cost_per_gallon: '4',
+              total_cost: '400',
+              odometer: null,
+              location: null,
+              state: null,
+              notes: null,
+            },
+          ],
+          error: null,
+        },
+        quickbooks_integrations: {
+          data: { sync_status: 'active' },
+          error: null,
+        },
+      })
+
+      const entries = await getTruckExpenses(supabase, TRUCK_ID, RANGE)
+      expect(entries).toHaveLength(1)
+      expect(entries[0].qbSyncStatus).toBe('pending')
+    })
+
+    it("marks rows with qb_id NOT NULL as 'synced'", async () => {
+      const supabase = buildMockSupabase({
+        fuel_entries: {
+          data: [
+            {
+              id: 'fe-1',
+              date: '2026-03-20',
+              gallons: '100',
+              cost_per_gallon: '4',
+              total_cost: '400',
+              odometer: null,
+              location: null,
+              state: null,
+              notes: null,
+            },
+          ],
+          error: null,
+        },
+        quickbooks_integrations: {
+          data: { sync_status: 'active' },
+          error: null,
+        },
+        quickbooks_entity_map: {
+          data: [
+            {
+              vroomx_id: 'fe-1',
+              qb_id: 'qb-purchase-123',
+              sync_error: null,
+              entity_type: 'expense_fuel',
+            },
+          ],
+          error: null,
+        },
+      })
+
+      const entries = await getTruckExpenses(supabase, TRUCK_ID, RANGE)
+      expect(entries[0].qbSyncStatus).toBe('synced')
+      expect(entries[0].qbSyncError).toBeNull()
+    })
+
+    it("marks rows with qb_id NULL + sync_error as 'error'", async () => {
+      const supabase = buildMockSupabase({
+        fuel_entries: {
+          data: [
+            {
+              id: 'fe-1',
+              date: '2026-03-20',
+              gallons: '100',
+              cost_per_gallon: '4',
+              total_cost: '400',
+              odometer: null,
+              location: null,
+              state: null,
+              notes: null,
+            },
+          ],
+          error: null,
+        },
+        quickbooks_integrations: {
+          data: { sync_status: 'active' },
+          error: null,
+        },
+        quickbooks_entity_map: {
+          data: [
+            {
+              vroomx_id: 'fe-1',
+              qb_id: null,
+              sync_error: 'QB API 429: rate limited',
+              entity_type: 'expense_fuel',
+            },
+          ],
+          error: null,
+        },
+      })
+
+      const entries = await getTruckExpenses(supabase, TRUCK_ID, RANGE)
+      expect(entries[0].qbSyncStatus).toBe('error')
+      expect(entries[0].qbSyncError).toBe('QB API 429: rate limited')
+    })
+
+    it("treats 'disconnected' integration as n/a (not connected)", async () => {
+      const supabase = buildMockSupabase({
+        fuel_entries: {
+          data: [
+            {
+              id: 'fe-1',
+              date: '2026-03-20',
+              gallons: '100',
+              cost_per_gallon: '4',
+              total_cost: '400',
+              odometer: null,
+              location: null,
+              state: null,
+              notes: null,
+            },
+          ],
+          error: null,
+        },
+        quickbooks_integrations: {
+          data: { sync_status: 'disconnected' },
+          error: null,
+        },
+      })
+
+      const entries = await getTruckExpenses(supabase, TRUCK_ID, RANGE)
+      expect(entries[0].qbSyncStatus).toBe('n/a')
+    })
   })
 })

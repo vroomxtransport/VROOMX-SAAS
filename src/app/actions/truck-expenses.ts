@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { authorize, safeError } from '@/lib/authz'
 import { revalidatePath } from 'next/cache'
 import { recalculateTripFinancials } from '@/app/actions/trips'
+import { syncExpenseToQB } from '@/lib/quickbooks/sync'
 
 // ============================================================================
 // Input schema
@@ -172,6 +173,18 @@ export async function addTruckExpense(data: unknown) {
           .select()
           .single()
         if (error) return { error: safeError(error, 'addTruckExpense/fuel') }
+        // Fire-and-forget QB push — errors land durably in
+        // quickbooks_entity_map so the ledger UI can surface a Retry button.
+        void syncExpenseToQB(supabase, tenantId, entry.id as string, 'fuel').catch((e: unknown) => {
+          // Fire-and-forget: don't fail the user's add-expense flow if QB
+          // push throws an unhandled error before recordQBExpenseError
+          // could write a durable state. Log so Sentry / server logs still
+          // capture the case where even the error-recording upsert failed.
+          console.error(
+            '[addTruckExpense] QB fire-and-forget failed:',
+            e instanceof Error ? e.message : String(e),
+          )
+        })
         revalidateTruckFinancials(v.truckId)
         return { success: true, data: entry }
       }
@@ -194,6 +207,16 @@ export async function addTruckExpense(data: unknown) {
           .select()
           .single()
         if (error) return { error: safeError(error, 'addTruckExpense/maintenance') }
+        void syncExpenseToQB(supabase, tenantId, entry.id as string, 'maintenance').catch((e: unknown) => {
+          // Fire-and-forget: don't fail the user's add-expense flow if QB
+          // push throws an unhandled error before recordQBExpenseError
+          // could write a durable state. Log so Sentry / server logs still
+          // capture the case where even the error-recording upsert failed.
+          console.error(
+            '[addTruckExpense] QB fire-and-forget failed:',
+            e instanceof Error ? e.message : String(e),
+          )
+        })
         revalidateTruckFinancials(v.truckId)
         return { success: true, data: entry }
       }
@@ -236,6 +259,16 @@ export async function addTruckExpense(data: unknown) {
         // Trip financials depend on trip_expenses — keep the denormalized
         // fields in sync just like createTripExpense does.
         await recalculateTripFinancials(v.tripId as string)
+        void syncExpenseToQB(supabase, tenantId, entry.id as string, 'trip').catch((e: unknown) => {
+          // Fire-and-forget: don't fail the user's add-expense flow if QB
+          // push throws an unhandled error before recordQBExpenseError
+          // could write a durable state. Log so Sentry / server logs still
+          // capture the case where even the error-recording upsert failed.
+          console.error(
+            '[addTruckExpense] QB fire-and-forget failed:',
+            e instanceof Error ? e.message : String(e),
+          )
+        })
         revalidateTruckFinancials(v.truckId)
         return { success: true, data: entry }
       }
@@ -268,6 +301,16 @@ export async function addTruckExpense(data: unknown) {
           .select()
           .single()
         if (error) return { error: safeError(error, 'addTruckExpense/businessExpense') }
+        void syncExpenseToQB(supabase, tenantId, entry.id as string, 'business').catch((e: unknown) => {
+          // Fire-and-forget: don't fail the user's add-expense flow if QB
+          // push throws an unhandled error before recordQBExpenseError
+          // could write a durable state. Log so Sentry / server logs still
+          // capture the case where even the error-recording upsert failed.
+          console.error(
+            '[addTruckExpense] QB fire-and-forget failed:',
+            e instanceof Error ? e.message : String(e),
+          )
+        })
         revalidateTruckFinancials(v.truckId)
         return { success: true, data: entry }
       }
@@ -281,6 +324,87 @@ export async function addTruckExpense(data: unknown) {
     }
   } catch (err) {
     return { error: safeError(err as { message: string }, 'addTruckExpense') }
+  }
+}
+
+// ============================================================================
+// retryQbSync — Retry a failed QB expense push
+// ============================================================================
+
+const retryQbSyncSchema = z.object({
+  expenseId: z.string().uuid('Invalid expense id'),
+  expenseSource: z.enum(['trip', 'business', 'fuel', 'maintenance']),
+  // Optional so existing callers still work, but highly recommended —
+  // the action revalidates the per-truck financials path when supplied.
+  truckId: z.string().uuid('Invalid truck id').optional(),
+})
+
+/**
+ * User-initiated retry of a failed QuickBooks expense push. The ledger UI
+ * surfaces a "Retry" button for rows whose quickbooks_entity_map entry has
+ * qb_id=NULL and sync_error set; this action runs the same `syncExpenseToQB`
+ * pipeline that originally failed. On success, the entity_map row is
+ * upserted with qb_id set and sync_error cleared. On failure, the error
+ * message is refreshed.
+ *
+ * Authorized at `integrations.manage` because initiating a QB call is an
+ * integration-level action, and rate-limited per user to prevent a runaway
+ * retry loop from hammering the QB API.
+ */
+export async function retryQbSync(data: unknown) {
+  const parsed = retryQbSyncSchema.safeParse(data)
+  if (!parsed.success) {
+    return { error: parsed.error.flatten().fieldErrors }
+  }
+
+  const auth = await authorize('integrations.manage', {
+    rateLimit: { key: 'retryQbSync', limit: 30, windowMs: 60_000 },
+  })
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
+
+  try {
+    // Defense-in-depth: confirm the source row belongs to this tenant
+    // before calling the sync function. The sync function also scopes by
+    // tenant_id, but a belt + suspenders check here gives clearer errors
+    // to the UI on a cross-tenant retry attempt.
+    const sourceTable = (() => {
+      switch (parsed.data.expenseSource) {
+        case 'trip':
+          return 'trip_expenses'
+        case 'business':
+          return 'business_expenses'
+        case 'fuel':
+          return 'fuel_entries'
+        case 'maintenance':
+          return 'maintenance_records'
+      }
+    })()
+
+    const { data: row, error: rowErr } = await supabase
+      .from(sourceTable)
+      .select('id')
+      .eq('id', parsed.data.expenseId)
+      .eq('tenant_id', tenantId)
+      .maybeSingle()
+
+    if (rowErr) return { error: safeError(rowErr, 'retryQbSync/rowLookup') }
+    if (!row) return { error: 'Expense not found' }
+
+    await syncExpenseToQB(supabase, tenantId, parsed.data.expenseId, parsed.data.expenseSource)
+
+    // Revalidate the specific truck's financials page when truckId is
+    // supplied by the caller; fall back to the fleet list for pre-existing
+    // callers that don't yet pass it.
+    if (parsed.data.truckId) {
+      revalidatePath(`/trucks/${parsed.data.truckId}/financials`)
+      revalidatePath(`/trucks/${parsed.data.truckId}`)
+    } else {
+      revalidatePath('/trucks')
+    }
+    return { success: true }
+  } catch (err) {
+    return { error: safeError(err as { message: string }, 'retryQbSync') }
   }
 }
 

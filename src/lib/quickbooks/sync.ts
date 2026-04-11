@@ -71,6 +71,20 @@ export async function getQBClientForTenant(
 // Entity map helpers
 // ============================================================================
 
+/**
+ * Fetch an existing QB entity mapping for (tenant, entity_type, vroomx_id).
+ *
+ * Note on the `qb_id: string` return type: post-Wave-5 the column is
+ * nullable in the DB to represent failed sync attempts (qb_id NULL +
+ * sync_error set). Callers in the broker / invoice / payment paths still
+ * treat qb_id as a non-null string and that works at runtime because JS
+ * truthiness on `null` is `false` — they all gate on `if (existing) { ... }`
+ * which narrows correctly. The Wave 5 expense path is more explicit: it
+ * checks `existing && existing.qb_id` to distinguish "synced" from "error".
+ * Keeping the type as `string` here preserves compatibility with the
+ * pre-existing callers; the expense path's truthy check is the only new
+ * consumer that actually observes the null.
+ */
 async function getEntityMapping(
   supabase: SupabaseClient,
   tenantId: string,
@@ -388,17 +402,195 @@ export async function syncPaymentToQB(
 }
 
 // ============================================================================
-// syncExpenseToQB — Sync trip or business expense as QB Purchase
+// syncExpenseToQB — Sync any expense (trip / business / fuel / maintenance)
+// as a QuickBooks Purchase
 // ============================================================================
 
+/**
+ * Source type that determines which table the expense id belongs to, and
+ * which `entity_type` to use in `quickbooks_entity_map` for dedup/retry.
+ *
+ * Kept narrow so the retry action can map source → table without
+ * re-scanning every expense table in the database.
+ */
+export type QBExpenseSource = 'trip' | 'business' | 'fuel' | 'maintenance'
+
+function sourceToEntityType(source: QBExpenseSource): string {
+  switch (source) {
+    case 'trip':
+      return 'expense_trip'
+    case 'business':
+      return 'expense_business'
+    case 'fuel':
+      return 'expense_fuel'
+    case 'maintenance':
+      return 'expense_maintenance'
+  }
+}
+
+function sourceToTableName(source: QBExpenseSource): string {
+  switch (source) {
+    case 'trip':
+      return 'trip_expenses'
+    case 'business':
+      return 'business_expenses'
+    case 'fuel':
+      return 'fuel_entries'
+    case 'maintenance':
+      return 'maintenance_records'
+  }
+}
+
+/**
+ * Extract a QB Purchase payload from a source row. Each source table has
+ * a different shape (date column, category, description, amount field),
+ * so adapting happens here at the boundary.
+ */
+interface QBExpensePayload {
+  amount: number
+  description: string
+  txnDate: string
+}
+
+function buildPayloadForSource(
+  source: QBExpenseSource,
+  row: Record<string, unknown>,
+): QBExpensePayload | null {
+  const today = new Date().toISOString().split('T')[0]
+
+  switch (source) {
+    case 'trip': {
+      const amount = parseFloat((row.amount as string) ?? '0')
+      if (!(amount > 0)) return null
+      const category = (row.category as string) ?? 'misc'
+      const notes = (row.notes as string | null) ?? ''
+      return {
+        amount,
+        description: `Trip expense: ${category}${notes ? ` - ${notes}` : ''}`,
+        txnDate: ((row.expense_date as string | null) ?? today).slice(0, 10),
+      }
+    }
+    case 'business': {
+      const amount = parseFloat((row.amount as string) ?? '0')
+      if (!(amount > 0)) return null
+      const name = (row.name as string | null) ?? (row.category as string | null) ?? 'business'
+      const notes = (row.notes as string | null) ?? ''
+      return {
+        amount,
+        description: `Business expense: ${name}${notes ? ` - ${notes}` : ''}`,
+        txnDate: ((row.effective_from as string | null) ?? today).slice(0, 10),
+      }
+    }
+    case 'fuel': {
+      const amount = parseFloat((row.total_cost as string) ?? '0')
+      if (!(amount > 0)) return null
+      const location = (row.location as string | null) ?? 'Fuel purchase'
+      const state = (row.state as string | null) ?? ''
+      const gallons = parseFloat((row.gallons as string) ?? '0')
+      return {
+        amount,
+        description: `Fuel: ${location}${state ? `, ${state}` : ''} (${gallons.toFixed(2)} gal)`,
+        txnDate: ((row.date as string | null) ?? today).slice(0, 10),
+      }
+    }
+    case 'maintenance': {
+      const amount = parseFloat((row.cost as string) ?? '0')
+      if (!(amount > 0)) return null
+      const type = (row.maintenance_type as string | null) ?? 'maintenance'
+      const vendor = (row.vendor as string | null) ?? ''
+      const description = (row.description as string | null) ?? ''
+      const label = description || `${type}${vendor ? ` at ${vendor}` : ''}`
+      const completedDate = row.completed_date as string | null
+      return {
+        amount,
+        description: `Maintenance: ${label}`,
+        txnDate: (completedDate ?? today).slice(0, 10),
+      }
+    }
+  }
+}
+
+/**
+ * Sanitize a QuickBooks API error message before storing or surfacing
+ * it to the UI. QB `Detail` fields frequently include:
+ *   - request payload echoes (account names, amounts, customer ids)
+ *   - OAuth refresh errors that may contain token fragments
+ *   - stack traces with internal paths
+ *
+ * We keep the status code, the short `Message`, and drop everything
+ * after the first colon/semicolon/newline. Truncates to 120 chars.
+ * The goal is a useful hint for the operator without leaking PII or
+ * secrets to lower-privilege users who can see the ledger.
+ */
+function sanitizeQBErrorMessage(raw: string): string {
+  const oneLine = raw.split(/[\r\n]/)[0] ?? raw
+  const trimmed = oneLine.split(/[:;]/)[0]?.trim() ?? oneLine
+  return trimmed.slice(0, 120)
+}
+
+/**
+ * Record (or clear) a durable error state in quickbooks_entity_map so the
+ * ledger UI can surface a Retry button. Safe to call repeatedly — upserts
+ * on the unique constraint.
+ *
+ * The stored error is sanitized (QB detail fields can include customer
+ * data + token fragments) and truncated to 120 chars.
+ */
+async function recordQBExpenseError(
+  supabase: SupabaseClient,
+  tenantId: string,
+  entityType: string,
+  expenseId: string,
+  errorMessage: string,
+): Promise<void> {
+  await supabase
+    .from('quickbooks_entity_map')
+    .upsert(
+      {
+        tenant_id: tenantId,
+        entity_type: entityType,
+        vroomx_id: expenseId,
+        qb_id: null,
+        qb_sync_token: null,
+        last_synced_at: new Date().toISOString(),
+        sync_error: sanitizeQBErrorMessage(errorMessage),
+      },
+      { onConflict: 'tenant_id,entity_type,vroomx_id' },
+    )
+}
+
+/**
+ * Push a VroomX expense (trip / business / fuel / maintenance) to
+ * QuickBooks as a Purchase. Fire-and-forget: caller does NOT await the
+ * result; errors are recorded durably in quickbooks_entity_map so the
+ * UI can retry.
+ *
+ * No-ops safely if:
+ *   - QB integration is not connected / disconnected / paused
+ *   - No expense_account_id is configured on the integration
+ *   - A successful sync already exists (qb_id is NOT NULL)
+ *   - The expense row can't be found
+ *   - The expense amount is zero or negative
+ *
+ * Re-runs on a row currently in error state (qb_id IS NULL): retries the
+ * push and clears the error on success or refreshes the error message on
+ * another failure.
+ */
 export async function syncExpenseToQB(
   supabase: SupabaseClient,
   tenantId: string,
   expenseId: string,
-  expenseType: 'trip' | 'business'
+  expenseSource: QBExpenseSource,
 ): Promise<void> {
+  const entityType = sourceToEntityType(expenseSource)
+
+  // Short-circuit if already successfully synced (qb_id is NOT NULL).
+  // A row with qb_id NULL is an error state — fall through and retry.
+  const existing = await getEntityMapping(supabase, tenantId, entityType, expenseId)
+  if (existing && existing.qb_id) return
+
   const client = await getQBClientForTenant(supabase, tenantId)
-  if (!client) return
+  if (!client) return // Not connected — silent no-op, not an error
 
   // Fetch integration config for expense account mapping
   const { data: integration } = await supabase
@@ -409,12 +601,8 @@ export async function syncExpenseToQB(
 
   if (!integration?.expense_account_id) return // No expense account configured
 
-  // Check if already synced
-  const existing = await getEntityMapping(supabase, tenantId, 'expense', expenseId)
-  if (existing) return
-
-  // Fetch expense from the appropriate table
-  const tableName = expenseType === 'trip' ? 'trip_expenses' : 'business_expenses'
+  // Fetch the source row
+  const tableName = sourceToTableName(expenseSource)
   const { data: expense, error: expenseError } = await supabase
     .from(tableName)
     .select('*')
@@ -422,43 +610,51 @@ export async function syncExpenseToQB(
     .eq('tenant_id', tenantId)
     .single()
 
-  if (expenseError || !expense) return
+  if (expenseError || !expense) return // Row missing — nothing to sync
+
+  const payload = buildPayloadForSource(expenseSource, expense as Record<string, unknown>)
+  if (!payload) return // Zero-amount row — nothing to sync
 
   try {
-    const expenseAmount = parseFloat(expense.amount as string)
-    const category = (expense.category as string) ?? 'misc'
-    const notes = (expense.notes as string) ?? ''
-    const description = expenseType === 'trip'
-      ? `Trip expense: ${category}${notes ? ` - ${notes}` : ''}`
-      : `Business expense: ${(expense.name as string) ?? category}${notes ? ` - ${notes}` : ''}`
-
-    const expenseDate = expenseType === 'trip'
-      ? (expense.expense_date as string | null)
-      : (expense.effective_from as string | null)
-
     const created = await client.createPurchase({
       AccountRef: { value: integration.expense_account_id as string },
       PaymentType: 'Cash',
-      TxnDate: expenseDate ?? new Date().toISOString().split('T')[0],
+      TxnDate: payload.txnDate,
       Line: [
         {
-          Amount: expenseAmount,
+          Amount: payload.amount,
           DetailType: 'AccountBasedExpenseLineDetail',
-          Description: description,
+          Description: payload.description,
           AccountBasedExpenseLineDetail: {
             AccountRef: { value: integration.expense_account_id as string },
           },
         },
       ],
-      PrivateNote: `VroomX ${expenseType} expense: ${expenseId}`,
+      PrivateNote: `VroomX ${expenseSource} expense: ${expenseId}`,
     })
 
-    await upsertEntityMapping(
-      supabase, tenantId, 'expense', expenseId,
-      created.Id, created.SyncToken
-    )
+    // Success: upsert with qb_id set + sync_error cleared. Upsert handles
+    // the retry case where an error row already exists.
+    await supabase
+      .from('quickbooks_entity_map')
+      .upsert(
+        {
+          tenant_id: tenantId,
+          entity_type: entityType,
+          vroomx_id: expenseId,
+          qb_id: created.Id,
+          qb_sync_token: created.SyncToken,
+          last_synced_at: new Date().toISOString(),
+          sync_error: null,
+        },
+        { onConflict: 'tenant_id,entity_type,vroomx_id' },
+      )
   } catch (err) {
-    console.error('[QB sync] Failed to sync expense:', err instanceof Error ? err.message : err)
+    const message = err instanceof Error ? err.message : 'Unknown QB sync error'
+    console.error(
+      `[QB sync] Failed to sync ${expenseSource} expense ${expenseId}: ${message}`,
+    )
+    await recordQBExpenseError(supabase, tenantId, entityType, expenseId, message)
   }
 }
 
