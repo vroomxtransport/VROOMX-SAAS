@@ -3,6 +3,7 @@
 import { loginAction, magicLinkAction } from '@/app/actions/auth'
 import { AnimatedInput, BoxReveal, BottomGradient, AnimatedLabel } from '@/components/blocks/modern-animated-sign-in'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useActionState, useState } from 'react'
@@ -17,6 +18,26 @@ function LoginForm() {
   const [state, formAction, isPending] = useActionState(loginAction, null)
   const [magicState, magicAction, magicPending] = useActionState(magicLinkAction, null)
   const [showPassword, setShowPassword] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [googleError, setGoogleError] = useState<string | null>(null)
+
+  async function handleGoogleSignIn() {
+    setGoogleLoading(true)
+    setGoogleError(null)
+    const supabase = createClient()
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: inviteToken
+          ? `${window.location.origin}/auth-confirm?next=${encodeURIComponent(`/invite/accept?token=${inviteToken}`)}`
+          : `${window.location.origin}/auth-confirm`,
+      },
+    })
+    if (oauthError) {
+      setGoogleLoading(false)
+      setGoogleError('Unable to sign in with Google. Please try again.')
+    }
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -36,20 +57,20 @@ function LoginForm() {
         </BoxReveal>
       )}
 
-      {error && (
+      {(error || googleError) && (
         <BoxReveal boxColor="var(--skeleton)" duration={0.3} width="100%">
           <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-            {error}
+            {error || googleError}
           </div>
         </BoxReveal>
       )}
 
-      {/* Google login button (visual placeholder) */}
       <BoxReveal boxColor="var(--skeleton)" duration={0.3} overflow="visible" width="100%">
         <button
-          className="g-button group/btn w-full rounded-md h-10 font-medium outline-hidden hover:cursor-pointer relative bg-transparent"
+          className="g-button group/btn w-full rounded-md h-10 font-medium outline-hidden hover:cursor-pointer relative bg-transparent disabled:opacity-50 disabled:cursor-not-allowed"
           type="button"
-          onClick={() => {}}
+          onClick={handleGoogleSignIn}
+          disabled={googleLoading}
         >
           <span className="flex items-center justify-center w-full h-full gap-3 text-sm">
             <Image
@@ -58,7 +79,7 @@ function LoginForm() {
               height={26}
               alt="Google"
             />
-            Continue with Google
+            {googleLoading ? 'Redirecting...' : 'Continue with Google'}
           </span>
           <BottomGradient />
         </button>
