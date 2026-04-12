@@ -12,7 +12,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           width={616}
           height={211}
           priority
-          className="pointer-events-none w-full max-w-[520px] h-auto brightness-0"
+          className="pointer-events-none w-full max-w-[650px] h-auto brightness-0"
         />
       </div>
 
