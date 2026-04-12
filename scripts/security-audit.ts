@@ -47,7 +47,7 @@ function checkEnvVars() {
   const envFiles = ['.env.local.example', '.env', '.env.local', '.env.production']
   const secretPatterns = ['secret', 'sk_live', 'sk_test', 'private_key', 'auth_token']
   let totalChecked = 0
-  let issues: string[] = []
+  const issues: string[] = []
 
   for (const envFile of envFiles) {
     const filePath = join(ROOT, envFile)
@@ -93,8 +93,20 @@ function checkEnvVars() {
 }
 
 // ---------------------------------------------------------------------------
-// Check 2: All server actions verify getUser()
+// Check 2: All server actions call authorize() or authorizeAdmin()
 // ---------------------------------------------------------------------------
+//
+// CLAUDE.md mandates the sequence:
+//   Zod parse → authorize(permission) → tenant_id filter → safeError()
+//
+// So every server action file should call authorize(...) (regular tenant-
+// scoped action) or authorizeAdmin(...) (cross-tenant admin action). A file
+// with exported async functions that has NEITHER is an unauthorized surface.
+//
+// Historical note: this check used to look for `getUser()`, which was the
+// pattern before 2025-Q3 when authorize() was introduced in src/lib/authz.ts.
+// The old check was never updated and has been silently failing all checks
+// since the migration. Fixed 2026-04-11.
 
 function checkAuthInActions() {
   const actionsDir = join(ROOT, 'src/app/actions')
@@ -105,7 +117,9 @@ function checkAuthInActions() {
 
   const files = readdirSync(actionsDir).filter(f => f.endsWith('.ts'))
 
-  // Actions that legitimately skip auth (public endpoints)
+  // Actions that legitimately skip auth:
+  //   - auth.ts       — signUp, signIn, password reset (unauthenticated by design)
+  //   - logout.ts     — session termination (auth-optional)
   const authExemptFiles = ['auth.ts', 'logout.ts']
 
   for (const file of files) {
@@ -123,18 +137,22 @@ function checkAuthInActions() {
       continue
     }
 
-    const hasGetUser = content.includes('getUser')
-    if (!hasGetUser) {
+    // Match either authorize(...) or authorizeAdmin(...) — both are valid gates.
+    const hasAuthorize = /\bauthorize\s*\(/.test(content)
+    const hasAuthorizeAdmin = /\bauthorizeAdmin\s*\(/.test(content)
+    const gate = hasAuthorizeAdmin ? 'authorizeAdmin()' : hasAuthorize ? 'authorize()' : null
+
+    if (!gate) {
       checks.push({
         name: `Auth in ${file}`,
         pass: false,
-        detail: `${exportedFunctions.length} action(s) but NO getUser() call found`,
+        detail: `${exportedFunctions.length} action(s) but NO authorize() or authorizeAdmin() call found`,
       })
     } else {
       checks.push({
         name: `Auth in ${file}`,
         pass: true,
-        detail: `${exportedFunctions.length} action(s), auth verified`,
+        detail: `${exportedFunctions.length} action(s), gated by ${gate}`,
       })
     }
   }
@@ -218,6 +236,20 @@ function checkExposedKeys() {
 // Check 5: RLS coverage on all tables
 // ---------------------------------------------------------------------------
 
+// Tables that intentionally do NOT have RLS, with the justification for
+// each. Adding a table here requires a code-review justification of the
+// alternative access control mechanism (typically service-role + an
+// application-layer authorize* gate).
+//
+// Do NOT add a table here without updating .claude/rules/security.md.
+const RLS_INTENTIONALLY_DISABLED: Record<string, string> = {
+  // Cross-tenant admin action audit trail. Accessed exclusively via
+  // authorizeAdmin() in src/app/actions/admin.ts, which itself requires
+  // PLATFORM_ADMIN_EMAILS membership + service-role. RLS by tenant_id
+  // would prevent the table from recording cross-tenant actions.
+  platform_audit_logs: 'Access gated by authorizeAdmin() + service-role; cross-tenant by design',
+}
+
 function checkRLS() {
   const migrationsDir = join(ROOT, 'supabase/migrations')
   if (!existsSync(migrationsDir)) {
@@ -245,7 +277,11 @@ function checkRLS() {
     }
   }
 
-  const missingRLS = allTables.filter(t => !rlsTables.includes(t))
+  // Filter out tables that intentionally skip RLS (with documented justification)
+  const missingRLS = allTables.filter(
+    (t) => !rlsTables.includes(t) && !(t in RLS_INTENTIONALLY_DISABLED),
+  )
+  const intentionallyDisabled = allTables.filter((t) => t in RLS_INTENTIONALLY_DISABLED)
 
   if (missingRLS.length > 0) {
     checks.push({
@@ -254,10 +290,14 @@ function checkRLS() {
       detail: `${missingRLS.length} table(s) missing RLS: ${missingRLS.join(', ')}`,
     })
   } else {
+    const note =
+      intentionallyDisabled.length > 0
+        ? ` (${intentionallyDisabled.length} intentionally excluded: ${intentionallyDisabled.join(', ')})`
+        : ''
     checks.push({
       name: 'RLS coverage',
       pass: true,
-      detail: `All ${allTables.length} tables have RLS enabled`,
+      detail: `All ${allTables.length - intentionallyDisabled.length} applicable tables have RLS enabled${note}`,
     })
   }
 }
