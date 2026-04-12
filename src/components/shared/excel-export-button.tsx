@@ -34,7 +34,7 @@ export function ExcelExportButton({
     try {
       const rows = await fetchData()
       if (rows.length === 0) return
-      exportToExcel({ filename, sheetName, columns, rows, title, subtitle })
+      await exportToExcel({ filename, sheetName, columns, rows, title, subtitle })
     } finally {
       setExporting(false)
     }
