@@ -29,6 +29,10 @@ vi.mock('@/lib/financial/trip-calculations', () => ({
   }),
 }))
 
+vi.mock('@/lib/audit-context', () => ({
+  getAuditContext: vi.fn().mockResolvedValue({ ipAddress: 'test-ip', userAgent: 'test-agent' }),
+}))
+
 import { authorize } from '@/lib/authz'
 import { revalidatePath } from 'next/cache'
 import { createTrip, updateTrip, deleteTrip, updateTripStatus, assignOrderToTrip, unassignOrderFromTrip } from '../trips'
@@ -62,25 +66,29 @@ function createMockSupabaseClient(overrides: {
   ordersUpdateResult?: { error: unknown }
   /** Result for select queries (e.g. trip fetch for recalc) */
   selectResult?: { data: unknown; error: unknown }
-  /** Result for orders select (recalc) */
+  /** Result for orders .order() array fetch (recalculateTripFinancials) */
   ordersSelectResult?: { data: unknown; error: unknown }
+  /** Result for orders .single() fetch (currentOrder trip_id lookup) */
+  ordersSingleResult?: { data: unknown; error: unknown }
 } = {}) {
   const insertResult = overrides.insertResult ?? { data: { id: 'trip-1', trip_number: 'TRP-001', status: 'planned' }, error: null }
   const updateResult = overrides.updateResult ?? { data: { id: 'trip-1', trip_number: 'TRP-001', status: 'planned' }, error: null }
   const deleteResult = overrides.deleteResult ?? { error: null }
   const ordersUpdateResult = overrides.ordersUpdateResult ?? { error: null }
 
-  // Generic chain builder for select queries
-  const makeSelectChain = (result: { data: unknown; error: unknown }) => {
+  // Generic chain builder for select queries.
+  // singleResult overrides what .single() resolves with (defaults to arrayResult).
+  const makeSelectChain = (arrayResult: { data: unknown; error: unknown }, singleResult?: { data: unknown; error: unknown }) => {
+    const resolvedSingle = singleResult ?? arrayResult
     const chain = {} as SelectChain
     chain.eq = vi.fn().mockReturnValue(chain)
-    chain.single = vi.fn().mockResolvedValue(result)
-    chain.order = vi.fn().mockResolvedValue(result)
-    chain.in = vi.fn().mockResolvedValue(result)
+    chain.single = vi.fn().mockResolvedValue(resolvedSingle)
+    chain.order = vi.fn().mockResolvedValue(arrayResult)
+    chain.in = vi.fn().mockResolvedValue(arrayResult)
     chain.gt = vi.fn().mockReturnValue({
       in: vi.fn().mockResolvedValue({ data: [], error: null }),
     })
-    chain.then = (resolve: (value: { data: unknown; error: unknown }) => void) => resolve(result)
+    chain.then = (resolve: (value: { data: unknown; error: unknown }) => void) => resolve(arrayResult)
     return chain
   }
 
@@ -94,7 +102,10 @@ function createMockSupabaseClient(overrides: {
             }),
           }),
           select: vi.fn().mockReturnValue(
-            makeSelectChain(overrides.ordersSelectResult ?? { data: [], error: null })
+            makeSelectChain(
+              overrides.ordersSelectResult ?? { data: [], error: null },
+              overrides.ordersSingleResult
+            )
           ),
         }
       }
@@ -539,23 +550,10 @@ describe('assignOrderToTrip and unassignOrderFromTrip notification behavior', ()
     const mockClient = createMockSupabaseClient({
       selectResult: { data: { route_sequence: [] }, error: null },
       updateResult: { data: null, error: null },
-      ordersSelectResult: { data: { trip_id: null }, error: null },
+      ordersSelectResult: { data: [], error: null },
+      ordersSingleResult: { data: { trip_id: null }, error: null },
     })
-    mockedAuthorize
-      .mockResolvedValueOnce({
-        ok: true,
-        ctx: {
-          supabase: mockClient as never,
-          tenantId: 'tenant-456',
-          user: { id: 'user-123', email: 'test@example.com' },
-          role: 'admin',
-          permissions: ['*'],
-        },
-      })
-      .mockResolvedValueOnce({
-        ok: false,
-        error: 'Not authenticated',
-      })
+    mockAuthSuccess(mockClient)
 
     const result = await assignOrderToTrip('order-1', 'trip-1')
 
@@ -566,27 +564,10 @@ describe('assignOrderToTrip and unassignOrderFromTrip notification behavior', ()
     const mockClient = createMockSupabaseClient({
       selectResult: { data: { route_sequence: [] }, error: null },
       updateResult: { data: null, error: null },
-      ordersSelectResult: { data: { trip_id: 'trip-old' }, error: null },
+      ordersSelectResult: { data: [], error: null },
+      ordersSingleResult: { data: { trip_id: 'trip-old' }, error: null },
     })
-    mockedAuthorize
-      .mockResolvedValueOnce({
-        ok: true,
-        ctx: {
-          supabase: mockClient as never,
-          tenantId: 'tenant-456',
-          user: { id: 'user-123', email: 'test@example.com' },
-          role: 'admin',
-          permissions: ['*'],
-        },
-      })
-      .mockResolvedValueOnce({
-        ok: false,
-        error: 'Not authenticated',
-      })
-      .mockResolvedValueOnce({
-        ok: false,
-        error: 'Not authenticated',
-      })
+    mockAuthSuccess(mockClient)
 
     const result = await assignOrderToTrip('order-1', 'trip-1')
 
@@ -597,23 +578,10 @@ describe('assignOrderToTrip and unassignOrderFromTrip notification behavior', ()
     const mockClient = createMockSupabaseClient({
       selectResult: { data: { trip_number: 'TRP-001', route_sequence: [] }, error: null },
       updateResult: { data: null, error: null },
-      ordersSelectResult: { data: { trip_id: 'trip-old' }, error: null },
+      ordersSelectResult: { data: [], error: null },
+      ordersSingleResult: { data: { trip_id: 'trip-old' }, error: null },
     })
-    mockedAuthorize
-      .mockResolvedValueOnce({
-        ok: true,
-        ctx: {
-          supabase: mockClient as never,
-          tenantId: 'tenant-456',
-          user: { id: 'user-123', email: 'test@example.com' },
-          role: 'admin',
-          permissions: ['*'],
-        },
-      })
-      .mockResolvedValueOnce({
-        ok: false,
-        error: 'Not authenticated',
-      })
+    mockAuthSuccess(mockClient)
 
     const result = await unassignOrderFromTrip('order-1')
 

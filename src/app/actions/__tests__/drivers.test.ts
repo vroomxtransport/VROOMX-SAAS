@@ -21,6 +21,10 @@ vi.mock('@/lib/resend/client', () => ({
   getResend: vi.fn(),
 }))
 
+vi.mock('@/lib/audit-context', () => ({
+  getAuditContext: vi.fn().mockResolvedValue({ ipAddress: 'test-ip', userAgent: 'test-agent' }),
+}))
+
 import { authorize } from '@/lib/authz'
 import { revalidatePath } from 'next/cache'
 import { checkTierLimit } from '@/lib/tier'
@@ -43,6 +47,8 @@ function createMockSupabaseClient(overrides: {
   const updateResult = overrides.updateResult ?? { data: { id: '00000000-0000-4000-a000-000000000001', first_name: 'John', last_name: 'Doe' }, error: null }
   const deleteResult = overrides.deleteResult ?? { error: null }
 
+  const snapshotRow = { data: { id: '00000000-0000-4000-a000-000000000001', first_name: 'John', last_name: 'Doe', email: 'john@example.com', phone: null, tenant_id: 'tenant-456' }, error: null }
+
   const client = {
     from: vi.fn().mockReturnValue({
       insert: vi.fn().mockReturnValue({
@@ -62,6 +68,13 @@ function createMockSupabaseClient(overrides: {
       delete: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
           eq: vi.fn().mockResolvedValue(deleteResult),
+        }),
+      }),
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue(snapshotRow),
+          }),
         }),
       }),
     }),
