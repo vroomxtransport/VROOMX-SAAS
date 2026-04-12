@@ -3,9 +3,7 @@
 import { loginAction, magicLinkAction } from '@/app/actions/auth'
 import { AnimatedInput, BoxReveal, BottomGradient, AnimatedLabel } from '@/components/blocks/modern-animated-sign-in'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
-import Image from 'next/image'
 import { useActionState, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
@@ -18,26 +16,6 @@ function LoginForm() {
   const [state, formAction, isPending] = useActionState(loginAction, null)
   const [magicState, magicAction, magicPending] = useActionState(magicLinkAction, null)
   const [showPassword, setShowPassword] = useState(false)
-  const [googleLoading, setGoogleLoading] = useState(false)
-  const [googleError, setGoogleError] = useState<string | null>(null)
-
-  async function handleGoogleSignIn() {
-    setGoogleLoading(true)
-    setGoogleError(null)
-    const supabase = createClient()
-    const { error: oauthError } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: inviteToken
-          ? `${window.location.origin}/auth-confirm?next=${encodeURIComponent(`/invite/accept?token=${inviteToken}`)}`
-          : `${window.location.origin}/auth-confirm`,
-      },
-    })
-    if (oauthError) {
-      setGoogleLoading(false)
-      setGoogleError('Unable to sign in with Google. Please try again.')
-    }
-  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -57,41 +35,13 @@ function LoginForm() {
         </BoxReveal>
       )}
 
-      {(error || googleError) && (
+      {error && (
         <BoxReveal boxColor="var(--skeleton)" duration={0.3} width="100%">
           <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-            {error || googleError}
+            {error}
           </div>
         </BoxReveal>
       )}
-
-      <BoxReveal boxColor="var(--skeleton)" duration={0.3} overflow="visible" width="100%">
-        <button
-          className="g-button group/btn w-full rounded-md h-10 font-medium outline-hidden hover:cursor-pointer relative bg-transparent disabled:opacity-50 disabled:cursor-not-allowed"
-          type="button"
-          onClick={handleGoogleSignIn}
-          disabled={googleLoading}
-        >
-          <span className="flex items-center justify-center w-full h-full gap-3 text-sm">
-            <Image
-              src="/images/google-logo.svg"
-              width={26}
-              height={26}
-              alt="Google"
-            />
-            {googleLoading ? 'Redirecting...' : 'Continue with Google'}
-          </span>
-          <BottomGradient />
-        </button>
-      </BoxReveal>
-
-      <BoxReveal boxColor="var(--skeleton)" duration={0.3} width="100%">
-        <div className="flex items-center gap-4">
-          <hr className="flex-1 border-dashed border-border-subtle" />
-          <p className="text-sm text-muted-foreground">or</p>
-          <hr className="flex-1 border-dashed border-border-subtle" />
-        </div>
-      </BoxReveal>
 
       <BoxReveal boxColor="var(--skeleton)" duration={0.3} width="100%">
         <Tabs defaultValue="password" className="w-full">
