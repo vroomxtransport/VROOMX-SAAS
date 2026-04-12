@@ -11,8 +11,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Primary quality gate — BLOCKING. Runs lint, type-check, and unit tests
+  # on every PR + main push. A failure here prevents merge.
   quality:
-    name: Type Check & Unit Tests
+    name: Lint, Type Check & Unit Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,33 +30,97 @@ jobs:
       - name: TypeScript
         run: npx tsc --noEmit
 
+      # Lint runs AFTER tsc (catches type-level issues first) but BEFORE
+      # tests so a lint error fails the job fast without waiting on vitest.
+      # Kept inside the `quality` job because it shares `npm ci` and only
+      # adds ~10-20s to total job time.
+      - name: Lint (eslint)
+        run: npm run lint
+
       - name: Unit Tests + Coverage
         run: npx vitest run --coverage
 
-  # CFG-012: dependency and secret scanning. Both jobs are allowed to
-  # surface issues without blocking PR merges (continue-on-error) so
-  # that a new moderate dep bump or a false-positive secret match
-  # doesn't wedge development — but failures are visible in the PR
-  # Checks tab and in GitHub's Security dashboard.
-  audit:
-    name: npm audit
+  # Runs `npm run build` (next build) in parallel with `quality` so CI
+  # catches build-breaking issues (Next.js compilation, Turbopack, Sentry
+  # sourcemap upload plumbing, etc.) before Netlify does — saving a round
+  # trip and a deploy slot when a PR breaks the build.
+  #
+  # continue-on-error: true — TEMPORARY. next.config.ts runs
+  # validateBuildTimeEnv() during `NEXT_PHASE=phase-production-build` and
+  # hard-fails if any of NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SECRET_KEY,
+  # DATABASE_URL, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET,
+  # NEXT_PUBLIC_APP_URL, or NEXT_PUBLIC_SENTRY_DSN are unset. Until those
+  # are provisioned as GitHub Actions secrets (and wired in via an `env:`
+  # block on this job), a blocking `build` would fail every PR from a
+  # fork or a freshly cloned repo. See src/lib/startup-checks.ts and
+  # next.config.ts for the authoritative list.
+  #
+  # TODO: Remove continue-on-error and add an `env:` block sourcing
+  # repository secrets once the operator provisions:
+  #   NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+  #   SUPABASE_SECRET_KEY, DATABASE_URL, STRIPE_SECRET_KEY,
+  #   STRIPE_WEBHOOK_SECRET, NEXT_PUBLIC_APP_URL, NEXT_PUBLIC_SENTRY_DSN
+  # Do NOT hardcode values here — use GitHub repository secrets.
+  build:
+    name: Next Build
     runs-on: ubuntu-latest
     continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # NOT --ignore-scripts: Next.js, Sentry, and Serwist all rely on
+      # postinstall hooks to wire up their build-time plugins.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (next build)
+        run: npm run build
+
+  # Dependency CVE scanning. BLOCKING gate — no CVE ships silently.
+  #
+  # Uses --omit=dev to audit runtime deps only. The dev-only chain
+  # (drizzle-kit → @esbuild-kit/esm-loader → esbuild) has 4 moderate
+  # advisories about esbuild's dev-server mode that don't apply to
+  # drizzle-kit's use of esbuild for TS transpilation during migrations.
+  # drizzle-kit 1.0+ drops @esbuild-kit entirely; this will clear on its
+  # next major bump. Track at https://github.com/drizzle-team/drizzle-orm
+  #
+  # Escape hatch for a transient false positive: raise --audit-level=critical
+  # temporarily with a PR comment + revert after. Do NOT add --force or
+  # downgrade the audit level without a written reason in the PR description.
+  audit:
+    name: npm audit (production deps)
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
+      # --ignore-scripts is intentional here: we only need the dependency
+      # tree for auditing, not any postinstall side-effects. Faster install
+      # and smaller attack surface on a job that reads untrusted package.json
+      # metadata.
       - name: Install dependencies
         run: npm ci --ignore-scripts
-      - name: Run npm audit (high + critical)
-        run: npm audit --audit-level=high
+      - name: Run npm audit (high + critical, production only)
+        run: npm audit --audit-level=high --omit=dev
 
+  # Secret scanning. BLOCKING gate — no leaked secret ships silently.
+  #
+  # Escape hatch for a legitimate false positive (e.g., example strings in
+  # docs, fixture keys in tests): add an allow-list entry to a
+  # `.gitleaks.toml` at repo root (does not exist today — create on first
+  # false positive). See https://github.com/gitleaks/gitleaks#configuration
+  # for allow-list syntax.
   secrets-scan:
     name: Gitleaks
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
         with:
@@ -69,3 +135,66 @@ jobs:
           # fields from GitHub events are interpolated into run: commands
           # anywhere in this workflow.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Project's custom static-analysis pass (scripts/security-audit.ts).
+  # BLOCKING gate. Walks the source tree for common security anti-patterns:
+  # server-action auth gating (authorize() / authorizeAdmin() on every
+  # exported action), webhook signature + idempotency, hardcoded secrets,
+  # RLS coverage (with documented intentional exclusions), server-only env
+  # vars leaking into client components.
+  #
+  # Fast, no postinstall needed — install with --ignore-scripts.
+  security-audit:
+    name: Security Audit (custom)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+      - name: Run custom security audit
+        run: npm run audit:security
+
+  # Advisory Playwright smoke-test run. Non-blocking today because the
+  # existing specs are thin smoke tests, not a production gate.
+  # TODO: Remove continue-on-error once E2E suite covers
+  #       signup -> order -> trip -> invoice flow.
+  #
+  # Note: playwright.config.ts runs `next build && next start` as its
+  # webServer, which invokes the same validateBuildTimeEnv() check as
+  # the `build` job above. This job will continue to fail until the
+  # same GitHub secrets are provisioned — it stays advisory either way.
+  e2e:
+    name: Playwright E2E (advisory)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # NOT --ignore-scripts: Playwright's postinstall registers the
+      # browser download metadata used by `playwright install` below.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
