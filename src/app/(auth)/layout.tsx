@@ -5,14 +5,14 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen">
       {/* Left panel — logo (hidden on mobile) */}
-      <div className="relative hidden w-1/2 overflow-hidden bg-background lg:flex lg:items-center lg:justify-center">
+      <div className="relative hidden w-1/2 overflow-hidden bg-background lg:flex lg:items-center lg:justify-center px-12">
         <Image
           src="/images/logo-white.png"
           alt="VroomX TMS"
           width={616}
           height={211}
           priority
-          className="pointer-events-none w-[60%] max-w-[360px] h-auto brightness-0"
+          className="pointer-events-none w-full max-w-[520px] h-auto brightness-0"
         />
       </div>
 
