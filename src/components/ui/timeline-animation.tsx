@@ -28,7 +28,8 @@ export function TimelineContent<T extends ElementType = 'div'>({
     margin: '-10% 0px -10% 0px',
   })
 
-  const Component = motion.create(as ?? 'div') as React.ComponentType<any>
+  // motion.create returns a typed component; cast to accept the generic props passed via spread
+  const Component = motion.create(as ?? 'div') as React.ComponentType<Record<string, unknown>>
 
   const defaultVariants: Variants = {
     hidden: { opacity: 0, y: 20, filter: 'blur(8px)' },

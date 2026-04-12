@@ -18,7 +18,7 @@ export function getStripeClient(): Stripe {
 // Legacy export for backwards compatibility
 export const stripe = new Proxy({} as Stripe, {
   get(target, prop) {
-    return (getStripeClient() as any)[prop]
+    return (getStripeClient() as unknown as Record<string | symbol, unknown>)[prop]
   }
 })
 

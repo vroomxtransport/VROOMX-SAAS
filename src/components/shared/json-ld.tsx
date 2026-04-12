@@ -23,7 +23,7 @@ export async function JsonLd({ data }: { data: Record<string, unknown> }) {
     <script
       type="application/ld+json"
       nonce={nonce}
-      // eslint-disable-next-line react/no-danger
+       
       dangerouslySetInnerHTML={{ __html: html }}
     />
   )

@@ -11,7 +11,9 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  type TooltipProps,
 } from 'recharts'
+import type { ValueType, NameType } from 'recharts/types/component/DefaultTooltipContent'
 import { cn } from '@/lib/utils'
 import type { MonthlyKPITrend } from '@/lib/queries/financials'
 
@@ -61,9 +63,9 @@ export function KPITrendChart({ data }: KPITrendChartProps) {
 
   const hasPerMileData = data.some((d) => d.rpm !== null)
 
-  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+   
   const renderTooltip = useCallback(
-    (props: any) => <TrendTooltip {...(props as CustomTooltipProps)} view={view} />,
+    (props: TooltipProps<ValueType, NameType>) => <TrendTooltip {...(props as CustomTooltipProps)} view={view} />,
     [view]
   )
 

@@ -22,6 +22,9 @@ export default async function RolesPage() {
     redirect('/settings/profile')
   }
 
+  let customRolesData: Array<{ id: string; name: string; description: string | null; permissions: string[]; created_at: string }> = []
+  let fetchError = false
+
   try {
     const { data: customRoles, error } = await supabase
       .from('custom_roles')
@@ -31,18 +34,16 @@ export default async function RolesPage() {
 
     if (error) {
       console.error('[SETTINGS/ROLES] Failed to fetch custom roles:', error)
-      return (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-center">
-          <p className="text-sm text-amber-800">
-            Unable to load roles. Please refresh the page.
-          </p>
-        </div>
-      )
+      fetchError = true
+    } else {
+      customRolesData = customRoles ?? []
     }
-
-    return <RolesSection customRoles={customRoles ?? []} />
   } catch (e) {
     console.error('[SETTINGS/ROLES] Data fetch failed:', e)
+    fetchError = true
+  }
+
+  if (fetchError) {
     return (
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-center">
         <p className="text-sm text-amber-800">
@@ -51,4 +52,6 @@ export default async function RolesPage() {
       </div>
     )
   }
+
+  return <RolesSection customRoles={customRolesData} />
 }

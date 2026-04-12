@@ -193,12 +193,11 @@ export function DashboardWidgets(props: DashboardWidgetsProps) {
   )
 
   const smLayouts = useMemo((): readonly LayoutItem[] => {
-    let cumY = 0
-    return renderedWidgets.map((w) => {
-      const item = { i: w.id, x: 0, y: cumY, w: 1, h: w.grid.h, minH: w.grid.minH, static: true }
-      cumY += w.grid.h
-      return item
-    })
+    return renderedWidgets.reduce<LayoutItem[]>((acc, w) => {
+      const cumY = acc.reduce((sum, item) => sum + item.h, 0)
+      acc.push({ i: w.id, x: 0, y: cumY, w: 1, h: w.grid.h, minH: w.grid.minH, static: true })
+      return acc
+    }, [])
   }, [renderedWidgets])
 
   const handleLayoutChange = useCallback(

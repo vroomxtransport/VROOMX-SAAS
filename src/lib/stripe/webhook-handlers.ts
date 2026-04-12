@@ -122,7 +122,7 @@ export async function handlePaymentFailed(invoice: Stripe.Invoice) {
 
   // Extract subscription ID from invoice
   // Type assertion needed because Stripe's types don't reflect runtime expandable fields
-  const subscription = (invoice as any).subscription
+  const subscription = (invoice as Stripe.Invoice & { subscription?: string | Stripe.Subscription | null }).subscription
   if (!subscription) return
 
   const subscriptionId = typeof subscription === 'string'
@@ -160,7 +160,7 @@ export async function handlePaymentFailed(invoice: Stripe.Invoice) {
 export async function handleInvoicePaid(invoice: Stripe.Invoice) {
   const supabase = createServiceRoleClient()
 
-  const subscription = (invoice as any).subscription
+  const subscription = (invoice as Stripe.Invoice & { subscription?: string | Stripe.Subscription | null }).subscription
   if (!subscription) return
 
   const subscriptionId = typeof subscription === 'string'
@@ -204,7 +204,7 @@ export async function handleInvoicePaid(invoice: Stripe.Invoice) {
 export async function handlePaymentFailedWithGrace(invoice: Stripe.Invoice) {
   const supabase = createServiceRoleClient()
 
-  const subscription = (invoice as any).subscription
+  const subscription = (invoice as Stripe.Invoice & { subscription?: string | Stripe.Subscription | null }).subscription
   if (!subscription) return
 
   const subscriptionId = typeof subscription === 'string'
@@ -225,7 +225,7 @@ export async function handlePaymentFailedWithGrace(invoice: Stripe.Invoice) {
   }
 
   // Build update: always set past_due, only set grace period if not already in one
-  const updates: Record<string, any> = {
+  const updates: { subscription_status: string; grace_period_ends_at?: string } = {
     subscription_status: 'past_due',
   }
 

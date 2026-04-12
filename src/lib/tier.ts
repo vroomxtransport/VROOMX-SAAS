@@ -1,3 +1,4 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { type TenantRole, type SubscriptionPlan, TIER_LIMITS } from '@/types'
 
 export function getTierDisplayName(plan: string): string {
@@ -40,7 +41,7 @@ export function hasMinRole(userRole: string, requiredRole: TenantRole): boolean 
  * the client can show "upgrade to add another truck" before the DB rejects it.
  */
 export async function checkTierLimit(
-  supabase: any,
+  supabase: SupabaseClient,
   tenantId: string,
   resource: 'trucks' | 'users'
 ): Promise<{ allowed: boolean; current: number; limit: number; plan: string }> {
@@ -90,7 +91,7 @@ export async function checkTierLimit(
  * hasn't been flipped yet.
  */
 export async function isAccountSuspended(
-  supabase: any,
+  supabase: SupabaseClient,
   tenantId: string
 ): Promise<{ suspended: boolean; gracePeriodEndsAt: string | null }> {
   const { data: tenant } = await supabase

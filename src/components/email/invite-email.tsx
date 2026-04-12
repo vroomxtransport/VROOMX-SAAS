@@ -22,7 +22,7 @@ export function InviteEmail({ tenantName, inviterName, role, acceptUrl }: Invite
   return (
     <Html>
       <Head />
-      <Preview>You've been invited to join {tenantName} on VroomX</Preview>
+      <Preview>You&apos;ve been invited to join {tenantName} on VroomX</Preview>
       <Body style={bodyStyle}>
         <Container style={containerStyle}>
           <Heading style={headingStyle}>Team Invitation</Heading>
@@ -41,7 +41,7 @@ export function InviteEmail({ tenantName, inviterName, role, acceptUrl }: Invite
           <Hr style={hrStyle} />
 
           <Text style={footerStyle}>
-            This invitation expires in 72 hours. If you didn't expect this email, you can safely ignore it.
+            This invitation expires in 72 hours. If you didn&apos;t expect this email, you can safely ignore it.
           </Text>
         </Container>
       </Body>

@@ -40,7 +40,7 @@ export function Testimonials() {
                 containerClassName="justify-center"
                 transition={{ type: 'spring', stiffness: 250, damping: 40 }}
               >
-                They switched. Here's what happened.
+                They switched. Here&apos;s what happened.
               </VerticalCutReveal>
             </h2>
           </TimelineContent>

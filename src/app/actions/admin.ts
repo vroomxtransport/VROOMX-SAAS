@@ -235,8 +235,8 @@ export async function fetchTenants(filters: z.input<typeof fetchTenantsSchema>) 
   // Get user counts and truck counts per tenant in parallel
   const tenantIds = (tenants ?? []).map((t) => t.id)
 
-  let userCounts = new Map<string, number>()
-  let truckCounts = new Map<string, number>()
+  const userCounts = new Map<string, number>()
+  const truckCounts = new Map<string, number>()
 
   if (tenantIds.length > 0) {
     const [membershipsRes, trucksRes] = await Promise.all([
@@ -430,7 +430,7 @@ export async function fetchAuditLogs(filters: z.input<typeof fetchAuditLogsSchem
 
   // Enrich with tenant names
   const tenantIds = [...new Set((data ?? []).map((l) => l.tenant_id).filter(Boolean))]
-  let tenantNames = new Map<string, string>()
+  const tenantNames = new Map<string, string>()
 
   if (tenantIds.length > 0) {
     const { data: tenants } = await supabase

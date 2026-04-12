@@ -43,7 +43,7 @@ export async function createBillingPortalSession() {
     redirect(portalUrl)
   } catch (error) {
     // redirect() throws a special error that must be re-thrown
-    if ((error as any)?.digest?.startsWith('NEXT_REDIRECT')) {
+    if (error instanceof Error && 'digest' in error && typeof (error as Error & { digest: unknown }).digest === 'string' && (error as Error & { digest: string }).digest.startsWith('NEXT_REDIRECT')) {
       throw error
     }
     console.error('Failed to create billing portal session:', error)
@@ -103,7 +103,7 @@ export async function createCheckoutSession(plan: SubscriptionPlan) {
 
     redirect(session.url)
   } catch (error) {
-    if ((error as any)?.digest?.startsWith('NEXT_REDIRECT')) {
+    if (error instanceof Error && 'digest' in error && typeof (error as Error & { digest: unknown }).digest === 'string' && (error as Error & { digest: string }).digest.startsWith('NEXT_REDIRECT')) {
       throw error
     }
     console.error('Failed to create checkout session:', error)

@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
       redirect('/dashboard')
     } catch (err: unknown) {
       // Next.js redirect() throws a NEXT_REDIRECT error -- re-throw it
-      if (err instanceof Error && 'digest' in err && typeof (err as any).digest === 'string' && (err as any).digest.startsWith('NEXT_REDIRECT')) {
+      if (err instanceof Error && 'digest' in err && typeof (err as Error & { digest: unknown }).digest === 'string' && (err as Error & { digest: string }).digest.startsWith('NEXT_REDIRECT')) {
         throw err
       }
       console.error('Invite acceptance error:', err)

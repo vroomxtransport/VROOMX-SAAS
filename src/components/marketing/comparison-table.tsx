@@ -178,7 +178,7 @@ export function ComparisonTable() {
                 Why VroomX TMS
               </p>
               <h2 className="text-3xl font-bold tracking-[-0.015em] text-foreground sm:text-4xl lg:text-[2.75rem]">
-                See what you're actually getting
+                See what you&apos;re actually getting
               </h2>
             </div>
           </TimelineContent>

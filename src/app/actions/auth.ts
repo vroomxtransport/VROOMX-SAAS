@@ -50,7 +50,7 @@ const signUpSchema = z.object({
 // via getPriceMap() so cold-start/build-time evaluation can't capture undefined
 // values. See src/lib/stripe/config.ts.
 
-export async function loginAction(prevState: any, formData: FormData) {
+export async function loginAction(prevState: { error?: string; success?: boolean; message?: string } | null, formData: FormData) {
   const supabase = await createClient()
 
   const email = formData.get('email') as string
@@ -76,7 +76,7 @@ export async function loginAction(prevState: any, formData: FormData) {
   redirect('/dashboard')
 }
 
-export async function signUpAction(prevState: any, formData: FormData) {
+export async function signUpAction(prevState: { error?: string; success?: boolean; message?: string } | null, formData: FormData) {
   // 0. Rate limit signup by IP — signup is unauthenticated, so authorize()
   // doesn't apply. C3 fix: prevent enumeration via repeated signup attempts.
   //
@@ -300,7 +300,7 @@ export async function signUpAction(prevState: any, formData: FormData) {
   return { error: 'Failed to create checkout session' }
 }
 
-export async function magicLinkAction(prevState: any, formData: FormData) {
+export async function magicLinkAction(prevState: { error?: string; success?: boolean; message?: string } | null, formData: FormData) {
   const email = formData.get('email') as string
   if (!email || !email.includes('@')) {
     return { error: 'Please enter a valid email address' }

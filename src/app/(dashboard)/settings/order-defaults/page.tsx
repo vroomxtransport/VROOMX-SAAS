@@ -22,6 +22,9 @@ export default async function OrderDefaultsPage() {
     redirect('/settings/profile')
   }
 
+  let factoringFeeRate: string | null = null
+  let fetchError = false
+
   try {
     const { data: tenant, error } = await supabase
       .from('tenants')
@@ -31,18 +34,16 @@ export default async function OrderDefaultsPage() {
 
     if (error || !tenant) {
       console.error('[SETTINGS/ORDER-DEFAULTS] Failed to fetch tenant:', error)
-      return (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-center">
-          <p className="text-sm text-amber-800">
-            Unable to load order defaults. Please refresh the page.
-          </p>
-        </div>
-      )
+      fetchError = true
+    } else {
+      factoringFeeRate = tenant.factoring_fee_rate ?? '0'
     }
-
-    return <CompanySection factoringFeeRate={tenant.factoring_fee_rate ?? '0'} />
   } catch (e) {
     console.error('[SETTINGS/ORDER-DEFAULTS] Data fetch failed:', e)
+    fetchError = true
+  }
+
+  if (fetchError) {
     return (
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-center">
         <p className="text-sm text-amber-800">
@@ -51,4 +52,6 @@ export default async function OrderDefaultsPage() {
       </div>
     )
   }
+
+  return <CompanySection factoringFeeRate={factoringFeeRate ?? '0'} />
 }

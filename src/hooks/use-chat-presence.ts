@@ -28,6 +28,7 @@ interface PresenceState {
 
 export function useChatPresence(tenantId: string, currentUser: CurrentUser) {
   const [members, setMembers] = useState<PresenceMember[]>([])
+  const [currentStatus, setCurrentStatus] = useState<PresenceStatus>('online')
   const channelRef = useRef<RealtimeChannel | null>(null)
   const statusRef = useRef<PresenceStatus>('online')
   const supabase = createClient()
@@ -94,6 +95,7 @@ export function useChatPresence(tenantId: string, currentUser: CurrentUser) {
   // Update status (online <-> busy)
   const setStatus = useCallback(async (newStatus: PresenceStatus) => {
     statusRef.current = newStatus
+    setCurrentStatus(newStatus)
     if (channelRef.current) {
       await channelRef.current.track({
         userId: currentUser.userId,
@@ -106,5 +108,5 @@ export function useChatPresence(tenantId: string, currentUser: CurrentUser) {
 
   const onlineCount = members.length
 
-  return { members, onlineCount, setStatus, currentStatus: statusRef.current }
+  return { members, onlineCount, setStatus, currentStatus }
 }
