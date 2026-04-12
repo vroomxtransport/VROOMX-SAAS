@@ -126,6 +126,14 @@ export async function fetchComplianceDoc(
   return (data as unknown) as ComplianceDocument
 }
 
+/**
+ * Fetch documents expiring within 30 days (or already expired).
+ *
+ * Capped at 200 results to prevent unbounded result sets on tenants
+ * with thousands of compliance documents. The dashboard shows the most
+ * urgent expirations; the full list is available via the paginated
+ * fetchComplianceDocs() with expiryTo filter.
+ */
 export async function fetchExpirationAlerts(
   supabase: SupabaseClient
 ): Promise<ComplianceDocument[]> {
@@ -138,36 +146,57 @@ export async function fetchExpirationAlerts(
     .not('expires_at', 'is', null)
     .lte('expires_at', thirtyDaysFromNow.toISOString())
     .order('expires_at', { ascending: true })
+    .limit(200)
 
   if (error) throw error
 
   return ((data ?? []) as unknown) as ComplianceDocument[]
 }
 
+/**
+ * Fetch compliance overview counts by status.
+ *
+ * Previously loaded ALL compliance_documents and counted in JS — a full
+ * table scan that times out at 100k+ rows. Now uses 4 parallel DB-side
+ * count queries (head: true = COUNT(*) only, no row data transferred).
+ * Benefits from the idx_compliance_docs_status index.
+ */
 export async function fetchComplianceOverview(
   supabase: SupabaseClient
 ): Promise<ComplianceOverview> {
-  const { data, error } = await supabase
-    .from('compliance_documents')
-    .select('status')
+  const [totalResult, validResult, expiringSoonResult, expiredResult, reqResult] = await Promise.all([
+    supabase
+      .from('compliance_documents')
+      .select('*', { count: 'exact', head: true }),
+    supabase
+      .from('compliance_documents')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'valid'),
+    supabase
+      .from('compliance_documents')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'expiring_soon'),
+    supabase
+      .from('compliance_documents')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'expired'),
+    supabase
+      .from('compliance_requirements')
+      .select('*', { count: 'exact', head: true })
+      .eq('is_active', true),
+  ])
 
-  if (error) throw error
+  if (totalResult.error) throw totalResult.error
+  if (validResult.error) throw validResult.error
+  if (expiringSoonResult.error) throw expiringSoonResult.error
+  if (expiredResult.error) throw expiredResult.error
+  if (reqResult.error) throw reqResult.error
 
-  const rows = (data ?? []) as Array<{ status: string }>
-  const total = rows.length
-  const valid = rows.filter(r => r.status === 'valid').length
-  const expiringSoon = rows.filter(r => r.status === 'expiring_soon').length
-  const expired = rows.filter(r => r.status === 'expired').length
-
-  // Fetch requirements count to determine "missing"
-  const { count: reqCount, error: reqError } = await supabase
-    .from('compliance_requirements')
-    .select('*', { count: 'exact', head: true })
-    .eq('is_active', true)
-
-  if (reqError) throw reqError
-
-  const totalRequired = reqCount ?? 0
+  const total = totalResult.count ?? 0
+  const valid = validResult.count ?? 0
+  const expiringSoon = expiringSoonResult.count ?? 0
+  const expired = expiredResult.count ?? 0
+  const totalRequired = reqResult.count ?? 0
   const missing = Math.max(0, totalRequired - total)
 
   return { total, valid, expiringSoon, expired, missing }
