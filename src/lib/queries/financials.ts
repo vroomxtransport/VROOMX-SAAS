@@ -3,6 +3,7 @@ import { startOfMonth, startOfQuarter, startOfYear, endOfMonth, subMonths, subDa
 import { fetchFixedExpensesForPeriod } from './business-expenses'
 import type { PnLInput } from '@/lib/financial/pnl-calculations'
 import type { DateRange } from '@/types/filters'
+import { cacheGet, cacheSet } from '@/lib/cache'
 
 // ============================================================================
 // Types
@@ -151,10 +152,21 @@ export function periodToDateRange(period: FinancialPeriod): DateRange {
 
 /**
  * Fetch financial summary for the current month.
+ *
+ * N15: optionally cache the result in Redis for 5 minutes when tenantId
+ * is provided. Dashboard loads hit this every 30s (TanStack staleTime);
+ * caching saves ~3 DB queries per dashboard view within the TTL window.
  */
 export async function fetchFinancialSummary(
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
+  tenantId?: string,
 ): Promise<FinancialSummary> {
+  // N15: check cache first
+  if (tenantId) {
+    const cached = await cacheGet<FinancialSummary>(tenantId, 'financial-summary')
+    if (cached) return cached
+  }
+
   const now = new Date()
   const monthStart = startOfMonth(now).toISOString()
   const monthEnd = endOfMonth(now).toISOString()
@@ -218,11 +230,18 @@ export async function fetchFinancialSummary(
   const expensesMTD = brokerFeesMTD + localFeesMTD + tripExpensesMTD + driverPayMTD
   const netProfitMTD = revenueMTD - expensesMTD
 
-  return {
+  const result: FinancialSummary = {
     revenueMTD: Math.round(revenueMTD * 100) / 100,
     expensesMTD: Math.round(expensesMTD * 100) / 100,
     netProfitMTD: Math.round(netProfitMTD * 100) / 100,
   }
+
+  // N15: cache for 5 minutes
+  if (tenantId) {
+    void cacheSet(tenantId, 'financial-summary', result, 300)
+  }
+
+  return result
 }
 
 /**

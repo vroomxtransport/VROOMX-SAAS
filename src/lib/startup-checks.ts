@@ -97,6 +97,11 @@ const REQUIRED_ENV: EnvCheck[] = [
   // continue to work without it; distance_miles stays null until entered
   // manually. Warning printed below.
   { name: 'MAPBOX_ACCESS_TOKEN', required: false, description: 'Mapbox token for geocoding + driving-distance calculation on orders' },
+
+  // N12: SSN encryption key — used by encrypt_ssn/decrypt_ssn RPCs.
+  // If unset, SSN encryption is skipped (ssn_last4 still stored).
+  // Generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+  { name: 'SUPABASE_SSN_KEY', required: false, description: 'AES-256 key for SSN encryption via pgcrypto (driver applications)' },
 ]
 
 /**

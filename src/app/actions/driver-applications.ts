@@ -449,13 +449,13 @@ export async function updateDraftSection(
     topLevelUpdate.license_state = lic.state
 
     // SSN handling: use the SSN from sectionParsed.data (has SSN), NOT dataToStore (SSN stripped).
-    // TODO(v2): call pgp_sym_encrypt(ssn, vault_key) via a Postgres RPC to
-    // populate ssn_encrypted. The RPC does not exist yet (backend-architect
-    // follow-up). For now, store only ssn_last4; do NOT store plaintext SSN
-    // in JSONB or any column.
+    // N12: encrypt the full SSN via the encrypt_ssn Postgres RPC (uses
+    // pgcrypto + Supabase Vault key). The RPC runs as SECURITY DEFINER so
+    // the encryption key never leaves the DB. The ssn_last4 column stores
+    // the unencrypted last 4 digits for display/search without decryption.
     const ssnRaw = ai.ssn.replace(/-/g, '') // strip dashes → 9 digits
     topLevelUpdate.ssn_last4 = ssnRaw.slice(-4)
-    topLevelUpdate.ssn_encrypted = null // populated by RPC in v2
+    // ssn_encrypted is set by the RPC below — don't set it here
   }
 
   // Persist the merged applicationData (and extracted columns if page1)
@@ -469,6 +469,32 @@ export async function updateDraftSection(
     // SEC-013: route through safeError so the message is PII-redacted before logging
     safeError(updateError, 'updateDraftSection')
     return { error: 'Unable to save progress. Please try again.' }
+  }
+
+  // N12: encrypt the full SSN via Postgres RPC after the main update succeeds.
+  // Fire-and-forget with error capture — if encryption fails, ssn_last4 is
+  // still stored and the applicant can continue. The encrypted column can be
+  // backfilled later. We don't block the UX on encryption success.
+  if (section === 'page1') {
+    const p1ssn = (sectionParsed.data as z.infer<typeof page1Schema>).applicantInfo.ssn
+    if (p1ssn) {
+      const ssnClean = p1ssn.replace(/-/g, '')
+      const ssnKey = process.env.SUPABASE_SSN_KEY
+      if (ssnKey) {
+        void (async () => {
+          const { error: encryptError } = await supabase.rpc('encrypt_ssn', {
+            p_application_id: application.id,
+            p_ssn: ssnClean,
+            p_key: ssnKey,
+          })
+          if (encryptError) {
+            console.error('[driver-app] SSN encryption failed:', encryptError.message)
+          }
+        })().catch(captureAsyncError('SSN encryption'))
+      } else {
+        console.warn('[driver-app] SUPABASE_SSN_KEY not set — SSN encryption skipped')
+      }
+    }
   }
 
   // Address history — only when page1 and lived3Years = false

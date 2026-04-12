@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ComplianceDocument, ComplianceRequirement } from '@/types/database'
 import { sanitizeSearch } from '@/lib/sanitize-search'
 import { clampPageSize } from '@/lib/queries/pagination'
+import { cacheGet, cacheSet } from '@/lib/cache'
 
 // M4: explicit column allowlist instead of SELECT *. Each list mirrors the
 // corresponding type in src/types/database.ts. Adding a new column to the
@@ -162,8 +163,14 @@ export async function fetchExpirationAlerts(
  * Benefits from the idx_compliance_docs_status index.
  */
 export async function fetchComplianceOverview(
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
+  tenantId?: string,
 ): Promise<ComplianceOverview> {
+  // N15: check cache first
+  if (tenantId) {
+    const cached = await cacheGet<ComplianceOverview>(tenantId, 'compliance-overview')
+    if (cached) return cached
+  }
   const [totalResult, validResult, expiringSoonResult, expiredResult, reqResult] = await Promise.all([
     supabase
       .from('compliance_documents')
@@ -199,7 +206,14 @@ export async function fetchComplianceOverview(
   const totalRequired = reqResult.count ?? 0
   const missing = Math.max(0, totalRequired - total)
 
-  return { total, valid, expiringSoon, expired, missing }
+  const result: ComplianceOverview = { total, valid, expiringSoon, expired, missing }
+
+  // N15: cache for 5 minutes
+  if (tenantId) {
+    void cacheSet(tenantId, 'compliance-overview', result, 300)
+  }
+
+  return result
 }
 
 export async function fetchComplianceChecklist(

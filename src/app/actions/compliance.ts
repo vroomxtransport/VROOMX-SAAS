@@ -5,6 +5,7 @@ import { authorize, safeError } from '@/lib/authz'
 import { complianceDocSchema } from '@/lib/validations/compliance'
 import { deleteFile } from '@/lib/storage'
 import { revalidatePath } from 'next/cache'
+import { cacheInvalidate } from '@/lib/cache'
 
 export async function createComplianceDoc(data: unknown) {
   const parsed = complianceDocSchema.safeParse(data)
@@ -44,6 +45,7 @@ export async function createComplianceDoc(data: unknown) {
   }
 
   revalidatePath('/compliance')
+  void cacheInvalidate(tenantId, 'compliance-overview')
   return { success: true, data: doc }
 }
 
@@ -85,6 +87,7 @@ export async function updateComplianceDoc(id: string, data: unknown) {
   }
 
   revalidatePath('/compliance')
+  void cacheInvalidate(tenantId, 'compliance-overview')
   return { success: true, data: doc }
 }
 
@@ -126,6 +129,7 @@ export async function updateComplianceDocFields(
   }
 
   revalidatePath('/compliance')
+  void cacheInvalidate(tenantId, 'compliance-overview')
   return { success: true, data: doc }
 }
 
@@ -167,6 +171,7 @@ export async function deleteComplianceDoc(id: string) {
   }
 
   revalidatePath('/compliance')
+  void cacheInvalidate(tenantId, 'compliance-overview')
   return { success: true }
 }
 
@@ -238,6 +243,7 @@ export async function seedComplianceRequirements() {
   }
 
   revalidatePath('/compliance')
+  void cacheInvalidate(tenantId, 'compliance-overview')
   return { success: true }
 }
 
@@ -309,6 +315,7 @@ export async function createCustomFolder(data: unknown) {
   }
 
   revalidatePath('/compliance')
+  void cacheInvalidate(tenantId, 'compliance-overview')
   return { success: true, subCategory }
 }
 
@@ -340,5 +347,6 @@ export async function deleteCustomFolder(data: unknown) {
   if (error) return { error: safeError(error, 'deleteCustomFolder') }
 
   revalidatePath('/compliance')
+  void cacheInvalidate(tenantId, 'compliance-overview')
   return { success: true }
 }
