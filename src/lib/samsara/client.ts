@@ -46,6 +46,8 @@ export class SamsaraClient {
   // Core HTTP
   // --------------------------------------------------------------------------
 
+  private readonly fetchTimeoutMs = 5_000
+
   async request<T>(path: string, opts?: RequestInit): Promise<T> {
     let lastError: Error | null = null
 
@@ -54,6 +56,7 @@ export class SamsaraClient {
         const url = path.startsWith('http') ? path : `${this.baseUrl}${path}`
         const response = await fetch(url, {
           ...opts,
+          signal: AbortSignal.timeout(this.fetchTimeoutMs),
           headers: {
             Authorization: `Bearer ${this.currentToken}`,
             'Content-Type': 'application/json',
@@ -114,7 +117,14 @@ export class SamsaraClient {
       }
     }
 
-    throw lastError ?? new Error('Samsara request failed after retries')
+    const isTimeout =
+      lastError instanceof DOMException && lastError.name === 'TimeoutError'
+    throw isTimeout
+      ? new SamsaraApiError(
+          `Samsara API timed out after ${this.maxRetries + 1} attempts`,
+          504
+        )
+      : (lastError ?? new Error('Samsara request failed after retries'))
   }
 
   // --------------------------------------------------------------------------

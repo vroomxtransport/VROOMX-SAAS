@@ -54,6 +54,7 @@ export class QuickBooksClient {
   private currentAccessToken: string
   private currentRefreshToken: string | undefined
   private maxRetries = 3
+  private readonly fetchTimeoutMs = 5_000
   private onTokenRefresh: ((tokens: QBTokenResponse) => Promise<void>) | undefined
 
   constructor(
@@ -94,6 +95,7 @@ export class QuickBooksClient {
           method,
           headers,
           body: body ? JSON.stringify(body) : undefined,
+          signal: AbortSignal.timeout(this.fetchTimeoutMs),
         })
 
         // 401 — try token refresh once
@@ -166,7 +168,14 @@ export class QuickBooksClient {
       }
     }
 
-    throw lastError ?? new Error('QuickBooks request failed after retries')
+    const isTimeout =
+      lastError instanceof DOMException && lastError.name === 'TimeoutError'
+    throw isTimeout
+      ? new QuickBooksApiError(
+          `QuickBooks API timed out after ${this.maxRetries + 1} attempts`,
+          504
+        )
+      : (lastError ?? new Error('QuickBooks request failed after retries'))
   }
 
   // --------------------------------------------------------------------------
