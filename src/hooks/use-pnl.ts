@@ -11,37 +11,9 @@ import {
 } from '@/lib/queries/financials'
 import { calculatePnL, calculateUnitMetrics, type PnLOutput, type UnitMetrics, type PnLInput } from '@/lib/financial/pnl-calculations'
 import type { DateRange } from '@/types/filters'
+import { useCurrentTenantId } from '@/hooks/use-current-tenant-id'
 
 export type { PnLBasis } from '@/lib/queries/financials'
-
-/**
- * Session-long lookup of the current user's tenant_id from Supabase
- * `app_metadata`. Mirrors the pattern in `use-current-user-permissions.ts`
- * which reads `app_metadata.role` the same way — the server is the real
- * security boundary, this is just for scoping realtime subscriptions so
- * we don't fan out cross-tenant events to the client.
- *
- * Returns `null` while loading or if unauthenticated; callers that use
- * this to build a realtime filter MUST gate their `useEffect` on a
- * non-null value and re-subscribe when it resolves.
- */
-function useCurrentTenantId(): string | null {
-  const supabase = createClient()
-  const query = useQuery({
-    queryKey: ['current-user-tenant-id'],
-    queryFn: async (): Promise<string | null> => {
-      const { data, error } = await supabase.auth.getUser()
-      if (error || !data.user) return null
-      const tenantId = data.user.app_metadata?.tenant_id
-      return typeof tenantId === 'string' ? tenantId : null
-    },
-    // Tenant rarely changes mid-session; keep it cached for the life
-    // of the session like the permissions hook does.
-    staleTime: 5 * 60_000,
-    retry: false,
-  })
-  return query.data ?? null
-}
 
 /**
  * Coalesces a burst of realtime invalidations into a single refetch.

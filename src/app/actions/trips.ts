@@ -12,6 +12,7 @@ import { calculateTripFinancials } from '@/lib/financial/trip-calculations'
 import { z } from 'zod'
 import type { OrderStatus, TripStatus } from '@/types'
 import type { RouteStop } from '@/types/database'
+import { captureAsyncError } from '@/lib/async-safe'
 
 // Trip status → Order status auto-sync mapping
 const TRIP_TO_ORDER_STATUS: Partial<Record<TripStatus, string>> = {
@@ -65,12 +66,12 @@ export async function createTrip(data: unknown) {
     metadata: { driverId: v.driver_id, truckId: v.truck_id },
     changeDiff: { before: {}, after: trip },
     ...auditCtx,
-  }).catch(() => {})
+  }).catch(captureAsyncError('trip action'))
 
   dispatchWebhookEvent(tenantId, 'trip.created', sanitizePayload({
     id: trip.id, trip_number: trip.trip_number, status: trip.status,
     driver_id: trip.driver_id, truck_id: trip.truck_id,
-  })).catch(() => {})
+  })).catch(captureAsyncError('trip action'))
 
   revalidatePath('/dispatch')
   return { success: true, data: trip }
@@ -137,7 +138,7 @@ export async function updateTrip(id: string, data: unknown) {
 
   dispatchWebhookEvent(tenantId, 'trip.updated', sanitizePayload({
     id: trip.id, trip_number: trip.trip_number,
-  })).catch(() => {})
+  })).catch(captureAsyncError('trip action'))
 
   revalidatePath('/dispatch')
   revalidatePath(`/trips/${id}`)
@@ -242,7 +243,7 @@ export async function updateTripStatus(id: string, newStatus: TripStatus) {
     metadata: { from: previousStatus, to: newStatus },
     changeDiff: { before: { status: previousStatus }, after: { status: newStatus } },
     ...auditCtx,
-  }).catch(() => {})
+  }).catch(captureAsyncError('trip action'))
 
   // Auto-sync order statuses based on trip status change
   if (orderStatus) {
@@ -260,7 +261,7 @@ export async function updateTripStatus(id: string, newStatus: TripStatus) {
   // Dispatch webhook after order sync succeeds (not before — avoids stale events)
   dispatchWebhookEvent(tenantId, 'trip.status_changed', sanitizePayload({
     id, status: newStatus, previous_status: previousStatus,
-  })).catch(() => {})
+  })).catch(captureAsyncError('trip action'))
 
   // Auto-create pending local deliveries for qualifying orders
   if (newStatus === 'at_terminal') {
@@ -488,7 +489,7 @@ export async function assignOrderToTrip(orderId: string, tripId: string) {
     actorId: auth.ctx.user.id,
     actorEmail: auth.ctx.user.email,
     metadata: { tripId, tripNumber: tripInfo?.trip_number },
-  }).catch(() => {})
+  }).catch(captureAsyncError('trip action'))
 
   logAuditEvent(supabase, {
     tenantId,
@@ -501,7 +502,7 @@ export async function assignOrderToTrip(orderId: string, tripId: string) {
     metadata: { orderId },
     changeDiff: { before: { trip_id: oldTripId ?? null }, after: { trip_id: tripId } },
     ...auditCtx,
-  }).catch(() => {})
+  }).catch(captureAsyncError('trip action'))
 
   revalidatePath('/dispatch')
   revalidatePath(`/trips/${tripId}`)
@@ -573,7 +574,7 @@ export async function unassignOrderFromTrip(orderId: string) {
     actorId: auth.ctx.user.id,
     actorEmail: auth.ctx.user.email,
     metadata: { tripId: oldTripId, tripNumber: tripInfo?.trip_number },
-  }).catch(() => {})
+  }).catch(captureAsyncError('trip action'))
 
   logAuditEvent(supabase, {
     tenantId,
@@ -586,7 +587,7 @@ export async function unassignOrderFromTrip(orderId: string) {
     metadata: { orderId },
     changeDiff: { before: { trip_id: oldTripId }, after: { trip_id: null } },
     ...auditCtx,
-  }).catch(() => {})
+  }).catch(captureAsyncError('trip action'))
 
   // Remove unassigned order's stops from route_sequence
   const { data: tripData } = await supabase

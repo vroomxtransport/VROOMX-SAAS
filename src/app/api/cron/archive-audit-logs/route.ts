@@ -28,6 +28,7 @@
 import { NextResponse } from 'next/server'
 import { createHash } from 'crypto'
 import { verifyCronSecret } from '@/lib/cron-auth'
+import { acquireCronLock } from '@/lib/cron-lock'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { redactPii } from '@/lib/audit-redact'
 
@@ -46,6 +47,12 @@ export async function POST(req: Request) {
   // Authenticate the cron caller (timing-safe comparison via cron-auth)
   if (!verifyCronSecret(req.headers.get('x-cron-secret'))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // N16: distributed lock — prevents overlapping archive runs
+  const lock = await acquireCronLock('cron:archive-audit-logs', 120)
+  if (!lock.acquired) {
+    return NextResponse.json({ ok: true, skipped: true, reason: 'concurrent invocation locked' })
   }
 
   const supabase = createServiceRoleClient()
@@ -271,6 +278,8 @@ export async function POST(req: Request) {
       results.errors++
     }
   }
+
+  await lock.release()
 
   return NextResponse.json({
     ok: true,

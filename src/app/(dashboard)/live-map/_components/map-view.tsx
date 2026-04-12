@@ -14,6 +14,7 @@ import { MapToolbar } from './map-toolbar'
 import { MapLegend } from './map-legend'
 import { MapStatsBar } from './map-stats-bar'
 import { useIsMobile } from '@/hooks/use-is-mobile'
+import { captureAsyncError } from '@/lib/async-safe'
 
 // Mobile-only components — lazy-loaded, no SSR (already inside a dynamic boundary)
 const MobileFleetSheet = dynamic(
@@ -79,10 +80,10 @@ export function MapView() {
   const handleFullscreenToggle = useCallback(() => {
     if (!containerRef.current) return
     if (!document.fullscreenElement) {
-      containerRef.current.requestFullscreen().catch(() => {})
+      containerRef.current.requestFullscreen().catch(captureAsyncError('live-map'))
       setIsFullscreen(true)
     } else {
-      document.exitFullscreen().catch(() => {})
+      document.exitFullscreen().catch(captureAsyncError('live-map'))
       setIsFullscreen(false)
     }
   }, [])

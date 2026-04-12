@@ -14,10 +14,12 @@ import {
   type ComplianceDocFilters,
 } from '@/lib/queries/compliance'
 import { useEffect } from 'react'
+import { useCurrentTenantId } from '@/hooks/use-current-tenant-id'
 
 export function useComplianceDocs(filters: ComplianceDocFilters = {}) {
   const supabase = createClient()
   const queryClient = useQueryClient()
+  const tenantId = useCurrentTenantId()
 
   const query = useQuery({
     queryKey: ['compliance-docs', filters],
@@ -25,15 +27,19 @@ export function useComplianceDocs(filters: ComplianceDocFilters = {}) {
     staleTime: 30_000,
   })
 
+  // N7: scope realtime subscription by tenant_id to prevent cross-tenant
+  // event fan-out on the Supabase Realtime bus.
   useEffect(() => {
+    if (!tenantId) return
     const channel = supabase
-      .channel('compliance-documents-changes')
+      .channel(`compliance-documents-changes:${tenantId}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'compliance_documents',
+          filter: `tenant_id=eq.${tenantId}`,
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ['compliance-docs'] })
@@ -44,7 +50,7 @@ export function useComplianceDocs(filters: ComplianceDocFilters = {}) {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [supabase, queryClient])
+  }, [supabase, queryClient, tenantId])
 
   return query
 }
@@ -63,6 +69,7 @@ export function useComplianceDoc(id: string | undefined) {
 export function useExpirationAlerts() {
   const supabase = createClient()
   const queryClient = useQueryClient()
+  const tenantId = useCurrentTenantId()
 
   const query = useQuery({
     queryKey: ['compliance-expiration-alerts'],
@@ -71,14 +78,16 @@ export function useExpirationAlerts() {
   })
 
   useEffect(() => {
+    if (!tenantId) return
     const channel = supabase
-      .channel('compliance-alerts-changes')
+      .channel(`compliance-alerts-changes:${tenantId}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'compliance_documents',
+          filter: `tenant_id=eq.${tenantId}`,
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ['compliance-expiration-alerts'] })
@@ -89,7 +98,7 @@ export function useExpirationAlerts() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [supabase, queryClient])
+  }, [supabase, queryClient, tenantId])
 
   return query
 }
@@ -97,6 +106,7 @@ export function useExpirationAlerts() {
 export function useComplianceOverview() {
   const supabase = createClient()
   const queryClient = useQueryClient()
+  const tenantId = useCurrentTenantId()
 
   const query = useQuery({
     queryKey: ['compliance-overview'],
@@ -105,14 +115,16 @@ export function useComplianceOverview() {
   })
 
   useEffect(() => {
+    if (!tenantId) return
     const channel = supabase
-      .channel('compliance-overview-changes')
+      .channel(`compliance-overview-changes:${tenantId}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'compliance_documents',
+          filter: `tenant_id=eq.${tenantId}`,
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ['compliance-overview'] })
@@ -123,7 +135,7 @@ export function useComplianceOverview() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [supabase, queryClient])
+  }, [supabase, queryClient, tenantId])
 
   return query
 }
@@ -135,6 +147,7 @@ export function useComplianceChecklist(
 ) {
   const supabase = createClient()
   const queryClient = useQueryClient()
+  const tenantId = useCurrentTenantId()
 
   const query = useQuery({
     queryKey: ['compliance-checklist', documentType, entityType, entityId],
@@ -144,14 +157,16 @@ export function useComplianceChecklist(
   })
 
   useEffect(() => {
+    if (!tenantId) return
     const channel = supabase
-      .channel(`compliance-checklist-changes-${documentType}-${entityType}-${entityId ?? 'all'}`)
+      .channel(`compliance-checklist-changes-${documentType}-${entityType}-${entityId ?? 'all'}:${tenantId}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'compliance_documents',
+          filter: `tenant_id=eq.${tenantId}`,
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ['compliance-checklist', documentType, entityType, entityId] })
@@ -162,7 +177,7 @@ export function useComplianceChecklist(
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [supabase, queryClient, documentType, entityType, entityId])
+  }, [supabase, queryClient, documentType, entityType, entityId, tenantId])
 
   return query
 }

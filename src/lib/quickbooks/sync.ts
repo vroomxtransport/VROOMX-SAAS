@@ -45,6 +45,10 @@ export async function getQBClientForTenant(
   // Build client with automatic token refresh callback for 401 retries.
   // The QuickBooksClient handles 401 internally by calling onTokenRefresh,
   // which persists the rotated refresh token immediately (critical for QB).
+  // N20: capture the token_expires_at at fetch time so the refresh callback
+  // can use a conditional update to detect clobbering from a concurrent 401.
+  const fetchedExpiresAt = integration.token_expires_at as string
+
   const client = new QuickBooksClient(realmId, accessToken, {
     refreshToken,
     onTokenRefresh: async (tokens: QBTokenResponse) => {
@@ -52,6 +56,11 @@ export async function getQBClientForTenant(
         Date.now() + tokens.expires_in * 1000
       ).toISOString()
 
+      // N20: conditional update — only write if token_expires_at hasn't changed
+      // since we fetched it. If another concurrent handler already refreshed,
+      // this update matches 0 rows and the clobbered tokens are discarded
+      // (the other handler's fresher tokens win). The client retries with
+      // the new access token on the next request.
       await supabase
         .from('quickbooks_integrations')
         .update({
@@ -61,6 +70,7 @@ export async function getQBClientForTenant(
         })
         .eq('id', integrationId)
         .eq('tenant_id', tenantId)
+        .eq('token_expires_at', fetchedExpiresAt)
     },
   })
 

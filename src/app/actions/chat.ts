@@ -4,6 +4,7 @@ import { authorize, safeError } from '@/lib/authz'
 import { messageSchema, channelSchema } from '@/lib/validations/chat'
 import { createWebNotification } from '@/app/actions/notifications'
 import { revalidatePath } from 'next/cache'
+import { captureAsyncError } from '@/lib/async-safe'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -91,7 +92,7 @@ export async function sendMessage(channelId: string, data: unknown) {
               title: `${senderName} mentioned you in #${channelName}`,
               body: bodyPreview,
               link: '/team-chat',
-            }).catch(() => {})
+            }).catch(captureAsyncError('chat action'))
           } else {
             createWebNotification({
               userId: member.user_id,
@@ -99,7 +100,7 @@ export async function sendMessage(channelId: string, data: unknown) {
               title: `New message in #${channelName}`,
               body: bodyPreview,
               link: '/team-chat',
-            }).catch(() => {})
+            }).catch(captureAsyncError('chat action'))
           }
         }
       }

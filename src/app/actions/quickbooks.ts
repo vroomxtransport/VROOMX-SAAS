@@ -13,6 +13,7 @@ import {
 } from '@/lib/quickbooks/sync'
 import type { QBSyncStatus } from '@/lib/quickbooks/types'
 import crypto from 'crypto'
+import { captureAsyncError } from '@/lib/async-safe'
 
 // ============================================================================
 // Types for UI consumption
@@ -74,7 +75,7 @@ export async function connectQuickBooks() {
       description: 'QuickBooks OAuth connection initiated',
       actorId: auth.ctx.user.id,
       actorEmail: auth.ctx.user.email,
-    }).catch(() => {})
+    }).catch(captureAsyncError('QB sync'))
 
     return { success: true, data: { authUrl, state: statePayload } }
   } catch (err) {
@@ -128,7 +129,7 @@ export async function disconnectQuickBooks() {
       description: 'QuickBooks integration disconnected (entity mappings preserved)',
       actorId: auth.ctx.user.id,
       actorEmail: auth.ctx.user.email,
-    }).catch(() => {})
+    }).catch(captureAsyncError('QB sync'))
 
     revalidatePath('/settings')
     revalidatePath('/settings/integrations')
@@ -320,7 +321,7 @@ export async function setQuickBooksAccounts(data: unknown) {
       incomeAccountId: parsed.data.incomeAccountId,
       expenseAccountId: parsed.data.expenseAccountId,
     },
-  }).catch(() => {})
+  }).catch(captureAsyncError('QB sync'))
 
   revalidatePath('/settings/integrations')
   return { success: true }
@@ -365,7 +366,7 @@ export async function syncAllBrokers() {
       description: `Synced ${synced}/${brokers.length} brokers to QuickBooks`,
       actorId: auth.ctx.user.id,
       actorEmail: auth.ctx.user.email,
-    }).catch(() => {})
+    }).catch(captureAsyncError('QB sync'))
 
     revalidatePath('/settings/integrations')
     return { success: true, data: { synced, total: brokers.length } }
@@ -430,7 +431,7 @@ export async function syncAllInvoices() {
       description: `Synced ${synced}/${unsyncedOrders.length} invoices to QuickBooks`,
       actorId: auth.ctx.user.id,
       actorEmail: auth.ctx.user.email,
-    }).catch(() => {})
+    }).catch(captureAsyncError('QB sync'))
 
     revalidatePath('/settings/integrations')
     return { success: true, data: { synced, total: unsyncedOrders.length } }
@@ -478,7 +479,7 @@ export async function triggerFullSync() {
         brokers: 'success' in brokersResult ? brokersResult : null,
         invoices: 'success' in invoicesResult ? invoicesResult : null,
       },
-    }).catch(() => {})
+    }).catch(captureAsyncError('QB sync'))
 
     revalidatePath('/settings/integrations')
     return { success: true }

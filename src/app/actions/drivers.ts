@@ -10,6 +10,7 @@ import { getAuditContext } from '@/lib/audit-context'
 import { revalidatePath } from 'next/cache'
 import { dispatchWebhookEvent } from '@/lib/webhooks/webhook-dispatcher'
 import { sanitizePayload } from '@/lib/webhooks/payload-sanitizer'
+import { captureAsyncError } from '@/lib/async-safe'
 
 export async function createDriver(data: unknown) {
   const parsed = driverSchema.safeParse(data)
@@ -69,7 +70,7 @@ export async function createDriver(data: unknown) {
     metadata: { driverType: parsed.data.driverType, payType: parsed.data.payType },
     changeDiff: { before: {}, after: driver },
     ...auditCtx,
-  }).catch(() => {})
+  }).catch(captureAsyncError('driver action'))
 
   revalidatePath('/drivers')
   return { success: true, data: driver }
@@ -132,7 +133,7 @@ export async function updateDriver(id: string, data: unknown) {
     actorEmail: auth.ctx.user.email,
     changeDiff: oldDriver ? { before: oldDriver, after: driver } : undefined,
     ...auditCtx,
-  }).catch(() => {})
+  }).catch(captureAsyncError('driver action'))
 
   revalidatePath('/drivers')
   return { success: true, data: driver }
@@ -175,7 +176,7 @@ export async function deleteDriver(id: string) {
     actorEmail: auth.ctx.user.email,
     changeDiff: deletedDriver ? { before: deletedDriver, after: {} } : undefined,
     ...auditCtx,
-  }).catch(() => {})
+  }).catch(captureAsyncError('driver action'))
 
   revalidatePath('/drivers')
   return { success: true }
@@ -202,7 +203,7 @@ export async function updateDriverStatus(id: string, status: 'active' | 'inactiv
 
   dispatchWebhookEvent(tenantId, 'driver.status_changed', sanitizePayload({
     driver_id: id, status,
-  })).catch(() => {})
+  })).catch(captureAsyncError('driver action'))
 
   revalidatePath('/drivers')
   return { success: true, data: driver }

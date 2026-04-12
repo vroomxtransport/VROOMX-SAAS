@@ -159,29 +159,42 @@ export async function fetchFinancialSummary(
   const monthStart = startOfMonth(now).toISOString()
   const monthEnd = endOfMonth(now).toISOString()
 
-  const { data: mtdOrders, error: mtdError } = await supabase
-    .from('orders')
-    .select('revenue, broker_fee, local_fee, carrier_pay')
-    .gte('created_at', monthStart)
-    .lte('created_at', monthEnd)
+  // N8: run all 3 queries in parallel (was sequential) and add .limit()
+  // to prevent unbounded result sets for high-volume tenants. 10,000 rows
+  // per query is generous — most tenants have hundreds, not thousands of
+  // orders per month. If a tenant exceeds this, the summary will be
+  // approximate (missing the tail), which is acceptable for a dashboard
+  // KPI card. The full P&L report uses a different, paginated path.
+  const SUMMARY_ROW_CAP = 10_000
 
-  if (mtdError) throw mtdError
+  const [ordersResult, expensesResult, tripsResult] = await Promise.all([
+    supabase
+      .from('orders')
+      .select('revenue, broker_fee, local_fee, carrier_pay')
+      .gte('created_at', monthStart)
+      .lte('created_at', monthEnd)
+      .limit(SUMMARY_ROW_CAP),
+    supabase
+      .from('trip_expenses')
+      .select('amount')
+      .gte('expense_date', monthStart.split('T')[0])
+      .lte('expense_date', monthEnd.split('T')[0])
+      .limit(SUMMARY_ROW_CAP),
+    supabase
+      .from('trips')
+      .select('driver_pay')
+      .gte('start_date', monthStart.split('T')[0])
+      .lte('start_date', monthEnd.split('T')[0])
+      .limit(SUMMARY_ROW_CAP),
+  ])
 
-  const { data: mtdExpenses, error: expError } = await supabase
-    .from('trip_expenses')
-    .select('amount')
-    .gte('expense_date', monthStart.split('T')[0])
-    .lte('expense_date', monthEnd.split('T')[0])
+  if (ordersResult.error) throw ordersResult.error
+  if (expensesResult.error) throw expensesResult.error
+  if (tripsResult.error) throw tripsResult.error
 
-  if (expError) throw expError
-
-  const { data: mtdTrips, error: tripError } = await supabase
-    .from('trips')
-    .select('driver_pay')
-    .gte('start_date', monthStart.split('T')[0])
-    .lte('start_date', monthEnd.split('T')[0])
-
-  if (tripError) throw tripError
+  const mtdOrders = ordersResult.data
+  const mtdExpenses = expensesResult.data
+  const mtdTrips = tripsResult.data
 
   let revenueMTD = 0
   let brokerFeesMTD = 0

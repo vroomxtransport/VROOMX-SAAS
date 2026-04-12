@@ -46,6 +46,7 @@ export const PERMISSION_CATEGORIES = {
     'driver_onboarding.adverse_action',
   ],
   webhooks: ['webhooks.view', 'webhooks.create', 'webhooks.update', 'webhooks.delete'],
+  alerts: ['alerts.view', 'alerts.create', 'alerts.update', 'alerts.delete'],
 } as const
 
 // Flat list of all permissions
@@ -80,6 +81,7 @@ export const CATEGORY_LABELS: Record<string, string> = {
   driver_applications: 'Driver Applications',
   driver_onboarding: 'Driver Onboarding',
   webhooks: 'Webhooks',
+  alerts: 'Alerts',
 }
 
 // Built-in roles and their permission sets
@@ -94,6 +96,7 @@ export const BUILT_IN_ROLES: Record<string, string[]> = {
     'business_expenses.*', 'dispatcher_payroll.view',
     'integrations.view',
     'driver_applications.read',
+    'alerts.*',
   ],
   billing: [
     'orders.view', 'orders.update',

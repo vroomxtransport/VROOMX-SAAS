@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { verifyCronSecret } from '@/lib/cron-auth'
+import { acquireCronLock } from '@/lib/cron-lock'
 import { createClient } from '@supabase/supabase-js'
 import { getResend } from '@/lib/resend/client'
 import { fetchDueScheduledReports } from '@/lib/queries/scheduled-reports'
@@ -66,6 +67,12 @@ export async function POST(request: Request) {
   // 1. Authenticate cron caller via shared secret (timing-safe — CRIT-3 fix)
   if (!verifyCronSecret(request.headers.get('x-cron-secret'))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // N16: distributed lock — prevents overlapping report sends
+  const lock = await acquireCronLock('cron:reports', 120)
+  if (!lock.acquired) {
+    return NextResponse.json({ ok: true, skipped: true, reason: 'concurrent invocation locked' })
   }
 
   // 2. Service-role client — bypasses RLS intentionally (cron has no user context)
@@ -177,6 +184,8 @@ export async function POST(request: Request) {
       errors.push(`Schedule ${schedule.id}: ${message}`)
     }
   }
+
+  await lock.release()
 
   console.log(`[cron/reports] Done. Processed: ${processed}, Errors: ${errors.length}`)
 

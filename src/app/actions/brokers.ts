@@ -4,6 +4,7 @@ import { authorize, safeError } from '@/lib/authz'
 import { brokerSchema } from '@/lib/validations/broker'
 import { syncBrokerToQB } from '@/lib/quickbooks/sync'
 import { revalidatePath } from 'next/cache'
+import { captureAsyncError } from '@/lib/async-safe'
 
 export async function createBroker(data: unknown) {
   const parsed = brokerSchema.safeParse(data)
@@ -38,7 +39,7 @@ export async function createBroker(data: unknown) {
   }
 
   // Fire-and-forget: sync new broker to QuickBooks as Customer
-  void syncBrokerToQB(supabase, tenantId, broker.id).catch(() => {})
+  void syncBrokerToQB(supabase, tenantId, broker.id).catch(captureAsyncError('broker action'))
 
   revalidatePath('/brokers')
   return { success: true, data: broker }
@@ -78,7 +79,7 @@ export async function updateBroker(id: string, data: unknown) {
   }
 
   // Fire-and-forget: sync updated broker to QuickBooks
-  void syncBrokerToQB(supabase, tenantId, broker.id).catch(() => {})
+  void syncBrokerToQB(supabase, tenantId, broker.id).catch(captureAsyncError('broker action'))
 
   revalidatePath('/brokers')
   return { success: true, data: broker }

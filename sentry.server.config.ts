@@ -196,16 +196,23 @@ function scrubEvent<T>(input: T): T {
   return input
 }
 
+// N22: sampling rates configurable via env vars so operators can adjust
+// without a code change + redeploy. Defaults match the previous hard-coded
+// values. Set SENTRY_SAMPLE_RATE_API=1.0 to trace all server actions during
+// an incident, then reset to 0.5 after.
+const SENTRY_SAMPLE_RATE_DEFAULT = parseFloat(process.env.SENTRY_SAMPLE_RATE ?? '0.1')
+const SENTRY_SAMPLE_RATE_API = parseFloat(process.env.SENTRY_SAMPLE_RATE_API ?? '0.5')
+
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   // CFG-005 + HIGH-4: adaptive sampling. Webhooks and cron are always
-  // traced (low volume, high criticality). Server actions get 50% to
-  // catch auth/payment anomalies. Everything else stays at 10%.
+  // traced (low volume, high criticality). Server actions get the API rate.
+  // Everything else gets the default rate.
   tracesSampler: ({ name, parentSampled }) => {
     if (parentSampled !== undefined) return parentSampled
     if (name?.includes('/api/webhooks') || name?.includes('/api/cron')) return 1.0
-    if (name?.includes('/api/') || name?.includes('actions')) return 0.5
-    return 0.1
+    if (name?.includes('/api/') || name?.includes('actions')) return SENTRY_SAMPLE_RATE_API
+    return SENTRY_SAMPLE_RATE_DEFAULT
   },
   // CFG-005: strip cookies, auth headers, well-known PII keys, and
   // third-party API tokens from every transaction before it leaves the

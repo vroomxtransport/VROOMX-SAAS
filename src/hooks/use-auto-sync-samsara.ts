@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { syncLocations, triggerFullSync } from '@/app/actions/samsara'
+import { captureAsyncError } from '@/lib/async-safe'
 
 const LOCATION_SYNC_INTERVAL = 60_000    // 60 seconds
 const FULL_SYNC_INTERVAL = 5 * 60_000    // 5 minutes
@@ -66,7 +67,7 @@ export function useAutoSyncSamsara() {
     }, FULL_SYNC_INTERVAL)
 
     // Initial location sync on mount
-    void syncLocations().catch(() => {})
+    void syncLocations().catch(captureAsyncError('auto-sync-samsara'))
 
     return () => {
       clearInterval(locationInterval)

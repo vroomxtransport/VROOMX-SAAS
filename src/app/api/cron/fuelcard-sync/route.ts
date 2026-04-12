@@ -25,6 +25,7 @@ import { NextResponse } from 'next/server'
 import { verifyCronSecret } from '@/lib/cron-auth'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { syncFuelTransactions } from '@/lib/fuelcard/sync'
+import { acquireCronLock } from '@/lib/cron-lock'
 
 // Max tenants processed in a single invocation (guard against very large deploys)
 const MAX_TENANTS = 500
@@ -33,6 +34,13 @@ export async function POST(req: Request) {
   // Authenticate the cron caller (timing-safe)
   if (!verifyCronSecret(req.headers.get('x-cron-secret'))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // N16: distributed lock — prevents overlapping fuelcard syncs from
+  // hitting the MSFuelCard API with duplicate requests.
+  const lock = await acquireCronLock('cron:fuelcard-sync', 120)
+  if (!lock.acquired) {
+    return NextResponse.json({ ok: true, skipped: true, reason: 'concurrent invocation locked' })
   }
 
   const supabase = createServiceRoleClient()
@@ -104,6 +112,8 @@ export async function POST(req: Request) {
       results.errors++
     }
   }
+
+  await lock.release()
 
   return NextResponse.json({
     ok: true,

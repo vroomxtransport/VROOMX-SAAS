@@ -3,6 +3,7 @@
 import { authorize, safeError } from '@/lib/authz'
 import { logOrderActivity } from '@/lib/activity-log'
 import { revalidatePath } from 'next/cache'
+import { captureAsyncError } from '@/lib/async-safe'
 
 export async function factorOrder(orderId: string) {
   if (!orderId) return { error: 'Order ID is required' }
@@ -78,7 +79,7 @@ export async function factorOrder(orderId: string) {
     actorId: auth.ctx.user.id,
     actorEmail: auth.ctx.user.email,
     metadata: { feeRate, factoringFee, netAmount },
-  }).catch(() => {})
+  }).catch(captureAsyncError('factoring action'))
 
   revalidatePath('/billing')
   revalidatePath(`/orders/${orderId}`)

@@ -34,16 +34,28 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
-  // 2. Idempotency check
+  // 2. Idempotency — INSERT-first pattern (N6 fix).
+  // The previous SELECT-then-INSERT had a TOCTOU race: under concurrent
+  // Stripe retries, two instances could both pass the SELECT check and
+  // process the same event twice. INSERT-first with a unique constraint on
+  // event_id ensures only one instance wins; the loser catches the 23505
+  // unique_violation and returns 200 (already processed). This matches the
+  // pattern already used in the QuickBooks webhook handler.
   const supabase = createServiceRoleClient()
-  const { data: existing } = await supabase
-    .from('stripe_events')
-    .select('id')
-    .eq('event_id', event.id)
-    .single()
+  const { error: dupError } = await supabase.from('stripe_events').insert({
+    event_id: event.id,
+    event_type: event.type,
+    processed_at: new Date().toISOString(),
+  })
 
-  if (existing) {
-    return NextResponse.json({ received: true, duplicate: true })
+  if (dupError) {
+    // 23505 = unique_violation → event already claimed by another instance
+    if (dupError.code === '23505') {
+      return NextResponse.json({ received: true, duplicate: true })
+    }
+    // Non-duplicate DB error — log and return 500 so Stripe retries
+    console.error('[stripe-webhook] idempotency insert failed:', dupError.message)
+    return NextResponse.json({ error: 'Idempotency check failed' }, { status: 500 })
   }
 
   // 3. Process based on event type
@@ -67,13 +79,6 @@ export async function POST(req: Request) {
       default:
         // Unhandled event type — no action needed
     }
-
-    // 4. Mark event as processed
-    await supabase.from('stripe_events').insert({
-      event_id: event.id,
-      event_type: event.type,
-      processed_at: new Date().toISOString(),
-    })
 
     return NextResponse.json({ received: true })
   } catch (error) {

@@ -51,6 +51,7 @@ import {
 } from '@/lib/validations/driver-application'
 import { getResend } from '@/lib/resend/client'
 import { DriverInviteEmail } from '@/components/email/driver-invite-email'
+import { captureAsyncError } from '@/lib/async-safe'
 import type {
   DriverApplication,
   DriverApplicationData,
@@ -253,7 +254,7 @@ export async function inviteDriverApplication(input: {
       email: parsed.data.email,
       email_sent: emailSent,
     }) as Record<string, unknown>,
-  }).catch(() => {})
+  }).catch(captureAsyncError('driver-app action'))
 
   // Step 11 — Revalidate
   revalidatePath('/onboarding')
@@ -1189,7 +1190,7 @@ export async function withdrawApplication(
     actorId: user.id,
     actorEmail: user.email,
     metadata: redactPii({ reason }) as Record<string, unknown>,
-  }).catch(() => {})
+  }).catch(captureAsyncError('driver-app action'))
 
   revalidatePath('/onboarding')
   revalidatePath(`/onboarding/${idParsed.data}`)
@@ -1240,7 +1241,7 @@ export async function rotateStatusToken(
     description: 'Status token rotated by admin',
     actorId: user.id,
     actorEmail: user.email,
-  }).catch(() => {})
+  }).catch(captureAsyncError('driver-app action'))
 
   revalidatePath(`/onboarding/${idParsed.data}`)
   return { statusToken, expiresAt }

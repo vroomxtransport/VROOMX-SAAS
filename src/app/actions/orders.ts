@@ -13,6 +13,7 @@ import { sanitizePayload } from '@/lib/webhooks/payload-sanitizer'
 import { computeOrderDriverPay, type DriverLike } from '@/lib/financial/driver-pay'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { OrderStatus } from '@/types'
+import { captureAsyncError } from '@/lib/async-safe'
 
 const ATTACHMENT_BUCKET = 'attachments'
 
@@ -221,15 +222,15 @@ export async function createOrder(data: unknown) {
     description: 'Order created',
     actorId: auth.ctx.user.id,
     actorEmail: auth.ctx.user.email,
-  }).catch(() => {})
+  }).catch(captureAsyncError('order action'))
 
   dispatchWebhookEvent(tenantId, 'order.created', sanitizePayload({
     id: order.id, order_number: order.order_number, status: order.status,
     broker_id: order.broker_id, revenue: order.revenue, broker_fee: order.broker_fee,
-  })).catch(() => {})
+  })).catch(captureAsyncError('order action'))
 
   // Auto-create local drives if pickup/delivery states match a terminal
-  void autoCreateLocalDrives(supabase, tenantId, finalOrder as Parameters<typeof autoCreateLocalDrives>[2]).catch(() => {})
+  void autoCreateLocalDrives(supabase, tenantId, finalOrder as Parameters<typeof autoCreateLocalDrives>[2]).catch(captureAsyncError('order action'))
 
   revalidatePath('/orders')
   return { success: true, data: finalOrder }
@@ -494,11 +495,11 @@ export async function updateOrder(id: string, data: unknown) {
     actorId: auth.ctx.user.id,
     actorEmail: auth.ctx.user.email,
     metadata: { changedFields },
-  }).catch(() => {})
+  }).catch(captureAsyncError('order action'))
 
   dispatchWebhookEvent(tenantId, 'order.updated', sanitizePayload({
     id, ...Object.fromEntries(Object.entries(parsed.data).filter(([k]) => k !== 'id')),
-  })).catch(() => {})
+  })).catch(captureAsyncError('order action'))
 
   revalidatePath('/orders')
   return { success: true, data: finalOrder }
@@ -527,7 +528,7 @@ export async function deleteOrder(id: string) {
     description: 'Order deleted',
     actorId: auth.ctx.user.id,
     actorEmail: auth.ctx.user.email,
-  }).catch(() => {})
+  }).catch(captureAsyncError('order action'))
 
   const { error } = await supabase
     .from('orders')
@@ -617,11 +618,11 @@ export async function updateOrderStatus(
     actorId: auth.ctx.user.id,
     actorEmail: auth.ctx.user.email,
     metadata: { oldStatus, newStatus },
-  }).catch(() => {})
+  }).catch(captureAsyncError('order action'))
 
   dispatchWebhookEvent(tenantId, 'order.status_changed', sanitizePayload({
     id, status: newStatus, previous_status: oldStatus,
-  })).catch(() => {})
+  })).catch(captureAsyncError('order action'))
 
   revalidatePath(`/orders/${id}`)
   revalidatePath('/orders')
@@ -854,7 +855,7 @@ export async function rollbackOrderStatus(id: string) {
     actorId: auth.ctx.user.id,
     actorEmail: auth.ctx.user.email,
     metadata: { oldStatus: currentStatus, newStatus: previousStatus },
-  }).catch(() => {})
+  }).catch(captureAsyncError('order action'))
 
   revalidatePath(`/orders/${id}`)
   revalidatePath('/orders')
@@ -929,7 +930,7 @@ export async function uploadOrderAttachment(formData: FormData) {
 
   if (insertErr || !inserted) {
     // Clean up the uploaded object so we don't leak storage on failure.
-    await deleteFile(supabase, ATTACHMENT_BUCKET, path).catch(() => {})
+    await deleteFile(supabase, ATTACHMENT_BUCKET, path).catch(captureAsyncError('order action'))
     return { error: safeError(insertErr ?? { message: 'insert failed' }, 'uploadOrderAttachment.insert') }
   }
 
@@ -940,7 +941,7 @@ export async function uploadOrderAttachment(formData: FormData) {
     description: `Attachment uploaded: ${file.name}`,
     actorId: user.id,
     actorEmail: user.email,
-  }).catch(() => {})
+  }).catch(captureAsyncError('order action'))
 
   revalidatePath(`/orders/${orderId}`)
   return { success: true, data: inserted }
@@ -972,7 +973,7 @@ export async function deleteOrderAttachment(attachmentId: string) {
   // Delete storage object first. If the storage delete fails we still try
   // the DB delete — an orphaned storage object is less bad than a dangling
   // DB row pointing to a deleted file.
-  await deleteFile(supabase, ATTACHMENT_BUCKET, attachment.storage_path).catch(() => {})
+  await deleteFile(supabase, ATTACHMENT_BUCKET, attachment.storage_path).catch(captureAsyncError('order action'))
 
   const { error: deleteErr } = await supabase
     .from('order_attachments')
@@ -989,7 +990,7 @@ export async function deleteOrderAttachment(attachmentId: string) {
     description: `Attachment deleted: ${attachment.file_name}`,
     actorId: user.id,
     actorEmail: user.email,
-  }).catch(() => {})
+  }).catch(captureAsyncError('order action'))
 
   revalidatePath(`/orders/${attachment.order_id}`)
   return { success: true }

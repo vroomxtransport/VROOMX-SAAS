@@ -16,6 +16,7 @@ import { NextResponse } from 'next/server'
 import { verifyCronSecret } from '@/lib/cron-auth'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { deliverWebhook } from '@/lib/webhooks/webhook-delivery'
+import { acquireCronLock } from '@/lib/cron-lock'
 import type { WebhookPayload } from '@/lib/webhooks/webhook-types'
 
 // Guard against extremely large backlogs in a single invocation
@@ -32,6 +33,13 @@ export async function POST(req: Request) {
   // Authenticate the cron caller (timing-safe — matches alerts cron pattern)
   if (!verifyCronSecret(req.headers.get('x-cron-secret'))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // N16: distributed lock — prevents overlapping retries from delivering
+  // the same webhook twice.
+  const lock = await acquireCronLock('cron:webhook-retries')
+  if (!lock.acquired) {
+    return NextResponse.json({ ok: true, skipped: true, reason: 'concurrent invocation locked' })
   }
 
   const supabase = createServiceRoleClient()
@@ -121,6 +129,8 @@ export async function POST(req: Request) {
       failed++
     }
   }
+
+  await lock.release()
 
   // ----- 3. Return batch summary (matches alerts cron response shape) -----
   return NextResponse.json({

@@ -5,6 +5,7 @@ import { ALL_PERMISSIONS } from '@/lib/permissions'
 import { logAuditEvent } from '@/lib/audit-log'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { captureAsyncError } from '@/lib/async-safe'
 
 const customRoleSchema = z.object({
   name: z.string().min(1, 'Role name is required').max(100),
@@ -57,7 +58,7 @@ export async function createCustomRole(data: unknown) {
     actorId: auth.ctx.user.id,
     actorEmail: auth.ctx.user.email,
     metadata: { permissions },
-  }).catch(() => {})
+  }).catch(captureAsyncError('custom-role audit'))
 
   revalidatePath('/settings')
   return { success: true, data: role }
@@ -110,7 +111,7 @@ export async function updateCustomRole(id: string, data: unknown) {
     actorId: auth.ctx.user.id,
     actorEmail: auth.ctx.user.email,
     metadata: { permissions },
-  }).catch(() => {})
+  }).catch(captureAsyncError('custom-role audit'))
 
   revalidatePath('/settings')
   return { success: true, data: role }
@@ -151,7 +152,7 @@ export async function deleteCustomRole(id: string) {
     description: 'Custom role deleted',
     actorId: auth.ctx.user.id,
     actorEmail: auth.ctx.user.email,
-  }).catch(() => {})
+  }).catch(captureAsyncError('custom-role audit'))
 
   revalidatePath('/settings')
   return { success: true }

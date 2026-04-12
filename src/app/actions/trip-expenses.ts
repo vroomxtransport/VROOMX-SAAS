@@ -5,6 +5,7 @@ import { tripExpenseSchema } from '@/lib/validations/trip-expense'
 import { syncExpenseToQB } from '@/lib/quickbooks/sync'
 import { revalidatePath } from 'next/cache'
 import { recalculateTripFinancials } from '@/app/actions/trips'
+import { captureAsyncError } from '@/lib/async-safe'
 
 export async function createTripExpense(tripId: string, data: unknown) {
   const parsed = tripExpenseSchema.safeParse(data)
@@ -46,7 +47,7 @@ export async function createTripExpense(tripId: string, data: unknown) {
   }
 
   // Fire-and-forget: sync expense to QuickBooks
-  void syncExpenseToQB(supabase, tenantId, expense.id, 'trip').catch(() => {})
+  void syncExpenseToQB(supabase, tenantId, expense.id, 'trip').catch(captureAsyncError('trip-expense action'))
 
   revalidatePath(`/trips/${tripId}`)
   revalidatePath('/dispatch')

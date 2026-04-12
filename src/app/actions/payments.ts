@@ -7,6 +7,7 @@ import { syncPaymentToQB } from '@/lib/quickbooks/sync'
 import { revalidatePath } from 'next/cache'
 import { dispatchWebhookEvent } from '@/lib/webhooks/webhook-dispatcher'
 import { sanitizePayload } from '@/lib/webhooks/payload-sanitizer'
+import { captureAsyncError } from '@/lib/async-safe'
 
 export async function recordPayment(orderId: string, data: unknown) {
   const parsed = recordPaymentSchema.safeParse(data)
@@ -94,7 +95,7 @@ export async function recordPayment(orderId: string, data: unknown) {
   }
 
   // Fire-and-forget: sync payment to QuickBooks
-  void syncPaymentToQB(supabase, tenantId, orderId, parsed.data.amount, parsed.data.paymentDate).catch(() => {})
+  void syncPaymentToQB(supabase, tenantId, orderId, parsed.data.amount, parsed.data.paymentDate).catch(captureAsyncError('payment action'))
 
   // Fire-and-forget activity log
   logOrderActivity(supabase, {
@@ -105,11 +106,11 @@ export async function recordPayment(orderId: string, data: unknown) {
     actorId: auth.ctx.user.id,
     actorEmail: auth.ctx.user.email,
     metadata: { amount: parsed.data.amount, paymentDate: parsed.data.paymentDate, newPaymentStatus },
-  }).catch(() => {})
+  }).catch(captureAsyncError('payment action'))
 
   dispatchWebhookEvent(tenantId, 'payment.received', sanitizePayload({
     order_id: orderId, amount: parsed.data.amount, payment_date: parsed.data.paymentDate,
-  })).catch(() => {})
+  })).catch(captureAsyncError('payment action'))
 
   revalidatePath(`/orders/${orderId}`)
   revalidatePath('/billing')
@@ -194,7 +195,7 @@ export async function batchMarkPaid(orderIds: string[], paymentDate: string) {
         actorId: auth.ctx.user.id,
         actorEmail: auth.ctx.user.email,
         metadata: { paymentDate },
-      }).catch(() => {})
+      }).catch(captureAsyncError('payment action'))
     }
   }
 
@@ -299,7 +300,7 @@ export async function recordCodPayment(orderId: string) {
     actorId: auth.ctx.user.id,
     actorEmail: auth.ctx.user.email,
     metadata: { codAmount, newPaymentStatus },
-  }).catch(() => {})
+  }).catch(captureAsyncError('payment action'))
 
   revalidatePath(`/orders/${orderId}`)
   revalidatePath('/billing')

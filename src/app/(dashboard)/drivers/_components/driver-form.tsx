@@ -28,6 +28,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { Smartphone, Check } from 'lucide-react'
 import type { Driver } from '@/types/database'
 import type { DriverPayType } from '@/types'
+import { captureAsyncError } from '@/lib/async-safe'
 
 interface DriverFormProps {
   driver?: Driver
@@ -158,7 +159,7 @@ export function DriverForm({ driver, onSuccess, onCancel }: DriverFormProps) {
 
       // Send app invitation for new driver if checkbox was checked
       if (!isEdit && sendInvite && 'data' in result && result.data) {
-        await sendDriverAppInvitation(result.data.id).catch(() => {})
+        await sendDriverAppInvitation(result.data.id).catch(captureAsyncError('driver-form'))
       }
 
       if (!isEdit) {

@@ -10,6 +10,7 @@ import { getSamsaraAuthUrl, refreshAccessToken } from '@/lib/samsara/oauth'
 import { SamsaraClient } from '@/lib/samsara/client'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
+import { captureAsyncError } from '@/lib/async-safe'
 
 // ============================================================================
 // Shared types (re-exported for UI consumption)
@@ -200,7 +201,7 @@ export async function connectSamsara(data?: { apiKey?: string }) {
         description: 'Samsara connected via API key',
         actorId: auth.ctx.user.id,
         actorEmail: auth.ctx.user.email,
-      }).catch(() => {})
+      }).catch(captureAsyncError('Samsara sync'))
 
       revalidatePath('/settings')
       revalidatePath('/settings/integrations')
@@ -232,7 +233,7 @@ export async function connectSamsara(data?: { apiKey?: string }) {
       description: 'Samsara OAuth connection initiated',
       actorId: auth.ctx.user.id,
       actorEmail: auth.ctx.user.email,
-    }).catch(() => {})
+    }).catch(captureAsyncError('Samsara sync'))
 
     return { success: true, data: { authUrl, state: statePayload } }
   } catch (err) {
@@ -290,7 +291,7 @@ export async function disconnectSamsara() {
       description: 'Samsara integration disconnected and all mappings removed',
       actorId: auth.ctx.user.id,
       actorEmail: auth.ctx.user.email,
-    }).catch(() => {})
+    }).catch(captureAsyncError('Samsara sync'))
 
     revalidatePath('/settings')
     revalidatePath('/settings/integrations')
@@ -614,7 +615,7 @@ export async function syncVehicles() {
       actorId: auth.ctx.user.id,
       actorEmail: auth.ctx.user.email,
       metadata: { synced, mapped },
-    }).catch(() => {})
+    }).catch(captureAsyncError('Samsara sync'))
 
     revalidatePath('/settings/integrations')
     revalidatePath('/trucks')
@@ -730,7 +731,7 @@ export async function syncDrivers() {
       actorId: auth.ctx.user.id,
       actorEmail: auth.ctx.user.email,
       metadata: { synced, mapped },
-    }).catch(() => {})
+    }).catch(captureAsyncError('Samsara sync'))
 
     revalidatePath('/settings/integrations')
     revalidatePath('/drivers')
@@ -1245,7 +1246,7 @@ export async function triggerFullSync() {
       actorId: auth.ctx.user.id,
       actorEmail: auth.ctx.user.email,
       metadata: { ...results, warnings },
-    }).catch(() => {})
+    }).catch(captureAsyncError('Samsara sync'))
 
     revalidatePath('/settings/integrations')
     return { success: true, data: results, warnings }
@@ -1329,7 +1330,7 @@ export async function mapSamsaraVehicle(data: unknown) {
       actorId: auth.ctx.user.id,
       actorEmail: auth.ctx.user.email,
       metadata: { samsaraVehicleId, truckId },
-    }).catch(() => {})
+    }).catch(captureAsyncError('Samsara sync'))
 
     revalidatePath('/settings/integrations')
     return { success: true }
@@ -1400,7 +1401,7 @@ export async function mapSamsaraDriver(data: unknown) {
       actorId: auth.ctx.user.id,
       actorEmail: auth.ctx.user.email,
       metadata: { samsaraDriverId, driverId },
-    }).catch(() => {})
+    }).catch(captureAsyncError('Samsara sync'))
 
     revalidatePath('/settings/integrations')
     return { success: true }

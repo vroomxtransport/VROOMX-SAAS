@@ -458,7 +458,8 @@ describe('signUpAction — normal flow', () => {
     const fd = buildFormData(VALID_SIGNUP_DATA)
     const result = await signUpAction(null, fd)
 
-    expect(result).toEqual({ error: 'Email already registered' })
+    // N3: signUpAction now returns a generic message to prevent email enumeration
+    expect(result).toEqual({ error: 'Signup failed. Please try again or contact support.' })
     expect(mockStripeCustomersCreate).not.toHaveBeenCalled()
   })
 

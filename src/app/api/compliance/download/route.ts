@@ -36,8 +36,10 @@ export async function GET(request: Request) {
   const documentType = rawDocumentType as DocumentType
   const entityType = rawEntityType as EntityType
 
-  // 2. Authorize — requires compliance.read permission, RLS handles tenant isolation
-  const auth = await authorize('compliance.read')
+  // 2. Authorize — requires compliance.view permission, RLS handles tenant isolation
+  // N5: was 'compliance.read' which doesn't exist in PERMISSION_CATEGORIES;
+  // only admin/safety (wildcard) could pass. Fixed to match the catalog.
+  const auth = await authorize('compliance.view')
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: 403 })
   }

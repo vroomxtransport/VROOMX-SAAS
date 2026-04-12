@@ -8,6 +8,7 @@ import { dispatchWebhookEvent } from '@/lib/webhooks/webhook-dispatcher'
 import { sanitizePayload } from '@/lib/webhooks/payload-sanitizer'
 import { InvoiceDocument } from '@/lib/pdf/invoice-template'
 import { InvoiceEmail } from '@/components/email/invoice-email'
+import { captureAsyncError } from '@/lib/async-safe'
 
 export async function POST(
   _request: Request,
@@ -149,7 +150,7 @@ export async function POST(
     }
 
     // Fire-and-forget: sync invoice to QuickBooks
-    void syncInvoiceToQB(supabase, tenantId, orderId).catch(() => {})
+    void syncInvoiceToQB(supabase, tenantId, orderId).catch(captureAsyncError('invoice send'))
 
     // Fire-and-forget activity log
     logOrderActivity(supabase, {
@@ -159,11 +160,11 @@ export async function POST(
       description: `Invoice sent to ${order.broker.email}`,
       actorId: user.id,
       actorEmail: user.email,
-    }).catch(() => {})
+    }).catch(captureAsyncError('invoice send'))
 
     dispatchWebhookEvent(tenantId, 'invoice.created', sanitizePayload({
       order_id: orderId, invoice_number: invoiceNumber,
-    })).catch(() => {})
+    })).catch(captureAsyncError('invoice send'))
 
     return Response.json({ success: true, emailId: data?.id })
   } catch (err) {

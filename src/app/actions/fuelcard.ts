@@ -5,6 +5,7 @@ import { authorize, safeError } from '@/lib/authz'
 import { logAuditEvent } from '@/lib/audit-log'
 import { revalidatePath } from 'next/cache'
 import type { FuelSyncResult } from '@/lib/fuelcard/types'
+import { captureAsyncError } from '@/lib/async-safe'
 
 // ============================================================================
 // Types for UI consumption
@@ -124,7 +125,7 @@ export async function connectFuelCard(data: unknown) {
         accountNumber: accountInfo.accountNumber,
         cardCount: accountInfo.cardCount,
       },
-    }).catch(() => {})
+    }).catch(captureAsyncError('fuelcard sync'))
 
     revalidatePath('/settings')
     revalidatePath('/settings/integrations')
@@ -181,7 +182,7 @@ export async function disconnectFuelCard() {
       description: 'Fuel card integration disconnected (transaction history preserved)',
       actorId: auth.ctx.user.id,
       actorEmail: auth.ctx.user.email,
-    }).catch(() => {})
+    }).catch(captureAsyncError('fuelcard sync'))
 
     revalidatePath('/settings')
     revalidatePath('/settings/integrations')
@@ -346,7 +347,7 @@ export async function syncFuelTransactions(): Promise<
         skipped: result.skipped,
         errorCount: result.errors.length,
       },
-    }).catch(() => {})
+    }).catch(captureAsyncError('fuelcard sync'))
 
     revalidatePath('/fuel-tracking')
     revalidatePath('/settings/integrations')
@@ -657,7 +658,7 @@ export async function flagTransaction(data: unknown) {
       description: `Fuel card transaction flagged: ${parsed.data.reason}`,
       actorId: auth.ctx.user.id,
       actorEmail: auth.ctx.user.email,
-    }).catch(() => {})
+    }).catch(captureAsyncError('fuelcard sync'))
 
     revalidatePath('/fuel-tracking')
     return { success: true }

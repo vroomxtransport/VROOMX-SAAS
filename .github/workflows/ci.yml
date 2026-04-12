@@ -55,16 +55,21 @@ jobs:
   # fork or a freshly cloned repo. See src/lib/startup-checks.ts and
   # next.config.ts for the authoritative list.
   #
-  # TODO: Remove continue-on-error and add an `env:` block sourcing
-  # repository secrets once the operator provisions:
+  # N19: The build job is now BLOCKING when GitHub Actions secrets are
+  # provisioned (NEXT_PUBLIC_SUPABASE_URL is the canary — if it's set,
+  # the rest should be too). When secrets are NOT provisioned (forks,
+  # fresh clones), continue-on-error stays true so CI isn't broken.
+  #
+  # To provision: GitHub repo → Settings → Secrets → add:
   #   NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
   #   SUPABASE_SECRET_KEY, DATABASE_URL, STRIPE_SECRET_KEY,
   #   STRIPE_WEBHOOK_SECRET, NEXT_PUBLIC_APP_URL, NEXT_PUBLIC_SENTRY_DSN
-  # Do NOT hardcode values here — use GitHub repository secrets.
+  # Security note: secrets.* is safe in continue-on-error expressions —
+  # it's a boolean context, not a run: command, so no injection risk.
   build:
     name: Next Build
     runs-on: ubuntu-latest
-    continue-on-error: true
+    continue-on-error: ${{ !secrets.NEXT_PUBLIC_SUPABASE_URL }}
     steps:
       - uses: actions/checkout@v4
 

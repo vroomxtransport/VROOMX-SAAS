@@ -37,6 +37,7 @@ import {
   assignStepSchema,
 } from '@/lib/validations/driver-onboarding'
 import type { DriverOnboardingPipeline, DriverOnboardingStep } from '@/types/database'
+import { captureAsyncError } from '@/lib/async-safe'
 
 // ---------------------------------------------------------------------------
 // Step seed configuration
@@ -179,7 +180,7 @@ export async function startPipeline(applicationId: string): Promise<
     actorId: user.id,
     actorEmail: user.email,
     metadata: { pipeline_id: pipeline.id },
-  }).catch(() => {})
+  }).catch(captureAsyncError('onboarding action'))
 
   revalidatePath('/onboarding')
   revalidatePath(`/onboarding/${idParsed.data}`)
@@ -287,7 +288,7 @@ export async function updateStepStatus(
       new_status: parsed.data.status,
       notes: parsed.data.notes,
     }) as Record<string, unknown>,
-  }).catch(() => {})
+  }).catch(captureAsyncError('onboarding action'))
 
   // Determine applicationId for path revalidation
   const { data: pipelineForPath } = await supabase
@@ -445,7 +446,7 @@ export async function waiveStep(
     actorId: user.id,
     actorEmail: user.email,
     metadata: redactPii({ step_key: step.step_key, reason: parsed.data.reason }) as Record<string, unknown>,
-  }).catch(() => {})
+  }).catch(captureAsyncError('onboarding action'))
 
   // Fetch application_id for path revalidation
   const { data: pipeline } = await supabase
@@ -529,7 +530,7 @@ export async function assignStep(
     actorId: user.id,
     actorEmail: user.email,
     metadata: { step_key: step.step_key, assignee_id: parsed.data.userId },
-  }).catch(() => {})
+  }).catch(captureAsyncError('onboarding action'))
 
   const { data: pipeline } = await supabase
     .from('driver_onboarding_pipelines')
@@ -629,7 +630,7 @@ export async function sendPreAdverseAction(
       failed_step_ids: parsed.data.failedStepIds,
       findings_summary: parsed.data.findingsSummary,
     },
-  }).catch(() => {})
+  }).catch(captureAsyncError('onboarding action'))
 
   revalidatePath('/onboarding')
   revalidatePath(`/onboarding/${parsed.data.applicationId}`)
@@ -729,7 +730,7 @@ export async function finalizeRejection(
     actorId: user.id,
     actorEmail: user.email,
     metadata: { adverse_action_sent_at: now, final_reason: parsed.data.finalReason },
-  }).catch(() => {})
+  }).catch(captureAsyncError('onboarding action'))
 
   revalidatePath('/onboarding')
   revalidatePath(`/onboarding/${parsed.data.applicationId}`)
@@ -1003,7 +1004,7 @@ export async function approvePipeline(
       docs_failed: transferSummary.failed,
       docs_skipped_unscanned: transferSummary.skipped,
     },
-  }).catch(() => {})
+  }).catch(captureAsyncError('onboarding action'))
 
   revalidatePath('/onboarding')
   revalidatePath(`/onboarding/${pipeline.application_id}`)

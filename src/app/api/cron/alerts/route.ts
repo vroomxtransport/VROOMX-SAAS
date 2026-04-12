@@ -21,6 +21,7 @@ import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { evaluateAlerts } from '@/lib/alerts/alert-evaluator'
 import { getResend } from '@/lib/resend/client'
 import { ALERT_METRICS_BY_ID, formatCondition } from '@/lib/alerts/alert-metrics'
+import { acquireCronLock } from '@/lib/cron-lock'
 import type { AlertRule } from '@/app/actions/alerts'
 
 // Max tenants processed in a single invocation (guard against very large deploys)
@@ -30,6 +31,14 @@ export async function POST(req: Request) {
   // Authenticate the cron caller (timing-safe — CRIT-3 fix)
   if (!verifyCronSecret(req.headers.get('x-cron-secret'))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // N16: distributed lock — prevents overlapping invocations from
+  // evaluating the same alert rules concurrently. Lock auto-expires
+  // after 60s if the function crashes or times out.
+  const lock = await acquireCronLock('cron:alerts')
+  if (!lock.acquired) {
+    return NextResponse.json({ ok: true, skipped: true, reason: 'concurrent invocation locked' })
   }
 
   const supabase = createServiceRoleClient()
@@ -159,6 +168,8 @@ export async function POST(req: Request) {
       results.errors++
     }
   }
+
+  await lock.release()
 
   return NextResponse.json({
     ok: true,

@@ -3,6 +3,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect } from 'react'
+import { useCurrentTenantId } from '@/hooks/use-current-tenant-id'
 
 export interface UnreadCount {
   channelId: string
@@ -37,28 +38,6 @@ async function fetchUnreadCounts(userId: string): Promise<UnreadResult> {
   const total = byChannel.reduce((sum, r) => sum + r.count, 0)
 
   return { total, byChannel }
-}
-
-/**
- * Session-long lookup of the current user's tenant_id from Supabase
- * `app_metadata`. Used to scope the realtime subscription so we only
- * listen to chat_messages rows that belong to this tenant — prevents
- * cross-tenant event fan-out on the realtime bus.
- */
-function useCurrentTenantId(): string | null {
-  const supabase = createClient()
-  const query = useQuery({
-    queryKey: ['current-user-tenant-id'],
-    queryFn: async (): Promise<string | null> => {
-      const { data, error } = await supabase.auth.getUser()
-      if (error || !data.user) return null
-      const tenantId = data.user.app_metadata?.tenant_id
-      return typeof tenantId === 'string' ? tenantId : null
-    },
-    staleTime: 5 * 60_000,
-    retry: false,
-  })
-  return query.data ?? null
 }
 
 export function useChatUnread(userId: string | undefined) {

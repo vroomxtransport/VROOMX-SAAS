@@ -51,6 +51,21 @@ const signUpSchema = z.object({
 // values. See src/lib/stripe/config.ts.
 
 export async function loginAction(prevState: { error?: string; success?: boolean; message?: string } | null, formData: FormData) {
+  // N1: action-level rate limit — the middleware in proxy.ts only matches
+  // POST /login by path. Server actions are callable via POST to the page
+  // URL with RPC headers, bypassing the middleware path matcher. This
+  // action-level check closes that gap.
+  const hdrs = await headers()
+  const ip =
+    hdrs.get('x-nf-client-connection-ip')?.trim() ||
+    hdrs.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    hdrs.get('x-real-ip')?.trim() ||
+    'unknown'
+  const rl = await rateLimit(`login-ip:${ip}`, { limit: 10, windowMs: 60_000 })
+  if (!rl.allowed) {
+    return { error: 'Too many login attempts. Please try again in a minute.' }
+  }
+
   const supabase = await createClient()
 
   const email = formData.get('email') as string
@@ -131,7 +146,10 @@ export async function signUpAction(prevState: { error?: string; success?: boolea
   })
 
   if (authError || !authData.user) {
-    return { error: authError?.message || 'Signup failed' }
+    // N3: return generic message — Supabase auth errors like "User already
+    // registered" enable email enumeration. Log the real reason server-side.
+    console.error('[SIGNUP] Auth error:', authError?.message)
+    return { error: 'Signup failed. Please try again or contact support.' }
   }
 
   const inviteToken = formData.get('invite_token') as string | null
@@ -301,8 +319,22 @@ export async function signUpAction(prevState: { error?: string; success?: boolea
 }
 
 export async function magicLinkAction(prevState: { error?: string; success?: boolean; message?: string } | null, formData: FormData) {
+  // N2: rate limit magic link — unauthenticated endpoint that triggers
+  // email sends. Without a limit, an attacker can spam thousands of OTP
+  // emails (email bombing + cost amplification on Supabase Auth).
+  const hdrs = await headers()
+  const ip =
+    hdrs.get('x-nf-client-connection-ip')?.trim() ||
+    hdrs.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    hdrs.get('x-real-ip')?.trim() ||
+    'unknown'
+  const rl = await rateLimit(`magic-link-ip:${ip}`, { limit: 3, windowMs: 60_000 })
+  if (!rl.allowed) {
+    return { error: 'Too many requests. Please try again in a minute.' }
+  }
+
   const email = formData.get('email') as string
-  if (!email || !email.includes('@')) {
+  if (!email || !z.string().email().safeParse(email).success) {
     return { error: 'Please enter a valid email address' }
   }
 
@@ -323,4 +355,48 @@ export async function magicLinkAction(prevState: { error?: string; success?: boo
   }
 
   return { success: true, message: 'Check your email for the login link. It expires in 1 hour.' }
+}
+
+/**
+ * N17: Request a password reset email.
+ *
+ * Rate-limited by IP (3/min) to prevent email bombing. Always returns
+ * a success message regardless of whether the email exists — prevents
+ * user enumeration.
+ */
+export async function resetPasswordAction(
+  prevState: { error?: string; success?: boolean; message?: string } | null,
+  formData: FormData,
+) {
+  const hdrs = await headers()
+  const ip =
+    hdrs.get('x-nf-client-connection-ip')?.trim() ||
+    hdrs.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    hdrs.get('x-real-ip')?.trim() ||
+    'unknown'
+  const rl = await rateLimit(`reset-pw-ip:${ip}`, { limit: 3, windowMs: 60_000 })
+  if (!rl.allowed) {
+    return { error: 'Too many requests. Please try again in a minute.' }
+  }
+
+  const email = formData.get('email') as string
+  if (!email || !z.string().email().safeParse(email).success) {
+    return { error: 'Please enter a valid email address' }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth-confirm`,
+  })
+
+  if (error) {
+    // Log the real error but always return success to prevent enumeration.
+    console.error('[RESET_PASSWORD] Error:', error.message)
+  }
+
+  // Always return success — don't reveal whether the email exists
+  return {
+    success: true,
+    message: 'If an account exists with that email, you will receive a password reset link.',
+  }
 }

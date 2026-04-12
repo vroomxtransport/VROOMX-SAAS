@@ -77,6 +77,16 @@ function buildCspHeader(nonce: string): string {
 }
 
 export async function middleware(request: NextRequest) {
+  // N11: Generate a per-request correlation ID. Propagated on both
+  // request and response headers so server actions, API routes, and
+  // external call logs can all reference the same ID for end-to-end
+  // tracing. Uses crypto.randomUUID() which is available in the Edge
+  // Runtime (Web Crypto API). Server-side code can read the ID via
+  // `headers().get('x-request-id')` and include it in log messages
+  // or Sentry context.
+  const requestId = crypto.randomUUID()
+  request.headers.set('x-request-id', requestId)
+
   // Generate a per-request CSP nonce. Base64 of 18 random bytes → 24
   // chars; well above the 128-bit entropy minimum recommended by the
   // CSP spec. Uses Web Crypto (Edge-Runtime compatible) — see
@@ -112,6 +122,10 @@ export async function middleware(request: NextRequest) {
   // header which is only used by Next.js internally for nonce extraction.
   response.headers.set('content-security-policy', csp)
   response.headers.set('x-nonce', nonce)
+
+  // N11: correlation ID on response — allows clients and load balancers
+  // to reference the same request ID that server logs use.
+  response.headers.set('x-request-id', requestId)
 
   return response
 }

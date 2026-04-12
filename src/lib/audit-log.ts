@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { classifySeverity, type AuditSeverity } from './audit-severity'
 import { computeIntegrityHash } from './audit-integrity'
+import { captureAsyncError } from '@/lib/async-safe'
 
 /**
  * Fire-and-forget helper to log entity-agnostic audit events.
@@ -81,7 +82,7 @@ export async function logAuditEvent(
 
     // Fire critical event alerts (non-blocking)
     if (severity === 'critical') {
-      notifyCriticalEvent(supabase, event).catch(() => {})
+      notifyCriticalEvent(supabase, event).catch(captureAsyncError('audit-log'))
     }
   } catch (err) {
     console.error('[audit-log] Unexpected error:', err)
