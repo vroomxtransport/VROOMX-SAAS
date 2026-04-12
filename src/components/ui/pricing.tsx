@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { TimelineContent } from "@/components/ui/timeline-animation";
 import { VerticalCutReveal } from "@/components/ui/vertical-cut-reveal";
 import { cn } from "@/lib/utils";
-import NumberFlow from "@number-flow/react";
+import { AnimatedNumber } from "@/components/ui/animated-number";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   TruckIcon,
@@ -261,11 +261,13 @@ export default function PricingSection() {
                 <div className="flex items-baseline">
                   <span className="text-4xl font-bold text-foreground">
                     $
-                    <NumberFlow
-                      format={{
-                        currency: "USD",
-                      }}
+                    <AnimatedNumber
                       value={isYearly ? plan.yearlyPrice : plan.price}
+                      format={{
+                        useGrouping: true,
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                      }}
                       className="text-4xl font-bold"
                     />
                   </span>

@@ -2,9 +2,9 @@
 
 import { useRef } from 'react'
 import { useInView } from 'motion/react'
-import NumberFlow from '@number-flow/react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { FlashIcon, Analytics02Icon, MoneyBag02Icon } from '@hugeicons/core-free-icons'
+import { AnimatedNumber } from '@/components/ui/animated-number'
 import { TimelineContent } from '@/components/ui/timeline-animation'
 
 interface Metric {
@@ -72,16 +72,14 @@ export function MetricsBanner() {
                     </div>
                     <p className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
                       {metric.prefix}
-                      <NumberFlow
-                        value={isInView ? metric.value : 0}
+                      <AnimatedNumber
+                        value={metric.value}
+                        trigger={isInView}
+                        duration={1000}
                         format={{
                           useGrouping: true,
                           minimumFractionDigits: isDecimal ? 1 : 0,
                           maximumFractionDigits: isDecimal ? 1 : 0,
-                        }}
-                        transformTiming={{
-                          duration: 1000,
-                          easing: 'ease-out',
                         }}
                       />
                       {metric.suffix}

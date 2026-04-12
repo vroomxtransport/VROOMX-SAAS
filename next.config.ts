@@ -121,16 +121,6 @@ const securityHeaders = [
 ]
 
 const nextConfig: NextConfig = {
-  // Force Next/Turbopack to re-resolve these packages through its own module
-  // pipeline. Without this, in production builds Turbopack picks the wrong
-  // `esm-env` export condition for client chunks (`production`/`development`
-  // win over `browser`), so `BROWSER` resolves to `false` and the
-  // `<number-flow-react>` custom element never gets registered via
-  // `customElements.define()`. Result: the SSR fallback HTML (the full 0-9
-  // digit tape that would normally be clipped by shadow DOM) leaks through
-  // as plain text on the landing and pricing pages. Including `esm-env`
-  // explicitly is the load-bearing piece.
-  transpilePackages: ['@number-flow/react', 'number-flow', 'esm-env'],
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '*.supabase.co' },
