@@ -10,6 +10,18 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
+import {
+  AreaGradient,
+  CHART_COLORS,
+  CHART_GRID_PROPS,
+  CHART_TOOLTIP_CURSOR,
+  CHART_X_AXIS_PROPS,
+  CHART_Y_AXIS_PROPS,
+  ChartGlowFilter,
+  ChartGradientDefs,
+  GlassTooltip,
+  type GlassTooltipProps,
+} from '@/components/charts/chart-theme'
 
 export interface MonthlyPnlPoint {
   month: string
@@ -22,36 +34,23 @@ interface TruckPnlChartProps {
   data: MonthlyPnlPoint[]
 }
 
-interface ChartTooltipProps {
-  active?: boolean
-  payload?: Array<{ name: string; value: number; color: string }>
-  label?: string
-}
-
-function ChartTooltip({ active, payload, label }: ChartTooltipProps) {
-  if (!active || !payload?.length) return null
-  return (
-    <div className="rounded-lg border border-border bg-card p-3 shadow-lg">
-      <p className="mb-1.5 text-xs font-medium text-muted-foreground">{label}</p>
-      {payload.map((entry) => (
-        <div key={entry.name} className="flex items-center gap-2">
-          <span
-            className="h-2 w-2 shrink-0 rounded-full"
-            style={{ backgroundColor: entry.color }}
-          />
-          <span className="text-xs text-muted-foreground">{entry.name}</span>
-          <span className="ml-auto text-xs font-semibold tabular-nums text-foreground">
-            ${Number(entry.value).toLocaleString()}
-          </span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 export function TruckPnlChart({ data }: TruckPnlChartProps) {
-  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  const renderTooltip = useCallback((props: any) => <ChartTooltip {...(props as ChartTooltipProps)} />, [])
+  const renderTooltip = useCallback(
+    (props: Record<string, unknown>) => {
+      const tooltipProps = props as unknown as Omit<
+        GlassTooltipProps,
+        'valueFormatter' | 'seriesLabels'
+      >
+      return (
+        <GlassTooltip
+          {...tooltipProps}
+          valueFormatter={(v) => `$${Number(v).toLocaleString()}`}
+          seriesLabels={{ revenue: 'Revenue', expenses: 'Expenses' }}
+        />
+      )
+    },
+    [],
+  )
 
   const totalRevenue = data.reduce((s, d) => s + d.revenue, 0)
   const totalExpenses = data.reduce((s, d) => s + d.expenses, 0)
@@ -79,49 +78,40 @@ export function TruckPnlChart({ data }: TruckPnlChartProps) {
           >
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="truckRevenueGradientFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#192334" stopOpacity={0.4} />
-                    <stop offset="100%" stopColor="#192334" stopOpacity={0.05} />
-                  </linearGradient>
-                  <linearGradient id="truckExpensesGradientFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="#f43f5e" stopOpacity={0.05} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e8e7e4" vertical={false} />
-                <XAxis
-                  dataKey="month"
-                  tick={{ fontSize: 11, fill: '#7a7a7a' }}
-                  tickLine={false}
-                  axisLine={false}
-                />
+                <ChartGradientDefs>
+                  <AreaGradient id="truck-pnl-rev" color={CHART_COLORS.brand} />
+                  <AreaGradient id="truck-pnl-exp" color={CHART_COLORS.rose} />
+                  <ChartGlowFilter id="truck-pnl-glow" color={CHART_COLORS.brand} />
+                </ChartGradientDefs>
+                <CartesianGrid {...CHART_GRID_PROPS} />
+                <XAxis dataKey="month" {...CHART_X_AXIS_PROPS} />
                 <YAxis
-                  tick={{ fontSize: 11, fill: '#7a7a7a' }}
-                  tickLine={false}
-                  axisLine={false}
                   tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`}
+                  {...CHART_Y_AXIS_PROPS}
                 />
-                <Tooltip content={renderTooltip} />
+                <Tooltip content={renderTooltip} cursor={CHART_TOOLTIP_CURSOR} />
                 <Area
                   type="monotone"
                   dataKey="revenue"
                   name="Revenue"
-                  stroke="#192334"
+                  stroke={CHART_COLORS.brand}
                   strokeWidth={2.5}
                   strokeLinecap="round"
-                  fill="url(#truckRevenueGradientFill)"
+                  fill="url(#truck-pnl-rev)"
+                  filter="url(#truck-pnl-glow)"
                   dot={false}
+                  activeDot={{ r: 4, fill: CHART_COLORS.brand, stroke: 'white', strokeWidth: 2 }}
                 />
                 <Area
                   type="monotone"
                   dataKey="expenses"
                   name="Expenses"
-                  stroke="#f43f5e"
-                  strokeWidth={2.5}
+                  stroke={CHART_COLORS.rose}
+                  strokeWidth={2}
                   strokeLinecap="round"
-                  fill="url(#truckExpensesGradientFill)"
+                  fill="url(#truck-pnl-exp)"
                   dot={false}
+                  activeDot={{ r: 4, fill: CHART_COLORS.rose, stroke: 'white', strokeWidth: 2 }}
                 />
               </AreaChart>
             </ResponsiveContainer>

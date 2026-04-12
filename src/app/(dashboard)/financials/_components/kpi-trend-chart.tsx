@@ -10,12 +10,22 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
-  type TooltipProps,
 } from 'recharts'
-import type { ValueType, NameType } from 'recharts/types/component/DefaultTooltipContent'
 import { cn } from '@/lib/utils'
 import type { MonthlyKPITrend } from '@/lib/queries/financials'
+import {
+  AreaGradient,
+  CHART_COLORS,
+  CHART_GRID_PROPS,
+  CHART_TOOLTIP_CURSOR,
+  CHART_X_AXIS_PROPS,
+  CHART_Y_AXIS_PROPS,
+  ChartGlowFilter,
+  ChartGradientDefs,
+  ChartLegendSwatches,
+  GlassTooltip,
+  type GlassTooltipProps,
+} from '@/components/charts/chart-theme'
 
 type TrendView = 'per_mile' | 'margins'
 
@@ -23,51 +33,57 @@ interface KPITrendChartProps {
   data: MonthlyKPITrend[]
 }
 
-interface CustomTooltipProps {
-  active?: boolean
-  payload?: Array<{ name: string; value: number; color: string }>
-  label?: string
-  view: TrendView
-}
-
-function TrendTooltip({ active, payload, label, view }: CustomTooltipProps) {
-  if (!active || !payload?.length) return null
-
-  return (
-    <div className="rounded-lg border border-border-subtle bg-surface p-3 shadow-lg">
-      <p className="text-xs font-medium text-muted-foreground mb-1.5">{label}</p>
-      {payload.map((entry) => {
-        if (entry.value == null) return null
-        const formatted = view === 'per_mile'
-          ? `$${Number(entry.value).toFixed(2)}/mi`
-          : `${Number(entry.value).toFixed(1)}%`
-        return (
-          <div key={entry.name} className="flex items-center gap-2">
-            <span
-              className="h-2 w-2 rounded-full shrink-0"
-              style={{ backgroundColor: entry.color }}
-            />
-            <span className="text-xs text-muted-foreground">{entry.name}</span>
-            <span className="text-xs font-semibold tabular-nums text-foreground ml-auto">
-              {formatted}
-            </span>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
+const SERIES_LABELS = {
+  rpm: 'RPM',
+  cpm: 'CPM',
+  ppm: 'PPM',
+  grossMargin: 'Gross Margin',
+  netMargin: 'Net Margin',
+  operatingRatio: 'Op. Ratio',
+} as const
 
 export function KPITrendChart({ data }: KPITrendChartProps) {
   const [view, setView] = useState<TrendView>('per_mile')
 
   const hasPerMileData = data.some((d) => d.rpm !== null)
 
-   
+  // view is baked into every gradient/filter id so tab-switch remounts get a
+  // disjoint SVG id namespace (prevents stale `fill="url(#...)"` references).
+  const idPrefix = `kpi-${view}`
+
   const renderTooltip = useCallback(
-    (props: TooltipProps<ValueType, NameType>) => <TrendTooltip {...(props as CustomTooltipProps)} view={view} />,
-    [view]
+    (props: Record<string, unknown>) => {
+      const tooltipProps = props as unknown as Omit<
+        GlassTooltipProps,
+        'valueFormatter' | 'seriesLabels'
+      >
+      return (
+        <GlassTooltip
+          {...tooltipProps}
+          valueFormatter={(v) =>
+            view === 'per_mile'
+              ? `$${Number(v).toFixed(2)}/mi`
+              : `${Number(v).toFixed(1)}%`
+          }
+          seriesLabels={SERIES_LABELS}
+        />
+      )
+    },
+    [view],
   )
+
+  const legendItems =
+    view === 'per_mile'
+      ? [
+          { label: 'RPM', color: CHART_COLORS.blue },
+          { label: 'CPM', color: CHART_COLORS.rose },
+          { label: 'PPM', color: CHART_COLORS.emerald },
+        ]
+      : [
+          { label: 'Gross Margin', color: CHART_COLORS.blue },
+          { label: 'Net Margin', color: CHART_COLORS.emerald },
+          { label: 'Op. Ratio', color: CHART_COLORS.amber, variant: 'dashed' as const },
+        ]
 
   return (
     <div className="rounded-xl border border-border-subtle bg-surface p-4">
@@ -102,75 +118,114 @@ export function KPITrendChart({ data }: KPITrendChartProps) {
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-              <defs>
-                {view === 'per_mile' ? (
-                  <>
-                    <linearGradient id="rpmAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.12} />
-                      <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.02} />
-                    </linearGradient>
-                    <linearGradient id="cpmAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.12} />
-                      <stop offset="100%" stopColor="#f43f5e" stopOpacity={0.02} />
-                    </linearGradient>
-                    <linearGradient id="ppmAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#10b981" stopOpacity={0.12} />
-                      <stop offset="100%" stopColor="#10b981" stopOpacity={0.02} />
-                    </linearGradient>
-                  </>
-                ) : (
-                  <>
-                    <linearGradient id="grossMarginAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.12} />
-                      <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.02} />
-                    </linearGradient>
-                    <linearGradient id="netMarginAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#10b981" stopOpacity={0.12} />
-                      <stop offset="100%" stopColor="#10b981" stopOpacity={0.02} />
-                    </linearGradient>
-                  </>
-                )}
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e8e7e4" vertical={false} />
-              <XAxis
-                dataKey="month"
-                tick={{ fontSize: 11, fill: '#7a7a7a' }}
-                tickLine={false}
-                axisLine={false}
-              />
+              <ChartGradientDefs>
+                {view === 'per_mile' && <AreaGradient id={`${idPrefix}-rpm`} color={CHART_COLORS.blue} />}
+                {view === 'per_mile' && <AreaGradient id={`${idPrefix}-cpm`} color={CHART_COLORS.rose} />}
+                {view === 'per_mile' && <AreaGradient id={`${idPrefix}-ppm`} color={CHART_COLORS.emerald} />}
+                {view === 'per_mile' && <ChartGlowFilter id={`${idPrefix}-glow-rpm`} color={CHART_COLORS.blue} />}
+                {view === 'margins' && <AreaGradient id={`${idPrefix}-gross`} color={CHART_COLORS.blue} />}
+                {view === 'margins' && <AreaGradient id={`${idPrefix}-net`} color={CHART_COLORS.emerald} />}
+                {view === 'margins' && <ChartGlowFilter id={`${idPrefix}-glow-gross`} color={CHART_COLORS.blue} />}
+              </ChartGradientDefs>
+              <CartesianGrid {...CHART_GRID_PROPS} />
+              <XAxis dataKey="month" {...CHART_X_AXIS_PROPS} />
               <YAxis
-                tick={{ fontSize: 11, fill: '#7a7a7a' }}
-                tickLine={false}
-                axisLine={false}
                 tickFormatter={(v: number) =>
                   view === 'per_mile' ? `$${v.toFixed(2)}` : `${v.toFixed(0)}%`
                 }
+                {...CHART_Y_AXIS_PROPS}
               />
-              <Tooltip content={renderTooltip} />
-              <Legend wrapperStyle={{ fontSize: '11px' }} />
+              <Tooltip content={renderTooltip} cursor={CHART_TOOLTIP_CURSOR} />
 
               {view === 'per_mile' ? (
                 <>
-                  <Area type="monotone" dataKey="rpm" name="RPM" stroke="none" fill="url(#rpmAreaGrad)" connectNulls />
-                  <Area type="monotone" dataKey="cpm" name="CPM" stroke="none" fill="url(#cpmAreaGrad)" connectNulls legendType="none" />
-                  <Area type="monotone" dataKey="ppm" name="PPM" stroke="none" fill="url(#ppmAreaGrad)" connectNulls legendType="none" />
-                  <Line type="monotone" dataKey="rpm" name="RPM" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3, fill: '#3b82f6', strokeWidth: 0 }} connectNulls legendType="none" />
-                  <Line type="monotone" dataKey="cpm" name="CPM" stroke="#f43f5e" strokeWidth={2} dot={{ r: 3, fill: '#f43f5e', strokeWidth: 0 }} connectNulls />
-                  <Line type="monotone" dataKey="ppm" name="PPM" stroke="#10b981" strokeWidth={2} dot={{ r: 3, fill: '#10b981', strokeWidth: 0 }} connectNulls />
+                  <Area type="monotone" dataKey="rpm" name="RPM" stroke="none" fill={`url(#${idPrefix}-rpm)`} connectNulls legendType="none" />
+                  <Area type="monotone" dataKey="cpm" name="CPM" stroke="none" fill={`url(#${idPrefix}-cpm)`} connectNulls legendType="none" />
+                  <Area type="monotone" dataKey="ppm" name="PPM" stroke="none" fill={`url(#${idPrefix}-ppm)`} connectNulls legendType="none" />
+                  <Line
+                    type="monotone"
+                    dataKey="rpm"
+                    name="RPM"
+                    stroke={CHART_COLORS.blue}
+                    strokeWidth={2.5}
+                    strokeLinecap="round"
+                    filter={`url(#${idPrefix}-glow-rpm)`}
+                    dot={false}
+                    activeDot={{ r: 4, fill: CHART_COLORS.blue, stroke: 'white', strokeWidth: 2 }}
+                    connectNulls
+                    legendType="none"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="cpm"
+                    name="CPM"
+                    stroke={CHART_COLORS.rose}
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    dot={false}
+                    activeDot={{ r: 4, fill: CHART_COLORS.rose, stroke: 'white', strokeWidth: 2 }}
+                    connectNulls
+                    legendType="none"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="ppm"
+                    name="PPM"
+                    stroke={CHART_COLORS.emerald}
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    dot={false}
+                    activeDot={{ r: 4, fill: CHART_COLORS.emerald, stroke: 'white', strokeWidth: 2 }}
+                    connectNulls
+                    legendType="none"
+                  />
                 </>
               ) : (
                 <>
-                  <Area type="monotone" dataKey="grossMargin" name="Gross Margin" stroke="none" fill="url(#grossMarginAreaGrad)" legendType="none" />
-                  <Area type="monotone" dataKey="netMargin" name="Net Margin" stroke="none" fill="url(#netMarginAreaGrad)" legendType="none" />
-                  <Line type="monotone" dataKey="grossMargin" name="Gross Margin" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3, fill: '#3b82f6', strokeWidth: 0 }} />
-                  <Line type="monotone" dataKey="netMargin" name="Net Margin" stroke="#10b981" strokeWidth={2} dot={{ r: 3, fill: '#10b981', strokeWidth: 0 }} />
-                  <Line type="monotone" dataKey="operatingRatio" name="Op. Ratio" stroke="#f59e0b" strokeWidth={2} dot={{ r: 3, fill: '#f59e0b', strokeWidth: 0 }} strokeDasharray="5 5" />
+                  <Area type="monotone" dataKey="grossMargin" name="Gross Margin" stroke="none" fill={`url(#${idPrefix}-gross)`} legendType="none" />
+                  <Area type="monotone" dataKey="netMargin" name="Net Margin" stroke="none" fill={`url(#${idPrefix}-net)`} legendType="none" />
+                  <Line
+                    type="monotone"
+                    dataKey="grossMargin"
+                    name="Gross Margin"
+                    stroke={CHART_COLORS.blue}
+                    strokeWidth={2.5}
+                    strokeLinecap="round"
+                    filter={`url(#${idPrefix}-glow-gross)`}
+                    dot={false}
+                    activeDot={{ r: 4, fill: CHART_COLORS.blue, stroke: 'white', strokeWidth: 2 }}
+                    legendType="none"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="netMargin"
+                    name="Net Margin"
+                    stroke={CHART_COLORS.emerald}
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    dot={false}
+                    activeDot={{ r: 4, fill: CHART_COLORS.emerald, stroke: 'white', strokeWidth: 2 }}
+                    legendType="none"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="operatingRatio"
+                    name="Op. Ratio"
+                    stroke={CHART_COLORS.amber}
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeDasharray="5 5"
+                    dot={false}
+                    activeDot={{ r: 4, fill: CHART_COLORS.amber, stroke: 'white', strokeWidth: 2 }}
+                    legendType="none"
+                  />
                 </>
               )}
             </ComposedChart>
           </ResponsiveContainer>
         )}
       </div>
+      <ChartLegendSwatches items={legendItems} className="mt-2 px-1" />
     </div>
   )
 }

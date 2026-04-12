@@ -16,6 +16,18 @@ import {
 } from 'recharts'
 import { TrendingUp, TrendingDown, DollarSign, Calendar, Zap, BarChart3 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import {
+  AreaGradient,
+  CHART_COLORS,
+  CHART_GRID_PROPS,
+  CHART_TOOLTIP_CURSOR,
+  CHART_X_AXIS_PROPS,
+  CHART_Y_AXIS_PROPS,
+  ChartGlowFilter,
+  ChartGradientDefs,
+  GlassTooltip,
+  type GlassTooltipProps,
+} from '@/components/charts/chart-theme'
 
 type Period = '7D' | '30D' | '90D'
 
@@ -35,39 +47,6 @@ function formatCurrency(value: number, compact = false): string {
     return `$${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}k`
   }
   return `$${value.toLocaleString()}`
-}
-
-function GlassTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number; dataKey: string }>; label?: string }) {
-  if (!active || !payload?.length) return null
-
-  const current = payload.find((p) => p.dataKey === 'revenue')
-  const prev = payload.find((p) => p.dataKey === 'prevRevenue')
-
-  return (
-    <div className="glass-panel rounded-xl px-4 py-3 shadow-lg border border-border-subtle min-w-[160px]">
-      <p className="text-xs font-medium text-muted-foreground mb-2">{label}</p>
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-1.5">
-            <div className="h-2 w-2 rounded-full bg-[#192334]" />
-            <span className="text-xs text-muted-foreground">Current</span>
-          </div>
-          <span className="text-sm font-semibold tabular-nums text-foreground">
-            {current ? formatCurrency(current.value) : '—'}
-          </span>
-        </div>
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-1.5">
-            <div className="h-2 w-2 rounded-full bg-[#192334]/30" />
-            <span className="text-xs text-muted-foreground">Previous</span>
-          </div>
-          <span className="text-sm font-medium tabular-nums text-muted-foreground">
-            {prev ? formatCurrency(prev.value) : '—'}
-          </span>
-        </div>
-      </div>
-    </div>
-  )
 }
 
 function ActiveDot(props: { cx?: number; cy?: number }) {
@@ -107,9 +86,19 @@ export function RevenueChart() {
 
   const tickInterval = period === '7D' ? 0 : period === '30D' ? 6 : 14
 
-  const renderTooltip = useCallback((props: Record<string, unknown>) => (
-    <GlassTooltip {...props as { active?: boolean; payload?: Array<{ value: number; dataKey: string }>; label?: string }} />
-  ), [])
+  const renderTooltip = useCallback(
+    (props: Record<string, unknown>) => {
+      const tooltipProps = props as unknown as Omit<GlassTooltipProps, 'valueFormatter' | 'seriesLabels'>
+      return (
+        <GlassTooltip
+          {...tooltipProps}
+          valueFormatter={(v) => formatCurrency(v)}
+          seriesLabels={{ revenue: 'Current', prevRevenue: 'Previous' }}
+        />
+      )
+    },
+    [],
+  )
 
   return (
     <div className="widget-card-primary h-full flex flex-col">
@@ -180,53 +169,29 @@ export function RevenueChart() {
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
-              <defs>
-                <linearGradient id="revStrokeGradient" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#192334" />
-                  <stop offset="50%" stopColor="#2a3a4f" />
-                  <stop offset="100%" stopColor="#192334" />
-                </linearGradient>
-                <linearGradient id="revGradientMain" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#192334" stopOpacity={0.4} />
-                  <stop offset="35%" stopColor="#2a3a4f" stopOpacity={0.15} />
-                  <stop offset="100%" stopColor="#192334" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="revGradientPrev" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#9ca3af" stopOpacity={0.06} />
-                  <stop offset="100%" stopColor="#9ca3af" stopOpacity={0} />
-                </linearGradient>
-                <filter id="lineGlow" x="-20%" y="-20%" width="140%" height="140%">
-                  <feGaussianBlur stdDeviation="4" result="blur" />
-                  <feFlood floodColor="#192334" floodOpacity="0.3" result="color" />
-                  <feComposite in="color" in2="blur" operator="in" result="coloredBlur" />
-                  <feMerge>
-                    <feMergeNode in="coloredBlur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-              </defs>
+              <ChartGradientDefs>
+                <AreaGradient id="rev-main" color={CHART_COLORS.brand} />
+                <AreaGradient
+                  id="rev-prev"
+                  color={CHART_COLORS.muted}
+                  topOpacity={0.08}
+                  midOpacity={0.03}
+                />
+                <ChartGlowFilter id="rev-glow" color={CHART_COLORS.brand} />
+              </ChartGradientDefs>
 
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="var(--border-subtle)"
-                vertical={false}
-                opacity={0.6}
-              />
+              <CartesianGrid {...CHART_GRID_PROPS} />
 
               <XAxis
                 dataKey="date"
-                tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
-                tickLine={false}
-                axisLine={false}
                 interval={tickInterval}
                 dy={4}
+                {...CHART_X_AXIS_PROPS}
               />
               <YAxis
-                tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
-                tickLine={false}
-                axisLine={false}
                 tickFormatter={(v: number) => formatCurrency(v, true)}
                 width={48}
+                {...CHART_Y_AXIS_PROPS}
               />
 
               <ReferenceLine
@@ -236,37 +201,30 @@ export function RevenueChart() {
                 strokeOpacity={0.8}
               />
 
-              <Tooltip
-                content={renderTooltip}
-                cursor={{
-                  stroke: 'var(--border-subtle)',
-                  strokeWidth: 1,
-                  strokeDasharray: '4 4',
-                }}
-              />
+              <Tooltip content={renderTooltip} cursor={CHART_TOOLTIP_CURSOR} />
 
               <Area
-                type="natural"
+                type="monotone"
                 dataKey="prevRevenue"
-                stroke="#9ca3af"
-                strokeWidth={1.5}
+                stroke={CHART_COLORS.muted}
+                strokeWidth={2}
                 strokeDasharray="6 4"
-                strokeOpacity={0.35}
+                strokeOpacity={0.45}
                 strokeLinecap="round"
-                fill="url(#revGradientPrev)"
+                fill="url(#rev-prev)"
                 dot={false}
                 activeDot={false}
               />
 
               <Area
-                type="natural"
+                type="monotone"
                 dataKey="revenue"
-                stroke="url(#revStrokeGradient)"
-                strokeWidth={3}
+                stroke={CHART_COLORS.brand}
+                strokeWidth={2.5}
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                fill="url(#revGradientMain)"
-                filter="url(#lineGlow)"
+                fill="url(#rev-main)"
+                filter="url(#rev-glow)"
                 dot={period === '7D' ? <SmallDot /> : false}
                 activeDot={<ActiveDot />}
               />

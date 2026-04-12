@@ -1,5 +1,6 @@
 'use client'
 
+import { useId } from 'react'
 import {
   ComposedChart,
   Line,
@@ -12,6 +13,15 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { cn } from '@/lib/utils'
+import {
+  AreaGradient,
+  CHART_COLORS,
+  CHART_GRID_PROPS,
+  CHART_X_AXIS_PROPS,
+  CHART_Y_AXIS_PROPS,
+  ChartGlowFilter,
+  ChartGradientDefs,
+} from '@/components/charts/chart-theme'
 
 // ============================================================================
 // Types
@@ -146,7 +156,14 @@ function ForecastTooltip({ active, payload, label, format, todayPeriod }: Custom
   if (relevantEntries.length === 0) return null
 
   return (
-    <div className="rounded-lg border border-border-subtle bg-surface p-3 shadow-lg min-w-[140px]">
+    <div
+      className="glass-panel rounded-lg border border-border-subtle px-4 py-3 shadow-lg min-w-[140px]"
+      style={{
+        borderTop: `2px ${isProjected ? 'dashed' : 'solid'} ${
+          isProjected ? PROJECTED_COLOR : HISTORICAL_COLOR
+        }`,
+      }}
+    >
       <p className="text-xs font-medium text-muted-foreground mb-2">{label}</p>
       {isProjected && (
         <p className="text-[10px] uppercase tracking-wide text-brand-muted font-semibold mb-1.5">
@@ -159,7 +176,7 @@ function ForecastTooltip({ active, payload, label, format, todayPeriod }: Custom
             className="h-2 w-2 rounded-full shrink-0"
             style={{ backgroundColor: entry.color }}
           />
-          <span className="text-xs font-semibold tabular-nums text-foreground ml-auto">
+          <span className="text-[13px] font-semibold tabular-nums text-foreground ml-auto">
             {formatValue(entry.value, format)}
           </span>
         </div>
@@ -172,7 +189,7 @@ function ForecastTooltip({ active, payload, label, format, todayPeriod }: Custom
 // Chart Component
 // ============================================================================
 
-const HISTORICAL_COLOR = '#059669' // emerald-600
+const HISTORICAL_COLOR = CHART_COLORS.emerald // --chart-3
 const PROJECTED_COLOR = '#34d399' // emerald-400 — lighter for projection
 
 export function ForecastChart({
@@ -193,6 +210,13 @@ export function ForecastChart({
   // YAxis formatter
   const yFormatter = (v: number) => formatValue(v, format)
 
+  // useId() namespaces gradient/filter SVG ids so the forecast dashboard can
+  // render multiple ForecastChart instances on one page without collision.
+  const rawId = useId()
+  const defsPrefix = `fc-${rawId.replace(/:/g, '')}`
+  const confGradId = `${defsPrefix}-conf`
+  const histGlowId = `${defsPrefix}-glow-hist`
+
   return (
     <div className={cn('w-full', className)}>
       {title && (
@@ -201,31 +225,25 @@ export function ForecastChart({
       <div className="h-[200px]">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={chartData} margin={{ top: 4, right: 4, left: -8, bottom: 0 }}>
-            <defs>
-              {/* Confidence band gradient */}
-              <linearGradient id="fcConfidenceGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={HISTORICAL_COLOR} stopOpacity={0.12} />
-                <stop offset="100%" stopColor={HISTORICAL_COLOR} stopOpacity={0.03} />
-              </linearGradient>
-            </defs>
+            <ChartGradientDefs>
+              <AreaGradient
+                id={confGradId}
+                color={HISTORICAL_COLOR}
+                topOpacity={0.15}
+                midOpacity={0.05}
+              />
+              <ChartGlowFilter id={histGlowId} color={HISTORICAL_COLOR} />
+            </ChartGradientDefs>
 
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle, #e5e7eb)" vertical={false} />
+            <CartesianGrid {...CHART_GRID_PROPS} />
 
             <XAxis
               dataKey="period"
-              tick={{ fontSize: 11, fill: 'var(--muted-foreground, #6b7280)' }}
-              tickLine={false}
-              axisLine={false}
               interval="preserveStartEnd"
+              {...CHART_X_AXIS_PROPS}
             />
 
-            <YAxis
-              tick={{ fontSize: 11, fill: 'var(--muted-foreground, #6b7280)' }}
-              tickLine={false}
-              axisLine={false}
-              tickFormatter={yFormatter}
-              width={60}
-            />
+            <YAxis tickFormatter={yFormatter} width={60} {...CHART_Y_AXIS_PROPS} />
 
             <Tooltip
               content={(props) => (
@@ -258,7 +276,7 @@ export function ForecastChart({
                 type="monotone"
                 dataKey="confidenceUpper"
                 stroke="none"
-                fill="url(#fcConfidenceGrad)"
+                fill={`url(#${confGradId})`}
                 fillOpacity={0.6}
                 connectNulls
                 legendType="none"
@@ -278,21 +296,23 @@ export function ForecastChart({
               />
             )}
 
-            {/* Historical line — solid, strong color */}
+            {/* Historical line — solid, glow-lit, hero series */}
             <Line
               type="monotone"
               dataKey="historical"
               name="Historical"
               stroke={HISTORICAL_COLOR}
-              strokeWidth={2}
-              dot={{ r: 3, fill: HISTORICAL_COLOR, strokeWidth: 0 }}
-              activeDot={{ r: 4, fill: HISTORICAL_COLOR }}
+              strokeWidth={2.5}
+              strokeLinecap="round"
+              filter={`url(#${histGlowId})`}
+              dot={false}
+              activeDot={{ r: 4, fill: HISTORICAL_COLOR, stroke: 'white', strokeWidth: 2 }}
               connectNulls
               legendType="none"
               isAnimationActive={false}
             />
 
-            {/* Projected line — dashed, lighter */}
+            {/* Projected line — dashed, lighter, NO glow (dashed strokes halo) */}
             {hasProjected && (
               <Line
                 type="monotone"
@@ -300,9 +320,10 @@ export function ForecastChart({
                 name="Projected"
                 stroke={PROJECTED_COLOR}
                 strokeWidth={2}
+                strokeLinecap="round"
                 strokeDasharray="6 4"
-                dot={{ r: 3, fill: PROJECTED_COLOR, strokeWidth: 0 }}
-                activeDot={{ r: 4, fill: PROJECTED_COLOR }}
+                dot={false}
+                activeDot={{ r: 4, fill: PROJECTED_COLOR, stroke: 'white', strokeWidth: 2 }}
                 connectNulls
                 legendType="none"
                 isAnimationActive={false}
