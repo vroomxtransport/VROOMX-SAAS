@@ -14,59 +14,57 @@ interface UnreadResult {
   byChannel: UnreadCount[]
 }
 
+// Row shape returned by the get_unread_counts Postgres RPC.
+interface UnreadRpcRow {
+  channel_id: string
+  unread_count: number
+}
+
 async function fetchUnreadCounts(userId: string): Promise<UnreadResult> {
   const supabase = createClient()
 
-  // Fetch both reads and channels in parallel
-  const [readsResult, channelsResult] = await Promise.all([
-    supabase
-      .from('chat_channel_reads')
-      .select('channel_id, last_read_at')
-      .eq('user_id', userId),
-    supabase
-      .from('chat_channels')
-      .select('id'),
-  ])
+  const { data, error } = await supabase.rpc('get_unread_counts', {
+    p_user_id: userId,
+  })
 
-  const channels = channelsResult.data
-  if (!channels || channels.length === 0) return { total: 0, byChannel: [] }
+  if (error) throw error
 
-  const readMap = new Map<string, string>()
-  readsResult.data?.forEach((r) => readMap.set(r.channel_id, r.last_read_at))
-
-  let total = 0
-  const byChannel: UnreadCount[] = []
-
-  // Count unread messages per channel (N+1 is acceptable for typical team sizes)
-  await Promise.all(
-    channels.map(async (channel) => {
-      const lastRead = readMap.get(channel.id)
-
-      let query = supabase
-        .from('chat_messages')
-        .select('id', { count: 'exact', head: true })
-        .eq('channel_id', channel.id)
-        .neq('user_id', userId) // never count own messages as unread
-
-      if (lastRead) {
-        query = query.gt('created_at', lastRead)
-      }
-
-      const { count } = await query
-      const unread = count ?? 0
-      if (unread > 0) {
-        total += unread
-        byChannel.push({ channelId: channel.id, count: unread })
-      }
-    })
-  )
+  const rows = (data ?? []) as UnreadRpcRow[]
+  const byChannel: UnreadCount[] = rows.map((r) => ({
+    channelId: r.channel_id,
+    count: Number(r.unread_count),
+  }))
+  const total = byChannel.reduce((sum, r) => sum + r.count, 0)
 
   return { total, byChannel }
+}
+
+/**
+ * Session-long lookup of the current user's tenant_id from Supabase
+ * `app_metadata`. Used to scope the realtime subscription so we only
+ * listen to chat_messages rows that belong to this tenant — prevents
+ * cross-tenant event fan-out on the realtime bus.
+ */
+function useCurrentTenantId(): string | null {
+  const supabase = createClient()
+  const query = useQuery({
+    queryKey: ['current-user-tenant-id'],
+    queryFn: async (): Promise<string | null> => {
+      const { data, error } = await supabase.auth.getUser()
+      if (error || !data.user) return null
+      const tenantId = data.user.app_metadata?.tenant_id
+      return typeof tenantId === 'string' ? tenantId : null
+    },
+    staleTime: 5 * 60_000,
+    retry: false,
+  })
+  return query.data ?? null
 }
 
 export function useChatUnread(userId: string | undefined) {
   const queryClient = useQueryClient()
   const supabase = createClient()
+  const tenantId = useCurrentTenantId()
 
   const query = useQuery({
     queryKey: ['chat-unread', userId],
@@ -76,15 +74,21 @@ export function useChatUnread(userId: string | undefined) {
     refetchInterval: 60_000, // fallback poll every minute
   })
 
-  // Real-time: invalidate the unread count when any new message arrives
+  // Realtime: invalidate the unread count when a new message arrives for
+  // this tenant. Scoped to tenant_id so we don't fan-out cross-tenant events.
   useEffect(() => {
-    if (!userId) return
+    if (!userId || !tenantId) return
 
     const channel = supabase
-      .channel('chat-unread-listener')
+      .channel(`chat-unread-listener:${tenantId}`)
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'chat_messages' },
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages',
+          filter: `tenant_id=eq.${tenantId}`,
+        },
         (payload) => {
           // Only invalidate if the message was sent by someone else
           const msg = payload.new as { user_id?: string }
@@ -98,7 +102,7 @@ export function useChatUnread(userId: string | undefined) {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [userId, supabase, queryClient])
+  }, [userId, tenantId, supabase, queryClient])
 
   return {
     totalUnread: query.data?.total ?? 0,
