@@ -37,6 +37,7 @@ export const PERMISSION_CATEGORIES = {
     'driver_applications.create',
     'driver_applications.update',
     'driver_applications.withdraw',
+    'driver_applications.manage',
   ],
   driver_onboarding: [
     'driver_onboarding.read',

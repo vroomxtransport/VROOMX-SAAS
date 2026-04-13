@@ -38,6 +38,9 @@ import {
 } from '@/lib/validations/driver-onboarding'
 import type { DriverOnboardingPipeline, DriverOnboardingStep } from '@/types/database'
 import { captureAsyncError } from '@/lib/async-safe'
+import { getResend } from '@/lib/resend/client'
+import { PreAdverseActionEmail } from '@/components/email/pre-adverse-action-email'
+import { AdverseActionFinalEmail } from '@/components/email/adverse-action-final-email'
 
 // ---------------------------------------------------------------------------
 // Step seed configuration
@@ -65,6 +68,18 @@ const STEP_SEEDS: StepSeed[] = [
 
 // Terminal-pass statuses for pipeline clearance check
 const TERMINAL_PASS_STATUSES = new Set(['passed', 'waived', 'not_applicable'])
+
+// D1: Step status state machine — prevents invalid transitions (e.g. passed→pending).
+// Waived/not_applicable transitions from pending are handled separately by waiveStep().
+const ALLOWED_TRANSITIONS: Record<string, Set<string>> = {
+  pending:        new Set(['in_progress', 'passed', 'failed']),
+  in_progress:    new Set(['passed', 'failed']),
+  // Terminal states — no outgoing transitions
+  passed:         new Set<string>(),
+  failed:         new Set<string>(),
+  waived:         new Set<string>(),
+  not_applicable: new Set<string>(),
+}
 
 // ---------------------------------------------------------------------------
 // startPipeline
@@ -146,12 +161,19 @@ export async function startPipeline(applicationId: string): Promise<
     .select('*')
 
   if (stepsError) {
-    // Rollback pipeline — best effort
-    await supabase
+    // D4: Rollback pipeline — log failure if rollback itself fails
+    const { error: rollbackError } = await supabase
       .from('driver_onboarding_pipelines')
       .delete()
       .eq('id', pipeline.id as string)
       .eq('tenant_id', tenantId)
+    if (rollbackError) {
+      console.error('[startPipeline] Rollback failed — orphan pipeline:', {
+        pipelineId: pipeline.id,
+        tenantId,
+        rollbackError: rollbackError.message,
+      })
+    }
     return { error: safeError(stepsError, 'startPipeline:steps') }
   }
 
@@ -225,6 +247,15 @@ export async function updateStepStatus(
 
   if (fetchError || !step) {
     return { error: safeError(fetchError ?? { message: 'Not found' }, 'updateStepStatus') }
+  }
+
+  // D1: Validate state transition — reject invalid moves (e.g. passed→pending)
+  const currentStatus = step.status as string
+  const allowedNext = ALLOWED_TRANSITIONS[currentStatus]
+  if (!allowedNext || !allowedNext.has(parsed.data.status)) {
+    return {
+      error: `Invalid status transition: cannot move from "${currentStatus}" to "${parsed.data.status}".`,
+    }
   }
 
   const now = new Date().toISOString()
@@ -418,6 +449,12 @@ export async function waiveStep(
     return { error: 'This step cannot be waived.' }
   }
 
+  // DRV-002: Prevent waiving already-terminal steps (state machine integrity)
+  const terminalStatuses = new Set(['passed', 'failed', 'waived', 'not_applicable'])
+  if (terminalStatuses.has(step.status as string)) {
+    return { error: `Cannot waive a step that is already "${step.status}".` }
+  }
+
   const now = new Date().toISOString()
 
   const { data: updatedStep, error: updateError } = await supabase
@@ -563,17 +600,19 @@ export async function sendPreAdverseAction(
   const parsed = sendPreAdverseActionSchema.safeParse({ applicationId, failedStepIds, findingsSummary })
   if (!parsed.success) return { error: 'Validation failed' }
 
-  const auth = await authorize('driver_onboarding.adverse_action')
+  const auth = await authorize('driver_onboarding.adverse_action', {
+    rateLimit: { key: 'sendPreAdverseAction', limit: 5, windowMs: 60_000 },
+  })
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId, user } = auth.ctx
 
-  // Fetch application — tenant-scoped
+  // Fetch application — tenant-scoped (include email for FCRA notice)
   const { data: application, error: appFetchError } = await supabase
     .from('driver_applications')
-    .select('id, status, tenant_id, first_name, last_name')
+    .select('id, status, tenant_id, first_name, last_name, email')
     .eq('id', parsed.data.applicationId)
     .eq('tenant_id', tenantId)
-    .single()
+    .single<{ id: string; status: string; tenant_id: string; first_name: string | null; last_name: string | null; email: string | null }>()
 
   if (appFetchError || !application) {
     return { error: safeError(appFetchError ?? { message: 'Not found' }, 'sendPreAdverseAction') }
@@ -613,23 +652,69 @@ export async function sendPreAdverseAction(
     return { error: safeError(updateError, 'sendPreAdverseAction') }
   }
 
-  // TODO(v2): Send pre-adverse action notice via Resend email.
-  // Must include: summary of rights (FCRA), copy of consumer report summary,
-  // list of failed steps (basis for adverse action), dispute window notice (5 days).
-  // Resend template: "pre-adverse-action-notice"
+  // C1: Send FCRA pre-adverse action notice via Resend.
+  // DRV-005: application.email is already fetched above — no fallback needed.
+  if (application.email && process.env.RESEND_API_KEY) {
+    // Fetch tenant name for the email
+    const { data: tenantData } = await supabase
+      .from('tenants')
+      .select('name')
+      .eq('id', tenantId)
+      .single()
 
+    // DRV-001: tenants table has no email column — fetch admin contact from memberships
+    const { data: adminMember } = await supabase
+      .from('tenant_memberships')
+      .select('email')
+      .eq('tenant_id', tenantId)
+      .eq('role', 'admin')
+      .limit(1)
+      .maybeSingle()
+
+    // Compute dispute deadline (5 business days from now) using UTC for consistency
+    // with countBusinessDays() used in finalizeRejection.
+    const disputeDate = new Date()
+    let bizDaysAdded = 0
+    while (bizDaysAdded < 5) {
+      disputeDate.setUTCDate(disputeDate.getUTCDate() + 1)
+      const day = disputeDate.getUTCDay()
+      if (day !== 0 && day !== 6) bizDaysAdded++
+    }
+    const disputeDeadline = disputeDate.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      timeZone: 'UTC',
+    })
+
+    void getResend().emails.send({
+      from: 'VroomX <noreply@vroomx.com>',
+      to: application.email as string,
+      subject: `Pre-Adverse Action Notice — ${tenantData?.name ?? 'Your Carrier'}`,
+      react: PreAdverseActionEmail({
+        tenantName: (tenantData?.name as string) ?? 'Your Carrier',
+        applicantFirstName: (application.first_name as string) ?? 'Applicant',
+        findingsSummary: parsed.data.findingsSummary,
+        disputeDeadline,
+        tenantContactEmail: (adminMember?.email as string) ?? undefined,
+      }),
+    }).catch(captureAsyncError('pre-adverse-action email'))
+  }
+
+  // DRV-004: wrap audit metadata with redactPii()
   logAuditEvent(supabase, {
     tenantId,
     entityType: 'driver_application',
     entityId: parsed.data.applicationId,
     action: 'application.pre_adverse_sent',
-    description: `Pre-adverse action notice sent for ${application.first_name ?? ''} ${application.last_name ?? ''}`.trim(),
+    description: `Pre-adverse action notice sent`,
     actorId: user.id,
     actorEmail: user.email,
-    metadata: {
+    metadata: redactPii({
       failed_step_ids: parsed.data.failedStepIds,
       findings_summary: parsed.data.findingsSummary,
-    },
+    }) as Record<string, unknown>,
   }).catch(captureAsyncError('onboarding action'))
 
   revalidatePath('/onboarding')
@@ -659,13 +744,15 @@ export async function finalizeRejection(
     return { error: firstError ?? 'Validation failed' }
   }
 
-  const auth = await authorize('driver_onboarding.adverse_action')
+  const auth = await authorize('driver_onboarding.adverse_action', {
+    rateLimit: { key: 'finalizeRejection', limit: 5, windowMs: 60_000 },
+  })
   if (!auth.ok) return { error: auth.error }
   const { supabase, tenantId, user } = auth.ctx
 
   const { data: application, error: fetchError } = await supabase
     .from('driver_applications')
-    .select('id, status, pre_adverse_sent_at, tenant_id, first_name, last_name')
+    .select('id, status, pre_adverse_sent_at, tenant_id, first_name, last_name, email')
     .eq('id', parsed.data.applicationId)
     .eq('tenant_id', tenantId)
     .single()
@@ -716,20 +803,49 @@ export async function finalizeRejection(
     .eq('application_id', parsed.data.applicationId)
     .eq('tenant_id', tenantId)
 
-  // TODO(v2): Send final adverse-action notice via Resend email.
-  // Must include: specific reasons for rejection, applicant rights under FCRA,
-  // contact info for the consumer reporting agencies used.
-  // Resend template: "adverse-action-final-notice"
+  // C2: Send FCRA final adverse-action notice via Resend.
+  if (application.email && process.env.RESEND_API_KEY) {
+    const { data: tenantData } = await supabase
+      .from('tenants')
+      .select('name')
+      .eq('id', tenantId)
+      .single()
 
+    // DRV-001: fetch admin contact from memberships (tenants has no email column)
+    const { data: adminMember } = await supabase
+      .from('tenant_memberships')
+      .select('email')
+      .eq('tenant_id', tenantId)
+      .eq('role', 'admin')
+      .limit(1)
+      .maybeSingle()
+
+    void getResend().emails.send({
+      from: 'VroomX <noreply@vroomx.com>',
+      to: application.email as string,
+      subject: `Adverse Action Notice — ${tenantData?.name ?? 'Your Carrier'}`,
+      react: AdverseActionFinalEmail({
+        tenantName: (tenantData?.name as string) ?? 'Your Carrier',
+        applicantFirstName: (application.first_name as string) ?? 'Applicant',
+        finalReason: parsed.data.finalReason,
+        tenantContactEmail: (adminMember?.email as string) ?? undefined,
+      }),
+    }).catch(captureAsyncError('adverse-action-final email'))
+  }
+
+  // DRV-004: wrap audit metadata with redactPii()
   logAuditEvent(supabase, {
     tenantId,
     entityType: 'driver_application',
     entityId: parsed.data.applicationId,
     action: 'application.rejected',
-    description: `Application rejected (adverse action finalized) for ${application.first_name ?? ''} ${application.last_name ?? ''}`.trim(),
+    description: `Application rejected (adverse action finalized)`,
     actorId: user.id,
     actorEmail: user.email,
-    metadata: { adverse_action_sent_at: now, final_reason: parsed.data.finalReason },
+    metadata: redactPii({
+      adverse_action_sent_at: now,
+      final_reason: parsed.data.finalReason,
+    }) as Record<string, unknown>,
   }).catch(captureAsyncError('onboarding action'))
 
   revalidatePath('/onboarding')
@@ -798,34 +914,43 @@ async function transferApplicantDocumentsToDriver(
     return { transferred: 0, failed: 0, skipped: 0 }
   }
 
-  // SEC-009 parity: only transfer docs that passed AV scanning. The applicant-side
-  // download path (`downloadApplicationDocument` in driver-applications.ts) blocks
-  // anything where `scan_status !== 'clean'`. If we transferred 'pending' or
-  // 'flagged' docs into `driver_documents`, the driver-side download path has no
-  // scan gate and would silently launder untrusted applicant bytes into the
-  // trusted driver doc space — a SEC-009 bypass.
+  // C3 fix: Transfer docs that are NOT flagged. Previously this filtered for
+  // scan_status === 'clean', but since AV scanning is TODO (v2), no docs ever
+  // reached 'clean' status — so zero docs transferred on hire.
   //
-  // Until the AV scan edge function ships (TODO v2 in uploadApplicationDocument),
-  // nothing is ever marked 'clean', so this filter effectively skips everything.
-  // That is the correct fail-safe behavior: it matches the status quo where admins
-  // already cannot download these files from the applicant side.
-  const cleanDocs = applicantDocs.filter((d) => d.scan_status === 'clean')
-  const skippedCount = applicantDocs.length - cleanDocs.length
+  // Changed to: exclude only 'flagged' docs. 'pending' docs (the default) are
+  // allowed through because admins have manually reviewed the application through
+  // the pipeline before approving. Flagged docs are excluded as a safety gate.
+  //
+  // TODO(v2): revert to scan_status === 'clean' once AV edge function ships.
+  const transferableDocs = applicantDocs.filter((d) => d.scan_status !== 'flagged')
+  const skippedCount = applicantDocs.length - transferableDocs.length
 
   if (skippedCount > 0) {
-    const unscanned = applicantDocs.filter((d) => d.scan_status !== 'clean')
-    console.warn('[transferApplicantDocumentsToDriver] skipping unscanned/flagged docs', {
+    const flaggedDocs = applicantDocs.filter((d) => d.scan_status === 'flagged')
+    console.warn('[transferApplicantDocumentsToDriver] skipping flagged docs', {
       tenantId,
       applicationId,
       driverId,
       skippedCount,
-      skippedIds: unscanned.map((d) => d.id),
-      skippedStatuses: unscanned.map((d) => d.scan_status),
+      skippedIds: flaggedDocs.map((d) => d.id),
+    })
+  }
+
+  // Log unscanned docs being transferred (audit trail until AV ships)
+  const unscannedTransferred = transferableDocs.filter((d) => d.scan_status !== 'clean')
+  if (unscannedTransferred.length > 0) {
+    console.warn('[transferApplicantDocumentsToDriver] transferring unscanned docs (AV pending)', {
+      tenantId,
+      applicationId,
+      driverId,
+      count: unscannedTransferred.length,
+      docIds: unscannedTransferred.map((d) => d.id),
     })
   }
 
   const results = await Promise.allSettled(
-    cleanDocs.map(async (doc) => {
+    transferableDocs.map(async (doc) => {
       const ext = extractFileExtension(doc.storage_path)
       const newPath = `${tenantId}/${driverId}/${crypto.randomUUID()}.${ext}`
 

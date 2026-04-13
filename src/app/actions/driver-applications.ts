@@ -51,6 +51,8 @@ import {
 } from '@/lib/validations/driver-application'
 import { getResend } from '@/lib/resend/client'
 import { DriverInviteEmail } from '@/components/email/driver-invite-email'
+import { NewApplicationEmail } from '@/components/email/new-application-email'
+import { ResumeApplicationEmail } from '@/components/email/resume-application-email'
 import { captureAsyncError } from '@/lib/async-safe'
 import type {
   DriverApplication,
@@ -311,7 +313,7 @@ export async function requestResumeLink(
   // Look up application by (tenant_id, email, status='draft')
   const { data: app } = await supabase
     .from('driver_applications')
-    .select('id, resume_token')
+    .select('id, resume_token, first_name')
     .eq('tenant_id', tenant.id)
     .eq('email', parsed.data.email)
     .eq('status', 'draft')
@@ -334,11 +336,19 @@ export async function requestResumeLink(
 
     const resumeUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/apply/${parsed.data.tenantSlug}/form?token=${newToken}`
 
-    // TODO(v2): Send magic link via Resend email integration.
-    // Resend template: "resume-application"
-    // Subject: "Resume your driver application"
-    // Body: link to resumeUrl, expires in 72h.
-    if (process.env.NODE_ENV === 'development') {
+    // U1: Send resume link via Resend email (non-fatal).
+    if (process.env.RESEND_API_KEY) {
+      void getResend().emails.send({
+        from: 'VroomX <noreply@vroomx.com>',
+        to: parsed.data.email,
+        subject: `Resume your driver application — ${tenant.name as string}`,
+        react: ResumeApplicationEmail({
+          tenantName: tenant.name as string,
+          applicantFirstName: (app.first_name as string | null) ?? 'Applicant',
+          resumeUrl,
+        }),
+      }).catch(captureAsyncError('resume-application email'))
+    } else if (process.env.NODE_ENV === 'development') {
       console.log('[requestResumeLink] Resume URL (dev only):', resumeUrl)
     }
   }
@@ -475,6 +485,12 @@ export async function updateDraftSection(
   // Fire-and-forget with error capture — if encryption fails, ssn_last4 is
   // still stored and the applicant can continue. The encrypted column can be
   // backfilled later. We don't block the UX on encryption success.
+  //
+  // S2 SECURITY NOTE: The encryption key (SUPABASE_SSN_KEY) is passed as an RPC
+  // parameter. If pg_stat_statements or statement logging is enabled on the DB,
+  // the key value will appear in Postgres logs. The proper fix is to source the
+  // key from Supabase Vault inside the encrypt_ssn() RPC (SECURITY DEFINER) so
+  // the key never leaves the DB boundary. Flagged for future hardening.
   if (section === 'page1') {
     const p1ssn = (sectionParsed.data as z.infer<typeof page1Schema>).applicantInfo.ssn
     if (p1ssn) {
@@ -805,6 +821,11 @@ export async function submitApplication(
   const parsed = z.string().uuid().safeParse(resumeToken)
   if (!parsed.success) return { error: 'Invalid token' }
 
+  // S1: Rate limit submitApplication — public endpoint, prevent abuse
+  const ip = await getClientIp()
+  const rl = await rateLimitByIp({ ip, key: 'apply:submit', limit: 5, windowMs: 60_000 })
+  if (!rl.allowed) return { error: 'Too many requests. Please try again shortly.' }
+
   const authResult = await publicAuthForResume(resumeToken)
   if ('error' in authResult) return { error: authResult.error }
   const { supabase, application } = authResult
@@ -813,6 +834,16 @@ export async function submitApplication(
   const appData = application.application_data as DriverApplicationData | null
   if (!appData) {
     return { error: 'Application is incomplete. Please fill in all required sections.' }
+  }
+
+  // D2: Validate all 8 pages are present in applicationData
+  const requiredPages = ['page1', 'page2', 'page3', 'page4', 'page5', 'page6', 'page7', 'page8']
+  const appDataRecord = appData as unknown as Record<string, unknown>
+  const missingPages = requiredPages.filter((p) => !(p in appDataRecord))
+  if (missingPages.length > 0) {
+    return {
+      error: `Application is incomplete. Missing sections: ${missingPages.join(', ')}. Please complete all pages before submitting.`,
+    }
   }
 
   // Check required top-level fields (page1 extracted columns)
@@ -892,9 +923,42 @@ export async function submitApplication(
     return { error: 'Unable to submit application. Please try again.' }
   }
 
-  // TODO(v2): Notify tenant admin via Resend email that a new application was submitted.
-  // Resend template: "new-driver-application"
-  // Recipient: tenant admin email(s) from tenant_memberships WHERE role='admin'
+  // C4: Notify tenant admins that a new application was submitted.
+  if (process.env.RESEND_API_KEY) {
+    void (async () => {
+      // Fetch tenant name
+      const { data: tenantData } = await supabase
+        .from('tenants')
+        .select('name')
+        .eq('id', application.tenant_id)
+        .single()
+
+      // Fetch admin emails from tenant_memberships
+      const { data: admins } = await supabase
+        .from('tenant_memberships')
+        .select('email')
+        .eq('tenant_id', application.tenant_id)
+        .eq('role', 'admin')
+
+      const adminEmails = (admins ?? [])
+        .map((a) => a.email as string)
+        .filter(Boolean)
+
+      if (adminEmails.length > 0) {
+        await getResend().emails.send({
+          from: 'VroomX <noreply@vroomx.com>',
+          to: adminEmails,
+          subject: `New driver application: ${application.first_name ?? ''} ${application.last_name ?? ''}`.trim(),
+          react: NewApplicationEmail({
+            tenantName: (tenantData?.name as string) ?? 'Your Company',
+            applicantFirstName: (application.first_name as string) ?? '',
+            applicantLastName: (application.last_name as string) ?? '',
+            applicationId: application.id as string,
+          }),
+        })
+      }
+    })().catch(captureAsyncError('new-application notification email'))
+  }
 
   return { statusToken }
 }
@@ -1326,4 +1390,97 @@ export async function downloadApplicationDocument(
   }
 
   return { url }
+}
+
+// ---------------------------------------------------------------------------
+// AUTHED: reopenApplication (U3)
+// ---------------------------------------------------------------------------
+
+/**
+ * Reopen a submitted application: reset to draft, mint new resume token.
+ *
+ * Guards:
+ * - Application must be in 'submitted' status (not in_review/approved/rejected)
+ * - Requires driver_applications.manage permission
+ *
+ * On success: status→draft, new resume_token (72h), clears submission fields.
+ */
+export async function reopenApplication(
+  applicationId: string
+): Promise<{ resumeToken: string; applicationUrl: string } | { error: string }> {
+  const idParsed = z.string().uuid().safeParse(applicationId)
+  if (!idParsed.success) return { error: 'Invalid application ID' }
+
+  const auth = await authorize('driver_applications.manage', {
+    rateLimit: { key: 'reopenApplication', limit: 10, windowMs: 60_000 },
+  })
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId, user } = auth.ctx
+
+  // Fetch application — tenant-scoped
+  const { data: application, error: fetchError } = await supabase
+    .from('driver_applications')
+    .select('id, status, tenant_id, first_name, last_name')
+    .eq('id', idParsed.data)
+    .eq('tenant_id', tenantId)
+    .single()
+
+  if (fetchError || !application) {
+    return { error: safeError(fetchError ?? { message: 'Not found' }, 'reopenApplication') }
+  }
+
+  if (application.status !== 'submitted') {
+    return {
+      error: `Cannot reopen application with status "${application.status}". Only submitted applications can be reopened.`,
+    }
+  }
+
+  // Mint new resume token (72h)
+  const { randomUUID } = await import('crypto')
+  const newToken = randomUUID()
+  const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString()
+
+  const { error: updateError } = await supabase
+    .from('driver_applications')
+    .update({
+      status: 'draft',
+      resume_token: newToken,
+      resume_token_expires_at: expiresAt,
+      submitted_at: null,
+      status_token: null,
+      status_token_expires_at: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', idParsed.data)
+    .eq('tenant_id', tenantId)
+
+  if (updateError) {
+    return { error: safeError(updateError, 'reopenApplication') }
+  }
+
+  // Look up tenant slug for the application URL
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('slug')
+    .eq('id', tenantId)
+    .single()
+
+  const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+  const applicationUrl = `${appBaseUrl}/apply/${tenant?.slug ?? 'unknown'}/form?token=${newToken}`
+
+  logAuditEvent(supabase, {
+    tenantId,
+    entityType: 'driver_application',
+    entityId: idParsed.data,
+    action: 'application.reopened',
+    description: `Application reopened for ${application.first_name ?? ''} ${application.last_name ?? ''}`.trim(),
+    actorId: user.id,
+    actorEmail: user.email,
+    metadata: { new_resume_token_expires_at: expiresAt },
+  }).catch(captureAsyncError('driver-app action'))
+
+  revalidatePath('/onboarding')
+  revalidatePath(`/onboarding/${idParsed.data}`)
+
+  return { resumeToken: newToken, applicationUrl }
 }
