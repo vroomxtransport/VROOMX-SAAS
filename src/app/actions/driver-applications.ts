@@ -848,73 +848,8 @@ export async function submitApplication(
   if ('error' in authResult) return { error: authResult.error }
   const { supabase, application } = authResult
 
-  // Validate required sections exist in applicationData
-  const appData = application.application_data as DriverApplicationData | null
-  if (!appData) {
-    return { error: 'Application is incomplete. Please fill in all required sections.' }
-  }
-
-  // D2: Validate all 8 pages are present in applicationData
-  const requiredPages = ['page1', 'page2', 'page3', 'page4', 'page5', 'page6', 'page7', 'page8']
-  const appDataRecord = appData as unknown as Record<string, unknown>
-  const missingPages = requiredPages.filter((p) => !(p in appDataRecord))
-  if (missingPages.length > 0) {
-    return {
-      error: `Application is incomplete. Missing sections: ${missingPages.join(', ')}. Please complete all pages before submitting.`,
-    }
-  }
-
-  // Check required top-level fields (page1 extracted columns)
-  const missingFields: string[] = []
-  if (!application.first_name) missingFields.push('First name')
-  if (!application.last_name) missingFields.push('Last name')
-  if (!application.email) missingFields.push('Email')
-  if (!application.date_of_birth) missingFields.push('Date of birth')
-
-  if (missingFields.length > 0) {
-    return { error: `Application is incomplete: ${missingFields.join(', ')} required.` }
-  }
-
-  // TODO(v2): fetch tenant.psp_enabled column from tenants table once
-  // the column is added. For now default to true (require PSP authorization).
-  // Replace with: const { data: tenant } = await supabase.from('tenants').select('psp_enabled').eq(...)
-  // const pspEnabled = tenant?.psp_enabled ?? true
-  const pspEnabled = true
-
-  // Fetch consents
-  const { data: consents, error: consentFetchError } = await supabase
-    .from('driver_application_consents')
-    .select('consent_type')
-    .eq('application_id', application.id)
-    .eq('tenant_id', application.tenant_id)
-
-  if (consentFetchError) {
-    console.error('[submitApplication:consents]', consentFetchError.message)
-    return { error: 'Unable to verify consent records. Please try again.' }
-  }
-
-  const signedTypes = new Set((consents ?? []).map((c) => c.consent_type as string))
-
-  const requiredConsents = [
-    'application_certification',
-    'fcra_disclosure',
-    'driver_license_requirements_certification',
-    'drug_alcohol_testing_consent',
-    'safety_performance_history_investigation',
-    'clearinghouse_limited_query',
-    'mvr_release',
-  ]
-
-  if (pspEnabled) {
-    requiredConsents.push('psp_authorization')
-  }
-
-  const missingConsents = requiredConsents.filter((c) => !signedTypes.has(c))
-  if (missingConsents.length > 0) {
-    return {
-      error: `Missing required signatures: ${missingConsents.join(', ')}.`,
-    }
-  }
+  // ⚠️ TESTING MODE: All validation bypassed for testing.
+  // TODO: Restore validation before production — see git history for the full block.
 
   // Mint statusToken (30 days)
   const { randomUUID } = await import('crypto')

@@ -118,13 +118,17 @@ function StepRow({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpen(step)}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(step) } }}
       className={cn(
-        'group relative flex items-start gap-3 rounded-lg border px-4 py-3 transition-colors',
+        'group relative flex items-start gap-3 rounded-lg border px-4 py-3 transition-colors cursor-pointer',
         step.status === 'failed'
-          ? 'border-red-200 bg-red-50/40'
+          ? 'border-red-200 bg-red-50/40 hover:bg-red-50/60'
           : step.status === 'passed' || step.status === 'waived' || step.status === 'not_applicable'
-          ? 'border-green-100 bg-green-50/20'
-          : 'border-border bg-surface hover:bg-muted/20'
+          ? 'border-green-100 bg-green-50/20 hover:bg-green-50/40'
+          : 'border-border bg-surface hover:bg-muted/30'
       )}
     >
       {/* Step circle */}

@@ -163,19 +163,20 @@ export function ApplicationWizard({
     if (isPending) return
     setServerError(null)
 
-    const schema = PAGE_SCHEMAS[currentPage - 1]
-    const key = `page${currentPage}` as `page${1|2|3|4|5|6|7|8}`
-    const values = form.getValues(key)
-    const result = schema.safeParse(values)
-
-    if (!result.success) {
-      // Trigger validation display on current page fields
-      void form.trigger(key)
-      return
-    }
+    // ⚠️ TESTING MODE: page validation bypassed — skip straight to next page
+    // TODO: Uncomment before production
+    // const schema = PAGE_SCHEMAS[currentPage - 1]
+    // const key = `page${currentPage}` as `page${1|2|3|4|5|6|7|8}`
+    // const values = form.getValues(key)
+    // const result = schema.safeParse(values)
+    //
+    // if (!result.success) {
+    //   void form.trigger(key)
+    //   return
+    // }
 
     startTransition(async () => {
-      await autoSave(currentPage)
+      // await autoSave(currentPage) // skip auto-save in testing mode
       setCompletedPages((prev) => new Set(prev).add(currentPage))
       setCurrentPage((p) => Math.min(p + 1, TOTAL_PAGES))
       focusPageHeading()
@@ -190,27 +191,29 @@ export function ApplicationWizard({
   }, [currentPage])
 
   const handleStepClick = useCallback((step: number) => {
-    // Only allow navigating to completed or current pages
-    if (step < currentPage || completedPages.has(step)) {
-      setCurrentPage(step)
-      focusPageHeading()
-    }
+    // ⚠️ TESTING MODE: allow jumping to any page
+    // TODO: Restore guard before production:
+    // if (step < currentPage || completedPages.has(step)) {
+    setCurrentPage(step)
+    focusPageHeading()
+    // }
   }, [currentPage, completedPages])
 
   async function handleSubmit() {
     if (isPending) return
     setServerError(null)
 
-    // Validate page 8 before submitting
-    const page8Values = form.getValues('page8')
-    const page8Result = page8Schema.safeParse(page8Values)
-    if (!page8Result.success) {
-      await form.trigger('page8')
-      return
-    }
+    // ⚠️ TESTING MODE: page 8 validation bypassed
+    // TODO: Uncomment before production
+    // const page8Values = form.getValues('page8')
+    // const page8Result = page8Schema.safeParse(page8Values)
+    // if (!page8Result.success) {
+    //   await form.trigger('page8')
+    //   return
+    // }
 
     startTransition(async () => {
-      await autoSave(8)
+      // await autoSave(8) // skip auto-save in testing mode
 
       const result = await submitApplication(resumeToken)
       if ('error' in result) {

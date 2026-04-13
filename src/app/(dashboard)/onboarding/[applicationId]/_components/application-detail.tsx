@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useQueryClient } from '@tanstack/react-query'
 import { useApplicationDetail } from '@/hooks/use-application-detail'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { Button } from '@/components/ui/button'
@@ -36,6 +37,7 @@ interface Props {
 const TERMINAL_PASS = new Set(['passed', 'waived', 'not_applicable'])
 
 export function ApplicationDetail({ applicationId }: Props) {
+  const queryClient = useQueryClient()
   const { data, isLoading, error } = useApplicationDetail(applicationId)
   const [adverseModalOpen, setAdverseModalOpen] = useState(false)
   const [approving, setApproving] = useState(false)
@@ -81,6 +83,7 @@ export function ApplicationDetail({ applicationId }: Props) {
       if ('error' in result) {
         toast.error('Approval failed', { description: result.error })
       } else {
+        queryClient.invalidateQueries({ queryKey: ['applications', applicationId] })
         toast.success('Driver approved', { description: `${fullName} has been cleared to drive.` })
       }
     } finally {

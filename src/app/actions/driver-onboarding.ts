@@ -27,7 +27,7 @@ import { authorize, safeError } from '@/lib/authz'
 import { logAuditEvent } from '@/lib/audit-log'
 import { redactPii } from '@/lib/audit-redact'
 import { countBusinessDays } from '@/lib/business-days'
-import { copyFile } from '@/lib/storage'
+import { copyFile, uploadFile, getSignedUrl } from '@/lib/storage'
 import {
   updateStepStatusSchema,
   uploadStepResultSchema,
@@ -1137,4 +1137,186 @@ export async function approvePipeline(
   revalidatePath(`/drivers/${driverId}`)
 
   return { driverId }
+}
+
+// ---------------------------------------------------------------------------
+// uploadStepDocument (FormData-based file upload for pipeline steps)
+// ---------------------------------------------------------------------------
+
+/** Step key → default compliance sub-category mapping */
+const STEP_SUB_CATEGORY_MAP: Record<string, string> = {
+  application_review: 'employment_application',
+  mvr_pull: 'mvr',
+  prior_employer_verification: 'employer_verification',
+  clearinghouse_query: 'drug_alcohol_testing',
+  drug_test: 'drug_alcohol_testing',
+  medical_verification: 'medical_certificate',
+  road_test: 'road_test_cert',
+  psp_query: 'mvr',
+  dq_file_assembly: 'employment_application',
+  final_approval: 'employment_application',
+}
+
+/**
+ * Upload a compliance document and attach it to a pipeline step.
+ *
+ * FormData fields:
+ *   stepId       string   — pipeline step UUID
+ *   subCategory  string   — DQF sub-category (optional, auto-mapped from step_key)
+ *   expiresAt    string   — optional ISO date
+ *   file         File     — the document
+ */
+export async function uploadStepDocument(formData: FormData): Promise<
+  | { documentId: string }
+  | { error: string }
+> {
+  const stepId = formData.get('stepId')
+  const subCategory = formData.get('subCategory')
+  const expiresAt = formData.get('expiresAt')
+  const file = formData.get('file')
+
+  if (typeof stepId !== 'string' || !stepId) return { error: 'Missing stepId' }
+  if (!(file instanceof File) || file.size === 0) return { error: 'Missing file' }
+
+  const idParsed = z.string().uuid().safeParse(stepId)
+  if (!idParsed.success) return { error: 'Invalid step ID' }
+
+  const auth = await authorize('driver_onboarding.update', {
+    rateLimit: { key: 'uploadStepDocument', limit: 20, windowMs: 60_000 },
+  })
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId, user } = auth.ctx
+
+  // Verify step belongs to tenant
+  const { data: step, error: stepErr } = await supabase
+    .from('driver_onboarding_steps')
+    .select('id, pipeline_id, step_key, tenant_id')
+    .eq('id', idParsed.data)
+    .eq('tenant_id', tenantId)
+    .single()
+
+  if (stepErr || !step) {
+    return { error: safeError(stepErr ?? { message: 'Not found' }, 'uploadStepDocument') }
+  }
+
+  // Fetch application_id from pipeline
+  const { data: pipeline, error: pipelineErr } = await supabase
+    .from('driver_onboarding_pipelines')
+    .select('application_id')
+    .eq('id', step.pipeline_id as string)
+    .eq('tenant_id', tenantId)
+    .single()
+
+  if (pipelineErr || !pipeline) {
+    return { error: safeError(pipelineErr ?? { message: 'Pipeline not found' }, 'uploadStepDocument') }
+  }
+
+  // Upload file to storage
+  const { path: storagePath, error: uploadError } = await uploadFile(
+    supabase,
+    'documents',
+    tenantId,
+    step.id as string,
+    file,
+  )
+
+  if (uploadError) {
+    return { error: safeError({ message: uploadError }, 'uploadStepDocument:upload') }
+  }
+
+  // Resolve sub-category
+  const resolvedSubCategory = (typeof subCategory === 'string' && subCategory)
+    ? subCategory
+    : STEP_SUB_CATEGORY_MAP[step.step_key as string] ?? 'employment_application'
+
+  // Insert compliance_documents row
+  const { data: doc, error: insertError } = await supabase
+    .from('compliance_documents')
+    .insert({
+      tenant_id: tenantId,
+      entity_type: 'driver_application',
+      entity_id: pipeline.application_id as string,
+      document_type: 'dqf',
+      name: file.name,
+      file_name: file.name,
+      storage_path: storagePath,
+      file_size: file.size,
+      sub_category: resolvedSubCategory,
+      expires_at: (typeof expiresAt === 'string' && expiresAt) ? expiresAt : null,
+      onboarding_step_id: idParsed.data,
+      uploaded_by: user.id,
+      status: 'valid',
+    })
+    .select('id')
+    .single()
+
+  if (insertError || !doc) {
+    return { error: safeError(insertError ?? { message: 'Insert failed' }, 'uploadStepDocument') }
+  }
+
+  revalidatePath(`/onboarding/${pipeline.application_id}`)
+  return { documentId: doc.id as string }
+}
+
+// ---------------------------------------------------------------------------
+// getStepDocuments (query compliance documents for a step)
+// ---------------------------------------------------------------------------
+
+export async function getStepDocuments(stepId: string): Promise<
+  | { documents: Array<{ id: string; file_name: string; sub_category: string; file_size: number | null; created_at: string; storage_path: string }> }
+  | { error: string }
+> {
+  const idParsed = z.string().uuid().safeParse(stepId)
+  if (!idParsed.success) return { error: 'Invalid step ID' }
+
+  const auth = await authorize('driver_onboarding.read')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
+
+  const { data: docs, error } = await supabase
+    .from('compliance_documents')
+    .select('id, file_name, sub_category, file_size, created_at, storage_path')
+    .eq('onboarding_step_id', idParsed.data)
+    .eq('tenant_id', tenantId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    return { error: safeError(error, 'getStepDocuments') }
+  }
+
+  return { documents: (docs ?? []) as Array<{ id: string; file_name: string; sub_category: string; file_size: number | null; created_at: string; storage_path: string }> }
+}
+
+// ---------------------------------------------------------------------------
+// downloadStepDocument (signed URL for compliance document)
+// ---------------------------------------------------------------------------
+
+export async function downloadStepDocument(documentId: string): Promise<
+  | { url: string }
+  | { error: string }
+> {
+  const idParsed = z.string().uuid().safeParse(documentId)
+  if (!idParsed.success) return { error: 'Invalid document ID' }
+
+  const auth = await authorize('driver_onboarding.read')
+  if (!auth.ok) return { error: auth.error }
+  const { supabase, tenantId } = auth.ctx
+
+  const { data: doc, error: docErr } = await supabase
+    .from('compliance_documents')
+    .select('storage_path')
+    .eq('id', idParsed.data)
+    .eq('tenant_id', tenantId)
+    .single()
+
+  if (docErr || !doc) {
+    return { error: safeError(docErr ?? { message: 'Not found' }, 'downloadStepDocument') }
+  }
+
+  const { url, error: urlErr } = await getSignedUrl(supabase, 'documents', doc.storage_path as string, 60)
+  if (urlErr || !url) {
+    return { error: safeError({ message: urlErr ?? 'Failed to generate URL' }, 'downloadStepDocument') }
+  }
+
+  return { url }
 }
