@@ -15,6 +15,9 @@ function formatBytes(bytes: number | null): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
+// Only show scan badge when AV scanning is actually active (clean or flagged).
+// 'pending' is the default state and AV scanning is not yet implemented (TODO v2),
+// so showing "Pending scan" permanently just confuses users.
 function ScanBadge({ status }: { status: string }) {
   if (status === 'clean') {
     return (
@@ -30,11 +33,8 @@ function ScanBadge({ status }: { status: string }) {
       </span>
     )
   }
-  return (
-    <span className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">
-      Pending scan
-    </span>
-  )
+  // 'pending' or unknown — don't show a badge until AV scanning ships
+  return null
 }
 
 export function DocumentsTab({ applicationId: _applicationId, documents }: Props) {
@@ -51,18 +51,17 @@ export function DocumentsTab({ applicationId: _applicationId, documents }: Props
   return (
     <div className="rounded-xl border border-border bg-surface overflow-hidden">
       {/* Header */}
-      <div className="grid grid-cols-[1fr_120px_100px_100px_80px] gap-2 border-b border-border bg-muted/50 px-4 py-2.5">
+      <div className="grid grid-cols-[1fr_120px_100px_100px] gap-2 border-b border-border bg-muted/50 px-4 py-2.5">
         <span className="text-xs font-medium text-muted-foreground">File</span>
         <span className="text-xs font-medium text-muted-foreground">Type</span>
         <span className="text-xs font-medium text-muted-foreground">Size</span>
         <span className="text-xs font-medium text-muted-foreground">Uploaded</span>
-        <span className="text-xs font-medium text-muted-foreground">Scan</span>
       </div>
 
       {typedDocs.map((doc) => (
         <div
           key={doc.id}
-          className="grid grid-cols-[1fr_120px_100px_100px_80px] gap-2 items-center border-b border-border px-4 py-3 last:border-b-0 hover:bg-muted/20 transition-colors"
+          className="grid grid-cols-[1fr_120px_100px_100px] gap-2 items-center border-b border-border px-4 py-3 last:border-b-0 hover:bg-muted/20 transition-colors"
         >
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-foreground">{doc.file_name}</p>
@@ -83,9 +82,12 @@ export function DocumentsTab({ applicationId: _applicationId, documents }: Props
               year: 'numeric',
             })}
           </div>
-          <div>
-            <ScanBadge status={doc.scan_status} />
-          </div>
+          {/* Show scan badge only for flagged docs (AV scanning is TODO v2) */}
+          {doc.scan_status === 'flagged' && (
+            <div className="col-span-full px-4 pb-2">
+              <ScanBadge status={doc.scan_status} />
+            </div>
+          )}
         </div>
       ))}
     </div>

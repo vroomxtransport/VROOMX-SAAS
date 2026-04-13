@@ -1199,10 +1199,11 @@ export async function getApplicationDetail(id: string): Promise<
     .eq('tenant_id', tenantId)
     .order('uploaded_at', { ascending: true })
 
-  // Attach downloadBlocked flag: admins must not download unscanned files
+  // Attach downloadBlocked flag: block only flagged files (AV scanning is TODO v2,
+  // so scan_status is always 'pending' — blocking non-clean made all downloads impossible)
   const documents = (rawDocuments ?? []).map((doc) => ({
     ...doc,
-    downloadBlocked: doc.scan_status !== 'clean',
+    downloadBlocked: doc.scan_status === 'flagged',
   }))
 
   // Pipeline + steps
@@ -1390,9 +1391,13 @@ export async function downloadApplicationDocument(
     return { error: safeError(docError ?? { message: 'Not found' }, 'downloadApplicationDocument') }
   }
 
-  // SEC-009: block downloads of unscanned or flagged files
-  if (doc.scan_status !== 'clean') {
-    return { error: 'Document has not been scanned yet. Download will be available after scanning completes.' }
+  // Block downloads of flagged files only. Previously blocked all non-clean docs
+  // (SEC-009), but AV scanning is not yet implemented (TODO v2), so scan_status
+  // is always 'pending' — which made ALL downloads impossible for admins.
+  // Relaxed to block only 'flagged' docs, matching the document transfer logic.
+  // TODO(v2): revert to scan_status !== 'clean' once AV edge function ships.
+  if (doc.scan_status === 'flagged') {
+    return { error: 'This document has been flagged and cannot be downloaded.' }
   }
 
   // Generate a 60-second signed URL (TTL is short to limit exposure)
