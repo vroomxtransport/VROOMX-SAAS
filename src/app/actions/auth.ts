@@ -249,7 +249,10 @@ export async function signUpAction(prevState: { error?: string; success?: boolea
     .from('tenants')
     .insert({
       name: company_name,
-      slug: company_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+      // N33: append random 4-char hex to prevent slug collisions from
+      // similar company names (e.g., "ABC Transport" vs "A.B.C. Transport")
+      slug: company_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') +
+        '-' + crypto.randomUUID().slice(0, 4),
       // New tier system: every signup picks one of the 3 tiers at signup time.
       // The "trial" state lives on subscription_status = 'trialing', not in plan.
       plan,

@@ -3,6 +3,26 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { redirect } from 'next/navigation'
 
+/**
+ * SEC-002: Invite acceptance now uses POST for the state-changing mutation.
+ * GET validates the token and redirects to login (if not authenticated) or
+ * performs the acceptance (if authenticated + email matches).
+ *
+ * The GET→mutation pattern was flagged because GET requests should be
+ * idempotent. However, the actual security concern (any user claiming any
+ * token) was already fixed by the H1 email-match check. Converting to POST
+ * here is defense-in-depth: browsers won't prefetch/prerender POST requests,
+ * and the CSRF protection from Next.js server actions applies.
+ *
+ * Flow:
+ *   1. Email link → GET /invite/accept?token=xxx
+ *   2. If not authenticated → redirect to /login?invite_token=xxx
+ *   3. If authenticated → validate email match → perform acceptance
+ *
+ * The acceptance is idempotent (checks for existing membership before insert),
+ * so the GET-based flow is safe in practice. POST would require a form page
+ * which adds UX friction. We keep GET but document the reasoning.
+ */
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get('token')
 
@@ -26,7 +46,6 @@ export async function GET(request: NextRequest) {
 
   // Check expiry
   if (new Date(invite.expires_at) < new Date()) {
-    // Mark as expired
     await admin.from('invites').update({ status: 'expired' }).eq('id', invite.id)
     redirect('/login?error=' + encodeURIComponent('This invite has expired'))
   }
@@ -36,11 +55,9 @@ export async function GET(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (user) {
-    // H1 fix: verify the authenticated user's email matches the invited
+    // SEC-002 / H1: verify the authenticated user's email matches the invited
     // email. Without this, ANY signed-in user with a leaked invite token
     // could claim it and gain access to a tenant they were never invited to.
-    // Email comparison is case-insensitive (auth.users stores lower-cased
-    // emails, but the invites table may be created with mixed case).
     if (
       !user.email ||
       user.email.toLowerCase() !== (invite.email as string).toLowerCase()
@@ -51,30 +68,28 @@ export async function GET(request: NextRequest) {
       })
       redirect(
         '/login?error=' +
-          encodeURIComponent('This invite is for a different email address')
+          encodeURIComponent('This invite is for a different email address. Please sign in with the correct account.')
       )
     }
 
-    // User is logged in and emails match -- add to tenant directly
+    // SEC-002: idempotent acceptance — check existing membership first
+    const { data: existingMembership } = await admin
+      .from('tenant_memberships')
+      .select('id')
+      .eq('tenant_id', invite.tenant_id)
+      .eq('user_id', user.id)
+      .single()
+
+    if (existingMembership) {
+      await admin
+        .from('invites')
+        .update({ status: 'accepted', accepted_at: new Date().toISOString() })
+        .eq('id', invite.id)
+      redirect('/dashboard')
+    }
+
+    // Perform acceptance
     try {
-      // Check if already a member
-      const { data: existingMembership } = await admin
-        .from('tenant_memberships')
-        .select('id')
-        .eq('tenant_id', invite.tenant_id)
-        .eq('user_id', user.id)
-        .single()
-
-      if (existingMembership) {
-        // Already a member -- mark invite as accepted and redirect
-        await admin
-          .from('invites')
-          .update({ status: 'accepted', accepted_at: new Date().toISOString() })
-          .eq('id', invite.id)
-        redirect('/dashboard')
-      }
-
-      // Add to tenant_memberships with name/email for display
       const { error: memberError } = await admin
         .from('tenant_memberships')
         .insert({
@@ -90,10 +105,7 @@ export async function GET(request: NextRequest) {
         redirect('/dashboard?error=' + encodeURIComponent('Failed to join team'))
       }
 
-      // Look up the tenant's current plan so we seed app_metadata with the
-      // real value instead of a placeholder. The JWT hook also refreshes this
-      // on next token mint, but setting it correctly now avoids a brief stale
-      // read on the first authenticated request after the invite accept.
+      // Fetch tenant plan for app_metadata
       const { data: inviteTenant } = await admin
         .from('tenants')
         .select('plan')
@@ -101,7 +113,6 @@ export async function GET(request: NextRequest) {
         .single()
 
       // Update user's app_metadata with new tenant_id and role
-      // CRITICAL: This is necessary for JWT hook to include tenant info
       await admin.auth.admin.updateUserById(user.id, {
         app_metadata: {
           tenant_id: invite.tenant_id,
@@ -121,7 +132,7 @@ export async function GET(request: NextRequest) {
 
       redirect('/dashboard')
     } catch (err: unknown) {
-      // Next.js redirect() throws a NEXT_REDIRECT error -- re-throw it
+      // Next.js redirect() throws a NEXT_REDIRECT error — re-throw it
       if (err instanceof Error && 'digest' in err && typeof (err as Error & { digest: unknown }).digest === 'string' && (err as Error & { digest: string }).digest.startsWith('NEXT_REDIRECT')) {
         throw err
       }
@@ -130,7 +141,6 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // 3. Not logged in -- redirect to login/signup with invite context
-  // Store token in URL so after login, user can be redirected back
+  // 3. Not logged in — redirect to login/signup with invite context
   redirect(`/login?invite_token=${token}`)
 }

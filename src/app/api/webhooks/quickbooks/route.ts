@@ -234,19 +234,49 @@ async function processEntity(
       }
 
       case 'Invoice.Void':
-        // TODO: implement voidInvoiceInVroomX — mark matching VroomX
-        // invoice as voided and update order payment status
-        console.info(
-          `[QB_WEBHOOK] Invoice voided: ${entity.id} for tenant ${tenantId}`
-        )
-        break
+      case 'Invoice.Delete': {
+        // N25: when a QB invoice is voided or deleted, revert the VroomX
+        // order's payment_status back to 'unpaid' and clear the invoice_date.
+        // This prevents financial mismatch where QB shows no invoice but
+        // VroomX still shows 'invoiced' or 'paid'.
+        const { data: invoiceMap } = await supabase
+          .from('quickbooks_entity_map')
+          .select('vroomx_id')
+          .eq('tenant_id', tenantId)
+          .eq('entity_type', 'order_invoice')
+          .eq('qb_id', entity.id)
+          .maybeSingle()
 
-      case 'Invoice.Delete':
-        // TODO: handle deleted invoice — unlink from VroomX order
-        console.info(
-          `[QB_WEBHOOK] Invoice deleted: ${entity.id} for tenant ${tenantId}`
-        )
+        if (invoiceMap?.vroomx_id) {
+          await supabase
+            .from('orders')
+            .update({
+              payment_status: 'unpaid',
+              invoice_date: null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', invoiceMap.vroomx_id)
+            .eq('tenant_id', tenantId)
+
+          // Remove the entity map entry so re-sync creates a fresh invoice
+          await supabase
+            .from('quickbooks_entity_map')
+            .delete()
+            .eq('tenant_id', tenantId)
+            .eq('entity_type', 'order_invoice')
+            .eq('qb_id', entity.id)
+
+          console.info(
+            `[QB_WEBHOOK] Invoice ${entity.operation === 'Void' ? 'voided' : 'deleted'}: ` +
+            `QB ${entity.id} → order ${invoiceMap.vroomx_id} reverted to unpaid`
+          )
+        } else {
+          console.info(
+            `[QB_WEBHOOK] Invoice ${entity.operation}: QB ${entity.id} not mapped to any VroomX order`
+          )
+        }
         break
+      }
 
       case 'Customer.Update':
       case 'Customer.Merge':
