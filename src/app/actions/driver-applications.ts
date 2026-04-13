@@ -671,6 +671,24 @@ export async function signConsent(
     return { error: 'Unable to record consent. Please try again.' }
   }
 
+  // Audit log — strengthens evidence chain if a driver disputes signing
+  logAuditEvent(supabase, {
+    tenantId: application.tenant_id as string,
+    entityType: 'driver_application',
+    entityId: application.id as string,
+    action: 'consent.signed',
+    description: `Consent "${parsed.data.consentType}" signed`,
+    actorId: 'applicant',
+    actorEmail: (application.email as string) ?? undefined,
+    metadata: redactPii({
+      consent_id: consent.id,
+      consent_type: parsed.data.consentType,
+      typed_name: parsed.data.typedName,
+      ip_address: ip,
+      signed_at: signedAt,
+    }) as Record<string, unknown>,
+  }).catch(captureAsyncError('driver-app action'))
+
   return { consentId: consent.id as string, signedAt: consent.signed_at as string }
 }
 
