@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { HexColorPicker } from 'react-colorful'
 import {
@@ -108,6 +109,7 @@ export function BrandingForm({
 
   const [saving, setSaving] = useState(false)
   const [, startTransition] = useTransition()
+  const router = useRouter()
 
   // ── Logo upload ──────────────────────────────────────────────────────────────
   async function handleFileUpload(file: File) {
@@ -203,15 +205,38 @@ export function BrandingForm({
       fd.append('banner', file)
 
       const result = await uploadBanner(fd)
-      if ('error' in result && result.error) {
-        toast.error(typeof result.error === 'string' ? result.error : 'Failed to upload banner.')
+      const ok =
+        !!result &&
+        typeof result === 'object' &&
+        'success' in result &&
+        result.success === true
+      if (!ok) {
+        const msg =
+          result && typeof result === 'object' && 'error' in result && typeof result.error === 'string'
+            ? result.error
+            : 'Failed to upload banner.'
+        toast.error(msg)
         setBannerUrl(initialBannerUrl ?? null)
-      } else {
-        toast.success('Banner uploaded successfully.')
+        URL.revokeObjectURL(objectUrl)
+        return
       }
-    } catch {
+      // Replace the ephemeral blob URL with the real signed URL so the preview
+      // survives a remount. Fall back to initialBannerUrl if the server didn't
+      // return one (shouldn't happen, but keep a safety net).
+      const signedUrl =
+        'signedUrl' in result && typeof result.signedUrl === 'string'
+          ? result.signedUrl
+          : null
+      URL.revokeObjectURL(objectUrl)
+      setBannerUrl(signedUrl ?? initialBannerUrl ?? null)
+      toast.success('Banner uploaded successfully.')
+      // Re-render parent RSC so initialBannerUrl reflects the saved path.
+      router.refresh()
+    } catch (err) {
+      console.error('[uploadBanner client] threw', err)
       toast.error('Failed to upload banner. Please try again.')
       setBannerUrl(initialBannerUrl ?? null)
+      URL.revokeObjectURL(objectUrl)
     } finally {
       setBannerUploading(false)
     }
@@ -245,11 +270,21 @@ export function BrandingForm({
     if (!confirm('Remove the application banner? This cannot be undone.')) return
     setBannerDeleting(true)
     const result = await deleteBanner()
-    if ('error' in result && result.error) {
-      toast.error(typeof result.error === 'string' ? result.error : 'Failed to remove banner.')
+    const ok =
+      !!result &&
+      typeof result === 'object' &&
+      'success' in result &&
+      result.success === true
+    if (!ok) {
+      const msg =
+        result && typeof result === 'object' && 'error' in result && typeof result.error === 'string'
+          ? result.error
+          : 'Failed to remove banner.'
+      toast.error(msg)
     } else {
       toast.success('Banner removed.')
       setBannerUrl(null)
+      router.refresh()
     }
     setBannerDeleting(false)
   }

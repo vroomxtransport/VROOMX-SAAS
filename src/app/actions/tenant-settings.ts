@@ -191,48 +191,90 @@ const ALLOWED_BANNER_MIME = new Set(['image/png', 'image/jpeg', 'image/webp'])
 const MAX_BANNER_SIZE = 5 * 1024 * 1024 // 5 MB
 
 export async function uploadBanner(formData: FormData) {
-  const auth = await authorize('settings.manage', { rateLimit: { key: 'uploadBanner', limit: 10, windowMs: 60_000 } })
-  if (!auth.ok) return { error: auth.error }
-  const { tenantId } = auth.ctx
+  try {
+    const auth = await authorize('settings.manage', { rateLimit: { key: 'uploadBanner', limit: 10, windowMs: 60_000 } })
+    if (!auth.ok) return { error: auth.error }
+    const { tenantId } = auth.ctx
 
-  const file = formData.get('banner') as File | null
-  if (!file || file.size === 0) return { error: 'No file provided.' }
+    const file = formData.get('banner') as File | null
+    if (!file || file.size === 0) return { error: 'No file provided.' }
 
-  if (!ALLOWED_BANNER_MIME.has(file.type)) {
-    return { error: 'File must be a PNG, JPEG, or WebP image.' }
+    console.info('[uploadBanner] received', {
+      tenantId,
+      fileName: file.name,
+      fileType: file.type,
+      fileSize: file.size,
+    })
+
+    // Trust magic-byte detection over file.type header. Some browsers (Safari on
+    // drag-and-drop, certain export pipelines) hand us an empty or unexpected
+    // MIME type even for valid PNG/JPEG. `uploadFile` re-validates via file-type
+    // against the buffer, so we only reject here when the header is ALSO non-image
+    // — a true image uploaded with no reported MIME should still pass.
+    if (file.type && !ALLOWED_BANNER_MIME.has(file.type)) {
+      console.info('[uploadBanner] reject by header MIME', { fileType: file.type })
+      return { error: 'File must be a PNG, JPEG, or WebP image.' }
+    }
+    if (file.size > MAX_BANNER_SIZE) {
+      return { error: 'File too large. Maximum size is 5MB.' }
+    }
+
+    const admin = createServiceRoleClient()
+
+    const { data: tenant, error: selectErr } = await admin
+      .from('tenants')
+      .select('app_banner_storage_path')
+      .eq('id', tenantId)
+      .single()
+
+    if (selectErr) {
+      return { error: safeError(selectErr, 'uploadBanner.select') }
+    }
+
+    if (tenant?.app_banner_storage_path) {
+      await deleteFile(admin, 'branding', tenant.app_banner_storage_path)
+    }
+
+    const { path, error: uploadError } = await uploadFile(admin, 'branding', tenantId, 'banner', file)
+    if (uploadError) {
+      console.info('[uploadBanner] uploadFile rejected')
+      return { error: uploadError }
+    }
+
+    // Defense-in-depth: the server constructs `path` itself, but confirm the
+    // prefix matches the caller's tenant before persisting. Guards against any
+    // future refactor of uploadFile that silently changes the layout.
+    if (!path.startsWith(`${tenantId}/`)) {
+      await deleteFile(admin, 'branding', path)
+      return { error: safeError({ message: 'storage path prefix mismatch' }, 'uploadBanner.assert') }
+    }
+
+    console.info('[uploadBanner] stored', { path })
+
+    const { error: updateError } = await admin
+      .from('tenants')
+      .update({ app_banner_storage_path: path, updated_at: new Date().toISOString() })
+      .eq('id', tenantId)
+
+    if (updateError) {
+      await deleteFile(admin, 'branding', path)
+      return { error: safeError(updateError, 'uploadBanner.update') }
+    }
+
+    // Mint a short-lived signed URL so the client can swap its optimistic blob
+    // URL for the real one without a full page reload. 1-hour expiry matches
+    // branding/page.tsx.
+    const { data: signed } = await admin.storage
+      .from('branding')
+      .createSignedUrl(path, 3600)
+
+    revalidatePath('/settings')
+    revalidatePath('/settings/branding')
+    console.info('[uploadBanner] success', { path, hasSignedUrl: !!signed?.signedUrl })
+    return { success: true as const, path, signedUrl: signed?.signedUrl ?? null }
+  } catch (err) {
+    return { error: safeError(err as { message: string }, 'uploadBanner.throw') }
   }
-  if (file.size > MAX_BANNER_SIZE) {
-    return { error: 'File too large. Maximum size is 5MB.' }
-  }
-
-  const admin = createServiceRoleClient()
-
-  const { data: tenant } = await admin
-    .from('tenants')
-    .select('app_banner_storage_path')
-    .eq('id', tenantId)
-    .single()
-
-  if (tenant?.app_banner_storage_path) {
-    await deleteFile(admin, 'branding', tenant.app_banner_storage_path)
-  }
-
-  const { path, error: uploadError } = await uploadFile(admin, 'branding', tenantId, 'banner', file)
-  if (uploadError) return { error: uploadError }
-
-  const { error: updateError } = await admin
-    .from('tenants')
-    .update({ app_banner_storage_path: path, updated_at: new Date().toISOString() })
-    .eq('id', tenantId)
-
-  if (updateError) {
-    await deleteFile(admin, 'branding', path)
-    return { error: safeError(updateError, 'uploadBanner') }
-  }
-
-  revalidatePath('/settings')
-  revalidatePath('/settings/branding')
-  return { success: true, path }
 }
 
 export async function deleteBanner() {
