@@ -108,6 +108,8 @@ export function StepDetailDrawer({ open, onOpenChange, step, applicationId }: Pr
     const result = await getStepDocuments(step.id)
     if ('documents' in result) {
       setDocs(result.documents)
+    } else if ('error' in result) {
+      toast.error('Failed to load documents', { description: result.error })
     }
     setLoadingDocs(false)
   }, [step])
@@ -395,7 +397,7 @@ export function StepDetailDrawer({ open, onOpenChange, step, applicationId }: Pr
                       Drop file here or click to browse
                     </p>
                     <p className="text-[10px] text-muted-foreground">
-                      PDF, JPG, PNG — max 25 MB
+                      PDF, JPG, PNG, DOC, DOCX, XLS, XLSX, CSV, TXT — max 25 MB
                     </p>
                   </>
                 )}

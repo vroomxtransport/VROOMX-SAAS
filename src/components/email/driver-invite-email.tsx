@@ -10,6 +10,7 @@ import {
   Section,
   Text,
 } from '@react-email/components'
+import { CompanyFooter, type CompanyInfo } from './company-footer'
 
 interface DriverInviteEmailProps {
   tenantName: string
@@ -17,6 +18,7 @@ interface DriverInviteEmailProps {
   inviterName: string
   driverFirstName: string
   applicationUrl: string
+  company?: CompanyInfo
 }
 
 export function DriverInviteEmail({
@@ -25,6 +27,7 @@ export function DriverInviteEmail({
   inviterName,
   driverFirstName,
   applicationUrl,
+  company,
 }: DriverInviteEmailProps) {
   const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.vroomx.com'
   const resumeUrl = `${appBaseUrl}/apply/${tenantSlug}/resume`
@@ -75,9 +78,7 @@ export function DriverInviteEmail({
             </Link>
           </Text>
 
-          <Hr style={hrStyle} />
-
-          <Text style={poweredByStyle}>Powered by VroomX TMS</Text>
+          <CompanyFooter company={company ?? { name: tenantName }} />
         </Container>
       </Body>
     </Html>
@@ -151,9 +152,3 @@ const linkStyle: React.CSSProperties = {
   wordBreak: 'break-all' as const,
 }
 
-const poweredByStyle: React.CSSProperties = {
-  fontSize: '11px',
-  color: '#9ca3af',
-  textAlign: 'center' as const,
-  margin: 0,
-}

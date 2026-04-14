@@ -3,12 +3,12 @@ import {
   Container,
   Head,
   Heading,
-  Hr,
   Html,
   Preview,
   Section,
   Text,
 } from '@react-email/components'
+import { CompanyFooter, type CompanyInfo } from './company-footer'
 
 interface InvoiceEmailProps {
   order: {
@@ -16,9 +16,7 @@ interface InvoiceEmailProps {
     order_number: string | null
     carrier_pay: string
   }
-  tenant: {
-    name: string
-  }
+  tenant: CompanyInfo
 }
 
 export function InvoiceEmail({ order, tenant }: InvoiceEmailProps) {
@@ -43,11 +41,7 @@ export function InvoiceEmail({ order, tenant }: InvoiceEmailProps) {
             <Text style={amountValueStyle}>{amountDue}</Text>
           </Section>
 
-          <Hr style={hrStyle} />
-
-          <Text style={footerStyle}>
-            This invoice was sent by {tenant.name}.
-          </Text>
+          <CompanyFooter company={tenant} />
         </Container>
       </Body>
     </Html>
@@ -108,13 +102,3 @@ const amountValueStyle: React.CSSProperties = {
   margin: 0,
 }
 
-const hrStyle: React.CSSProperties = {
-  borderColor: '#e5e7eb',
-  margin: '24px 0',
-}
-
-const footerStyle: React.CSSProperties = {
-  fontSize: '12px',
-  color: '#6b7280',
-  margin: 0,
-}

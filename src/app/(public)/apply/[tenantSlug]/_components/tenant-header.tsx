@@ -6,20 +6,9 @@ interface TenantHeaderProps {
   city: string | null
   state: string | null
   zip: string | null
-  /**
-   * Pre-resolved signed URL for the carrier's logo, or null if no logo.
-   * Computed server-side via publicReadTenantLogoUrl() — never construct
-   * storage URLs in this component.
-   */
   logoUrl: string | null
 }
 
-/**
- * Server-rendered header card matching the reference screenshots:
- * Logo (if present) | CARRIER NAME IN BOLD CAPS | address on line below
- *
- * Appears at the top of every wizard page.
- */
 export function TenantHeader({
   name,
   address,
@@ -33,7 +22,7 @@ export function TenantHeader({
     .join(', ')
 
   return (
-    <div className="flex items-center gap-4 py-3 px-0">
+    <div className="flex items-center gap-3 py-2 px-0">
       {logoUrl && (
         <div className="shrink-0">
           {/*
@@ -46,9 +35,9 @@ export function TenantHeader({
           <Image
             src={logoUrl}
             alt={`${name} logo`}
-            width={56}
-            height={56}
-            className="h-14 w-14 rounded object-contain bg-white p-1"
+            width={44}
+            height={44}
+            className="h-11 w-11 rounded-lg object-contain bg-white p-1 ring-1 ring-gray-200/80 shadow-sm"
             unoptimized
           />
         </div>
@@ -58,7 +47,7 @@ export function TenantHeader({
           {name}
         </h1>
         {addressLine && (
-          <p className="mt-0.5 text-xs text-white/50 truncate">
+          <p className="mt-0.5 text-xs text-gray-300 truncate">
             {addressLine}
           </p>
         )}

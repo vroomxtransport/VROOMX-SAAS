@@ -151,9 +151,9 @@
   --sidebar-hover: #f3f4f6;
   --sidebar-active: #eef2ff;
   --sidebar-active-glow: transparent;
-  --sidebar-text: #6b7280;
+  --sidebar-text: #4b5563;
   --sidebar-text-active: #192334;
-  --sidebar-category: #64748b;
+  --sidebar-category: #475569;
 
   /* Card accent colors */
   --accent-blue: #3b82f6;
@@ -258,6 +258,18 @@
   }
 
   .sidebar-noise { position: relative; }
+
+  /* Dark sidebar — scoped to dashboard sidebar only (admin stays light) */
+  .sidebar-dark {
+    --sidebar-bg: #1a1c1e;
+    --sidebar-bg-subtle: #222426;
+    --sidebar-border-color: rgba(255, 255, 255, 0.07);
+    --sidebar-hover: rgba(255, 255, 255, 0.06);
+    --sidebar-active: rgba(255, 255, 255, 0.08);
+    --sidebar-text: rgba(255, 255, 255, 0.5);
+    --sidebar-text-active: rgba(255, 255, 255, 0.95);
+    --sidebar-category: rgba(255, 255, 255, 0.35);
+  }
 }
 
 /* Marketing page color tokens */
@@ -699,4 +711,11 @@
   background: color-mix(in oklch, var(--brand) 22%, transparent);
   color: var(--brand);
   box-shadow: 0 0 0 1px color-mix(in oklch, var(--brand) 35%, transparent);
+}
+
+/* File upload field — indeterminate progress bar */
+@keyframes progress-indeterminate {
+  0%   { left: -40%; width: 40%; }
+  60%  { left: 100%; width: 40%; }
+  100% { left: 100%; width: 40%; }
 }

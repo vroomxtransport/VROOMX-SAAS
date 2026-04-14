@@ -10,15 +10,17 @@ import {
   Section,
   Text,
 } from '@react-email/components'
+import { CompanyFooter, type CompanyInfo } from './company-footer'
 
 interface InviteEmailProps {
   tenantName: string
   inviterName: string
   role: string
   acceptUrl: string
+  company?: CompanyInfo
 }
 
-export function InviteEmail({ tenantName, inviterName, role, acceptUrl }: InviteEmailProps) {
+export function InviteEmail({ tenantName, inviterName, role, acceptUrl, company }: InviteEmailProps) {
   return (
     <Html>
       <Head />
@@ -43,6 +45,8 @@ export function InviteEmail({ tenantName, inviterName, role, acceptUrl }: Invite
           <Text style={footerStyle}>
             This invitation expires in 72 hours. If you didn&apos;t expect this email, you can safely ignore it.
           </Text>
+
+          <CompanyFooter company={company ?? { name: tenantName }} />
         </Container>
       </Body>
     </Html>

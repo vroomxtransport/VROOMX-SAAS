@@ -10,22 +10,23 @@ import {
   Section,
   Text,
 } from '@react-email/components'
+import { CompanyFooter, type CompanyInfo } from './company-footer'
 
 interface NewApplicationEmailProps {
   tenantName: string
   applicantFirstName: string
   applicantLastName: string
-  applicationId: string
+  reviewUrl: string
+  company?: CompanyInfo
 }
 
 export function NewApplicationEmail({
   tenantName,
   applicantFirstName,
   applicantLastName,
-  applicationId,
+  reviewUrl,
+  company,
 }: NewApplicationEmailProps) {
-  const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.vroomx.com'
-  const reviewUrl = `${appBaseUrl}/onboarding/${applicationId}`
 
   return (
     <Html>
@@ -77,9 +78,7 @@ export function NewApplicationEmail({
             </Link>
           </Text>
 
-          <Hr style={hrStyle} />
-
-          <Text style={poweredByStyle}>Powered by VroomX TMS</Text>
+          <CompanyFooter company={company ?? { name: tenantName }} />
         </Container>
       </Body>
     </Html>
@@ -174,9 +173,3 @@ const linkStyle: React.CSSProperties = {
   wordBreak: 'break-all' as const,
 }
 
-const poweredByStyle: React.CSSProperties = {
-  fontSize: '11px',
-  color: '#9ca3af',
-  textAlign: 'center' as const,
-  margin: 0,
-}

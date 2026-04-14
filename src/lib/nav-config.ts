@@ -20,6 +20,7 @@ import {
   PlugSocketIcon,
   Settings02Icon,
   Menu01Icon,
+  UserMultipleIcon,
 } from '@hugeicons/core-free-icons'
 import type { TenantRole } from '@/types'
 import { hasMinRole } from '@/lib/tier'
@@ -35,6 +36,8 @@ export type NavItem = {
 
 export type NavCategory = {
   label: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  icon?: any
   items: NavItem[]
 }
 
@@ -50,6 +53,7 @@ export const NAV_CATEGORIES: NavCategory[] = [
   },
   {
     label: 'Operations',
+    icon: Route01Icon,
     items: [
       { name: 'Orders', href: '/orders', icon: Car01Icon },
       { name: 'Trips', href: '/dispatch', icon: Route01Icon },
@@ -57,6 +61,7 @@ export const NAV_CATEGORIES: NavCategory[] = [
   },
   {
     label: 'Fleet',
+    icon: TruckIcon,
     items: [
       { name: 'Trucks', href: '/trucks', icon: TruckIcon },
       { name: 'Trailers', href: '/trailers', icon: CaravanIcon },
@@ -69,6 +74,7 @@ export const NAV_CATEGORIES: NavCategory[] = [
   },
   {
     label: 'People',
+    icon: UserMultipleIcon,
     items: [
       { name: 'Dispatchers', href: '/dispatchers', icon: HeadsetIcon, minRole: 'admin' },
       { name: 'Performance', href: '/dispatcher-performance', icon: Analytics02Icon, minRole: 'admin' },
@@ -76,12 +82,14 @@ export const NAV_CATEGORIES: NavCategory[] = [
   },
   {
     label: 'Safety & Compliance',
+    icon: ShieldEnergyIcon,
     items: [
       { name: 'Safety & Compliance', href: '/compliance', icon: ShieldEnergyIcon, minRole: 'admin' },
     ],
   },
   {
     label: 'Finance',
+    icon: ChartBarLineIcon,
     items: [
       { name: 'Accounting', href: '/financials', icon: ChartBarLineIcon, minRole: 'admin' },
       { name: 'Brokers', href: '/brokers', icon: Agreement02Icon, minRole: 'dispatcher' },
@@ -89,6 +97,7 @@ export const NAV_CATEGORIES: NavCategory[] = [
   },
   {
     label: 'System',
+    icon: Settings02Icon,
     items: [
       { name: 'Integrations', href: '/integrations', icon: PlugSocketIcon },
       { name: 'Settings', href: '/settings', icon: Settings02Icon, minRole: 'admin' },

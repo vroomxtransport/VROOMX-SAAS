@@ -17,16 +17,20 @@ export default async function BrandingPage() {
   const { data: tenant } = await supabase
     .from('tenants')
     .select(
-      'name, logo_storage_path, brand_color_primary, brand_color_secondary, invoice_header_text, invoice_footer_text',
+      'name, logo_storage_path, brand_color_primary, brand_color_secondary, invoice_header_text, invoice_footer_text, app_banner_storage_path, app_welcome_message, app_footer_text, app_estimated_time',
     )
     .single()
 
-  let logoUrl: string | null = null
-  if (tenant?.logo_storage_path) {
-    // Signed URL valid for 1 hour — page is server-rendered on each request
-    const { url } = await getSignedUrl(supabase, 'branding', tenant.logo_storage_path, 3600)
-    logoUrl = url || null
-  }
+  const [logoResult, bannerResult] = await Promise.all([
+    tenant?.logo_storage_path
+      ? getSignedUrl(supabase, 'branding', tenant.logo_storage_path, 3600)
+      : Promise.resolve({ url: '', error: null }),
+    tenant?.app_banner_storage_path
+      ? getSignedUrl(supabase, 'branding', tenant.app_banner_storage_path, 3600)
+      : Promise.resolve({ url: '', error: null }),
+  ])
+  const logoUrl = logoResult.url || null
+  const bannerUrl = bannerResult.url || null
 
   return (
     <BrandingForm
@@ -36,6 +40,10 @@ export default async function BrandingPage() {
       initialBrandColorSecondary={tenant?.brand_color_secondary ?? ''}
       initialInvoiceHeaderText={tenant?.invoice_header_text ?? ''}
       initialInvoiceFooterText={tenant?.invoice_footer_text ?? ''}
+      initialBannerUrl={bannerUrl}
+      initialAppWelcomeMessage={tenant?.app_welcome_message ?? ''}
+      initialAppFooterText={tenant?.app_footer_text ?? ''}
+      initialAppEstimatedTime={tenant?.app_estimated_time ?? '15-20 minutes'}
     />
   )
 }

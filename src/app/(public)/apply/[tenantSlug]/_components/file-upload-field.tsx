@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
-import { Upload, X, Check, Loader2 } from 'lucide-react'
+import { Upload, X, Check, Loader2, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { uploadApplicationDocument } from '@/app/actions/driver-applications'
 
@@ -138,10 +138,13 @@ export function FileUploadField({
   )
 
   const displayError = error ?? uploadError
+  const isSuccess = uploadState === 'success' || isAlreadyUploaded
+  const isUploading = uploadState === 'uploading'
+  const isError = !isSuccess && !!displayError
 
   return (
     <div className="space-y-1.5">
-      <label className="block text-[10px] font-semibold uppercase tracking-widest text-gray-500">
+      <label className="block text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
         {label}
         {required && <span className="ml-0.5 text-red-500" aria-hidden="true">*</span>}
       </label>
@@ -162,42 +165,81 @@ export function FileUploadField({
           }
         }}
         className={cn(
-          'flex min-h-[80px] cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-4 text-sm transition-colors',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fb7232] focus-visible:ring-offset-1',
+          // Base — geometry, cursor, focus ring, transition
+          'relative flex min-h-[100px] min-w-[44px] cursor-pointer flex-col items-center justify-center',
+          'gap-2 overflow-hidden rounded-xl border-2 border-dashed px-4 py-5',
+          'transition-all duration-150 ease-out',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#192334)] focus-visible:ring-offset-2',
+          // State-based appearance
           isDragging
-            ? 'border-[#fb7232] bg-orange-50'
-            : uploadState === 'success' || isAlreadyUploaded
-              ? 'border-green-300 bg-green-50'
-              : displayError
-                ? 'border-red-300 bg-red-50'
-                : 'border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100',
+            ? 'border-[var(--brand-primary,#192334)] bg-orange-50/30 shadow-[0_0_0_4px_rgba(251,114,50,0.08)]'
+            : isSuccess
+              ? 'border-emerald-200 bg-emerald-50/50 hover:border-emerald-300'
+              : isError
+                ? 'border-red-200 bg-red-50/50 hover:border-red-300'
+                : 'border-gray-200 bg-gradient-to-b from-gray-50/50 to-white hover:border-gray-300 hover:bg-gray-50/80',
         )}
       >
-        {uploadState === 'uploading' ? (
-          <>
-            <Loader2 className="h-5 w-5 animate-spin text-[#fb7232]" aria-hidden="true" />
-            <span className="text-xs text-gray-500">Uploading…</span>
-          </>
-        ) : uploadState === 'success' || isAlreadyUploaded ? (
-          <>
-            <Check className="h-5 w-5 text-green-600" aria-hidden="true" />
-            <span className="text-xs font-medium text-green-700">
+        {/* Content */}
+        {isUploading ? (
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
+              <Loader2
+                className="h-5 w-5 animate-spin text-[var(--brand-primary,#192334)]"
+                aria-hidden="true"
+              />
+            </div>
+            <span className="text-sm font-medium text-muted-foreground">Uploading…</span>
+          </div>
+        ) : isSuccess ? (
+          <div className="flex flex-col items-center gap-1.5">
+            {/* Green check badge */}
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100">
+              <Check className="h-5 w-5 text-emerald-600" aria-hidden="true" />
+            </div>
+            <span className="max-w-[200px] truncate text-sm font-medium text-gray-700">
               {uploadedFileName ?? existingFileName ?? 'File uploaded'}
             </span>
-            <span className="text-xs text-gray-400">Click to replace</span>
-          </>
-        ) : (
-          <>
-            {uploadState === 'error' ? (
+            <span className="text-xs text-muted-foreground">Click to replace</span>
+          </div>
+        ) : isError ? (
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
               <X className="h-5 w-5 text-red-500" aria-hidden="true" />
-            ) : (
-              <Upload className="h-5 w-5 text-gray-400" aria-hidden="true" />
-            )}
-            <span className="text-xs text-gray-500">
-              Drag &amp; drop or <span className="font-medium text-[#192334]">click to upload</span>
+            </div>
+            <span className="text-sm font-medium text-gray-600">
+              Drag &amp; drop or{' '}
+              <span className="font-semibold text-[var(--brand-primary,#192334)]">click to upload</span>
             </span>
-            <span className="text-[11px] text-gray-400">PDF, JPG, PNG, HEIC · max 25 MB</span>
-          </>
+            <span className="text-xs text-muted-foreground mt-1">PDF, JPG, PNG, HEIC · max 25 MB</span>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
+              <Upload className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+            </div>
+            <span className="text-sm font-medium text-gray-600">
+              Drag &amp; drop or{' '}
+              <span className="font-semibold text-[var(--brand-primary,#192334)]">click to upload</span>
+            </span>
+            <span className="text-xs text-muted-foreground mt-1">PDF, JPG, PNG, HEIC · max 25 MB</span>
+          </div>
+        )}
+
+        {/* Uploading progress bar — thin brand-colored stripe that animates across the bottom */}
+        {isUploading && (
+          <span
+            aria-hidden="true"
+            className="absolute bottom-0 left-0 h-0.5 w-full overflow-hidden rounded-b-xl bg-gray-100"
+          >
+            <span
+              className="absolute inset-y-0 left-0 h-full animate-[progress-indeterminate_1.4s_ease-in-out_infinite] bg-[var(--brand-primary,#192334)]"
+              style={{
+                // CSS custom keyframe — falls back gracefully if not present
+                animationName: 'progress-indeterminate',
+              }}
+            />
+          </span>
         )}
       </div>
 
@@ -209,10 +251,13 @@ export function FileUploadField({
         className="sr-only"
         aria-hidden="true"
         tabIndex={-1}
+        style={{ fontSize: '16px' }}
       />
 
+      {/* Error message */}
       {displayError && (
-        <p role="alert" className="text-xs text-red-600">
+        <p role="alert" className="flex items-center gap-1.5 text-xs text-red-600">
+          <AlertCircle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           {displayError}
         </p>
       )}

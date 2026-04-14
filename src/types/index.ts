@@ -844,7 +844,7 @@ export const ONBOARDING_STEP_STATUS_COLORS: Record<OnboardingStepStatus, string>
   passed: 'bg-green-50 text-green-700 border-green-200',
   failed: 'bg-red-50 text-red-700 border-red-200',
   waived: 'bg-purple-50 text-purple-700 border-purple-200',
-  not_applicable: 'bg-gray-50 text-gray-400 border-gray-100',
+  not_applicable: 'bg-gray-50 text-gray-500 border-gray-100',
 }
 
 // --- ConsentType ---

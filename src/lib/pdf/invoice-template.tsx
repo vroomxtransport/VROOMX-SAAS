@@ -121,6 +121,8 @@ interface InvoiceDocumentProps {
     state: string | null
     zip: string | null
     phone: string | null
+    dot_number?: string | null
+    mc_number?: string | null
     invoice_header_text?: string | null
     invoice_footer_text?: string | null
   }
@@ -136,7 +138,9 @@ function formatCurrency(value: string): string {
 }
 
 export function InvoiceDocument({ order, tenant, logoUrl }: InvoiceDocumentProps) {
-  const invoiceNumber = `INV-${order.id}`
+  const invoiceNumber = order.order_number
+    ? `INV-${order.order_number}`
+    : `INV-${order.id.slice(0, 8).toUpperCase()}`
 
   const vehicleDescription = [order.vehicle_year, order.vehicle_make, order.vehicle_model]
     .filter(Boolean)
@@ -179,6 +183,14 @@ export function InvoiceDocument({ order, tenant, logoUrl }: InvoiceDocumentProps
             {tenant.phone && (
               <Text style={styles.companyDetail}>{tenant.phone}</Text>
             )}
+            {(tenant.dot_number || tenant.mc_number) && (
+              <Text style={styles.companyDetail}>
+                {[
+                  tenant.dot_number ? `DOT# ${tenant.dot_number}` : null,
+                  tenant.mc_number ? `MC# ${tenant.mc_number}` : null,
+                ].filter(Boolean).join(' · ')}
+              </Text>
+            )}
           </View>
           <View style={{ alignItems: 'flex-end' }}>
             <Text style={styles.invoiceTitle}>INVOICE</Text>
@@ -206,10 +218,15 @@ export function InvoiceDocument({ order, tenant, logoUrl }: InvoiceDocumentProps
 
           {/* Vehicle row */}
           <View style={styles.tableRow}>
-            <Text style={styles.col1}>
-              {vehicleDescription || 'Vehicle Transport'}
-              {isSplit ? ' (Billing Portion)' : ''}
-            </Text>
+            <View style={styles.col1}>
+              <Text>
+                {vehicleDescription || 'Vehicle Transport'}
+                {isSplit ? ' (Billing Portion)' : ''}
+              </Text>
+              <Text style={{ color: '#64748b', fontSize: 9, marginTop: 2 }}>
+                Order {order.order_number || `#${order.id.slice(0, 8).toUpperCase()}`}
+              </Text>
+            </View>
             <Text style={styles.col2}>{routeDescription || 'N/A'}</Text>
             <Text style={styles.col3}>{formatCurrency(invoiceAmount)}</Text>
           </View>

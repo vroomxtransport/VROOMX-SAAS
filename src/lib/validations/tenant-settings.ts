@@ -32,6 +32,9 @@ export const brandingSchema = z.object({
     .or(z.literal('')),
   invoiceHeaderText: z.string().max(500).optional().or(z.literal('')),
   invoiceFooterText: z.string().max(500).optional().or(z.literal('')),
+  appWelcomeMessage: z.string().max(500).optional().or(z.literal('')),
+  appFooterText: z.string().max(300).optional().or(z.literal('')),
+  appEstimatedTime: z.string().max(50).optional().or(z.literal('')),
 })
 
 export type BrandingFormValues = z.infer<typeof brandingSchema>

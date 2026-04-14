@@ -1,16 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 
 interface SignatureBoxProps {
-  /** The consent type key — passed back to the parent on sign */
   consentType: string
-  /** Called when the user successfully types a name */
   onChange: (typedName: string, dateSigned: string) => void
-  /** Whether the consent has already been signed (persisted) */
   isSigned?: boolean
-  /** Error message from the parent form */
   error?: string
 }
 
@@ -18,18 +14,6 @@ function todayIso(): string {
   return new Date().toISOString().split('T')[0]
 }
 
-/**
- * Reusable typed-name signature component.
- *
- * Visually matches the reference:
- * - Labeled "PROSPECTIVE EMPLOYEE SIGNATURE *"
- * - Box with typed name rendered live in Caveat (handwriting) font
- * - × clear button top-right of the box
- * - Adjacent "DATE SIGNED *" field prefilled with today
- * - "Signed ✓" badge once isSigned = true
- *
- * WCAG: role="textbox", aria-label, visible focus ring, keyboard accessible.
- */
 export function SignatureBox({
   consentType,
   onChange,
@@ -38,6 +22,11 @@ export function SignatureBox({
 }: SignatureBoxProps) {
   const [typedName, setTypedName] = useState('')
   const [dateSigned, setDateSigned] = useState(todayIso())
+  const [isPulsing, setIsPulsing] = useState(false)
+
+  useEffect(() => {
+    if (isSigned) setIsPulsing(true)
+  }, [isSigned])
 
   function handleNameChange(value: string) {
     setTypedName(value)
@@ -55,110 +44,132 @@ export function SignatureBox({
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
-        {/* Signature capture box */}
-        <div className="flex-1 space-y-1.5">
-          <label
-            htmlFor={`sig-name-${consentType}`}
-            className="block text-[10px] font-semibold uppercase tracking-widest text-gray-500"
-          >
-            Prospective Employee Signature *
-          </label>
+    <>
+      <style>{`
+        @media (prefers-reduced-motion: no-preference) {
+          @keyframes sig-badge-in {
+            from { opacity: 0; transform: scale(0.82) translateY(2px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
+          }
+          @keyframes sig-border-pulse {
+            0%   { box-shadow: 0 0 0 0 rgba(34,197,94,0.3); }
+            50%  { box-shadow: 0 0 0 5px rgba(34,197,94,0.15); }
+            100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+          }
+          .sig-badge { animation: sig-badge-in 200ms ease-out both; }
+          .sig-pulse { animation: sig-border-pulse 650ms ease-out forwards; }
+        }
+      `}</style>
 
-          <div
-            className={cn(
-              'relative min-h-[64px] rounded border bg-white transition-shadow',
-              error
-                ? 'border-red-400 ring-1 ring-red-400'
-                : isSigned
-                  ? 'border-green-400'
-                  : 'border-gray-300 focus-within:border-[var(--brand-primary,#192334)] focus-within:ring-1 focus-within:ring-[var(--brand-primary,#192334)]',
-            )}
-          >
-            {/* Live preview in Caveat / handwriting font */}
-            {typedName && (
-              <span
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-0 flex items-center px-3 text-2xl text-gray-800 leading-none"
-                style={{ fontFamily: 'var(--font-signature, cursive)' }}
-              >
-                {typedName}
-              </span>
-            )}
+      <div className="space-y-3">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
+          <div className="flex-1 space-y-1.5">
+            <label
+              htmlFor={`sig-name-${consentType}`}
+              className="block text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
+            >
+              Prospective Employee Signature *
+            </label>
 
-            {/* Hidden-visually but focusable input */}
-            <input
-              id={`sig-name-${consentType}`}
-              type="text"
-              role="textbox"
-              aria-label="Type your full legal name to sign"
-              aria-required="true"
-              aria-invalid={!!error}
-              aria-describedby={error ? `sig-error-${consentType}` : undefined}
-              value={typedName}
-              onChange={(e) => handleNameChange(e.target.value)}
-              placeholder={!typedName ? 'Type your full legal name' : ''}
-              autoComplete="name"
+            <div
+              onAnimationEnd={() => setIsPulsing(false)}
               className={cn(
-                'absolute inset-0 w-full rounded bg-transparent px-3 py-2 text-sm outline-none',
-                // Make text transparent when previewing in Caveat font
-                typedName ? 'text-transparent caret-gray-400' : 'text-gray-800 placeholder:text-gray-400',
+                'relative min-h-[56px] sm:min-h-[64px] rounded-lg border bg-white',
+                'transition-[border-color,box-shadow] duration-200',
+                isPulsing && 'sig-pulse',
+                error
+                  ? 'border-red-400 ring-1 ring-red-400'
+                  : isSigned
+                    ? 'border-green-400'
+                    : 'border-gray-300 focus-within:border-[var(--brand-primary,#192334)] focus-within:shadow-[0_0_0_3px_rgba(25,35,52,0.12)]',
               )}
-            />
+            >
+              {typedName && (
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 flex items-center px-3 text-2xl text-gray-800 leading-none"
+                  style={{ fontFamily: 'var(--font-signature, cursive)' }}
+                >
+                  {typedName}
+                </span>
+              )}
 
-            {/* Clear button */}
-            {typedName && (
-              <button
-                type="button"
-                onClick={handleClear}
-                aria-label="Clear signature"
-                className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-gray-200 text-gray-500 hover:bg-gray-300 focus-visible:ring-2 focus-visible:ring-[var(--brand-secondary,#fb7232)] transition-colors"
-              >
-                <span aria-hidden="true" className="text-xs leading-none">&times;</span>
-              </button>
+              <input
+                id={`sig-name-${consentType}`}
+                type="text"
+                role="textbox"
+                aria-label="Type your full legal name to sign"
+                aria-required="true"
+                aria-invalid={!!error}
+                aria-describedby={error ? `sig-error-${consentType}` : undefined}
+                value={typedName}
+                onChange={(e) => handleNameChange(e.target.value)}
+                placeholder={!typedName ? 'Type your full legal name' : ''}
+                autoComplete="name"
+                style={{ fontSize: '16px' }}
+                className={cn(
+                  'absolute inset-0 w-full rounded-lg bg-transparent px-3 py-2 outline-none',
+                  typedName ? 'text-transparent caret-gray-400' : 'text-gray-800 placeholder:text-muted-foreground',
+                )}
+              />
+
+              {typedName && (
+                <button
+                  type="button"
+                  onClick={handleClear}
+                  aria-label="Clear signature"
+                  className={cn(
+                    'absolute right-1 top-1 -m-2.5 p-2.5',
+                    'flex h-6 w-6 items-center justify-center rounded-full',
+                    'bg-gray-100 text-muted-foreground text-sm',
+                    'hover:bg-red-50 hover:text-red-500 hover:scale-105',
+                    'focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#192334)]',
+                    'transition-all duration-150',
+                  )}
+                >
+                  <span aria-hidden="true" className="leading-none">&times;</span>
+                </button>
+              )}
+            </div>
+
+            {isSigned && (
+              <p className="sig-badge flex items-center gap-1 text-xs text-green-600 font-medium">
+                <span aria-hidden="true">&#10003;</span>
+                Signed
+              </p>
+            )}
+
+            {error && (
+              <p id={`sig-error-${consentType}`} role="alert" className="text-xs text-red-600">
+                {error}
+              </p>
             )}
           </div>
 
-          {/* Signed state indicator */}
-          {isSigned && (
-            <p className="flex items-center gap-1 text-xs text-green-600 font-medium">
-              <span aria-hidden="true">&#10003;</span>
-              Signed
-            </p>
-          )}
-
-          {/* Inline error */}
-          {error && (
-            <p
-              id={`sig-error-${consentType}`}
-              role="alert"
-              className="text-xs text-red-600"
+          <div className="space-y-1.5 sm:w-44">
+            <label
+              htmlFor={`sig-date-${consentType}`}
+              className="block text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
             >
-              {error}
-            </p>
-          )}
-        </div>
-
-        {/* Date Signed field */}
-        <div className="space-y-1.5 sm:w-44">
-          <label
-            htmlFor={`sig-date-${consentType}`}
-            className="block text-[10px] font-semibold uppercase tracking-widest text-gray-500"
-          >
-            Date Signed *
-          </label>
-          <input
-            id={`sig-date-${consentType}`}
-            type="date"
-            value={dateSigned}
-            onChange={(e) => handleDateChange(e.target.value)}
-            aria-label="Date signed"
-            aria-required="true"
-            className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-[var(--brand-primary,#192334)] focus:ring-1 focus:ring-[var(--brand-primary,#192334)]"
-          />
+              Date Signed *
+            </label>
+            <input
+              id={`sig-date-${consentType}`}
+              type="date"
+              value={dateSigned}
+              onChange={(e) => handleDateChange(e.target.value)}
+              aria-label="Date signed"
+              aria-required="true"
+              style={{ fontSize: '16px' }}
+              className={cn(
+                'w-full min-h-[44px] rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-800 outline-none',
+                'transition-[border-color,box-shadow] duration-200',
+                'focus:border-[var(--brand-primary,#192334)] focus:shadow-[0_0_0_3px_rgba(25,35,52,0.12)]',
+              )}
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }

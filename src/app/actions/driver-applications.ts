@@ -156,10 +156,10 @@ export async function inviteDriverApplication(input: {
     return { error: 'A driver with this email already exists' }
   }
 
-  // Step 5 — Look up tenant slug + name
+  // Step 5 — Look up tenant slug + company info (used in email branding)
   const { data: tenant, error: tenantError } = await supabase
     .from('tenants')
-    .select('slug, name')
+    .select('slug, name, address, city, state, zip, phone, dot_number, mc_number')
     .eq('id', tenantId)
     .single()
 
@@ -230,6 +230,7 @@ export async function inviteDriverApplication(input: {
           inviterName,
           driverFirstName: parsed.data.firstName,
           applicationUrl,
+          company: tenant,
         }),
       })
       emailSent = true
@@ -346,6 +347,7 @@ export async function requestResumeLink(
           tenantName: tenant.name as string,
           applicantFirstName: (app.first_name as string | null) ?? 'Applicant',
           resumeUrl,
+          company: tenant,
         }),
       }).catch(captureAsyncError('resume-application email'))
     } else if (process.env.NODE_ENV === 'development') {
@@ -879,10 +881,10 @@ export async function submitApplication(
   // C4: Notify tenant admins that a new application was submitted.
   if (process.env.RESEND_API_KEY) {
     void (async () => {
-      // Fetch tenant name
+      // Fetch tenant info for email branding
       const { data: tenantData } = await supabase
         .from('tenants')
-        .select('name')
+        .select('name, address, city, state, zip, phone, dot_number, mc_number')
         .eq('id', application.tenant_id)
         .single()
 
@@ -906,7 +908,8 @@ export async function submitApplication(
             tenantName: (tenantData?.name as string) ?? 'Your Company',
             applicantFirstName: (application.first_name as string) ?? '',
             applicantLastName: (application.last_name as string) ?? '',
-            applicationId: application.id as string,
+            reviewUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.vroomx.com'}/onboarding/${application.id as string}`,
+            company: tenantData ?? undefined,
           }),
         })
       }

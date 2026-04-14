@@ -27,7 +27,8 @@ import {
   Check,
   X,
 } from 'lucide-react'
-import { updateBranding, uploadLogo, deleteLogo } from '@/app/actions/tenant-settings'
+import { updateBranding, uploadLogo, deleteLogo, uploadBanner, deleteBanner } from '@/app/actions/tenant-settings'
+import { Briefcase, ImageIcon } from 'lucide-react'
 
 interface BrandingFormProps {
   tenantName: string
@@ -36,6 +37,10 @@ interface BrandingFormProps {
   initialBrandColorSecondary: string
   initialInvoiceHeaderText: string
   initialInvoiceFooterText: string
+  initialBannerUrl?: string | null
+  initialAppWelcomeMessage?: string
+  initialAppFooterText?: string
+  initialAppEstimatedTime?: string
 }
 
 const HEX_REGEX = /^#[0-9a-fA-F]{6}$/
@@ -70,8 +75,13 @@ export function BrandingForm({
   initialBrandColorSecondary,
   initialInvoiceHeaderText,
   initialInvoiceFooterText,
+  initialBannerUrl,
+  initialAppWelcomeMessage,
+  initialAppFooterText,
+  initialAppEstimatedTime,
 }: BrandingFormProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const bannerInputRef = useRef<HTMLInputElement>(null)
 
   // Logo state
   const [logoUrl, setLogoUrl] = useState<string | null>(initialLogoUrl)
@@ -86,6 +96,15 @@ export function BrandingForm({
   // Invoice text state
   const [headerText, setHeaderText] = useState(initialInvoiceHeaderText)
   const [footerText, setFooterText] = useState(initialInvoiceFooterText)
+
+  // Application branding state
+  const [bannerUrl, setBannerUrl] = useState<string | null>(initialBannerUrl ?? null)
+  const [bannerUploading, setBannerUploading] = useState(false)
+  const [bannerDeleting, setBannerDeleting] = useState(false)
+  const [isBannerDragOver, setIsBannerDragOver] = useState(false)
+  const [appWelcomeMessage, setAppWelcomeMessage] = useState(initialAppWelcomeMessage ?? '')
+  const [appFooterText, setAppFooterText] = useState(initialAppFooterText ?? '')
+  const [appEstimatedTime, setAppEstimatedTime] = useState(initialAppEstimatedTime ?? '15-20 minutes')
 
   const [saving, setSaving] = useState(false)
   const [, startTransition] = useTransition()
@@ -106,20 +125,24 @@ export function BrandingForm({
     const objectUrl = URL.createObjectURL(file)
     setLogoUrl(objectUrl)
 
-    const fd = new FormData()
-    fd.append('logo', file)
+    try {
+      const fd = new FormData()
+      fd.append('logo', file)
 
-    const result = await uploadLogo(fd)
+      const result = await uploadLogo(fd)
 
-    if ('error' in result && result.error) {
-      toast.error(typeof result.error === 'string' ? result.error : 'Failed to upload logo.')
-      // Revert optimistic update
+      if ('error' in result && result.error) {
+        toast.error(typeof result.error === 'string' ? result.error : 'Failed to upload logo.')
+        setLogoUrl(initialLogoUrl)
+      } else {
+        toast.success('Logo uploaded successfully.')
+      }
+    } catch {
+      toast.error('Failed to upload logo. Please try again.')
       setLogoUrl(initialLogoUrl)
-    } else {
-      toast.success('Logo uploaded successfully.')
-      // Keep the object URL for now; page revalidation will provide signed URL on next load
+    } finally {
+      setLogoUploading(false)
     }
-    setLogoUploading(false)
   }
 
   function handleFileInputChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -160,6 +183,77 @@ export function BrandingForm({
     setLogoDeleting(false)
   }
 
+  // ── Banner upload ────────────────────────────────────────────────────────────
+  async function handleBannerUpload(file: File) {
+    if (!file.type.startsWith('image/')) {
+      toast.error('File must be a PNG, JPEG, or WebP image.')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File too large. Maximum size is 5MB.')
+      return
+    }
+
+    setBannerUploading(true)
+    const objectUrl = URL.createObjectURL(file)
+    setBannerUrl(objectUrl)
+
+    try {
+      const fd = new FormData()
+      fd.append('banner', file)
+
+      const result = await uploadBanner(fd)
+      if ('error' in result && result.error) {
+        toast.error(typeof result.error === 'string' ? result.error : 'Failed to upload banner.')
+        setBannerUrl(initialBannerUrl ?? null)
+      } else {
+        toast.success('Banner uploaded successfully.')
+      }
+    } catch {
+      toast.error('Failed to upload banner. Please try again.')
+      setBannerUrl(initialBannerUrl ?? null)
+    } finally {
+      setBannerUploading(false)
+    }
+  }
+
+  function handleBannerInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (file) handleBannerUpload(file)
+    e.target.value = ''
+  }
+
+  const handleBannerDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsBannerDragOver(true)
+  }, [])
+
+  const handleBannerDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsBannerDragOver(false)
+  }, [])
+
+  const handleBannerDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsBannerDragOver(false)
+    const file = e.dataTransfer.files?.[0]
+    if (file) handleBannerUpload(file)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  async function handleDeleteBanner() {
+    if (!confirm('Remove the application banner? This cannot be undone.')) return
+    setBannerDeleting(true)
+    const result = await deleteBanner()
+    if ('error' in result && result.error) {
+      toast.error(typeof result.error === 'string' ? result.error : 'Failed to remove banner.')
+    } else {
+      toast.success('Banner removed.')
+      setBannerUrl(null)
+    }
+    setBannerDeleting(false)
+  }
+
   // ── Color helpers ────────────────────────────────────────────────────────────
   function handlePrimaryColorText(e: React.ChangeEvent<HTMLInputElement>) {
     setPrimaryColor(e.target.value)
@@ -192,6 +286,9 @@ export function BrandingForm({
       brandColorSecondary: secondaryColor || '',
       invoiceHeaderText: headerText,
       invoiceFooterText: footerText,
+      appWelcomeMessage: appWelcomeMessage,
+      appFooterText: appFooterText,
+      appEstimatedTime: appEstimatedTime,
     })
 
     if ('error' in result && result.error) {
@@ -597,101 +694,383 @@ export function BrandingForm({
           </div>
         </CardHeader>
 
-        <CardContent className="px-6 pt-6 pb-6 flex justify-center">
-          <div
-            className="w-full max-w-sm bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden text-[11px] font-sans"
-            role="img"
-            aria-label="Invoice preview"
-          >
-            {/* Invoice header bar */}
+        <CardContent className="px-6 pt-6 pb-6">
+          {/* Full-size invoice document on subtle paper background */}
+          <div className="bg-[#f0f1f3] rounded-xl p-6 sm:p-8">
             <div
-              className="h-1.5 w-full"
-              style={{ backgroundColor: effectivePrimary }}
+              className="mx-auto bg-white font-sans overflow-hidden"
+              style={{
+                boxShadow: 'rgba(50,50,93,0.12) 0px 30px 60px -12px, rgba(0,0,0,0.08) 0px 18px 36px -18px',
+                border: '1px solid #e5edf5',
+                borderRadius: '6px',
+                /* US Letter aspect ratio: 8.5 x 11 */
+                maxWidth: '680px',
+                minHeight: '880px',
+              }}
+              role="img"
+              aria-label="Invoice preview"
+            >
+              {/* Accent bar */}
+              <div className="h-1 w-full" style={{ backgroundColor: effectivePrimary }} />
+
+              <div className="flex flex-col justify-between" style={{ minHeight: '876px' }}>
+                <div className="px-8 sm:px-12 pt-10">
+                  {/* ── Header: company + invoice meta ── */}
+                  <div className="flex items-start justify-between gap-8 mb-10">
+                    <div className="flex-1 min-w-0">
+                      {logoUrl && (
+                        <div className="mb-3">
+                          <Image
+                            src={logoUrl}
+                            alt="Logo preview"
+                            width={140}
+                            height={60}
+                            className="object-contain object-left max-h-[60px]"
+                            unoptimized
+                          />
+                        </div>
+                      )}
+                      <div className="text-base font-semibold text-[#0f172a]">
+                        {tenantName || 'Your Company'}
+                      </div>
+                      {headerText && (
+                        <div className="text-[13px] text-[#64748b] mt-1 leading-relaxed whitespace-pre-wrap max-w-xs">
+                          {headerText}
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div
+                        className="text-xs font-bold uppercase tracking-[0.2em] mb-1"
+                        style={{ color: effectivePrimary }}
+                      >
+                        Invoice
+                      </div>
+                      <div className="text-xl font-semibold text-[#0f172a] mb-3">#INV-001</div>
+                      <div className="space-y-1 text-[13px]">
+                        <div className="flex items-center justify-end gap-3">
+                          <span className="text-[#64748b]">Issued</span>
+                          <span className="text-[#475569] font-medium">
+                            {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-end gap-3">
+                          <span className="text-[#64748b]">Due</span>
+                          <span className="text-[#475569] font-medium">NET 30</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ── Divider ── */}
+                  <div className="h-px bg-[#e5edf5] mb-8" />
+
+                  {/* ── Bill To + Ship Info ── */}
+                  <div className="grid grid-cols-2 gap-8 mb-10">
+                    <div>
+                      <div
+                        className="text-[11px] font-semibold uppercase tracking-[0.15em] mb-2"
+                        style={{ color: effectivePrimary }}
+                      >
+                        Bill To
+                      </div>
+                      <div className="text-sm font-medium text-[#0f172a]">National Auto Transport LLC</div>
+                      <div className="text-[13px] text-[#64748b] mt-1 leading-relaxed">
+                        1200 Commerce Blvd, Suite 400<br />
+                        Jacksonville, FL 32256
+                      </div>
+                      <div className="text-[13px] text-[#64748b] mt-1">billing@nationalauto.com</div>
+                    </div>
+                    <div>
+                      <div
+                        className="text-[11px] font-semibold uppercase tracking-[0.15em] mb-2"
+                        style={{ color: effectivePrimary }}
+                      >
+                        Payment Details
+                      </div>
+                      <div className="space-y-1 text-[13px]">
+                        <div className="flex justify-between">
+                          <span className="text-[#64748b]">Method</span>
+                          <span className="text-[#475569] font-medium">ACH / Wire</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-[#64748b]">Terms</span>
+                          <span className="text-[#475569] font-medium">NET 30</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-[#64748b]">Status</span>
+                          <span className="inline-flex items-center gap-1 text-amber-600 font-medium">
+                            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                            Pending
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ── Line items table ── */}
+                  <div className="mb-8">
+                    {/* Table header */}
+                    <div
+                      className="grid gap-4 px-4 py-2.5 rounded-md mb-1"
+                      style={{
+                        gridTemplateColumns: '2fr 1fr 1fr 100px',
+                        backgroundColor: `${effectivePrimary}08`,
+                      }}
+                    >
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#64748b]">Vehicle</span>
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#64748b]">Route</span>
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#64748b]">VIN</span>
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#64748b] text-right">Amount</span>
+                    </div>
+
+                    {/* Row 1 */}
+                    <div className="grid gap-4 px-4 py-3.5 border-b border-[#f1f5f9]" style={{ gridTemplateColumns: '2fr 1fr 1fr 100px' }}>
+                      <div>
+                        <div className="text-sm font-medium text-[#0f172a]">2024 BMW X5 xDrive40i</div>
+                        <div className="text-[12px] text-[#64748b] mt-0.5">Order #ORD-1847</div>
+                      </div>
+                      <div className="text-[13px] text-[#475569] self-center">Dallas, TX → Miami, FL</div>
+                      <div className="text-[12px] text-[#64748b] font-mono self-center">5UX...G7F2</div>
+                      <div className="text-sm font-medium text-[#0f172a] text-right tabular-nums self-center">$1,850.00</div>
+                    </div>
+
+                    {/* Row 2 */}
+                    <div className="grid gap-4 px-4 py-3.5 border-b border-[#f1f5f9]" style={{ gridTemplateColumns: '2fr 1fr 1fr 100px' }}>
+                      <div>
+                        <div className="text-sm font-medium text-[#0f172a]">2023 Mercedes-Benz GLE 450</div>
+                        <div className="text-[12px] text-[#64748b] mt-0.5">Order #ORD-1848</div>
+                      </div>
+                      <div className="text-[13px] text-[#475569] self-center">Houston, TX → Atlanta, GA</div>
+                      <div className="text-[12px] text-[#64748b] font-mono self-center">4JG...K9M1</div>
+                      <div className="text-sm font-medium text-[#0f172a] text-right tabular-nums self-center">$1,275.00</div>
+                    </div>
+
+                    {/* Row 3 */}
+                    <div className="grid gap-4 px-4 py-3.5 border-b border-[#f1f5f9]" style={{ gridTemplateColumns: '2fr 1fr 1fr 100px' }}>
+                      <div>
+                        <div className="text-sm font-medium text-[#0f172a]">2024 Tesla Model Y Long Range</div>
+                        <div className="text-[12px] text-[#64748b] mt-0.5">Order #ORD-1849</div>
+                      </div>
+                      <div className="text-[13px] text-[#475569] self-center">Phoenix, AZ → Denver, CO</div>
+                      <div className="text-[12px] text-[#64748b] font-mono self-center">7SA...N3P8</div>
+                      <div className="text-sm font-medium text-[#0f172a] text-right tabular-nums self-center">$950.00</div>
+                    </div>
+                  </div>
+
+                  {/* ── Summary block ── */}
+                  <div className="flex justify-end mb-10">
+                    <div className="w-64">
+                      <div className="flex justify-between py-2 text-[13px]">
+                        <span className="text-[#64748b]">Subtotal</span>
+                        <span className="text-[#0f172a] font-medium tabular-nums">$4,075.00</span>
+                      </div>
+                      <div className="flex justify-between py-2 text-[13px] border-b border-[#e5edf5]">
+                        <span className="text-[#64748b]">Broker Fee</span>
+                        <span className="text-[#0f172a] font-medium tabular-nums">-$0.00</span>
+                      </div>
+                      <div
+                        className="flex justify-between py-3 mt-1 rounded-md px-3 -mx-3"
+                        style={{ backgroundColor: `${effectivePrimary}0a` }}
+                      >
+                        <span
+                          className="text-sm font-bold uppercase tracking-[0.08em]"
+                          style={{ color: effectivePrimary }}
+                        >
+                          Total Due
+                        </span>
+                        <span
+                          className="text-lg font-bold tabular-nums"
+                          style={{ color: effectivePrimary }}
+                        >
+                          $4,075.00
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── Footer — pinned to bottom ── */}
+                <div className="px-8 sm:px-12 pb-8">
+                  <div className="h-px bg-[#e5edf5] mb-4" />
+                  {footerText ? (
+                    <div className="text-[13px] text-center text-[#64748b] leading-relaxed whitespace-pre-wrap">
+                      {footerText}
+                    </div>
+                  ) : (
+                    <div className="text-[13px] text-center text-[#94a3b8] italic">
+                      Your footer text will appear here
+                    </div>
+                  )}
+                  <div className="text-[11px] text-center text-[#94a3b8] mt-3">
+                    Generated by {tenantName || 'Your Company'} via VroomX TMS
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── Section 5: Employment Application Branding ────────────────────── */}
+      <Card className="widget-card !p-0 border-0 shadow-none">
+        <CardHeader className="px-6 pt-5 pb-4 border-b border-border-subtle">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-muted p-2">
+              <Briefcase className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <div>
+              <CardTitle className="text-base font-semibold">Employment Application</CardTitle>
+              <CardDescription className="text-sm">
+                Customize the branded welcome page drivers see when applying
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="px-6 pt-6 pb-6 space-y-5">
+          {/* Banner image upload */}
+          <div className="space-y-1.5">
+            <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Banner Image
+            </Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Hero image shown at the top of the application welcome page
+            </p>
+
+            <input
+              ref={bannerInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="hidden"
+              onChange={handleBannerInputChange}
+              aria-label="Upload banner"
             />
 
-            <div className="p-5">
-              {/* Company header */}
-              <div className="flex items-start justify-between gap-4 mb-4">
-                <div className="flex-1 min-w-0">
-                  {logoUrl && (
-                    <div className="mb-2">
-                      <Image
-                        src={logoUrl}
-                        alt="Logo preview"
-                        width={80}
-                        height={40}
-                        className="object-contain object-left"
-                        unoptimized
-                      />
-                    </div>
-                  )}
-                  <div className="font-bold text-slate-900 text-sm truncate">{tenantName || 'Your Company'}</div>
-                  {headerText && (
-                    <div className="text-slate-500 mt-0.5 leading-relaxed whitespace-pre-wrap line-clamp-2">
-                      {headerText}
-                    </div>
-                  )}
-                </div>
-                <div className="text-right shrink-0">
-                  <div
-                    className="text-base font-bold"
-                    style={{ color: effectivePrimary }}
+            {bannerUrl ? (
+              <div className="relative w-full h-40 rounded-xl border border-border bg-muted/30 overflow-hidden group">
+                <Image
+                  src={bannerUrl}
+                  alt="Application banner"
+                  fill
+                  className="object-cover"
+                  unoptimized
+                />
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => bannerInputRef.current?.click()}
+                    disabled={bannerUploading || bannerDeleting}
                   >
-                    INVOICE
-                  </div>
-                  <div className="text-slate-500">#INV-001</div>
-                  <div className="text-slate-500">
-                    {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                  </div>
+                    {bannerUploading ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
+                    ) : (
+                      <Upload className="h-4 w-4 mr-1.5" />
+                    )}
+                    Change
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="destructive"
+                    onClick={handleDeleteBanner}
+                    disabled={bannerUploading || bannerDeleting}
+                  >
+                    {bannerDeleting ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
+                    ) : (
+                      <Trash2 className="h-4 w-4 mr-1.5" />
+                    )}
+                    Remove
+                  </Button>
                 </div>
               </div>
-
-              {/* Divider */}
-              <div className="h-px bg-slate-200 mb-3" />
-
-              {/* Bill to */}
-              <div className="mb-3">
-                <div
-                  className="text-xs font-semibold uppercase tracking-wide mb-1"
-                  style={{ color: effectivePrimary }}
-                >
-                  Bill To
-                </div>
-                <div className="text-slate-700">Sample Broker Co.</div>
-              </div>
-
-              {/* Line items */}
-              <div className="mb-3">
-                <div className="flex justify-between text-slate-500 pb-1 border-b border-slate-100">
-                  <span className="font-semibold">Description</span>
-                  <span className="font-semibold">Amount</span>
-                </div>
-                <div className="flex justify-between py-1.5">
-                  <span className="text-slate-700">2024 BMW X5 · Dallas → Miami</span>
-                  <span className="text-slate-900 font-medium">$1,850.00</span>
-                </div>
-              </div>
-
-              {/* Total */}
-              <div
-                className="flex justify-between font-bold text-sm py-1.5 border-t-2"
-                style={{ borderColor: effectivePrimary, color: effectivePrimary }}
+            ) : (
+              <button
+                type="button"
+                onClick={() => bannerInputRef.current?.click()}
+                onDragOver={handleBannerDragOver}
+                onDragLeave={handleBannerDragLeave}
+                onDrop={handleBannerDrop}
+                disabled={bannerUploading}
+                className={[
+                  'w-full h-40 rounded-xl border-2 border-dashed transition-colors duration-150',
+                  'flex flex-col items-center justify-center gap-2 cursor-pointer',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  isBannerDragOver
+                    ? 'border-brand bg-brand/5'
+                    : 'border-border hover:border-brand/60 hover:bg-muted/40',
+                  bannerUploading ? 'opacity-50 cursor-not-allowed' : '',
+                ].join(' ')}
               >
-                <span>Total Due</span>
-                <span>$1,850.00</span>
-              </div>
+                {bannerUploading ? (
+                  <Loader2 className="h-8 w-8 text-muted-foreground animate-spin" />
+                ) : (
+                  <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                )}
+                <span className="text-sm font-medium text-muted-foreground">
+                  {bannerUploading ? 'Uploading…' : 'Click to upload or drag and drop'}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  PNG, JPEG, or WebP — max 5MB, recommended 1200x400
+                </span>
+              </button>
+            )}
+          </div>
 
-              {/* Footer */}
-              {footerText ? (
-                <div className="mt-4 pt-3 border-t border-slate-100 text-center text-slate-400 leading-relaxed whitespace-pre-wrap line-clamp-3">
-                  {footerText}
-                </div>
-              ) : (
-                <div className="mt-4 pt-3 border-t border-slate-100 text-center text-slate-300 italic">
-                  Your footer text will appear here
-                </div>
-              )}
+          {/* Welcome message */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="appWelcomeMessage">Welcome Message</Label>
+              <span className="text-xs text-muted-foreground">{appWelcomeMessage.length}/500</span>
             </div>
+            <Textarea
+              id="appWelcomeMessage"
+              value={appWelcomeMessage}
+              onChange={(e) => setAppWelcomeMessage(e.target.value)}
+              placeholder="Thank you for your interest in joining our team. Please complete the application below to get started."
+              rows={3}
+              maxLength={500}
+            />
+            <p className="text-xs text-muted-foreground">
+              Shown on the welcome page before the application form
+            </p>
+          </div>
+
+          {/* Application footer text */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="appFooterText">Application Footer</Label>
+              <span className="text-xs text-muted-foreground">{appFooterText.length}/300</span>
+            </div>
+            <Textarea
+              id="appFooterText"
+              value={appFooterText}
+              onChange={(e) => setAppFooterText(e.target.value)}
+              placeholder="e.g. Equal Opportunity Employer · All information is kept strictly confidential"
+              rows={2}
+              maxLength={300}
+            />
+            <p className="text-xs text-muted-foreground">
+              Displayed at the bottom of the application form
+            </p>
+          </div>
+
+          {/* Estimated time */}
+          <div className="space-y-1.5">
+            <Label htmlFor="appEstimatedTime">Estimated Completion Time</Label>
+            <Input
+              id="appEstimatedTime"
+              value={appEstimatedTime}
+              onChange={(e) => setAppEstimatedTime(e.target.value)}
+              placeholder="15-20 minutes"
+              maxLength={50}
+            />
+            <p className="text-xs text-muted-foreground">
+              Shown on the welcome page so applicants know what to expect
+            </p>
           </div>
         </CardContent>
       </Card>

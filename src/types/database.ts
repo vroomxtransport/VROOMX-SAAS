@@ -23,6 +23,10 @@ export interface Tenant {
   brand_color_secondary: string | null
   invoice_header_text: string | null
   invoice_footer_text: string | null
+  app_welcome_message: string | null
+  app_banner_storage_path: string | null
+  app_footer_text: string | null
+  app_estimated_time: string | null
   created_at: string
   updated_at: string
 }

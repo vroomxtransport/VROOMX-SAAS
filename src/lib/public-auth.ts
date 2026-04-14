@@ -45,14 +45,21 @@ export type PublicTenantPublicFields = {
   city: string | null
   state: string | null
   zip: string | null
+  phone: string | null
+  dot_number: string | null
+  mc_number: string | null
   logo_storage_path: string | null
   brand_color_primary: string | null
   brand_color_secondary: string | null
+  app_welcome_message: string | null
+  app_banner_storage_path: string | null
+  app_footer_text: string | null
+  app_estimated_time: string | null
   is_suspended: boolean
 }
 
 const PUBLIC_TENANT_SELECT =
-  'id, name, slug, address, city, state, zip, logo_storage_path, brand_color_primary, brand_color_secondary, is_suspended'
+  'id, name, slug, address, city, state, zip, phone, dot_number, mc_number, logo_storage_path, brand_color_primary, brand_color_secondary, app_welcome_message, app_banner_storage_path, app_footer_text, app_estimated_time, is_suspended'
 
 /**
  * Read only the public-safe tenant fields by slug.
@@ -95,20 +102,30 @@ export async function publicReadTenantById(id: string): Promise<PublicTenantPubl
  * Silent fallback to null on missing path or signing error — a broken logo must
  * never break the public application page.
  */
-export async function publicReadTenantLogoUrl(
-  logoStoragePath: string | null,
+/**
+ * Resolve a branding asset storage path to a short-lived signed URL.
+ * Works for logos, banners, or any file in the private `branding` bucket.
+ * 1-hour expiry. Silent fallback to null on missing path or signing error.
+ */
+export async function publicReadBrandingAssetUrl(
+  storagePath: string | null,
 ): Promise<string | null> {
-  if (!logoStoragePath) return null
+  if (!storagePath) return null
   try {
     const supabase = createServiceRoleClient()
     const { data } = await supabase.storage
       .from('branding')
-      .createSignedUrl(logoStoragePath, 3600)
+      .createSignedUrl(storagePath, 3600)
     return data?.signedUrl ?? null
   } catch {
     return null
   }
 }
+
+/** @deprecated Use publicReadBrandingAssetUrl instead */
+export const publicReadTenantLogoUrl = publicReadBrandingAssetUrl
+/** @deprecated Use publicReadBrandingAssetUrl instead */
+export const publicReadTenantBannerUrl = publicReadBrandingAssetUrl
 
 export type PublicAuthSuccess = {
   supabase: SupabaseClient

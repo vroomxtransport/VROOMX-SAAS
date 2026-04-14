@@ -71,7 +71,7 @@ export async function sendInvite(data: unknown) {
 
   // Fetch tenant name + inviter name for email template
   const [{ data: tenantData }, { data: memberData }] = await Promise.all([
-    supabase.from('tenants').select('name').eq('id', tenantId).single(),
+    supabase.from('tenants').select('name, address, city, state, zip, phone, dot_number, mc_number').eq('id', tenantId).single(),
     supabase.from('tenant_memberships').select('full_name').eq('user_id', auth.ctx.user.id).eq('tenant_id', tenantId).single(),
   ])
   const tenantName = tenantData?.name || 'Your Team'
@@ -97,7 +97,7 @@ export async function sendInvite(data: unknown) {
         from: 'VroomX <noreply@vroomx.com>',
         to: parsed.data.email,
         subject: `You've been invited to join ${tenantName} on VroomX`,
-        react: InviteEmail({ tenantName, inviterName, role: parsed.data.role, acceptUrl }),
+        react: InviteEmail({ tenantName, inviterName, role: parsed.data.role, acceptUrl, company: tenantData ?? undefined }),
       })
     }
   } catch (err) {

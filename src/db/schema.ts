@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, unique, index, uniqueIndex, numeric, integer, date, pgEnum, boolean, doublePrecision, jsonb } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, text, timestamp, unique, index, uniqueIndex, numeric, integer, date, pgEnum, boolean, doublePrecision, jsonb, varchar } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 
 // ============================================================================
@@ -74,6 +74,11 @@ export const tenants = pgTable('tenants', {
   brandColorSecondary: text('brand_color_secondary'),
   invoiceHeaderText: text('invoice_header_text'),
   invoiceFooterText: text('invoice_footer_text'),
+  // Employment application branding
+  appWelcomeMessage: text('app_welcome_message'),
+  appBannerStoragePath: text('app_banner_storage_path'),
+  appFooterText: text('app_footer_text'),
+  appEstimatedTime: varchar('app_estimated_time', { length: 50 }).default('15-20 minutes'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })

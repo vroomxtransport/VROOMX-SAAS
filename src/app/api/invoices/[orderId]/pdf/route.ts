@@ -35,7 +35,7 @@ export async function GET(
   // Fetch tenant for company info (include branding fields)
   const { data: tenant, error: tenantError } = await supabase
     .from('tenants')
-    .select('name, address, city, state, zip, phone, logo_storage_path, invoice_header_text, invoice_footer_text')
+    .select('name, address, city, state, zip, phone, dot_number, mc_number, logo_storage_path, invoice_header_text, invoice_footer_text')
     .single()
 
   if (tenantError || !tenant) {

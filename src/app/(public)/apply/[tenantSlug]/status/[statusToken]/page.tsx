@@ -136,7 +136,7 @@ export default async function StatusPage({ params }: Props) {
           <header className="mb-8 text-center">
             <h1 className="text-xl font-bold text-[#192334]">Application Status</h1>
             {formattedDate && (
-              <p className="mt-1 text-xs text-gray-400">Submitted {formattedDate}</p>
+              <p className="mt-1 text-xs text-muted-foreground">Submitted {formattedDate}</p>
             )}
           </header>
 
@@ -176,12 +176,12 @@ export default async function StatusPage({ params }: Props) {
                             ? 'text-[var(--brand-secondary,#fb7232)]'
                             : step.status === 'rejected'
                               ? 'text-red-600'
-                              : 'text-gray-400'
+                              : 'text-muted-foreground'
                       }`}
                     >
                       {step.label}
                     </p>
-                    <p className="mt-0.5 text-xs text-gray-500">{step.description}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{step.description}</p>
                   </div>
                 </li>
               )
@@ -198,7 +198,7 @@ export default async function StatusPage({ params }: Props) {
 
           {/* Footer */}
           <div className="mt-6 border-t border-gray-100 pt-5 text-center">
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-muted-foreground">
               Questions? Contact the carrier directly. Bookmark this page to check back on your status.
             </p>
             <Link

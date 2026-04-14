@@ -10,7 +10,7 @@
  * - Back / Next / Submit buttons at bottom of every page
  */
 
-import { useState, useCallback, useTransition, useRef } from 'react'
+import { useState, useCallback, useTransition, useRef, useEffect } from 'react'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
@@ -55,6 +55,17 @@ const PAGE_SCHEMAS = [
 ] as const
 
 const TOTAL_PAGES = 8
+
+const PAGE_SHORT_HEADINGS = [
+  'Personal Information',
+  'FCRA Disclosure',
+  'License Certification',
+  'Drug & Alcohol',
+  'Safety Performance',
+  'PSP Authorization',
+  'Clearinghouse Consent',
+  'MVR Release',
+] as const
 
 interface ApplicationWizardProps {
   resumeToken: string
@@ -138,16 +149,28 @@ export function ApplicationWizard({
   const [isPending, startTransition] = useTransition()
   const pageHeadingRef = useRef<HTMLHeadingElement>(null)
 
+  // Page transition animation state
+  const [direction, setDirection] = useState<'next' | 'back'>('next')
+  const [pageKey, setPageKey] = useState(0)
+
+  // Auto-save indicator
+  const [savedAt, setSavedAt] = useState<number | null>(null)
+  const [showSaved, setShowSaved] = useState(false)
+
+  useEffect(() => {
+    if (!savedAt) return
+    setShowSaved(true)
+    const t = setTimeout(() => setShowSaved(false), 2000)
+    return () => clearTimeout(t)
+  }, [savedAt])
+
   const form = useForm<FullApplication>({
-    // zodResolver type mismatch: z.coerce.number() yields unknown in position field.
-    // Cast is safe — schema validates at runtime.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(fullApplicationSchema as any),
     defaultValues: buildDefaultValues(application) as FullApplication,
     mode: 'onBlur',
   })
 
-  // Focus page heading on page transition for accessibility
   function focusPageHeading() {
     setTimeout(() => pageHeadingRef.current?.focus(), 50)
   }
@@ -157,6 +180,7 @@ export function ApplicationWizard({
     const values = form.getValues(key)
     if (!values) return
     await updateDraftSection(resumeToken, key, values)
+    setSavedAt(Date.now())
   }
 
   const handleNext = useCallback(async () => {
@@ -177,6 +201,8 @@ export function ApplicationWizard({
 
     startTransition(async () => {
       // await autoSave(currentPage) // skip auto-save in testing mode
+      setDirection('next')
+      setPageKey((k) => k + 1)
       setCompletedPages((prev) => new Set(prev).add(currentPage))
       setCurrentPage((p) => Math.min(p + 1, TOTAL_PAGES))
       focusPageHeading()
@@ -186,6 +212,8 @@ export function ApplicationWizard({
 
   const handleBack = useCallback(() => {
     if (currentPage <= 1) return
+    setDirection('back')
+    setPageKey((k) => k + 1)
     setCurrentPage((p) => p - 1)
     focusPageHeading()
   }, [currentPage])
@@ -194,6 +222,8 @@ export function ApplicationWizard({
     // ⚠️ TESTING MODE: allow jumping to any page
     // TODO: Restore guard before production:
     // if (step < currentPage || completedPages.has(step)) {
+    setDirection(step >= currentPage ? 'next' : 'back')
+    setPageKey((k) => k + 1)
     setCurrentPage(step)
     focusPageHeading()
     // }
@@ -224,26 +254,28 @@ export function ApplicationWizard({
     })
   }
 
-  const PAGE_HEADINGS = [
-    'Page 1 — Application for Employment',
-    'Page 2 — Fair Credit Reporting Act Disclosure',
-    'Page 3 — Driver License Requirements Certification',
-    'Page 4 — Drug & Alcohol Test Statement',
-    'Page 5 — Safety Performance History Investigation',
-    'Page 6 — PSP Driver Disclosure & Authorization',
-    'Page 7 — Clearinghouse Limited Query Consent',
-    'Page 8 — MVR Release Consent',
-  ] as const
-
   return (
     <FormProvider {...form}>
-      <div className="flex min-h-screen flex-col">
-        {/* Tab strip */}
-        <div
-          className="border-b border-white/10 px-4"
-          style={{ backgroundColor: '#0C1220' }}
-        >
-          <div className="mx-auto max-w-4xl">
+      {/* Page transition animations */}
+      <style>{`
+        @media (prefers-reduced-motion: no-preference) {
+          @keyframes page-slide-next {
+            from { opacity: 0; transform: translateX(20px); }
+            to   { opacity: 1; transform: translateX(0); }
+          }
+          @keyframes page-slide-back {
+            from { opacity: 0; transform: translateX(-20px); }
+            to   { opacity: 1; transform: translateX(0); }
+          }
+          .page-anim-next { animation: page-slide-next 200ms ease both; }
+          .page-anim-back { animation: page-slide-back 200ms ease both; }
+        }
+      `}</style>
+
+      <div className="flex min-h-[calc(100vh-56px)] flex-col">
+        {/* Step indicator strip */}
+        <div className="sticky top-[56px] z-10 border-b border-gray-200/60 bg-white/80 backdrop-blur-lg px-4 sm:px-6">
+          <div className="mx-auto max-w-5xl">
             <StepIndicator
               currentStep={currentPage}
               totalSteps={TOTAL_PAGES}
@@ -253,35 +285,42 @@ export function ApplicationWizard({
           </div>
         </div>
 
-        {/* Main content area — white card on dark background */}
-        <main
-          className="flex-1 px-4 py-6"
-          style={{ backgroundColor: '#0C1220' }}
-        >
-          <div className="mx-auto max-w-4xl">
-            {/* Page heading (sr-only but focusable for accessibility) */}
-            <h2
-              ref={pageHeadingRef}
-              tabIndex={-1}
-              className="sr-only focus:not-sr-only focus:mb-4 focus:text-white focus:text-lg focus:font-semibold focus:outline-none"
-            >
-              {PAGE_HEADINGS[currentPage - 1]}
-            </h2>
-
+        {/* Full-page content area */}
+        <main className="flex-1">
+          <div className="mx-auto max-w-3xl px-4 sm:px-6 py-8 sm:py-10">
             {/* Server error banner */}
             {serverError && (
               <div
                 role="alert"
-                className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700"
+                className="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700 shadow-sm"
               >
                 {serverError}
               </div>
             )}
 
-            {/* White form card */}
-            <div className="rounded-xl bg-white shadow-xl">
-              {/* Page content */}
-              <div className="px-6 py-6 sm:px-8 sm:py-8">
+            {/* Page heading */}
+            <div className="mb-8">
+              <h2
+                ref={pageHeadingRef}
+                tabIndex={-1}
+                aria-live="polite"
+                className="text-2xl font-semibold tracking-tight text-gray-900 focus:outline-none"
+              >
+                {PAGE_SHORT_HEADINGS[currentPage - 1]}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Step {currentPage} of {TOTAL_PAGES}
+              </p>
+            </div>
+
+            {/* Page content with transition animation */}
+            <div
+              key={pageKey}
+              className={cn(
+                'pb-28 sm:pb-8',
+                direction === 'next' ? 'page-anim-next' : 'page-anim-back',
+              )}
+            >
                 {currentPage === 1 && (
                   <Page1MainApplication
                     resumeToken={resumeToken}
@@ -356,8 +395,17 @@ export function ApplicationWizard({
                 )}
               </div>
 
-              {/* Navigation footer */}
-              <div className="flex items-center justify-between border-t border-gray-100 px-6 py-4 sm:px-8">
+            {/* Navigation footer — sticky on mobile, static on desktop */}
+            <div
+              className={cn(
+                'flex items-center justify-between py-4',
+                'fixed bottom-0 left-0 right-0 z-10 px-4 sm:px-6',
+                'backdrop-blur-md bg-white/90 border-t border-gray-200',
+                '[padding-bottom:env(safe-area-inset-bottom)]',
+                'sm:static sm:bottom-auto sm:left-auto sm:right-auto sm:z-auto sm:px-0',
+                'sm:bg-transparent sm:backdrop-blur-none sm:border-t sm:border-gray-200/60 sm:mt-10 sm:pt-6',
+              )}
+            >
                 <div>
                   {currentPage > 1 && (
                     <button
@@ -389,7 +437,7 @@ export function ApplicationWizard({
                         'disabled:opacity-50 disabled:cursor-not-allowed',
                       )}
                     >
-                      {isPending ? 'Saving…' : 'Next'}
+                      {isPending ? 'Saving...' : 'Next'}
                     </button>
                   ) : (
                     <button
@@ -398,22 +446,32 @@ export function ApplicationWizard({
                       disabled={isPending}
                       className={cn(
                         'rounded-lg px-6 py-2.5 text-sm font-semibold text-white transition-[filter,colors]',
-                        'bg-[var(--brand-secondary,#fb7232)] hover:brightness-110',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-secondary,#fb7232)] focus-visible:ring-offset-1',
+                        'bg-[var(--brand-primary,#192334)] hover:brightness-110',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#192334)] focus-visible:ring-offset-1',
                         'disabled:opacity-50 disabled:cursor-not-allowed',
                       )}
                     >
-                      {isPending ? 'Submitting…' : 'Submit Application'}
+                      {isPending ? 'Submitting...' : 'Submit Application'}
                     </button>
                   )}
                 </div>
-              </div>
             </div>
 
-            {/* Page counter */}
-            <p className="mt-3 text-center text-xs text-white/30">
-              Page {currentPage} of {TOTAL_PAGES}
-            </p>
+            {/* Page counter + save indicator */}
+            <div className="mt-4 flex items-center justify-center gap-4 pb-6">
+              <p className="text-center text-xs text-muted-foreground">
+                Page {currentPage} of {TOTAL_PAGES}
+              </p>
+              <span
+                aria-live="polite"
+                className={cn(
+                  'text-xs text-muted-foreground transition-opacity duration-500',
+                  showSaved ? 'opacity-100' : 'opacity-0',
+                )}
+              >
+                Saved
+              </span>
+            </div>
           </div>
         </main>
       </div>

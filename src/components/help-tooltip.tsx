@@ -23,7 +23,7 @@ export function HelpTooltip({ content, side = 'top', className }: HelpTooltipPro
           <button
             type="button"
             className={cn(
-              'inline-flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 focus:outline-none',
+              'inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-gray-600 focus:outline-none',
               className
             )}
           >

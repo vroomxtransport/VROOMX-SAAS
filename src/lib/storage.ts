@@ -2,7 +2,7 @@ import { SupabaseClient } from '@supabase/supabase-js'
 import { validateFileBuffer } from '@/lib/file-validation'
 
 const ALLOWED_EXTENSIONS = new Set([
-  'pdf', 'png', 'jpg', 'jpeg', 'gif', 'webp',
+  'pdf', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg',
   'doc', 'docx', 'xls', 'xlsx', 'csv', 'txt',
 ])
 
@@ -63,6 +63,10 @@ export async function uploadFile(
   // Defends against attackers renaming an executable as `evil.jpg` — the
   // user-supplied extension and File.type header are both trivially
   // spoofable; only the file signature in the first ~4KB is trustworthy.
+  //
+  // Read buffer ONCE and reuse for both validation and upload — the File
+  // stream may be consumed after the first .arrayBuffer() call in Next.js
+  // server actions (Node.js edge runtime streams are one-shot).
   const buffer = await file.arrayBuffer()
   const validation = await validateFileBuffer(buffer, ALLOWED_MAGIC_BYTE_MIMES, MAX_FILE_SIZE)
   if (!validation.ok) {
@@ -74,9 +78,10 @@ export async function uploadFile(
 
   const { error } = await supabase.storage
     .from(bucket)
-    .upload(storagePath, file, {
+    .upload(storagePath, buffer, {
       cacheControl: '3600',
       upsert: false,
+      contentType: file.type,
     })
 
   if (error) return { path: '', error: error.message }

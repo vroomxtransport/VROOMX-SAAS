@@ -20,40 +20,31 @@ export default async function FormPage({ params, searchParams }: Props) {
 
   if (!token) notFound()
 
-  // Validate resume token
   const authResult = await publicAuthForResume(token)
   if ('error' in authResult) notFound()
 
   const { application } = authResult
 
-  // Load tenant for header rendering
   const tenant = await publicReadTenantById(application.tenant_id)
-  // publicReadTenantById returns null for both nonexistent and suspended tenants
   if (!tenant) notFound()
 
-  // Resolve carrier logo to a 1h signed URL (private branding bucket)
   const logoUrl = await publicReadTenantLogoUrl(tenant.logo_storage_path)
 
   return (
-    // Dark navy outer shell — neutral chrome, brand color is applied to accents only
-    <div className="min-h-screen" style={{ backgroundColor: '#0C1220' }}>
+    <div className="min-h-screen bg-gray-50/80">
       <BrandStyle
         primary={tenant.brand_color_primary}
         secondary={tenant.brand_color_secondary}
       />
-      {/* Persistent top bar */}
-      <div
-        className="sticky top-0 z-20 border-b border-white/10 px-4"
-        style={{ backgroundColor: '#0C1220' }}
-      >
-        {/* 2px brand accent line under the sticky bar */}
+
+      {/* Top header bar */}
+      <div className="sticky top-0 z-20 border-b border-gray-200/80 bg-white/80 backdrop-blur-xl">
         <div
           aria-hidden="true"
-          className="absolute inset-x-0 bottom-0 h-[2px]"
-          style={{ background: 'var(--brand-primary, #192334)' }}
+          className="absolute inset-x-0 bottom-0 h-[2px] opacity-40"
+          style={{ background: 'linear-gradient(90deg, transparent, var(--brand-primary, #192334), transparent)' }}
         />
-        <div className="mx-auto flex max-w-4xl items-center justify-between py-2.5">
-          {/* Centered "Application For Employment" label */}
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 sm:px-6 py-2.5">
           <TenantHeader
             name={tenant.name}
             address={tenant.address}
@@ -62,19 +53,19 @@ export default async function FormPage({ params, searchParams }: Props) {
             zip={tenant.zip}
             logoUrl={logoUrl}
           />
-          <span className="hidden text-xs font-semibold uppercase tracking-widest text-white/40 sm:block">
+          <span className="hidden text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground lg:block">
             Application For Employment
           </span>
           <Link
             href="/login"
-            className="text-xs text-white/40 hover:text-white/70 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 rounded"
+            className="text-xs text-muted-foreground hover:text-gray-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 rounded px-2 py-1"
           >
-            &larr; Back to Login
+            &larr; Back
           </Link>
         </div>
       </div>
 
-      {/* Wizard mounts here */}
+      {/* Wizard */}
       <ApplicationWizard
         resumeToken={token}
         application={application}

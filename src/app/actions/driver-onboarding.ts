@@ -73,7 +73,7 @@ const TERMINAL_PASS_STATUSES = new Set(['passed', 'waived', 'not_applicable'])
 // Waived/not_applicable transitions from pending are handled separately by waiveStep().
 const ALLOWED_TRANSITIONS: Record<string, Set<string>> = {
   pending:        new Set(['in_progress', 'passed', 'failed']),
-  in_progress:    new Set(['passed', 'failed']),
+  in_progress:    new Set(['passed', 'failed', 'waived']),
   // Terminal states — no outgoing transitions
   passed:         new Set<string>(),
   failed:         new Set<string>(),
@@ -250,11 +250,14 @@ export async function updateStepStatus(
   }
 
   // D1: Validate state transition — reject invalid moves (e.g. passed→pending)
+  // Allow same-status updates (used for note-only saves from the step drawer)
   const currentStatus = step.status as string
-  const allowedNext = ALLOWED_TRANSITIONS[currentStatus]
-  if (!allowedNext || !allowedNext.has(parsed.data.status)) {
-    return {
-      error: `Invalid status transition: cannot move from "${currentStatus}" to "${parsed.data.status}".`,
+  if (parsed.data.status !== currentStatus) {
+    const allowedNext = ALLOWED_TRANSITIONS[currentStatus]
+    if (!allowedNext || !allowedNext.has(parsed.data.status)) {
+      return {
+        error: `Invalid status transition: cannot move from "${currentStatus}" to "${parsed.data.status}".`,
+      }
     }
   }
 
@@ -622,12 +625,25 @@ export async function sendPreAdverseAction(
     return { error: 'Pre-adverse action can only be sent for applications under review.' }
   }
 
-  // Validate that every cited step belongs to this tenant and has status='failed'
+  // M3 fix: Fetch pipeline for this application to scope step validation
+  const { data: pipelineForValidation } = await supabase
+    .from('driver_onboarding_pipelines')
+    .select('id')
+    .eq('application_id', parsed.data.applicationId)
+    .eq('tenant_id', tenantId)
+    .maybeSingle()
+
+  if (!pipelineForValidation) {
+    return { error: 'No pipeline found for this application.' }
+  }
+
+  // Validate that every cited step belongs to this application's pipeline and has status='failed'
   const { data: steps, error: stepsError } = await supabase
     .from('driver_onboarding_steps')
     .select('id, status, tenant_id')
     .in('id', parsed.data.failedStepIds)
     .eq('tenant_id', tenantId)
+    .eq('pipeline_id', pipelineForValidation.id as string)
 
   if (stepsError || !steps || steps.length !== parsed.data.failedStepIds.length) {
     return { error: 'One or more specified steps were not found or belong to another tenant.' }
@@ -655,10 +671,10 @@ export async function sendPreAdverseAction(
   // C1: Send FCRA pre-adverse action notice via Resend.
   // DRV-005: application.email is already fetched above — no fallback needed.
   if (application.email && process.env.RESEND_API_KEY) {
-    // Fetch tenant name for the email
+    // Fetch tenant info for the email branding
     const { data: tenantData } = await supabase
       .from('tenants')
-      .select('name')
+      .select('name, address, city, state, zip, phone, dot_number, mc_number')
       .eq('id', tenantId)
       .single()
 
@@ -698,6 +714,7 @@ export async function sendPreAdverseAction(
         findingsSummary: parsed.data.findingsSummary,
         disputeDeadline,
         tenantContactEmail: (adminMember?.email as string) ?? undefined,
+        company: tenantData ?? undefined,
       }),
     }).catch(captureAsyncError('pre-adverse-action email'))
   }
@@ -807,7 +824,7 @@ export async function finalizeRejection(
   if (application.email && process.env.RESEND_API_KEY) {
     const { data: tenantData } = await supabase
       .from('tenants')
-      .select('name')
+      .select('name, address, city, state, zip, phone, dot_number, mc_number')
       .eq('id', tenantId)
       .single()
 
@@ -829,6 +846,7 @@ export async function finalizeRejection(
         applicantFirstName: (application.first_name as string) ?? 'Applicant',
         finalReason: parsed.data.finalReason,
         tenantContactEmail: (adminMember?.email as string) ?? undefined,
+        company: tenantData ?? undefined,
       }),
     }).catch(captureAsyncError('adverse-action-final email'))
   }

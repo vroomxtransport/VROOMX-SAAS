@@ -59,32 +59,30 @@ export function DocumentsTab({ applicationId: _applicationId, documents }: Props
       </div>
 
       {typedDocs.map((doc) => (
-        <div
-          key={doc.id}
-          className="grid grid-cols-[1fr_120px_100px_100px] gap-2 items-center border-b border-border px-4 py-3 last:border-b-0 hover:bg-muted/20 transition-colors"
-        >
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-foreground">{doc.file_name}</p>
-            {doc.mime_type && (
-              <p className="text-xs text-muted-foreground font-mono">{doc.mime_type}</p>
-            )}
+        <div key={doc.id}>
+          <div className="grid grid-cols-[1fr_120px_100px_100px] gap-2 items-center border-b border-border px-4 py-3 last:border-b-0 hover:bg-muted/20 transition-colors">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium text-foreground">{doc.file_name}</p>
+              {doc.mime_type && (
+                <p className="text-xs text-muted-foreground font-mono">{doc.mime_type}</p>
+              )}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {APPLICANT_DOCUMENT_TYPE_LABELS[doc.document_type] ?? doc.document_type}
+            </div>
+            <div className="text-xs text-muted-foreground tabular-nums">
+              {formatBytes(doc.file_size)}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {new Date(doc.uploaded_at).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              })}
+            </div>
           </div>
-          <div className="text-xs text-muted-foreground">
-            {APPLICANT_DOCUMENT_TYPE_LABELS[doc.document_type] ?? doc.document_type}
-          </div>
-          <div className="text-xs text-muted-foreground tabular-nums">
-            {formatBytes(doc.file_size)}
-          </div>
-          <div className="text-xs text-muted-foreground">
-            {new Date(doc.uploaded_at).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-            })}
-          </div>
-          {/* Show scan badge only for flagged docs (AV scanning is TODO v2) */}
           {doc.scan_status === 'flagged' && (
-            <div className="col-span-full px-4 pb-2">
+            <div className="px-4 pb-2 border-b border-border">
               <ScanBadge status={doc.scan_status} />
             </div>
           )}

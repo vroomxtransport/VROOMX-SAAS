@@ -8,7 +8,6 @@ import type { TenantRole } from '@/types'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   SidebarLeft01Icon,
-  SidebarRight01Icon,
 } from '@hugeicons/core-free-icons'
 import { cn } from '@/lib/utils'
 import {
@@ -57,194 +56,186 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
         className={cn(
           'sidebar-noise fixed left-0 top-0 z-50 hidden h-full flex-col border-r transition-all duration-300 ease-in-out lg:flex',
           'bg-[var(--sidebar-bg)] border-[var(--sidebar-border-color)]',
-          // Desktop: collapse to w-16
           isCollapsed ? 'lg:w-16' : 'lg:w-64'
         )}
       >
-        {/* Logo area */}
-        <div className="flex h-16 items-center border-b border-[var(--sidebar-border-color)] px-3">
-          <Link href="/dashboard" className="flex flex-1 items-center justify-center overflow-hidden">
-            {isCollapsed ? (
+        {/* Header — logo + tenant name + collapse toggle */}
+        <div className={cn(
+          'flex h-14 items-center px-3 gap-2',
+          isCollapsed && 'justify-center'
+        )}>
+          <Link href="/dashboard" className={cn(
+            'flex flex-1 items-center gap-2.5 overflow-hidden min-w-0',
+            isCollapsed && 'flex-initial justify-center'
+          )}>
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--brand)]">
               <Image
                 src="/images/logo-white.png"
                 alt="VroomX"
-                width={45}
-                height={45}
-                className="h-[6.7rem] w-auto object-contain brightness-0"
+                width={20}
+                height={20}
+                className="h-5 w-auto object-contain"
               />
-            ) : (
-              <Image
-                src="/images/logo-white.png"
-                alt="VroomX TMS"
-                width={196}
-                height={67}
-                className="h-[7.6rem] w-auto brightness-0"
-              />
+            </div>
+            {!isCollapsed && (
+              <span className="text-sm font-semibold text-[var(--sidebar-text-active)] truncate">
+                {tenantName}
+              </span>
             )}
           </Link>
-{/* Close button removed — mobile nav uses bottom tab bar */}
-        </div>
-
-        {/* Tenant name */}
-        <div
-          className={cn(
-            'border-b border-[var(--sidebar-border-color)] px-4 py-2 overflow-hidden',
-            isCollapsed && 'lg:hidden'
+          {!isCollapsed && (
+            <button
+              onClick={toggleCollapse}
+              className="shrink-0 rounded-md p-1.5 text-[var(--sidebar-text)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-text-active)] transition-colors"
+              aria-label="Collapse sidebar"
+            >
+              <HugeiconsIcon icon={SidebarLeft01Icon} size={16} />
+            </button>
           )}
-        >
-          <p className="text-sm font-medium text-foreground text-center truncate">{tenantName}</p>
-        </div>
-
-        {/* Collapse toggle (desktop only) */}
-        <div className="hidden lg:flex px-3 py-1.5">
-          <button
-            onClick={toggleCollapse}
-            className={cn(
-              'flex items-center gap-2 rounded-md p-1.5 text-[var(--sidebar-text)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-text-active)] transition-colors',
-              isCollapsed && 'lg:mx-auto'
-            )}
-            aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          >
-            {isCollapsed ? (
-              <HugeiconsIcon icon={SidebarRight01Icon} size={16} />
-            ) : (
-              <>
-                <HugeiconsIcon icon={SidebarLeft01Icon} size={16} />
-                <span className="text-xs text-[var(--sidebar-category)]">Collapse</span>
-              </>
-            )}
-          </button>
         </div>
 
         {/* Navigation */}
-        <nav className={cn("flex-1 overflow-y-auto py-2", isCollapsed ? "lg:space-y-1 lg:py-1 lg:px-1 px-2" : "space-y-3 px-2")}>
+        <nav className={cn(
+          'flex-1 overflow-y-auto',
+          isCollapsed ? 'py-2 px-1.5' : 'py-2 px-2.5'
+        )}>
           {filteredCategories.map((category, catIndex) => {
             const isMainCategory = category.label === 'Main'
             const isCategoryCollapsed = !isMainCategory && collapsedCategories.includes(category.label)
 
             return (
-            <div key={category.label}>
-              {/* Category label or divider */}
-              {isCollapsed ? (
-                catIndex > 0 && (
-                  <div className="hidden lg:block mx-3 my-1 border-t border-[var(--sidebar-border-color)]" />
-                )
-              ) : isMainCategory ? (
-                <div className="mb-1.5 px-3 pt-1">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--sidebar-category)]">
-                    {category.label}
-                  </span>
-                </div>
-              ) : (
-                <button
-                  onClick={() => toggleCategory(category.label)}
-                  className="mb-1.5 px-3 pt-1 flex items-center justify-between w-full group/cat"
-                >
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--sidebar-category)] group-hover/cat:text-[var(--sidebar-text-active)] transition-colors">
-                    {category.label}
-                  </span>
-                  <ChevronDown
-                    className={cn(
-                      'h-3 w-3 text-[var(--sidebar-category)] group-hover/cat:text-[var(--sidebar-text-active)] transition-all duration-200',
-                      isCategoryCollapsed && '-rotate-90'
-                    )}
-                  />
-                </button>
-              )}
-
-              {/* Nav items — animated collapse */}
-              <div
-                className={cn(
-                  'grid transition-[grid-template-rows] duration-200 ease-in-out',
-                  !isCollapsed && isCategoryCollapsed ? 'grid-rows-[0fr]' : 'grid-rows-[1fr]'
-                )}
-              >
-              <div className="space-y-0.5 overflow-hidden min-h-0">
-                {category.items.map((item) => {
-                  // Accounting hub: highlight for /financials, /billing, /payroll, /local-driver-payroll
-                  const accountingRoutes = ['/financials', '/billing', '/payroll', '/local-driver-payroll']
-                  const isActive = item.href === '/financials'
-                    ? accountingRoutes.some((r) => pathname === r || pathname.startsWith(r + '/'))
-                    : pathname === item.href || pathname.startsWith(item.href + '/')
-                  // Inject live unread count for Team Chat
-                  const badge = item.href === '/team-chat' && totalUnread > 0 ? totalUnread : undefined
-
-                  const linkContent = (
-                    <Link
-                      href={item.href}
-                      style={{ color: isActive ? 'var(--sidebar-text-active)' : 'var(--sidebar-text)' }}
-                      className={cn(
-                        'group flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-all duration-150 relative',
-                        isActive
-                          ? 'bg-[var(--sidebar-active)]'
-                          : 'hover:bg-[var(--sidebar-hover)] hover:!text-[var(--sidebar-text-active)]',
-                        isCollapsed && 'lg:justify-center lg:px-0 lg:py-1.5 lg:mx-auto lg:w-10'
-                      )}
-                    >
-                      {/* Active indicator pill */}
-                      {isActive && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-brand" />
-                      )}
-                      <HugeiconsIcon
-                        icon={item.icon}
-                        size={isCollapsed ? 18 : 20}
-                        className={cn(
-                          'shrink-0 transition-colors',
-                          isActive ? 'text-brand' : 'group-hover:text-[var(--sidebar-text-active)]'
-                        )}
-                      />
-                      <span
-                        className={cn(
-                          'whitespace-nowrap transition-opacity duration-200',
-                          isCollapsed && 'lg:hidden'
-                        )}
-                      >
-                        {item.name}
-                      </span>
-                      {/* Unread badge — hidden when sidebar is collapsed on desktop */}
-                      {badge && !isCollapsed && (
-                        <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--brand)] px-1.5 text-[10px] font-bold text-white leading-none">
-                          {badge > 99 ? '99+' : badge}
-                        </span>
-                      )}
-                    </Link>
+              <div key={category.label}>
+                {/* Gradient divider between Main and grouped sections */}
+                {catIndex === 1 && (
+                  isCollapsed ? (
+                    <div className="mx-2 my-2 h-px bg-[var(--sidebar-border-color)]" />
+                  ) : (
+                    <div className="mx-3 my-3 h-px bg-gradient-to-r from-transparent via-[var(--sidebar-border-color)] to-transparent" />
                   )
+                )}
 
-                  if (isCollapsed) {
-                    return (
-                      <Tooltip key={item.href}>
-                        <TooltipTrigger asChild className="hidden lg:flex">
-                          <div className="relative">
-                            {linkContent}
-                            {/* Collapsed dot indicator for unread */}
-                            {badge && (
-                              <span className="pointer-events-none absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-[var(--brand)] ring-2 ring-background" />
+                {/* Thin divider between grouped sections (not before first group) */}
+                {catIndex > 1 && !isCollapsed && (
+                  <div className="my-1" />
+                )}
+                {catIndex > 1 && isCollapsed && (
+                  <div className="mx-2 my-1.5 h-px bg-[var(--sidebar-border-color)]" />
+                )}
+
+                {/* Section header for non-Main categories (expanded sidebar only) */}
+                {!isMainCategory && !isCollapsed && (
+                  <button
+                    onClick={() => toggleCategory(category.label)}
+                    className={cn(
+                      'mb-0.5 flex w-full items-center gap-2.5 rounded-lg px-3 py-2 transition-colors duration-150',
+                      !isCategoryCollapsed
+                        ? 'bg-[var(--sidebar-hover)] text-[var(--sidebar-text-active)]'
+                        : 'text-[var(--sidebar-text)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-text-active)]'
+                    )}
+                  >
+                    {category.icon && (
+                      <HugeiconsIcon icon={category.icon} size={18} className="shrink-0" />
+                    )}
+                    <span className="flex-1 text-left text-[13px] font-medium">{category.label}</span>
+                    <ChevronDown
+                      className={cn(
+                        'h-3.5 w-3.5 transition-transform duration-200',
+                        isCategoryCollapsed && '-rotate-90'
+                      )}
+                    />
+                  </button>
+                )}
+
+                {/* Nav items — animated collapse */}
+                <div
+                  className={cn(
+                    'grid transition-[grid-template-rows] duration-200 ease-in-out',
+                    !isCollapsed && isCategoryCollapsed ? 'grid-rows-[0fr]' : 'grid-rows-[1fr]'
+                  )}
+                >
+                  <div className="overflow-hidden min-h-0">
+                    <div className={cn(
+                      'space-y-0.5',
+                      !isMainCategory && !isCollapsed && 'relative ml-[22px] pl-3 border-l border-[var(--sidebar-border-color)]'
+                    )}>
+                      {category.items.map((item) => {
+                        const accountingRoutes = ['/financials', '/billing', '/payroll', '/local-driver-payroll']
+                        const isActive = item.href === '/financials'
+                          ? accountingRoutes.some((r) => pathname === r || pathname.startsWith(r + '/'))
+                          : pathname === item.href || pathname.startsWith(item.href + '/')
+                        const badge = item.href === '/team-chat' && totalUnread > 0 ? totalUnread : undefined
+
+                        const linkContent = (
+                          <Link
+                            href={item.href}
+                            className={cn(
+                              'group flex items-center gap-3 rounded-lg px-3 py-1.5 text-[13px] font-medium transition-all duration-150 relative',
+                              isActive
+                                ? 'bg-[var(--sidebar-active)] text-[var(--sidebar-text-active)]'
+                                : 'text-[var(--sidebar-text)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-text-active)]',
+                              isCollapsed && 'lg:justify-center lg:px-0 lg:py-1.5 lg:mx-auto lg:w-10'
                             )}
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent side="right" sideOffset={8}>
-                          {item.name}
-                          {badge ? ` (${badge > 99 ? '99+' : badge} unread)` : ''}
-                        </TooltipContent>
-                        {/* Mobile: show without tooltip */}
-                        <div className="lg:hidden">{linkContent}</div>
-                      </Tooltip>
-                    )
-                  }
+                          >
+                            <HugeiconsIcon
+                              icon={item.icon}
+                              size={18}
+                              className={cn(
+                                'shrink-0 transition-colors',
+                                isActive ? 'text-[var(--sidebar-text-active)]' : 'group-hover:text-[var(--sidebar-text-active)]'
+                              )}
+                            />
+                            <span
+                              className={cn(
+                                'whitespace-nowrap transition-opacity duration-200',
+                                isCollapsed && 'lg:hidden'
+                              )}
+                            >
+                              {item.name}
+                            </span>
+                            {/* Unread badge — hidden when sidebar is collapsed on desktop */}
+                            {badge && !isCollapsed && (
+                              <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--brand)] px-1.5 text-[10px] font-bold text-white leading-none">
+                                {badge > 99 ? '99+' : badge}
+                              </span>
+                            )}
+                          </Link>
+                        )
 
-                  return <div key={item.href}>{linkContent}</div>
-                })}
+                        if (isCollapsed) {
+                          return (
+                            <Tooltip key={item.href}>
+                              <TooltipTrigger asChild className="hidden lg:flex">
+                                <div className="relative">
+                                  {linkContent}
+                                  {/* Collapsed dot indicator for unread */}
+                                  {badge && (
+                                    <span className="pointer-events-none absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-[var(--brand)] ring-2 ring-background" />
+                                  )}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent side="right" sideOffset={8}>
+                                {item.name}
+                                {badge ? ` (${badge > 99 ? '99+' : badge} unread)` : ''}
+                              </TooltipContent>
+                            </Tooltip>
+                          )
+                        }
+
+                        return <div key={item.href}>{linkContent}</div>
+                      })}
+                    </div>
+                  </div>
+                </div>
               </div>
-              </div>
-            </div>
-          )})}
+            )
+          })}
         </nav>
 
         {/* Footer */}
-        <div className="border-t border-[var(--sidebar-border-color)] px-4 py-2">
+        <div className="px-4 py-3">
           <p
             className={cn(
-              'text-xs text-[var(--sidebar-category)] text-center',
+              'text-[11px] text-[var(--sidebar-category)] text-center',
               isCollapsed && 'lg:text-[10px]'
             )}
           >
@@ -253,7 +244,6 @@ export function Sidebar({ userRole, tenantName, userId }: SidebarProps) {
             ) : (
               'VroomX TMS v0.1.0'
             )}
-            <span className="lg:hidden">VroomX TMS v0.1.0</span>
           </p>
         </div>
       </aside>

@@ -10,17 +10,20 @@ import {
   Section,
   Text,
 } from '@react-email/components'
+import { CompanyFooter, type CompanyInfo } from './company-footer'
 
 interface ResumeApplicationEmailProps {
   tenantName: string
   applicantFirstName: string
   resumeUrl: string
+  company?: CompanyInfo
 }
 
 export function ResumeApplicationEmail({
   tenantName,
   applicantFirstName,
   resumeUrl,
+  company,
 }: ResumeApplicationEmailProps) {
   return (
     <Html>
@@ -65,9 +68,7 @@ export function ResumeApplicationEmail({
             If you did not request this link, you can safely ignore this email.
           </Text>
 
-          <Hr style={hrStyle} />
-
-          <Text style={poweredByStyle}>Sent via VroomX TMS on behalf of {tenantName}</Text>
+          <CompanyFooter company={company ?? { name: tenantName }} />
         </Container>
       </Body>
     </Html>
@@ -149,9 +150,3 @@ const linkStyle: React.CSSProperties = {
   wordBreak: 'break-all' as const,
 }
 
-const poweredByStyle: React.CSSProperties = {
-  fontSize: '11px',
-  color: '#9ca3af',
-  textAlign: 'center' as const,
-  margin: 0,
-}

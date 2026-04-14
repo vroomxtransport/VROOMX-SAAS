@@ -47,7 +47,7 @@ export function ResumeForm({ tenantSlug }: ResumeFormProps) {
         <>
           <div className="mb-8 space-y-2">
             <h1 className="text-xl font-bold text-[#192334]">Resume your application</h1>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               Enter the email address you used when you started your application. We&apos;ll send you a secure link to continue where you left off.
             </p>
           </div>
@@ -56,7 +56,7 @@ export function ResumeForm({ tenantSlug }: ResumeFormProps) {
             <div className="space-y-1.5">
               <label
                 htmlFor="resume-email"
-                className="block text-[10px] font-semibold uppercase tracking-widest text-gray-500"
+                className="block text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
               >
                 Email Address *
               </label>
@@ -71,7 +71,7 @@ export function ResumeForm({ tenantSlug }: ResumeFormProps) {
                 aria-required="true"
                 aria-invalid={!!error}
                 aria-describedby={error ? 'resume-email-error' : undefined}
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-[var(--brand-primary,#192334)] focus:ring-1 focus:ring-[var(--brand-primary,#192334)] placeholder:text-gray-400"
+                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-[var(--brand-primary,#192334)] focus:ring-1 focus:ring-[var(--brand-primary,#192334)] placeholder:text-muted-foreground"
               />
               {error && (
                 <p
@@ -96,7 +96,7 @@ export function ResumeForm({ tenantSlug }: ResumeFormProps) {
           <div className="mt-6 border-t border-gray-100 pt-4 text-center">
             <Link
               href={`/apply/${tenantSlug}`}
-              className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
+              className="text-xs text-muted-foreground hover:text-gray-700 transition-colors"
             >
               &larr; Back to application
             </Link>
@@ -117,12 +117,12 @@ export function ResumeForm({ tenantSlug }: ResumeFormProps) {
             </svg>
           </div>
           <h2 className="text-lg font-bold text-[#192334]">Check your email</h2>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             If an application exists for{' '}
             <span className="font-medium text-gray-700">{email}</span>,
             we&apos;ve sent you a secure link to resume your application. The link expires in 72 hours.
           </p>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-muted-foreground">
             Check your spam folder if you don&apos;t see it within a few minutes.
           </p>
           <Link

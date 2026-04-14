@@ -62,7 +62,7 @@ function StepCircle({ status }: { status: StepStatus }) {
   // pending
   return (
     <span className={cn(base, 'bg-gray-200 ring-gray-100')}>
-      <HugeiconsIcon icon={Time01Icon} size={14} className="text-gray-500" />
+      <HugeiconsIcon icon={Time01Icon} size={14} className="text-muted-foreground" />
     </span>
   )
 }

@@ -10,6 +10,7 @@ import {
   Section,
   Text,
 } from '@react-email/components'
+import { CompanyFooter, type CompanyInfo } from './company-footer'
 
 interface PreAdverseActionEmailProps {
   tenantName: string
@@ -17,6 +18,7 @@ interface PreAdverseActionEmailProps {
   findingsSummary: string
   disputeDeadline: string
   tenantContactEmail?: string
+  company?: CompanyInfo
 }
 
 export function PreAdverseActionEmail({
@@ -25,6 +27,7 @@ export function PreAdverseActionEmail({
   findingsSummary,
   disputeDeadline,
   tenantContactEmail,
+  company,
 }: PreAdverseActionEmailProps) {
   return (
     <Html>
@@ -109,9 +112,7 @@ export function PreAdverseActionEmail({
             </Link>.
           </Text>
 
-          <Hr style={hrStyle} />
-
-          <Text style={poweredByStyle}>Sent via VroomX TMS on behalf of {tenantName}</Text>
+          <CompanyFooter company={company ?? { name: tenantName }} />
         </Container>
       </Body>
     </Html>
@@ -213,9 +214,3 @@ const legalStyle: React.CSSProperties = {
   marginBottom: '12px',
 }
 
-const poweredByStyle: React.CSSProperties = {
-  fontSize: '11px',
-  color: '#9ca3af',
-  textAlign: 'center' as const,
-  margin: 0,
-}
