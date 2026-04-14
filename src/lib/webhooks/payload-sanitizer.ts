@@ -3,6 +3,7 @@ const SENSITIVE_KEYS = new Set([
   'date_of_birth', 'dob',
   'license_number', 'pin_hash',
   'pickup_contact_phone', 'delivery_contact_phone',
+  'pickup_contact_email', 'delivery_contact_email',
   'phone', 'personal_email',
   'auth_user_id', 'secret', 'password', 'token',
 ])

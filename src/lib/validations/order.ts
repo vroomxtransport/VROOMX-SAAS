@@ -49,6 +49,7 @@ export const orderLocationSchema = z.object({
   pickupZip: z.string().max(20).optional().or(z.literal('')),
   pickupContactName: z.string().max(200).optional().or(z.literal('')),
   pickupContactPhone: z.string().max(30).optional().or(z.literal('')),
+  pickupContactEmail: z.string().email('Invalid email').max(200).optional().or(z.literal('')),
   pickupDate: z.string().max(200).optional().or(z.literal('')),
   deliveryCustomerType: z.enum(['private', 'dealer', 'business', 'auction']).optional().or(z.literal('')),
   deliveryLocation: z.string().min(1, 'Delivery location is required').max(500),
@@ -57,6 +58,7 @@ export const orderLocationSchema = z.object({
   deliveryZip: z.string().max(20).optional().or(z.literal('')),
   deliveryContactName: z.string().max(200).optional().or(z.literal('')),
   deliveryContactPhone: z.string().max(30).optional().or(z.literal('')),
+  deliveryContactEmail: z.string().email('Invalid email').max(200).optional().or(z.literal('')),
   deliveryDate: z.string().max(200).optional().or(z.literal('')),
 })
 

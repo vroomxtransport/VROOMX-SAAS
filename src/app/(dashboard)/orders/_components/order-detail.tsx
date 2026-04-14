@@ -15,6 +15,7 @@ import { OrderDrawer } from './order-drawer'
 import { AssignToTrip } from './assign-to-trip'
 import { PaymentRecorder } from './payment-recorder'
 import { InvoiceButton } from './invoice-button'
+import { ReceiptButton } from './receipt-button'
 import { OrderAttachments } from './order-attachments'
 import { OrderActivityLog } from './order-activity-log'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
@@ -304,13 +305,34 @@ export function OrderDetail({ order }: OrderDetailProps) {
                   <Receipt className="h-5 w-5 text-muted-foreground" />
                   <h2 className="text-lg font-semibold text-foreground">Billing</h2>
                 </div>
-                <InvoiceButton
-                  orderId={order.id}
-                  orderNumber={order.order_number}
-                  paymentStatus={order.payment_status as PaymentStatus}
-                  invoiceDate={order.invoice_date}
-                  hasBrokerEmail={!!order.broker?.email}
-                />
+                <div className="flex items-start gap-2">
+                  <InvoiceButton
+                    orderId={order.id}
+                    orderNumber={order.order_number}
+                    paymentStatus={order.payment_status as PaymentStatus}
+                    invoiceDate={order.invoice_date}
+                    hasBrokerEmail={!!order.broker?.email}
+                  />
+                  <ReceiptButton
+                    orderId={order.id}
+                    orderNumber={order.order_number}
+                    paymentType={order.payment_type ?? null}
+                    paymentStatus={order.payment_status as PaymentStatus}
+                    pickupContact={{
+                      name: order.pickup_contact_name,
+                      email: order.pickup_contact_email,
+                    }}
+                    deliveryContact={{
+                      name: order.delivery_contact_name,
+                      email: order.delivery_contact_email,
+                    }}
+                    broker={
+                      order.broker
+                        ? { name: order.broker.name, email: order.broker.email }
+                        : null
+                    }
+                  />
+                </div>
               </div>
               <PaymentRecorder
                 orderId={order.id}

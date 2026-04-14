@@ -248,6 +248,7 @@ export const orders = pgTable('orders', {
   pickupZip: text('pickup_zip'),
   pickupContactName: text('pickup_contact_name'),
   pickupContactPhone: text('pickup_contact_phone'),
+  pickupContactEmail: text('pickup_contact_email'),
   pickupDate: date('pickup_date'),
   pickupCustomerType: text('pickup_customer_type'),
   // Delivery
@@ -257,6 +258,7 @@ export const orders = pgTable('orders', {
   deliveryZip: text('delivery_zip'),
   deliveryContactName: text('delivery_contact_name'),
   deliveryContactPhone: text('delivery_contact_phone'),
+  deliveryContactEmail: text('delivery_contact_email'),
   deliveryDate: date('delivery_date'),
   deliveryCustomerType: text('delivery_customer_type'),
   // Actual dates

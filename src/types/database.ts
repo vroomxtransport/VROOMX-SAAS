@@ -149,6 +149,7 @@ export interface Order {
   pickup_zip: string | null
   pickup_contact_name: string | null
   pickup_contact_phone: string | null
+  pickup_contact_email: string | null
   pickup_date: string | null
   pickup_customer_type: string | null
   delivery_location: string | null
@@ -157,6 +158,7 @@ export interface Order {
   delivery_zip: string | null
   delivery_contact_name: string | null
   delivery_contact_phone: string | null
+  delivery_contact_email: string | null
   delivery_date: string | null
   delivery_customer_type: string | null
   actual_pickup_date: string | null

@@ -113,6 +113,7 @@ function LocationSection({
   const zipField = `${prefix}Zip` as keyof CreateOrderInput
   const contactNameField = `${prefix}ContactName` as keyof CreateOrderInput
   const contactPhoneField = `${prefix}ContactPhone` as keyof CreateOrderInput
+  const contactEmailField = `${prefix}ContactEmail` as keyof CreateOrderInput
   const dateField = `${prefix}Date` as keyof CreateOrderInput
 
   const handleAddressSelect = (suggestion: AddressSuggestion) => {
@@ -244,6 +245,25 @@ function LocationSection({
           )}
         />
       </div>
+
+      <FormField
+        control={form.control}
+        name={contactEmailField}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Contact Email</FormLabel>
+            <FormControl>
+              <Input
+                type="email"
+                placeholder="contact@example.com"
+                {...field}
+                value={field.value as string ?? ''}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
       <FormField
         control={form.control}

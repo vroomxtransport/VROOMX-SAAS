@@ -140,6 +140,7 @@ export async function createOrder(data: unknown) {
       pickup_zip: v.pickupZip || null,
       pickup_contact_name: v.pickupContactName || null,
       pickup_contact_phone: v.pickupContactPhone || null,
+      pickup_contact_email: v.pickupContactEmail || null,
       pickup_date: v.pickupDate || null,
       pickup_customer_type: v.pickupCustomerType || null,
       delivery_customer_type: v.deliveryCustomerType || null,
@@ -149,6 +150,7 @@ export async function createOrder(data: unknown) {
       delivery_zip: v.deliveryZip || null,
       delivery_contact_name: v.deliveryContactName || null,
       delivery_contact_phone: v.deliveryContactPhone || null,
+      delivery_contact_email: v.deliveryContactEmail || null,
       delivery_date: v.deliveryDate || null,
       revenue: String(v.revenue),
       // carrier_pay is computed server-side after insert + geocoding below
@@ -370,6 +372,7 @@ export async function updateOrder(id: string, data: unknown) {
   if (v.pickupZip !== undefined) updateData.pickup_zip = v.pickupZip || null
   if (v.pickupContactName !== undefined) updateData.pickup_contact_name = v.pickupContactName || null
   if (v.pickupContactPhone !== undefined) updateData.pickup_contact_phone = v.pickupContactPhone || null
+  if (v.pickupContactEmail !== undefined) updateData.pickup_contact_email = v.pickupContactEmail || null
   if (v.pickupDate !== undefined) updateData.pickup_date = v.pickupDate || null
   if (v.pickupCustomerType !== undefined) updateData.pickup_customer_type = v.pickupCustomerType || null
   if (v.deliveryCustomerType !== undefined) updateData.delivery_customer_type = v.deliveryCustomerType || null
@@ -379,6 +382,7 @@ export async function updateOrder(id: string, data: unknown) {
   if (v.deliveryZip !== undefined) updateData.delivery_zip = v.deliveryZip || null
   if (v.deliveryContactName !== undefined) updateData.delivery_contact_name = v.deliveryContactName || null
   if (v.deliveryContactPhone !== undefined) updateData.delivery_contact_phone = v.deliveryContactPhone || null
+  if (v.deliveryContactEmail !== undefined) updateData.delivery_contact_email = v.deliveryContactEmail || null
   if (v.deliveryDate !== undefined) updateData.delivery_date = v.deliveryDate || null
   if (v.revenue !== undefined) updateData.revenue = String(v.revenue)
   // carrier_pay is not accepted from the form — it's recomputed below

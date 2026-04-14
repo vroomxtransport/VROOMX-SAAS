@@ -33,6 +33,7 @@ const ACTION_CONFIG: Record<OrderActivityAction, { icon: typeof Activity; dotCol
   batch_marked_paid: { icon: CheckCircle2, dotColor: 'bg-emerald-500', iconColor: 'text-emerald-500' },
   invoice_sent: { icon: FileText, dotColor: 'bg-purple-500', iconColor: 'text-purple-500' },
   order_factored: { icon: Receipt, dotColor: 'bg-purple-500', iconColor: 'text-purple-500' },
+  receipt_sent: { icon: Receipt, dotColor: 'bg-emerald-500', iconColor: 'text-emerald-500' },
 }
 
 const DEFAULT_CONFIG = { icon: Activity, dotColor: 'bg-gray-400', iconColor: 'text-gray-400' }

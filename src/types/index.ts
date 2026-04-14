@@ -395,6 +395,7 @@ export type OrderActivityAction =
   | 'assigned_to_trip' | 'unassigned_from_trip'
   | 'payment_recorded' | 'batch_marked_paid'
   | 'invoice_sent' | 'order_factored'
+  | 'receipt_sent'
 
 // ============================================================================
 // Phase 4: Billing & Invoicing Types
