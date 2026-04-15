@@ -151,7 +151,7 @@ export function BrokerForm({ broker, onSuccess, onCancel }: BrokerFormProps) {
         key={broker?.id ?? 'create'}
       >
         {serverError && (
-          <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
+          <div className="rounded-md p-3 text-sm text-red-700">
             {serverError}
           </div>
         )}

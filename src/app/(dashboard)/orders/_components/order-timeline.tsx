@@ -83,7 +83,7 @@ export function OrderTimeline({
                     isCompleted &&
                       'border-blue-500 bg-blue-500 text-white',
                     isCurrent &&
-                      'border-blue-500 bg-blue-50 text-blue-600 ring-4 ring-blue-100',
+                      'border-blue-500 text-blue-600 ring-4 ring-blue-100',
                     isFuture &&
                       'border-border bg-surface text-muted-foreground/60',
                     isCancelled &&

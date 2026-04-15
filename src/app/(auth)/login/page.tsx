@@ -29,7 +29,7 @@ function LoginForm() {
 
       {inviteToken && (
         <BoxReveal boxColor="var(--skeleton)" duration={0.3} width="100%">
-          <div className="rounded-md bg-blue-50 p-3 text-sm text-blue-700">
+          <div className="rounded-md p-3 text-sm text-blue-700">
             Sign in to accept your team invitation.
           </div>
         </BoxReveal>
@@ -123,7 +123,7 @@ function LoginForm() {
               )}
 
               {magicState?.success && (
-                <div className="rounded-md bg-green-50 p-3 text-sm text-green-700">
+                <div className="rounded-md p-3 text-sm text-green-700">
                   {magicState.message}
                 </div>
               )}

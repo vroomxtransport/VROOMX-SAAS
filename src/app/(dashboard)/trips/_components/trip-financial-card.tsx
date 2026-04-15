@@ -44,10 +44,10 @@ const ACCENT_STYLES: Record<Accent, string> = {
 }
 
 const ICON_STYLES: Record<Accent, string> = {
-  emerald: 'text-emerald-600 bg-emerald-100',
+  emerald: 'text-emerald-600',
   muted: 'text-muted-foreground bg-muted',
-  violet: 'text-violet-600 bg-violet-100',
-  rose: 'text-rose-600 bg-rose-100',
+  violet: 'text-violet-600',
+  rose: 'text-rose-600',
 }
 
 // --- Sub-components ---

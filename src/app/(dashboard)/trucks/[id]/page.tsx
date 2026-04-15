@@ -140,7 +140,7 @@ export default function TruckDetailPage({ params }: TruckDetailPageProps) {
               {truck.ownership === 'owner_operator' && (
                 <Badge
                   variant="outline"
-                  className="bg-purple-50 text-purple-700 border-purple-200"
+                  className="text-purple-700 border-purple-200"
                 >
                   Owner-Operator
                 </Badge>
@@ -175,7 +175,7 @@ export default function TruckDetailPage({ params }: TruckDetailPageProps) {
             </Button>
             <Button
               variant="outline"
-              className="text-red-600 hover:bg-red-50 hover:text-red-700"
+              className="text-red-600 hover:text-red-700"
               onClick={() => setDeleteDialogOpen(true)}
             >
               <Trash2 className="mr-2 h-4 w-4" />

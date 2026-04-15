@@ -77,7 +77,7 @@ export default function BrokerDetailPage({
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Brokers
         </Button>
-        <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
+        <div className="rounded-md p-4 text-sm text-red-700">
           Failed to load broker: {error?.message ?? 'Unknown error'}
         </div>
       </div>
@@ -95,7 +95,7 @@ export default function BrokerDetailPage({
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Brokers
         </Button>
-        <div className="rounded-md bg-yellow-50 p-4 text-sm text-yellow-700">
+        <div className="rounded-md p-4 text-sm text-yellow-700">
           Broker not found.
         </div>
       </div>
@@ -134,7 +134,7 @@ export default function BrokerDetailPage({
           </Button>
           <Button
             variant="outline"
-            className="text-red-600 hover:bg-red-50 hover:text-red-700"
+            className="text-red-600 hover:text-red-700"
             onClick={() => setDeleteDialogOpen(true)}
           >
             <Trash2 className="mr-2 h-4 w-4" />

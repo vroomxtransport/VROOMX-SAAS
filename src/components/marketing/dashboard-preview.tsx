@@ -165,9 +165,9 @@ export function DashboardPreview() {
                       <span>Status</span>
                       <span className="text-right">Rev</span>
                     </div>
-                    <OrderRow num="ORD-1047" vehicle="Tesla Model Y" route="Dallas → Miami" status="Picked Up" statusColor="bg-purple-100 text-purple-700" revenue="$2,450" />
-                    <OrderRow num="ORD-1046" vehicle="BMW X5" route="LA → Phoenix" status="Assigned" statusColor="bg-amber-50 text-amber-600" revenue="$1,800" />
-                    <OrderRow num="ORD-1045" vehicle="Ford F-150" route="Houston → ATL" status="New" statusColor="bg-blue-50 text-blue-600" revenue="$3,200" />
+                    <OrderRow num="ORD-1047" vehicle="Tesla Model Y" route="Dallas → Miami" status="Picked Up" statusColor="text-purple-700" revenue="$2,450" />
+                    <OrderRow num="ORD-1046" vehicle="BMW X5" route="LA → Phoenix" status="Assigned" statusColor="text-amber-600" revenue="$1,800" />
+                    <OrderRow num="ORD-1045" vehicle="Ford F-150" route="Houston → ATL" status="New" statusColor="text-blue-600" revenue="$3,200" />
                   </div>
                 </div>
 
@@ -178,7 +178,7 @@ export function DashboardPreview() {
                       <span className="w-1.5 h-1.5 rounded-full bg-brand" />
                       Revenue
                     </span>
-                    <span className="text-[9px] font-medium text-emerald-600 bg-emerald-50 rounded-full px-2 py-0.5">+18.4%</span>
+                    <span className="text-[9px] font-medium text-emerald-600 rounded-full px-2 py-0.5">+18.4%</span>
                   </div>
 
                   <div className="text-base font-bold text-foreground tabular-nums">$128,450</div>
@@ -228,7 +228,7 @@ export function DashboardPreview() {
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                     Fleet Pulse
                   </span>
-                  <span className="flex items-center gap-1 text-[9px] font-medium text-emerald-600 bg-emerald-50 rounded-full px-2 py-0.5">
+                  <span className="flex items-center gap-1 text-[9px] font-medium text-emerald-600 rounded-full px-2 py-0.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     Live
                   </span>

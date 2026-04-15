@@ -106,7 +106,7 @@ export function OrderHeaderBar({ order, onEdit, onDelete, canDelete }: OrderHead
               <Button
                 variant="outline"
                 size="sm"
-                className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                className="text-red-600 hover:text-red-700"
                 onClick={onDelete}
               >
                 <Trash2 className="mr-2 h-4 w-4" />

@@ -369,7 +369,7 @@ function AddExpenseForm({ onClose, truckId, trips }: AddExpenseDialogProps) {
           </div>
 
           {serverError && (
-            <p className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+            <p className="rounded-md border border-rose-200 px-3 py-2 text-xs text-rose-700">
               {serverError}
             </p>
           )}

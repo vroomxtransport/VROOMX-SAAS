@@ -38,9 +38,9 @@ const ENHANCED_FILTER_CONFIG: EnhancedFilterConfig[] = [
         label,
         color:
           value === 'active'
-            ? 'bg-emerald-100 text-emerald-800'
+            ? 'text-emerald-800'
             : value === 'maintenance'
-              ? 'bg-amber-100 text-amber-800'
+              ? 'text-amber-800'
               : 'bg-muted text-muted-foreground',
       })
     ),

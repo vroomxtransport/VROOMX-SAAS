@@ -73,7 +73,7 @@ export function TruckRow({ truck, onClick, onEdit }: TruckRowProps) {
         {truck.ownership === 'owner_operator' && (
           <Badge
             variant="outline"
-            className="bg-purple-50 text-xs text-purple-700 border-purple-200"
+            className="text-xs text-purple-700 border-purple-200"
           >
             Owner-Op
           </Badge>

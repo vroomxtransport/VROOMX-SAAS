@@ -124,8 +124,8 @@ function SortableStop({ stop, index }: { stop: SequenceStop; index: number }) {
           </span>
           <span className={`text-[10px] font-semibold uppercase px-1 py-0.5 rounded ${
             isPickup
-              ? 'bg-green-100 text-green-700'
-              : 'bg-red-100 text-red-700'
+              ? 'text-green-700'
+              : 'text-red-700'
           }`}>
             {isPickup ? 'Pickup' : 'Delivery'}
           </span>

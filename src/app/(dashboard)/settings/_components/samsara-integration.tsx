@@ -56,7 +56,7 @@ import type {
 function ConnectionBadge({ status }: { status: string }) {
   if (status === 'active') {
     return (
-      <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 gap-1">
+      <Badge className="text-emerald-700 border-emerald-200 gap-1">
         <CheckCircle className="h-3 w-3" />
         Connected
       </Badge>
@@ -64,7 +64,7 @@ function ConnectionBadge({ status }: { status: string }) {
   }
   if (status === 'paused') {
     return (
-      <Badge className="bg-amber-100 text-amber-700 border-amber-200 gap-1">
+      <Badge className="text-amber-700 border-amber-200 gap-1">
         <RefreshCw className="h-3 w-3 animate-spin" />
         Syncing
       </Badge>

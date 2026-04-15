@@ -157,8 +157,8 @@ function BreakEvenCard({ revenueData, costData }: BreakEvenCardProps) {
                 className={cn(
                   'px-1.5 py-0.5 rounded text-[10px] font-medium',
                   d.breakEvenReached
-                    ? 'bg-emerald-50 text-emerald-700'
-                    : 'bg-rose-50 text-rose-600'
+                    ? 'text-emerald-700'
+                    : 'text-rose-600'
                 )}
               >
                 {d.breakEvenReached ? 'Profitable' : 'Loss'}

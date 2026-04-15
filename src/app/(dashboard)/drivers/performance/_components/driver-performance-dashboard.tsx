@@ -68,9 +68,9 @@ function fmtPerMile(val: number | null): string {
 // ============================================================================
 
 const DRIVER_TYPE_BADGE: Record<string, string> = {
-  company: 'bg-blue-100 text-blue-700',
-  owner_operator: 'bg-violet-100 text-violet-700',
-  local_driver: 'bg-slate-100 text-slate-700',
+  company: 'text-blue-700',
+  owner_operator: 'text-violet-700',
+  local_driver: 'text-slate-700',
 }
 
 const DRIVER_TYPE_LABEL: Record<string, string> = {
@@ -84,7 +84,7 @@ function DriverTypeBadge({ type }: { type: string }) {
     <span
       className={cn(
         'inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium',
-        DRIVER_TYPE_BADGE[type] ?? 'bg-slate-100 text-slate-700'
+        DRIVER_TYPE_BADGE[type] ?? 'text-slate-700'
       )}
     >
       {DRIVER_TYPE_LABEL[type] ?? type}
@@ -97,9 +97,9 @@ function DriverTypeBadge({ type }: { type: string }) {
 // ============================================================================
 
 function scoreBadgeClass(score: number): string {
-  if (score >= 75) return 'bg-emerald-100 text-emerald-700'
-  if (score >= 50) return 'bg-amber-100 text-amber-700'
-  return 'bg-red-100 text-red-700'
+  if (score >= 75) return 'text-emerald-700'
+  if (score >= 50) return 'text-amber-700'
+  return 'text-red-700'
 }
 
 function ScoreBadge({ score }: { score: number }) {
@@ -137,10 +137,10 @@ const CARD_ACCENT: Record<string, string> = {
 }
 
 const ICON_ACCENT: Record<string, string> = {
-  blue: 'text-blue-600 bg-blue-100',
-  emerald: 'text-emerald-600 bg-emerald-100',
-  amber: 'text-amber-600 bg-amber-100',
-  violet: 'text-violet-600 bg-violet-100',
+  blue: 'text-blue-600',
+  emerald: 'text-emerald-600',
+  amber: 'text-amber-600',
+  violet: 'text-violet-600',
 }
 
 function SummaryCard({

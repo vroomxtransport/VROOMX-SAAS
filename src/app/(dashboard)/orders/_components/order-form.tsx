@@ -259,7 +259,7 @@ export function OrderForm({ order, onSuccess, onCancel, onStepChange, onDirtyCha
               <div
                 className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
                   index < currentStep
-                    ? 'bg-green-100 text-green-700'
+                    ? 'text-green-700'
                     : index === currentStep
                       ? 'bg-blue-600 text-white'
                       : 'bg-muted text-muted-foreground'
@@ -288,7 +288,7 @@ export function OrderForm({ order, onSuccess, onCancel, onStepChange, onDirtyCha
         </div>
 
         {serverError && (
-          <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
+          <div className="rounded-md p-3 text-sm text-red-700">
             {serverError}
           </div>
         )}

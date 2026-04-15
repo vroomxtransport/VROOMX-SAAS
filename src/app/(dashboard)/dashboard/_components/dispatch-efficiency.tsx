@@ -25,9 +25,9 @@ function rateColor(rate: number): string {
 }
 
 function rateBadgeStyles(rate: number): string {
-  if (rate >= 90) return 'bg-emerald-50 text-emerald-700'
-  if (rate >= 80) return 'bg-amber-50 text-amber-700'
-  return 'bg-red-50 text-red-700'
+  if (rate >= 90) return 'text-emerald-700'
+  if (rate >= 80) return 'text-amber-700'
+  return 'text-red-700'
 }
 
 function SkeletonRow() {
@@ -105,7 +105,7 @@ export function DispatchEfficiency() {
                 {totalOrders.toLocaleString()}
               </p>
             </div>
-            <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700">
+            <span className="rounded-full px-2.5 py-1 text-[11px] font-semibold text-blue-700">
               {completedOrders} completed
             </span>
           </div>

@@ -65,7 +65,7 @@ export function StatCard({ label, value, sublabel, icon, accent = 'blue', trend 
           {trend && (
             <>
               <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${
-                trend.value >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+                trend.value >= 0 ? 'text-emerald-600' : 'text-red-600'
               }`}>
                 {trend.value >= 0
                   ? <HugeiconsIcon icon={ChartIncreaseIcon} size={12} />

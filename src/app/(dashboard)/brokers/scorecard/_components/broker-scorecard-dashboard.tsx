@@ -26,11 +26,11 @@ import {
 // ============================================================================
 
 function gradeStyle(grade: BrokerScore['grade']): string {
-  if (grade === 'A') return 'bg-emerald-100 text-emerald-700'
-  if (grade === 'B') return 'bg-blue-100 text-blue-700'
-  if (grade === 'C') return 'bg-amber-100 text-amber-700'
-  if (grade === 'D') return 'bg-orange-100 text-orange-700'
-  return 'bg-red-100 text-red-700'
+  if (grade === 'A') return 'text-emerald-700'
+  if (grade === 'B') return 'text-blue-700'
+  if (grade === 'C') return 'text-amber-700'
+  if (grade === 'D') return 'text-orange-700'
+  return 'text-red-700'
 }
 
 function GradeBadge({ grade }: { grade: BrokerScore['grade'] }) {

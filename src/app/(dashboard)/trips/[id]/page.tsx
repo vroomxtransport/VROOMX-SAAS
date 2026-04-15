@@ -59,7 +59,7 @@ export default function TripDetailPage({
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Trips
         </Button>
-        <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
+        <div className="rounded-md p-4 text-sm text-red-700">
           Failed to load trip: {error?.message ?? 'Unknown error'}
         </div>
       </div>
@@ -77,7 +77,7 @@ export default function TripDetailPage({
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Trips
         </Button>
-        <div className="rounded-md bg-yellow-50 p-4 text-sm text-yellow-700">
+        <div className="rounded-md p-4 text-sm text-yellow-700">
           Trip not found.
         </div>
       </div>

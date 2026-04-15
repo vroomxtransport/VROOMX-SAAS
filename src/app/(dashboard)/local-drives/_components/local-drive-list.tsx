@@ -27,10 +27,10 @@ import type { SortConfig, DateRange } from '@/types/filters'
 import type { LocalDrive } from '@/types/database'
 
 const STATUS_PILL_COLORS: Record<LocalDriveStatus, string> = {
-  pending: 'bg-blue-100 text-blue-800',
-  in_progress: 'bg-amber-100 text-amber-800',
-  completed: 'bg-emerald-100 text-emerald-800',
-  cancelled: 'bg-red-100 text-red-800',
+  pending: 'text-blue-800',
+  in_progress: 'text-amber-800',
+  completed: 'text-emerald-800',
+  cancelled: 'text-red-800',
 }
 
 const CSV_HEADERS = [

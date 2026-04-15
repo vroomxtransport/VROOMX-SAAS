@@ -376,7 +376,7 @@ function ScheduleCard({ schedule, onToggle, onDelete, deletingId, togglingId }: 
               'h-7 w-7 p-0 transition-colors',
               isDeleting
                 ? 'text-muted-foreground'
-                : 'text-muted-foreground hover:text-red-500 hover:bg-red-50'
+                : 'text-muted-foreground hover:text-red-500'
             )}
           >
             {isDeleting

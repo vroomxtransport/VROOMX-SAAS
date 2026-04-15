@@ -122,7 +122,7 @@ export function SignatureBox({
                     'absolute right-1 top-1 -m-2.5 p-2.5',
                     'flex h-6 w-6 items-center justify-center rounded-full',
                     'bg-gray-100 text-muted-foreground text-sm',
-                    'hover:bg-red-50 hover:text-red-500 hover:scale-105',
+                    'hover:text-red-500 hover:scale-105',
                     'focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#192334)]',
                     'transition-all duration-150',
                   )}

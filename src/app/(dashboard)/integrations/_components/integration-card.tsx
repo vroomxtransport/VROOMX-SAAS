@@ -16,9 +16,9 @@ import type { IntegrationDefinition, IntegrationTag } from '@/lib/integrations/r
 
 const TAG_STYLES: Record<IntegrationTag, string> = {
   official: 'bg-brand/10 text-brand border-brand/20',
-  popular: 'bg-amber-50 text-amber-700 border-amber-200',
-  new: 'bg-blue-50 text-blue-700 border-blue-200',
-  beta: 'bg-violet-50 text-violet-700 border-violet-200',
+  popular: 'text-amber-700 border-amber-200',
+  new: 'text-blue-700 border-blue-200',
+  beta: 'text-violet-700 border-violet-200',
 }
 
 const TAG_LABELS: Record<IntegrationTag, string> = {
@@ -96,7 +96,7 @@ export function IntegrationCard({
 
         {isConnected && (
           <div className="flex flex-col items-end gap-1">
-            <Badge className="gap-1.5 bg-emerald-100 text-emerald-700 border-emerald-200">
+            <Badge className="gap-1.5 text-emerald-700 border-emerald-200">
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />

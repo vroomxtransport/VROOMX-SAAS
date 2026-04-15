@@ -163,7 +163,7 @@ function VersionList({ documents, onDelete, isDeleting, deletingId }: VersionLis
                         v{versionNumber}
                       </span>
                       {isActive && (
-                        <span className="inline-flex items-center rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 ring-1 ring-emerald-200">
+                        <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 ring-1 ring-emerald-200">
                           active
                         </span>
                       )}
@@ -191,7 +191,7 @@ function VersionList({ documents, onDelete, isDeleting, deletingId }: VersionLis
                       aria-label="Delete version"
                       disabled={isBeingDeleted}
                       onClick={() => onDelete(doc.id)}
-                      className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground/50 transition-colors hover:bg-red-50 hover:text-red-500 disabled:opacity-40"
+                      className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground/50 transition-colors hover:text-red-500 disabled:opacity-40"
                     >
                       {isBeingDeleted ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />

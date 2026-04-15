@@ -39,10 +39,10 @@ function fmtCurrencyFull(value: number): string {
 }
 
 function marginBadge(margin: number) {
-  if (margin >= 20) return 'bg-emerald-100 text-emerald-700'
-  if (margin >= 10) return 'bg-amber-100 text-amber-700'
-  if (margin >= 0) return 'bg-yellow-100 text-yellow-700'
-  return 'bg-red-100 text-red-700'
+  if (margin >= 20) return 'text-emerald-700'
+  if (margin >= 10) return 'text-amber-700'
+  if (margin >= 0) return 'text-yellow-700'
+  return 'text-red-700'
 }
 
 // ============================================================================

@@ -20,10 +20,10 @@ const TAB_INDICATOR_COLORS: Record<TripStatus, string> = {
 }
 
 const TAB_COUNT_COLORS: Record<TripStatus, string> = {
-  planned: 'bg-blue-100 text-blue-700',
-  in_progress: 'bg-amber-100 text-amber-700',
-  at_terminal: 'bg-purple-100 text-purple-700',
-  completed: 'bg-green-100 text-green-700',
+  planned: 'text-blue-700',
+  in_progress: 'text-amber-700',
+  at_terminal: 'text-purple-700',
+  completed: 'text-green-700',
 }
 
 const TAB_ACTIVE_TEXT: Record<TripStatus, string> = {

@@ -257,7 +257,7 @@ export function ReadyToInvoice({ factoringFeeRate = 0 }: ReadyToInvoiceProps) {
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-semibold text-foreground">Ready to Invoice</h2>
-          <span className="rounded-full bg-amber-100 text-amber-700 px-2.5 py-0.5 text-xs font-medium">
+          <span className="rounded-full text-amber-700 px-2.5 py-0.5 text-xs font-medium">
             {totalCount}
           </span>
         </div>

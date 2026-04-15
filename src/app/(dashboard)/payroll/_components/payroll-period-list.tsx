@@ -34,9 +34,9 @@ import {
 import { useQueryClient } from '@tanstack/react-query'
 
 const STATUS_OPTIONS = [
-  { value: 'draft', label: 'Draft', color: 'bg-gray-100 text-gray-700' },
-  { value: 'approved', label: 'Approved', color: 'bg-blue-100 text-blue-700' },
-  { value: 'paid', label: 'Paid', color: 'bg-emerald-100 text-emerald-700' },
+  { value: 'draft', label: 'Draft', color: 'text-gray-700' },
+  { value: 'approved', label: 'Approved', color: 'text-blue-700' },
+  { value: 'paid', label: 'Paid', color: 'text-emerald-700' },
 ]
 
 const FILTER_CONFIG: EnhancedFilterConfig[] = [

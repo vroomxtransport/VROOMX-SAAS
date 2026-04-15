@@ -100,7 +100,7 @@ export function ShopList({ shops: initialShops, canManage }: ShopListProps) {
                 <TableCell className="text-sm text-muted-foreground">{location || '—'}</TableCell>
                 <TableCell>
                   {shop.is_active ? (
-                    <Badge className="bg-green-50 text-green-700 border-green-200 font-normal">
+                    <Badge className="text-green-700 border-green-200 font-normal">
                       Active
                     </Badge>
                   ) : (

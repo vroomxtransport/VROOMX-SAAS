@@ -574,7 +574,7 @@ export function FuelCsvImportDialog({ open, onOpenChange }: FuelCsvImportDialogP
                 </Badge>
                 <Badge
                   variant="secondary"
-                  className="text-xs bg-green-50 text-green-700"
+                  className="text-xs text-green-700"
                 >
                   {validRowCount} valid
                 </Badge>
@@ -723,7 +723,7 @@ export function FuelCsvImportDialog({ open, onOpenChange }: FuelCsvImportDialogP
                             {importResult.errors.map((err, i) => (
                               <div
                                 key={i}
-                                className="text-xs text-red-700 bg-red-50 rounded px-2 py-1"
+                                className="text-xs text-red-700 rounded px-2 py-1"
                               >
                                 <span className="font-medium">Row {err.row}:</span> {err.message}
                               </div>

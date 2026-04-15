@@ -128,7 +128,7 @@ export function ActivityFeed() {
           <span className="widget-accent-dot bg-blue-500" />
           Recent Activity
         </span>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-600">
+        <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold text-blue-600">
           <span className="relative flex h-1.5 w-1.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-500 opacity-75" />
             <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-blue-500" />

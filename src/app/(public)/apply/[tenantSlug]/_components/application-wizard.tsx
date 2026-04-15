@@ -292,7 +292,7 @@ export function ApplicationWizard({
             {serverError && (
               <div
                 role="alert"
-                className="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700 shadow-sm"
+                className="mb-6 rounded-xl border border-red-200 px-5 py-4 text-sm text-red-700 shadow-sm"
               >
                 {serverError}
               </div>

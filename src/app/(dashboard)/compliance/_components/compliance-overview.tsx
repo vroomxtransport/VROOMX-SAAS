@@ -45,24 +45,24 @@ function expiryBucketStyle(days: number): {
   if (days < 0)
     return {
       dot: 'bg-red-500',
-      badge: 'bg-red-50 text-red-700',
+      badge: 'text-red-700',
       label: 'Expired',
     }
   if (days <= 7)
     return {
       dot: 'bg-red-500',
-      badge: 'bg-red-50 text-red-700',
+      badge: 'text-red-700',
       label: `${days}d`,
     }
   if (days <= 30)
     return {
       dot: 'bg-amber-500',
-      badge: 'bg-amber-50 text-amber-700',
+      badge: 'text-amber-700',
       label: `${days}d`,
     }
   return {
     dot: 'bg-yellow-400',
-    badge: 'bg-yellow-50 text-yellow-700',
+    badge: 'text-yellow-700',
     label: `${days}d`,
   }
 }
@@ -72,24 +72,24 @@ function severityStyle(
 ): string {
   switch (severity) {
     case 'critical':
-      return 'bg-red-100 text-red-700 border-red-200'
+      return 'text-red-700 border-red-200'
     case 'severe':
-      return 'bg-orange-100 text-orange-700 border-orange-200'
+      return 'text-orange-700 border-orange-200'
     case 'moderate':
-      return 'bg-amber-100 text-amber-700 border-amber-200'
+      return 'text-amber-700 border-amber-200'
     default:
-      return 'bg-blue-100 text-blue-700 border-blue-200'
+      return 'text-blue-700 border-blue-200'
   }
 }
 
 function statusStyle(status: SafetyEvent['status']): string {
   switch (status) {
     case 'open':
-      return 'bg-red-50 text-red-700 border-red-200'
+      return 'text-red-700 border-red-200'
     case 'under_review':
-      return 'bg-amber-50 text-amber-700 border-amber-200'
+      return 'text-amber-700 border-amber-200'
     case 'resolved':
-      return 'bg-emerald-50 text-emerald-700 border-emerald-200'
+      return 'text-emerald-700 border-emerald-200'
     case 'closed':
       return 'bg-muted text-muted-foreground border-border'
   }

@@ -318,7 +318,7 @@ export function BulkUploadDialog({
 
           {/* Global error banner */}
           {globalError && (
-            <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="mb-4 rounded-md border border-red-200 px-4 py-3 text-sm text-red-700">
               {globalError}
             </div>
           )}
@@ -494,8 +494,8 @@ function FileRow({ entry, index, subCategories, uploading, onUpdate, onRemove }:
         <div
           className={cn(
             'flex h-8 w-8 shrink-0 items-center justify-center rounded-md',
-            entry.status === 'success' ? 'bg-emerald-100 text-emerald-600' :
-            entry.status === 'error' ? 'bg-red-100 text-red-500' :
+            entry.status === 'success' ? 'text-emerald-600' :
+            entry.status === 'error' ? 'text-red-500' :
             entry.status === 'uploading' ? 'bg-[var(--brand)]/10 text-[var(--brand)]' :
             'bg-muted text-muted-foreground',
           )}

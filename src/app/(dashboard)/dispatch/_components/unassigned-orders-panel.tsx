@@ -43,7 +43,7 @@ export function UnassignedOrdersPanel({ forceExpanded }: UnassignedOrdersPanelPr
         <div className="flex items-center gap-2">
           <PackageSearch className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-medium text-foreground">Unassigned Orders</span>
-          <span className="rounded-full bg-amber-100 text-amber-700 px-2 py-0.5 text-xs font-medium">
+          <span className="rounded-full text-amber-700 px-2 py-0.5 text-xs font-medium">
             {count}
           </span>
         </div>

@@ -21,14 +21,14 @@ function formatBytes(bytes: number | null): string {
 function ScanBadge({ status }: { status: string }) {
   if (status === 'clean') {
     return (
-      <span className="text-[10px] text-green-700 bg-green-50 border border-green-200 rounded px-1.5 py-0.5">
+      <span className="text-[10px] text-green-700 border border-green-200 rounded px-1.5 py-0.5">
         Clean
       </span>
     )
   }
   if (status === 'flagged') {
     return (
-      <span className="text-[10px] text-red-700 bg-red-50 border border-red-200 rounded px-1.5 py-0.5">
+      <span className="text-[10px] text-red-700 border border-red-200 rounded px-1.5 py-0.5">
         Flagged
       </span>
     )

@@ -18,16 +18,16 @@ interface ProfitByTruckTableProps {
 function marginBadge(margin: number) {
   if (margin >= 20) {
     return {
-      bg: 'bg-emerald-100 text-emerald-700',
+      bg: 'text-emerald-700',
     }
   }
   if (margin >= 10) {
     return {
-      bg: 'bg-amber-100 text-amber-700',
+      bg: 'text-amber-700',
     }
   }
   return {
-    bg: 'bg-red-100 text-red-700',
+    bg: 'text-red-700',
   }
 }
 

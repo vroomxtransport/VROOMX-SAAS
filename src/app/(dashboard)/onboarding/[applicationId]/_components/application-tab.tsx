@@ -42,7 +42,7 @@ function ConsentRow({ consent }: { consent: DriverApplicationConsent }) {
     <div className="rounded-lg border border-border bg-surface p-3 space-y-2">
       <div className="flex items-start justify-between gap-2">
         <p className="text-xs font-medium text-foreground">{label}</p>
-        <span className="shrink-0 text-[10px] text-green-700 bg-green-50 border border-green-200 rounded px-1.5 py-0.5">
+        <span className="shrink-0 text-[10px] text-green-700 border border-green-200 rounded px-1.5 py-0.5">
           Signed
         </span>
       </div>

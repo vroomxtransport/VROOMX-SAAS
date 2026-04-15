@@ -32,30 +32,30 @@ type CategoryFilter = 'all' | NormalizedExpenseCategory
 
 const CATEGORY_BADGE_COLORS: Record<NormalizedExpenseCategory, string> = {
   fuel: 'bg-slate-900/90 text-white',
-  tolls: 'bg-sky-100 text-sky-800',
-  repairs: 'bg-amber-100 text-amber-800',
-  lodging: 'bg-violet-100 text-violet-800',
-  maintenance: 'bg-indigo-100 text-indigo-800',
-  insurance: 'bg-emerald-100 text-emerald-800',
-  truck_lease: 'bg-slate-200 text-slate-800',
-  registration: 'bg-teal-100 text-teal-800',
-  dispatch: 'bg-slate-100 text-slate-700',
-  parking: 'bg-slate-100 text-slate-700',
-  rent: 'bg-slate-100 text-slate-700',
-  telematics: 'bg-slate-100 text-slate-700',
-  salary: 'bg-slate-100 text-slate-700',
-  office_supplies: 'bg-slate-100 text-slate-700',
-  software: 'bg-slate-100 text-slate-700',
-  professional_services: 'bg-slate-100 text-slate-700',
-  misc: 'bg-slate-100 text-slate-700',
+  tolls: 'text-sky-800',
+  repairs: 'text-amber-800',
+  lodging: 'text-violet-800',
+  maintenance: 'text-indigo-800',
+  insurance: 'text-emerald-800',
+  truck_lease: 'text-slate-800',
+  registration: 'text-teal-800',
+  dispatch: 'text-slate-700',
+  parking: 'text-slate-700',
+  rent: 'text-slate-700',
+  telematics: 'text-slate-700',
+  salary: 'text-slate-700',
+  office_supplies: 'text-slate-700',
+  software: 'text-slate-700',
+  professional_services: 'text-slate-700',
+  misc: 'text-slate-700',
 }
 
 const SOURCE_BADGE_STYLES: Record<string, string> = {
   manual: 'border-border bg-card text-muted-foreground',
-  samsara: 'border-blue-200 bg-blue-50 text-blue-700',
-  quickbooks: 'border-green-200 bg-green-50 text-green-700',
-  efs: 'border-orange-200 bg-orange-50 text-orange-700',
-  msfuelcard: 'border-amber-200 bg-amber-50 text-amber-700',
+  samsara: 'border-blue-200 text-blue-700',
+  quickbooks: 'border-green-200 text-green-700',
+  efs: 'border-orange-200 text-orange-700',
+  msfuelcard: 'border-amber-200 text-amber-700',
 }
 
 const SOURCE_BADGE_LABELS: Record<string, string> = {
@@ -68,9 +68,9 @@ const SOURCE_BADGE_LABELS: Record<string, string> = {
 
 const QB_BADGE_STYLES: Record<QBSyncStatus, string> = {
   'n/a': '',
-  pending: 'bg-slate-100 text-slate-700',
-  synced: 'bg-emerald-100 text-emerald-700',
-  error: 'bg-rose-100 text-rose-700',
+  pending: 'text-slate-700',
+  synced: 'text-emerald-700',
+  error: 'text-rose-700',
 }
 
 const QB_BADGE_LABELS: Record<QBSyncStatus, string> = {

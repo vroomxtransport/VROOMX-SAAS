@@ -71,7 +71,7 @@ function SuspendButton({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2 border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800">
+        <Button variant="outline" className="gap-2 border-red-200 text-red-700 hover:text-red-800">
           <ShieldOff className="h-4 w-4" />
           Suspend Tenant
         </Button>
@@ -151,7 +151,7 @@ function UnsuspendButton({
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="outline" className="gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800">
+        <Button variant="outline" className="gap-2 border-emerald-200 text-emerald-700 hover:text-emerald-800">
           <ShieldCheck className="h-4 w-4" />
           Unsuspend Tenant
         </Button>

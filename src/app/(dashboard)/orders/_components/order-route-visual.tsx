@@ -105,8 +105,8 @@ export function OrderRouteVisual({ order }: OrderRouteVisualProps) {
                 <span
                   className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium border ${
                     pickupOverdue
-                      ? 'bg-red-50 text-red-700 border-red-200'
-                      : 'bg-blue-50 text-blue-700 border-blue-200'
+                      ? 'text-red-700 border-red-200'
+                      : 'text-blue-700 border-blue-200'
                   }`}
                 >
                   <Calendar className="h-3 w-3" />
@@ -114,7 +114,7 @@ export function OrderRouteVisual({ order }: OrderRouteVisualProps) {
                 </span>
               )}
               {order.actual_pickup_date && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 text-xs font-medium">
+                <span className="inline-flex items-center gap-1 rounded-full text-emerald-700 border border-emerald-200 px-2.5 py-0.5 text-xs font-medium">
                   <Calendar className="h-3 w-3" />
                   Actual: {formatDate(order.actual_pickup_date)}
                 </span>
@@ -178,8 +178,8 @@ export function OrderRouteVisual({ order }: OrderRouteVisualProps) {
                 <span
                   className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium border ${
                     deliveryOverdue
-                      ? 'bg-red-50 text-red-700 border-red-200'
-                      : 'bg-amber-50 text-amber-700 border-amber-200'
+                      ? 'text-red-700 border-red-200'
+                      : 'text-amber-700 border-amber-200'
                   }`}
                 >
                   <Calendar className="h-3 w-3" />
@@ -187,7 +187,7 @@ export function OrderRouteVisual({ order }: OrderRouteVisualProps) {
                 </span>
               )}
               {order.actual_delivery_date && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 text-xs font-medium">
+                <span className="inline-flex items-center gap-1 rounded-full text-emerald-700 border border-emerald-200 px-2.5 py-0.5 text-xs font-medium">
                   <Calendar className="h-3 w-3" />
                   Actual: {formatDate(order.actual_delivery_date)}
                 </span>

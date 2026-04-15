@@ -69,28 +69,28 @@ const STATUS_CONFIG: Record<
     icon: X,
     iconClass: 'text-red-500',
     badgeClass:
-      'bg-red-50 text-red-700 border-red-200',
+      'text-red-700 border-red-200',
     label: 'Missing',
   },
   valid: {
     icon: Check,
     iconClass: 'text-green-500',
     badgeClass:
-      'bg-green-50 text-green-700 border-green-200',
+      'text-green-700 border-green-200',
     label: 'Valid',
   },
   expiring_soon: {
     icon: AlertTriangle,
     iconClass: 'text-amber-500',
     badgeClass:
-      'bg-amber-50 text-amber-700 border-amber-200',
+      'text-amber-700 border-amber-200',
     label: 'Expiring Soon',
   },
   expired: {
     icon: X,
     iconClass: 'text-red-500',
     badgeClass:
-      'bg-red-50 text-red-700 border-red-200',
+      'text-red-700 border-red-200',
     label: 'Expired',
   },
 }
@@ -200,7 +200,7 @@ export function ChecklistItem({
           <Button
             size="sm"
             variant="outline"
-            className="h-8 gap-1.5 text-xs font-medium border-amber-300 text-amber-700 hover:bg-amber-50"
+            className="h-8 gap-1.5 text-xs font-medium border-amber-300 text-amber-700"
             onClick={() => onUpload(requirement)}
           >
             <RefreshCw className="h-3.5 w-3.5" />

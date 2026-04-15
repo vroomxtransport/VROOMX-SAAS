@@ -74,7 +74,7 @@ export function StepIndicator({
                   'shadow-sm',
                 ],
                 isCompleted && !isCurrent && [
-                  'bg-gray-100 text-gray-700 cursor-pointer',
+                  'text-gray-700 cursor-pointer',
                   'hover:bg-gray-200/80 hover:text-gray-900',
                 ],
                 isFuture && 'text-muted-foreground cursor-not-allowed',
@@ -154,7 +154,7 @@ export function StepIndicator({
                     className={cn(
                       'flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold',
                       isCurrent && 'text-white',
-                      isCompleted && !isCurrent && 'text-emerald-600 bg-emerald-50',
+                      isCompleted && !isCurrent && 'text-emerald-600',
                       isFuture && 'bg-gray-100 text-gray-300',
                     )}
                     style={isCurrent ? { background: 'var(--brand-primary, #192334)' } : undefined}

@@ -407,7 +407,7 @@ export function DispatchBoard() {
           </div>
         )
       ) : isError ? (
-        <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
+        <div className="rounded-md p-4 text-sm text-red-700">
           Failed to load trips: {error?.message ?? 'Unknown error'}
         </div>
       ) : data && data.trips.length === 0 ? (

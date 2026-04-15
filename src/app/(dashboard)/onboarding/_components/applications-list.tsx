@@ -174,7 +174,7 @@ export function ApplicationsList() {
       {isLoading ? (
         <TableSkeleton />
       ) : error ? (
-        <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
+        <div className="rounded-md p-4 text-sm text-red-700">
           {error instanceof Error ? error.message : 'Failed to load applications'}
         </div>
       ) : applications.length === 0 ? (

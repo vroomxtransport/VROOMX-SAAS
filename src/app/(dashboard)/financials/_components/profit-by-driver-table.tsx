@@ -20,22 +20,22 @@ interface ProfitByDriverTableProps {
 function marginBadge(margin: number) {
   if (margin >= 20) {
     return {
-      bg: 'bg-emerald-100 text-emerald-700',
+      bg: 'text-emerald-700',
     }
   }
   if (margin >= 10) {
     return {
-      bg: 'bg-amber-100 text-amber-700',
+      bg: 'text-amber-700',
     }
   }
   return {
-    bg: 'bg-red-100 text-red-700',
+    bg: 'text-red-700',
   }
 }
 
 const PAY_TYPE_STYLES: Record<string, string> = {
-  company: 'bg-blue-100 text-blue-700 ring-1 ring-blue-200',
-  owner_operator: 'bg-purple-100 text-purple-700 ring-1 ring-purple-200',
+  company: 'text-blue-700 ring-1 ring-blue-200',
+  owner_operator: 'text-purple-700 ring-1 ring-purple-200',
 }
 
 export function ProfitByDriverTable({ data }: ProfitByDriverTableProps) {
@@ -214,7 +214,7 @@ export function ProfitByDriverTable({ data }: ProfitByDriverTableProps) {
                 const revenueBarWidth = Math.min((driver.revenue / maxRevenue) * 100, 100)
                 const badge = marginBadge(driver.profitMargin)
                 const payTypeStyle = PAY_TYPE_STYLES[driver.driverType] ??
-                  'bg-gray-100 text-gray-700 ring-1 ring-gray-200'
+                  'text-gray-700 ring-1 ring-gray-200'
 
                 return (
                   <tr key={driver.driverId} className="border-b border-border-subtle/50 last:border-0 bg-card hover:bg-muted/30 transition-colors">

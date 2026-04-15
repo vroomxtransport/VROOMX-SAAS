@@ -206,7 +206,7 @@ export function BrokerList() {
           ))}
         </div>
       ) : isError ? (
-        <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
+        <div className="rounded-md p-4 text-sm text-red-700">
           Failed to load brokers: {error?.message ?? 'Unknown error'}
         </div>
       ) : brokers.length === 0 ? (

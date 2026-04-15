@@ -48,7 +48,7 @@ export function ApplicationDetail({ applicationId }: Props) {
 
   if (error || !data) {
     return (
-      <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
+      <div className="rounded-md p-4 text-sm text-red-700">
         {error instanceof Error ? error.message : 'Failed to load application'}
       </div>
     )
@@ -125,7 +125,7 @@ export function ApplicationDetail({ applicationId }: Props) {
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                className="h-8 text-red-600 border-red-200 hover:border-red-300"
                 onClick={() => setAdverseModalOpen(true)}
               >
                 <HugeiconsIcon icon={Cancel01Icon} size={14} className="mr-1.5" />

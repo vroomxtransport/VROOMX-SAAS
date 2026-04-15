@@ -292,7 +292,7 @@ export function TeamSection({
                 <Clock className="h-4 w-4 text-amber-600" />
                 Pending Invites
               </CardTitle>
-              <Badge className="bg-amber-100 text-amber-700 border-0 text-xs font-medium tabular-nums">
+              <Badge className="text-amber-700 border-0 text-xs font-medium tabular-nums">
                 {pendingInvites.length}
               </Badge>
             </div>

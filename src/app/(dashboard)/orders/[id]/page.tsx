@@ -56,7 +56,7 @@ export default function OrderDetailPage({
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Orders
         </Button>
-        <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
+        <div className="rounded-md p-4 text-sm text-red-700">
           Failed to load order: {error?.message ?? 'Unknown error'}
         </div>
       </div>
@@ -74,7 +74,7 @@ export default function OrderDetailPage({
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Orders
         </Button>
-        <div className="rounded-md bg-yellow-50 p-4 text-sm text-yellow-700">
+        <div className="rounded-md p-4 text-sm text-yellow-700">
           Order not found.
         </div>
       </div>

@@ -175,7 +175,7 @@ function SignupForm() {
         </BoxReveal>
 
         <BoxReveal boxColor="var(--skeleton)" duration={0.3} width="100%">
-          <div className="rounded-md bg-blue-50 p-3 text-sm text-blue-700">
+          <div className="rounded-md p-3 text-sm text-blue-700">
             Create an account to accept your team invitation.
           </div>
         </BoxReveal>
@@ -286,7 +286,7 @@ function SignupForm() {
             </div>
             {dotError && <p className="text-xs text-destructive">{dotError}</p>}
             {fmcsaData && (
-              <div className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-800">
+              <div className="rounded-md p-3 text-sm text-emerald-800">
                 <p className="font-medium">{fmcsaData.legalName}</p>
                 {fmcsaData.dbaName && fmcsaData.dbaName !== fmcsaData.legalName && (
                   <p className="text-xs">DBA: {fmcsaData.dbaName}</p>

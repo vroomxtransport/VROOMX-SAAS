@@ -125,7 +125,7 @@ export function ReportsList({ initialReports }: ReportsListProps) {
                   size="sm"
                   onClick={() => handleDelete(report.id)}
                   disabled={isDeleting}
-                  className={cn('text-xs px-2', isDeleting ? '' : 'text-red-500 hover:text-red-600 hover:bg-red-50')}
+                  className={cn('text-xs px-2', isDeleting ? '' : 'text-red-500 hover:text-red-600')}
                 >
                   {isDeleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
                 </Button>

@@ -519,7 +519,7 @@ export function CSVImportDialog({ open, onOpenChange }: CSVImportDialogProps) {
                 <Badge variant="secondary" className="text-xs">
                   {csvData.length} total rows
                 </Badge>
-                <Badge variant="secondary" className="text-xs bg-green-50 text-green-700">
+                <Badge variant="secondary" className="text-xs text-green-700">
                   {validRowCount} valid
                 </Badge>
                 {invalidRowCount > 0 && (
@@ -652,7 +652,7 @@ export function CSVImportDialog({ open, onOpenChange }: CSVImportDialogProps) {
                             {importResult.errors.map((err, i) => (
                               <div
                                 key={i}
-                                className="text-xs text-red-700 bg-red-50 rounded px-2 py-1"
+                                className="text-xs text-red-700 rounded px-2 py-1"
                               >
                                 <span className="font-medium">Row {err.row}:</span>{' '}
                                 {err.message}

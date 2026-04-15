@@ -152,7 +152,7 @@ const selectCls = (error?: string) =>
 // Small numbered badge for nested card items (addresses, employers, etc.)
 function ItemBadge({ index }: { index: number }) {
   return (
-    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-200 text-[10px] font-semibold text-gray-600">
+    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-gray-600">
       {index + 1}
     </span>
   )
@@ -958,7 +958,7 @@ export function Page1MainApplication({ resumeToken, onConsentSigned }: Page1Prop
         <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
           To Be Read and Signed by Applicant
         </h3>
-        <div className="mb-6 rounded-lg border border-gray-100 bg-gray-50/50 p-4 text-xs leading-relaxed text-gray-700 whitespace-pre-line max-h-48 overflow-y-auto">
+        <div className="mb-6 rounded-lg border border-gray-100/50 p-4 text-xs leading-relaxed text-gray-700 whitespace-pre-line max-h-48 overflow-y-auto">
           {APPLICATION_CERTIFICATION_TEXT}
         </div>
         <SignatureBox

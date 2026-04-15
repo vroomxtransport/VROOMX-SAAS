@@ -65,14 +65,14 @@ const BADGE_CONFIG: Record<
   synced: {
     dotClass: 'bg-emerald-500',
     pulse: true,
-    labelClass: 'text-emerald-700 bg-emerald-50 border-emerald-200',
+    labelClass: 'text-emerald-700 border-emerald-200',
     label: (lastSync) => (lastSync ? `QBO Synced ${lastSync}` : 'QBO Synced'),
     icon: <RefreshCw className="h-3 w-3" />,
   },
   error: {
     dotClass: 'bg-red-500',
     pulse: false,
-    labelClass: 'text-red-700 bg-red-50 border-red-200',
+    labelClass: 'text-red-700 border-red-200',
     label: () => 'QBO Error',
     icon: <AlertCircle className="h-3 w-3" />,
   },

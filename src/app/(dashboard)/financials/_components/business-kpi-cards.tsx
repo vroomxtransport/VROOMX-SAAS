@@ -41,11 +41,11 @@ interface KPICardDef {
 }
 
 const ICON_STYLES = {
-  blue: 'text-blue-600 bg-blue-100',
-  emerald: 'text-emerald-600 bg-emerald-100',
-  amber: 'text-amber-600 bg-amber-100',
-  violet: 'text-violet-600 bg-violet-100',
-  rose: 'text-rose-600 bg-rose-100',
+  blue: 'text-blue-600',
+  emerald: 'text-emerald-600',
+  amber: 'text-amber-600',
+  violet: 'text-violet-600',
+  rose: 'text-rose-600',
 }
 
 function fmt$(val: number): string {

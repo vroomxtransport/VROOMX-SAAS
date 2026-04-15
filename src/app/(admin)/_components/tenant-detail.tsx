@@ -22,9 +22,9 @@ import {
 
 // ── Plan / status display helpers ──────────────────────────────────────────────
 const PLAN_COLORS: Record<string, string> = {
-  owner_operator: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  owner_operator: 'text-emerald-700 border-emerald-200',
   starter_x:      'bg-brand/10 text-brand border-brand/20',
-  pro_x:          'bg-blue-50 text-blue-700 border-blue-200',
+  pro_x:          'text-blue-700 border-blue-200',
 }
 const PLAN_LABELS: Record<string, string> = {
   owner_operator: 'Owner-Operator',
@@ -33,12 +33,12 @@ const PLAN_LABELS: Record<string, string> = {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  active: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  trialing: 'bg-blue-50 text-blue-700 border-blue-200',
-  past_due: 'bg-amber-50 text-amber-700 border-amber-200',
-  canceled: 'bg-gray-50 text-gray-500 border-gray-200',
-  suspended: 'bg-red-50 text-red-700 border-red-200',
-  unpaid: 'bg-orange-50 text-orange-700 border-orange-200',
+  active: 'text-emerald-700 border-emerald-200',
+  trialing: 'text-blue-700 border-blue-200',
+  past_due: 'text-amber-700 border-amber-200',
+  canceled: 'text-gray-500 border-gray-200',
+  suspended: 'text-red-700 border-red-200',
+  unpaid: 'text-orange-700 border-orange-200',
 }
 const STATUS_LABELS: Record<string, string> = {
   active: 'Active',

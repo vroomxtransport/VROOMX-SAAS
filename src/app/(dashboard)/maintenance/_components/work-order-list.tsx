@@ -37,7 +37,7 @@ interface WorkOrderListProps {
 
 function StatusBadge({ status }: { status: string }) {
   const s = status as MaintenanceStatus
-  const colors = MAINTENANCE_STATUS_COLORS[s] ?? 'bg-slate-50 text-slate-700 border-slate-200'
+  const colors = MAINTENANCE_STATUS_COLORS[s] ?? 'text-slate-700 border-slate-200'
   const label = MAINTENANCE_STATUS_LABELS[s] ?? status
 
   const dotColor =
