@@ -24,6 +24,10 @@ type ActionErr = { error: string | Record<string, string[]> }
 function revalidateWorkOrderRoutes(workOrderId?: string) {
   revalidatePath('/maintenance')
   if (workOrderId) revalidatePath(`/maintenance/${workOrderId}`)
+  // Closed WOs flow into the truck-expense ledger which the dashboard +
+  // /financials read. Stay fresh on every WO mutation.
+  revalidatePath('/dashboard')
+  revalidatePath('/financials')
 }
 
 // ---------------------------------------------------------------------------

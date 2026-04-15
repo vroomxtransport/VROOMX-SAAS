@@ -8,6 +8,7 @@ import { logOrderActivity } from '@/lib/activity-log'
 import { recalculateTripFinancials } from '@/app/actions/trips'
 import { uploadFile, deleteFile } from '@/lib/storage'
 import { revalidatePath } from 'next/cache'
+import { revalidateFinancialDashboards } from '@/lib/revalidate-helpers'
 import { cacheInvalidate } from '@/lib/cache'
 import { dispatchWebhookEvent } from '@/lib/webhooks/webhook-dispatcher'
 import { sanitizePayload } from '@/lib/webhooks/payload-sanitizer'
@@ -241,6 +242,7 @@ export async function createOrder(data: unknown) {
   void autoCreateLocalDrives(supabase, tenantId, finalOrder as Parameters<typeof autoCreateLocalDrives>[2]).catch(captureAsyncError('order action'))
 
   revalidatePath('/orders')
+  revalidateFinancialDashboards()
   void cacheInvalidate(tenantId, 'financial-summary')
   return { success: true, data: finalOrder }
 }
@@ -522,6 +524,7 @@ export async function updateOrder(id: string, data: unknown) {
   })).catch(captureAsyncError('order action'))
 
   revalidatePath('/orders')
+  revalidateFinancialDashboards()
   void cacheInvalidate(tenantId, 'financial-summary')
   return { success: true, data: finalOrder }
 }
@@ -571,6 +574,7 @@ export async function deleteOrder(id: string) {
   }
 
   revalidatePath('/orders')
+  revalidateFinancialDashboards()
   void cacheInvalidate(tenantId, 'financial-summary')
   return { success: true }
 }
@@ -648,6 +652,7 @@ export async function updateOrderStatus(
 
   revalidatePath(`/orders/${id}`)
   revalidatePath('/orders')
+  revalidateFinancialDashboards()
   void cacheInvalidate(tenantId, 'financial-summary')
   return { success: true, data: order }
 }
@@ -805,6 +810,7 @@ export async function batchCreateOrders(
   }
 
   revalidatePath('/orders')
+  revalidateFinancialDashboards()
   void cacheInvalidate(tenantId, 'financial-summary')
   return result
 }
@@ -883,6 +889,7 @@ export async function rollbackOrderStatus(id: string) {
 
   revalidatePath(`/orders/${id}`)
   revalidatePath('/orders')
+  revalidateFinancialDashboards()
   void cacheInvalidate(tenantId, 'financial-summary')
   return { success: true, data: order }
 }

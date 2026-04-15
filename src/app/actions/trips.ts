@@ -6,6 +6,7 @@ import { logOrderActivity } from '@/lib/activity-log'
 import { logAuditEvent } from '@/lib/audit-log'
 import { getAuditContext } from '@/lib/audit-context'
 import { revalidatePath } from 'next/cache'
+import { revalidateFinancialDashboards } from '@/lib/revalidate-helpers'
 import { dispatchWebhookEvent } from '@/lib/webhooks/webhook-dispatcher'
 import { sanitizePayload } from '@/lib/webhooks/payload-sanitizer'
 import { calculateTripFinancials } from '@/lib/financial/trip-calculations'
@@ -74,6 +75,7 @@ export async function createTrip(data: unknown) {
   })).catch(captureAsyncError('trip action'))
 
   revalidatePath('/dispatch')
+  revalidateFinancialDashboards()
   return { success: true, data: trip }
 }
 
@@ -141,6 +143,7 @@ export async function updateTrip(id: string, data: unknown) {
   })).catch(captureAsyncError('trip action'))
 
   revalidatePath('/dispatch')
+  revalidateFinancialDashboards()
   revalidatePath(`/trips/${id}`)
   return { success: true, data: trip }
 }
@@ -172,6 +175,7 @@ export async function deleteTrip(id: string) {
   }
 
   revalidatePath('/dispatch')
+  revalidateFinancialDashboards()
   revalidatePath('/orders')
   return { success: true }
 }
@@ -397,6 +401,7 @@ export async function updateTripStatus(id: string, newStatus: TripStatus) {
   }
 
   revalidatePath('/dispatch')
+  revalidateFinancialDashboards()
   revalidatePath(`/trips/${id}`)
   revalidatePath('/orders')
   return { success: true, data: trip }
@@ -505,6 +510,7 @@ export async function assignOrderToTrip(orderId: string, tripId: string) {
   }).catch(captureAsyncError('trip action'))
 
   revalidatePath('/dispatch')
+  revalidateFinancialDashboards()
   revalidatePath(`/trips/${tripId}`)
   if (oldTripId && oldTripId !== tripId) {
     revalidatePath(`/trips/${oldTripId}`)
@@ -609,6 +615,7 @@ export async function unassignOrderFromTrip(orderId: string) {
   }
 
   revalidatePath('/dispatch')
+  revalidateFinancialDashboards()
   revalidatePath(`/trips/${oldTripId}`)
   revalidatePath(`/orders/${orderId}`)
   revalidatePath('/orders')

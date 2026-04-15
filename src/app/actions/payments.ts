@@ -5,6 +5,7 @@ import { recordPaymentSchema } from '@/lib/validations/payment'
 import { logOrderActivity } from '@/lib/activity-log'
 import { syncPaymentToQB } from '@/lib/quickbooks/sync'
 import { revalidatePath } from 'next/cache'
+import { revalidateFinancialDashboards } from '@/lib/revalidate-helpers'
 import { dispatchWebhookEvent } from '@/lib/webhooks/webhook-dispatcher'
 import { sanitizePayload } from '@/lib/webhooks/payload-sanitizer'
 import { captureAsyncError } from '@/lib/async-safe'
@@ -114,6 +115,7 @@ export async function recordPayment(orderId: string, data: unknown) {
 
   revalidatePath(`/orders/${orderId}`)
   revalidatePath('/billing')
+  revalidateFinancialDashboards()
   return { success: true, data: payment }
 }
 
@@ -200,6 +202,7 @@ export async function batchMarkPaid(orderIds: string[], paymentDate: string) {
   }
 
   revalidatePath('/billing')
+  revalidateFinancialDashboards()
   revalidatePath('/orders')
 
   const processed = results.filter((r) => r.status === 'fulfilled').length
@@ -304,5 +307,114 @@ export async function recordCodPayment(orderId: string) {
 
   revalidatePath(`/orders/${orderId}`)
   revalidatePath('/billing')
+  revalidateFinancialDashboards()
   return { success: true, data: payment }
+}
+
+/**
+ * Delete a payment row and reconcile the parent order's amount_paid +
+ * payment_status from the remaining payments. Audit AUD-1 #1: without
+ * this, deleting a payment row directly leaves orders.amount_paid stale
+ * and P&L drifts.
+ *
+ * Uses sum-of-remaining (not subtract) so split payments, COD, and
+ * partial refunds all reconcile correctly. Calls recalculateTripFinancials
+ * if the order is on a trip.
+ */
+export async function deletePayment(paymentId: string) {
+  if (!paymentId || typeof paymentId !== 'string') {
+    return { error: 'Payment id is required.' }
+  }
+
+  try {
+    const auth = await authorize('payments.delete', {
+      rateLimit: { key: 'deletePayment', limit: 20, windowMs: 60_000 },
+    })
+    if (!auth.ok) return { error: auth.error }
+    const { supabase, tenantId, user } = auth.ctx
+
+    const { data: payment, error: fetchErr } = await supabase
+      .from('payments')
+      .select('id, amount, order_id')
+      .eq('id', paymentId)
+      .eq('tenant_id', tenantId)
+      .maybeSingle()
+    if (fetchErr) return { error: safeError(fetchErr, 'deletePayment.fetch') }
+    if (!payment) return { error: 'Payment not found.' }
+
+    const { data: order, error: orderErr } = await supabase
+      .from('orders')
+      .select('id, order_number, carrier_pay, trip_id, payment_status')
+      .eq('id', payment.order_id)
+      .eq('tenant_id', tenantId)
+      .single()
+    if (orderErr || !order) {
+      return { error: 'Parent order not found.' }
+    }
+
+    const { error: deleteErr } = await supabase
+      .from('payments')
+      .delete()
+      .eq('id', paymentId)
+      .eq('tenant_id', tenantId)
+    if (deleteErr) return { error: safeError(deleteErr, 'deletePayment.delete') }
+
+    // Re-sum REMAINING payments — authoritative source. Avoids float drift
+    // that would accumulate from "subtract from amount_paid" across many
+    // partial payment edits.
+    const { data: remaining, error: sumErr } = await supabase
+      .from('payments')
+      .select('amount')
+      .eq('order_id', payment.order_id)
+      .eq('tenant_id', tenantId)
+    if (sumErr) return { error: safeError(sumErr, 'deletePayment.sum') }
+
+    const newTotalPaid = (remaining ?? []).reduce(
+      (acc, r) => acc + parseFloat((r as { amount: string }).amount ?? '0'),
+      0,
+    )
+    const newAmountPaid = Math.round(newTotalPaid * 100) / 100
+
+    const carrierPay = parseFloat(order.carrier_pay)
+    let newStatus: 'unpaid' | 'partially_paid' | 'paid' | 'invoiced'
+    if (newAmountPaid <= 0) {
+      newStatus = order.payment_status === 'invoiced' ? 'invoiced' : 'unpaid'
+    } else if (Math.abs(newAmountPaid - carrierPay) < 0.01 || newAmountPaid >= carrierPay) {
+      newStatus = 'paid'
+    } else {
+      newStatus = 'partially_paid'
+    }
+
+    const { error: updateErr } = await supabase
+      .from('orders')
+      .update({
+        amount_paid: String(newAmountPaid),
+        payment_status: newStatus,
+      })
+      .eq('id', payment.order_id)
+      .eq('tenant_id', tenantId)
+    if (updateErr) return { error: safeError(updateErr, 'deletePayment.update') }
+
+    if (order.trip_id) {
+      const { recalculateTripFinancials } = await import('@/app/actions/trips')
+      await recalculateTripFinancials(order.trip_id)
+    }
+
+    logOrderActivity(supabase, {
+      tenantId,
+      orderId: payment.order_id,
+      action: 'payment_deleted',
+      description: `Deleted payment of $${parseFloat(payment.amount).toFixed(2)} (new total paid: $${newAmountPaid.toFixed(2)})`,
+      actorId: user.id,
+      actorEmail: user.email,
+      metadata: { paymentId, deletedAmount: payment.amount, newAmountPaid, newPaymentStatus: newStatus },
+    }).catch(captureAsyncError('deletePayment'))
+
+    revalidatePath(`/orders/${payment.order_id}`)
+    revalidatePath('/billing')
+    revalidateFinancialDashboards()
+    return { success: true }
+  } catch (err) {
+    return { error: safeError(err as { message: string }, 'deletePayment.throw') }
+  }
 }

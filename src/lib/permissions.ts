@@ -23,7 +23,7 @@ export const PERMISSION_CATEGORIES = {
   compliance: ['compliance.view', 'compliance.create', 'compliance.update', 'compliance.delete'],
   safety_events: ['safety_events.view', 'safety_events.create', 'safety_events.update', 'safety_events.delete'],
   billing: ['billing.view', 'billing.manage'],
-  payments: ['payments.view', 'payments.create'],
+  payments: ['payments.view', 'payments.create', 'payments.delete'],
   invoices: ['invoices.view', 'invoices.send'],
   receipts: ['receipts.send'],
   tasks: ['tasks.view', 'tasks.create', 'tasks.update', 'tasks.delete'],

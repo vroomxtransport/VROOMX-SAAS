@@ -5,6 +5,21 @@ import type { PnLInput } from '@/lib/financial/pnl-calculations'
 import type { DateRange } from '@/types/filters'
 import { cacheGet, cacheSet } from '@/lib/cache'
 
+/**
+ * Default row cap for KPI aggregation queries.
+ *
+ * PostgREST silently truncates `.select()` at 1000 rows by default.
+ * Without an explicit `.limit()`, a tenant with > 1000 orders/payments/
+ * trips in a date window sees silent undercounts on every dashboard
+ * KPI — no error, no warning, just wrong numbers.
+ *
+ * 50_000 = a tenant doing 1500 orders/day for a month, well above
+ * realistic single-period volume but bounded so a runaway query can't
+ * exhaust memory. Long-term: replace JS-side aggregation with Postgres
+ * SUM() RPCs (Wave 3).
+ */
+const KPI_AGG_ROW_CAP = 50_000
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -257,6 +272,7 @@ export async function fetchRevenueByMonth(
     .from('orders')
     .select('revenue, broker_fee, local_fee, created_at')
     .gte('created_at', sixMonthsAgo.toISOString())
+    .limit(KPI_AGG_ROW_CAP)
 
   if (ordError) throw ordError
 
@@ -264,6 +280,7 @@ export async function fetchRevenueByMonth(
     .from('trip_expenses')
     .select('amount, expense_date')
     .gte('expense_date', format(sixMonthsAgo, 'yyyy-MM-dd'))
+    .limit(KPI_AGG_ROW_CAP)
 
   if (expError) throw expError
 
@@ -271,6 +288,7 @@ export async function fetchRevenueByMonth(
     .from('trips')
     .select('driver_pay, start_date')
     .gte('start_date', format(sixMonthsAgo, 'yyyy-MM-dd'))
+    .limit(KPI_AGG_ROW_CAP)
 
   if (tripError) throw tripError
 
@@ -342,12 +360,14 @@ export async function fetchDailyRevenue(
       .from('orders')
       .select('revenue, created_at')
       .gte('created_at', periodStart.toISOString())
-      .lte('created_at', now.toISOString()),
+      .lte('created_at', now.toISOString())
+      .limit(KPI_AGG_ROW_CAP),
     supabase
       .from('orders')
       .select('revenue, created_at')
       .gte('created_at', prevPeriodStart.toISOString())
-      .lt('created_at', periodStart.toISOString()),
+      .lt('created_at', periodStart.toISOString())
+      .limit(KPI_AGG_ROW_CAP),
   ])
 
   if (e1) throw e1
@@ -400,6 +420,7 @@ export async function fetchTopBrokersByRevenue(
     .not('broker_id', 'is', null)
     .gte('created_at', startISO)
     .lte('created_at', endISO)
+    .limit(KPI_AGG_ROW_CAP)
 
   if (error) throw error
 
@@ -448,6 +469,7 @@ async function safeFetchMiles(
       .select('distance_miles, created_at')
       .gte(filter.column, filter.value)
       .not('distance_miles', 'is', null)
+      .limit(KPI_AGG_ROW_CAP)
 
     if (upperBound) {
       query = query.lte(filter.column, upperBound)
@@ -501,11 +523,13 @@ export async function fetchKPIAggregates(
         .select('amount, payment_date, order:orders!inner(id, revenue, broker_fee, local_fee, carrier_pay)')
         .gte('payment_date', startDate)
         .lte('payment_date', endDate)
+        .limit(KPI_AGG_ROW_CAP)
     : supabase
         .from('orders')
         .select('revenue, broker_fee, local_fee, carrier_pay')
         .gte('created_at', startISO)
         .lte('created_at', endISO)
+        .limit(KPI_AGG_ROW_CAP)
 
   // Parallel queries — distance_miles fetched separately to gracefully handle missing column
   const [revenueRes, milesData, tripsRes, expensesRes, trucksRes] = await Promise.all([
@@ -515,12 +539,14 @@ export async function fetchKPIAggregates(
       .from('trips')
       .select('driver_pay, total_revenue, total_expenses, status')
       .gte('start_date', startDate)
-      .lte('start_date', endDate),
+      .lte('start_date', endDate)
+      .limit(KPI_AGG_ROW_CAP),
     supabase
       .from('trip_expenses')
       .select('amount, category')
       .gte('expense_date', startDate)
-      .lte('expense_date', endDate),
+      .lte('expense_date', endDate)
+      .limit(KPI_AGG_ROW_CAP),
     supabase
       .from('trucks')
       .select('id', { count: 'exact', head: true })
@@ -670,6 +696,7 @@ export async function fetchProfitByTruck(
     .select('truck_id, total_revenue, total_broker_fees, total_local_fees, driver_pay, total_expenses, carrier_pay, truck:trucks(id, unit_number)')
     .gte('start_date', startDate)
     .lte('start_date', endDate)
+    .limit(KPI_AGG_ROW_CAP)
 
   if (error) throw error
 
@@ -737,6 +764,7 @@ export async function fetchProfitByDriver(
     .select('driver_id, total_revenue, driver_pay, driver:drivers(id, first_name, last_name, driver_type)')
     .gte('start_date', startDate)
     .lte('start_date', endDate)
+    .limit(KPI_AGG_ROW_CAP)
 
   if (error) throw error
 
@@ -790,16 +818,19 @@ export async function fetchMonthlyKPITrend(
     supabase
       .from('orders')
       .select('revenue, broker_fee, local_fee, carrier_pay, created_at')
-      .gte('created_at', startFrom.toISOString()),
+      .gte('created_at', startFrom.toISOString())
+      .limit(KPI_AGG_ROW_CAP),
     safeFetchMiles(supabase, { column: 'created_at', op: 'gte', value: startFrom.toISOString() }),
     supabase
       .from('trips')
       .select('driver_pay, start_date')
-      .gte('start_date', format(startFrom, 'yyyy-MM-dd')),
+      .gte('start_date', format(startFrom, 'yyyy-MM-dd'))
+      .limit(KPI_AGG_ROW_CAP),
     supabase
       .from('trip_expenses')
       .select('amount, expense_date')
-      .gte('expense_date', format(startFrom, 'yyyy-MM-dd')),
+      .gte('expense_date', format(startFrom, 'yyyy-MM-dd'))
+      .limit(KPI_AGG_ROW_CAP),
   ])
 
   if (ordersRes.error) throw ordersRes.error
@@ -963,16 +994,19 @@ export async function fetchMonthlyPnLTrend(
     supabase
       .from('orders')
       .select('revenue, broker_fee, local_fee, carrier_pay, created_at, status')
-      .gte('created_at', startISO),
+      .gte('created_at', startISO)
+      .limit(KPI_AGG_ROW_CAP),
     safeFetchMiles(supabase, { column: 'created_at', op: 'gte', value: startISO }),
     supabase
       .from('trips')
       .select('driver_pay, start_date, status')
-      .gte('start_date', startDateStr),
+      .gte('start_date', startDateStr)
+      .limit(KPI_AGG_ROW_CAP),
     supabase
       .from('trip_expenses')
       .select('amount, category, expense_date')
-      .gte('expense_date', startDateStr),
+      .gte('expense_date', startDateStr)
+      .limit(KPI_AGG_ROW_CAP),
     supabase
       .from('trucks')
       .select('id', { count: 'exact', head: true })
@@ -982,7 +1016,8 @@ export async function fetchMonthlyPnLTrend(
       .from('orders')
       .select('created_at, status')
       .gte('created_at', startISO)
-      .in('status', ['delivered', 'invoiced', 'paid']),
+      .in('status', ['delivered', 'invoiced', 'paid'])
+      .limit(KPI_AGG_ROW_CAP),
   ])
 
   if (ordersRes.error) throw ordersRes.error
@@ -1153,6 +1188,7 @@ export async function fetchTripAnalytics(
     .gte('start_date', startDate)
     .lte('start_date', endDate)
     .order('start_date', { ascending: false })
+    .limit(KPI_AGG_ROW_CAP)
 
   if (error) throw error
 
