@@ -69,10 +69,14 @@ async function recomputeWorkOrderTotals(
 }
 
 /**
- * Atomic next-WO-number assignment per tenant. Uses a tenant-scoped advisory
- * lock so two concurrent createWorkOrder calls can't collide. The unique
- * index on (tenant_id, wo_number) is the belt; the advisory lock is the
- * suspenders.
+ * Atomic next-WO-number assignment per tenant. Calls the
+ * nextval_wo_number SECURITY DEFINER function (advisory-locked SELECT MAX+1).
+ * Falls back to a plain SELECT MAX+1 if the RPC is unavailable.
+ *
+ * IMPORTANT: the advisory lock is released at end of the RPC's implicit
+ * transaction — it does NOT span the subsequent INSERT. Concurrent creates
+ * can still collide on the unique index (tenant_id, wo_number). Callers
+ * must retry on 23505 unique-violation; see insertWithWoNumberRetry.
  */
 async function nextWoNumber(
   admin: SupabaseClient,
@@ -80,7 +84,7 @@ async function nextWoNumber(
 ): Promise<{ wo: number | null; error: string | null }> {
   const { data, error } = await admin.rpc('nextval_wo_number', { p_tenant_id: tenantId })
   if (error || typeof data !== 'number') {
-    // Fallback: read max + 1 (safe because of the unique index).
+    // Fallback: read max + 1 (safe because of the unique index + the retry loop).
     const { data: max, error: maxErr } = await admin
       .from('maintenance_records')
       .select('wo_number')
@@ -93,6 +97,42 @@ async function nextWoNumber(
     return { wo: next, error: null }
   }
   return { wo: data, error: null }
+}
+
+const PG_UNIQUE_VIOLATION = '23505'
+const WO_NUMBER_MAX_ATTEMPTS = 4
+
+/**
+ * Insert a work-order row with transparent retry on wo_number collisions.
+ *
+ * The advisory lock in nextval_wo_number doesn't span the action's INSERT,
+ * so two concurrent calls on the same tenant can both compute the same
+ * wo_number. The unique index catches that, and we re-allocate + retry.
+ */
+async function insertWithWoNumberRetry(
+  admin: SupabaseClient,
+  tenantId: string,
+  buildRow: (woNumber: number) => Record<string, unknown>,
+): Promise<{ data: WorkOrder | null; error: string | null }> {
+  for (let attempt = 1; attempt <= WO_NUMBER_MAX_ATTEMPTS; attempt++) {
+    const { wo, error: woErr } = await nextWoNumber(admin, tenantId)
+    if (woErr || wo == null) return { data: null, error: woErr ?? 'wo_number allocation failed' }
+
+    const { data, error } = await admin
+      .from('maintenance_records')
+      .insert(buildRow(wo))
+      .select('*')
+      .single()
+
+    if (!error) return { data: data as WorkOrder, error: null }
+
+    const code = (error as { code?: string }).code
+    if (code !== PG_UNIQUE_VIOLATION || attempt === WO_NUMBER_MAX_ATTEMPTS) {
+      return { data: null, error: error.message }
+    }
+    // Fall through and retry with a fresh nextval.
+  }
+  return { data: null, error: 'wo_number allocation exhausted retries' }
 }
 
 // ---------------------------------------------------------------------------
@@ -113,35 +153,28 @@ export async function createWorkOrder(
     const { tenantId } = auth.ctx
 
     const { supabase: admin } = auth.ctx
-    const { wo, error: woErr } = await nextWoNumber(admin, tenantId)
-    if (woErr || wo == null) return { error: safeError({ message: woErr ?? 'Could not allocate WO number' }, 'createWorkOrder.woNumber') }
+    const { data: inserted, error } = await insertWithWoNumberRetry(admin, tenantId, (woNumber) => ({
+      tenant_id: tenantId,
+      shop_id: parsed.data.shopId,
+      truck_id: parsed.data.truckId ?? null,
+      trailer_id: parsed.data.trailerId ?? null,
+      wo_number: woNumber,
+      status: 'new',
+      maintenance_type: parsed.data.maintenanceType,
+      description: parsed.data.description || null,
+      scheduled_date: parsed.data.scheduledDate || null,
+      odometer: parsed.data.odometer ?? null,
+      notes: parsed.data.notes || null,
+      total_labor: '0',
+      total_parts: '0',
+      grand_total: '0',
+      cost: '0',
+    }))
 
-    const { data: inserted, error } = await admin
-      .from('maintenance_records')
-      .insert({
-        tenant_id: tenantId,
-        shop_id: parsed.data.shopId,
-        truck_id: parsed.data.truckId ?? null,
-        trailer_id: parsed.data.trailerId ?? null,
-        wo_number: wo,
-        status: 'new',
-        maintenance_type: parsed.data.maintenanceType,
-        description: parsed.data.description || null,
-        scheduled_date: parsed.data.scheduledDate || null,
-        odometer: parsed.data.odometer ?? null,
-        notes: parsed.data.notes || null,
-        total_labor: '0',
-        total_parts: '0',
-        grand_total: '0',
-        cost: '0',
-      })
-      .select('*')
-      .single()
-
-    if (error) return { error: safeError(error, 'createWorkOrder') }
+    if (error || !inserted) return { error: safeError({ message: error ?? 'create failed' }, 'createWorkOrder') }
 
     revalidateWorkOrderRoutes(inserted.id)
-    return { success: true, workOrder: inserted as WorkOrder }
+    return { success: true, workOrder: inserted }
   } catch (err) {
     return { error: safeError(err as { message: string }, 'createWorkOrder.throw') }
   }
@@ -539,31 +572,24 @@ export async function duplicateWorkOrder(
     if (srcErr) return { error: safeError(srcErr, 'duplicateWorkOrder.source') }
     if (!source) return { error: 'Work order not found.' }
 
-    const { wo, error: woErr } = await nextWoNumber(admin, tenantId)
-    if (woErr || wo == null) return { error: safeError({ message: woErr ?? 'Could not allocate WO number' }, 'duplicateWorkOrder.woNumber') }
-
-    const { data: created, error: insertErr } = await admin
-      .from('maintenance_records')
-      .insert({
-        tenant_id: tenantId,
-        shop_id: source.shop_id,
-        truck_id: source.truck_id,
-        trailer_id: source.trailer_id,
-        wo_number: wo,
-        status: 'new',
-        maintenance_type: source.maintenance_type,
-        description: source.description,
-        scheduled_date: source.scheduled_date,
-        odometer: source.odometer,
-        notes: source.notes,
-        total_labor: '0',
-        total_parts: '0',
-        grand_total: '0',
-        cost: '0',
-      })
-      .select('id')
-      .single()
-    if (insertErr || !created) return { error: safeError(insertErr ?? { message: 'insert failed' }, 'duplicateWorkOrder.insert') }
+    const { data: created, error: insertErr } = await insertWithWoNumberRetry(admin, tenantId, (woNumber) => ({
+      tenant_id: tenantId,
+      shop_id: source.shop_id,
+      truck_id: source.truck_id,
+      trailer_id: source.trailer_id,
+      wo_number: woNumber,
+      status: 'new',
+      maintenance_type: source.maintenance_type,
+      description: source.description,
+      scheduled_date: source.scheduled_date,
+      odometer: source.odometer,
+      notes: source.notes,
+      total_labor: '0',
+      total_parts: '0',
+      grand_total: '0',
+      cost: '0',
+    }))
+    if (insertErr || !created) return { error: safeError({ message: insertErr ?? 'insert failed' }, 'duplicateWorkOrder.insert') }
 
     // Clone line items — reset service_date + mechanic_name as those are per-execution.
     const { data: items, error: itemsErr } = await admin
@@ -592,7 +618,7 @@ export async function duplicateWorkOrder(
     if (recompute.error) return { error: safeError({ message: recompute.error }, 'duplicateWorkOrder.recompute') }
 
     revalidateWorkOrderRoutes(created.id)
-    return { success: true, workOrderId: created.id, woNumber: wo }
+    return { success: true, workOrderId: created.id, woNumber: created.wo_number ?? 0 }
   } catch (err) {
     return { error: safeError(err as { message: string }, 'duplicateWorkOrder.throw') }
   }
