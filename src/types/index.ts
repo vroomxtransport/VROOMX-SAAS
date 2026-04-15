@@ -396,6 +396,7 @@ export type OrderActivityAction =
   | 'payment_recorded' | 'batch_marked_paid'
   | 'invoice_sent' | 'order_factored'
   | 'receipt_sent'
+  | 'distance_recalculated'
 
 // ============================================================================
 // Phase 4: Billing & Invoicing Types
@@ -517,10 +518,24 @@ export const LOCAL_RUN_STATUS_COLORS: Record<LocalRunStatus, string> = {
 
 // Maintenance types
 export type MaintenanceType = 'preventive' | 'repair' | 'inspection' | 'tire' | 'oil_change' | 'other'
-export type MaintenanceStatus = 'scheduled' | 'in_progress' | 'completed'
+export type MaintenanceStatus = 'scheduled' | 'in_progress' | 'completed' | 'new' | 'closed'
 
 export const MAINTENANCE_TYPES: readonly MaintenanceType[] = ['preventive', 'repair', 'inspection', 'tire', 'oil_change', 'other'] as const
-export const MAINTENANCE_STATUSES: readonly MaintenanceStatus[] = ['scheduled', 'in_progress', 'completed'] as const
+export const MAINTENANCE_STATUSES: readonly MaintenanceStatus[] = ['scheduled', 'in_progress', 'completed', 'new', 'closed'] as const
+
+export type ShopKind = 'internal' | 'external'
+export const SHOP_KINDS: readonly ShopKind[] = ['internal', 'external'] as const
+export const SHOP_KIND_LABELS: Record<ShopKind, string> = {
+  internal: 'Internal',
+  external: 'External',
+}
+
+export type WorkOrderItemKind = 'labor' | 'part'
+export const WORK_ORDER_ITEM_KINDS: readonly WorkOrderItemKind[] = ['labor', 'part'] as const
+export const WORK_ORDER_ITEM_KIND_LABELS: Record<WorkOrderItemKind, string> = {
+  labor: 'Labor',
+  part: 'Part',
+}
 
 export const MAINTENANCE_TYPE_LABELS: Record<MaintenanceType, string> = {
   preventive: 'Preventive',
@@ -532,15 +547,19 @@ export const MAINTENANCE_TYPE_LABELS: Record<MaintenanceType, string> = {
 }
 
 export const MAINTENANCE_STATUS_LABELS: Record<MaintenanceStatus, string> = {
+  new: 'New',
   scheduled: 'Scheduled',
   in_progress: 'In Progress',
   completed: 'Completed',
+  closed: 'Closed',
 }
 
 export const MAINTENANCE_STATUS_COLORS: Record<MaintenanceStatus, string> = {
+  new: 'bg-slate-50 text-slate-700 border-slate-200',
   scheduled: 'bg-blue-50 text-blue-700 border-blue-200',
   in_progress: 'bg-amber-50 text-amber-700 border-amber-200',
   completed: 'bg-green-50 text-green-700 border-green-200',
+  closed: 'bg-zinc-100 text-zinc-700 border-zinc-300',
 }
 
 // Compliance types

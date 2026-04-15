@@ -168,6 +168,9 @@ export interface Order {
   pickup_longitude: number | null
   delivery_latitude: number | null
   delivery_longitude: number | null
+  geocode_status: 'pending' | 'ok' | 'failed' | 'skipped' | null
+  geocode_error: string | null
+  route_geometry: { type: 'LineString'; coordinates: [number, number][] } | null
   revenue: string
   carrier_pay: string
   broker_fee: string
@@ -290,7 +293,7 @@ export interface TruckDocument {
 }
 
 // ============================================================================
-// Phase 8: New Module Interfaces
+/// Phase 8: New Module Interfaces
 // ============================================================================
 
 export interface Task {
@@ -443,22 +446,78 @@ export interface FuelEntry {
   updated_at: string
 }
 
+export interface Shop {
+  id: string
+  tenant_id: string
+  name: string
+  kind: 'internal' | 'external'
+  contact_name: string | null
+  phone: string | null
+  email: string | null
+  address: string | null
+  city: string | null
+  state: string | null
+  zip: string | null
+  notes: string | null
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
 export interface MaintenanceRecord {
   id: string
   tenant_id: string
   truck_id: string | null
+  trailer_id: string | null
+  shop_id: string | null
+  wo_number: number | null
   maintenance_type: 'preventive' | 'repair' | 'inspection' | 'tire' | 'oil_change' | 'other'
-  status: 'scheduled' | 'in_progress' | 'completed'
+  status: 'scheduled' | 'in_progress' | 'completed' | 'new' | 'closed'
   description: string | null
   vendor: string | null
   cost: string
+  total_labor: string
+  total_parts: string
+  grand_total: string
   scheduled_date: string | null
   completed_date: string | null
+  closed_at: string | null
   odometer: number | null
   notes: string | null
+  created_by: string | null
   truck?: Truck
+  shop?: Shop
+  items?: WorkOrderItem[]
   created_at: string
   updated_at: string
+}
+
+/** Semantic alias — new code should use `WorkOrder` for clarity. */
+export type WorkOrder = MaintenanceRecord
+
+export interface WorkOrderItem {
+  id: string
+  tenant_id: string
+  work_order_id: string
+  kind: 'labor' | 'part'
+  description: string
+  quantity: string
+  unit_rate: string
+  amount: string
+  mechanic_name: string | null
+  service_date: string | null
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
+export interface WorkOrderNote {
+  id: string
+  tenant_id: string
+  work_order_id: string
+  author_id: string | null
+  body: string
+  created_at: string
 }
 
 export interface ComplianceDocument {

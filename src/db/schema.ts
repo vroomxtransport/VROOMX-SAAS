@@ -280,6 +280,10 @@ export const orders = pgTable('orders', {
   pickupLongitude: doublePrecision('pickup_longitude'),
   deliveryLatitude: doublePrecision('delivery_latitude'),
   deliveryLongitude: doublePrecision('delivery_longitude'),
+  // Geocode observability + cached Mapbox route geometry
+  geocodeStatus: text('geocode_status'),
+  geocodeError: text('geocode_error'),
+  routeGeometry: jsonb('route_geometry'),
   // Trip assignment
   tripId: uuid('trip_id'),
   // Billing (Phase 4)
@@ -576,7 +580,9 @@ export const localDriveStatusEnum = pgEnum('local_drive_status', ['pending', 'in
 export const localDriveTypeEnum = pgEnum('local_drive_type', ['pickup_to_terminal', 'delivery_from_terminal', 'standalone'])
 export const localRunStatusEnum = pgEnum('local_run_status', ['planned', 'in_progress', 'completed', 'cancelled'])
 export const maintenanceTypeEnum = pgEnum('maintenance_type', ['preventive', 'repair', 'inspection', 'tire', 'oil_change', 'other'])
-export const maintenanceStatusEnum = pgEnum('maintenance_status', ['scheduled', 'in_progress', 'completed'])
+export const maintenanceStatusEnum = pgEnum('maintenance_status', ['scheduled', 'in_progress', 'completed', 'new', 'closed'])
+export const shopKindEnum = pgEnum('shop_kind', ['internal', 'external'])
+export const workOrderItemKindEnum = pgEnum('work_order_item_kind', ['labor', 'part'])
 export const complianceDocTypeEnum = pgEnum('compliance_doc_type', ['dqf', 'vehicle_qualification', 'company_document'])
 export const complianceEntityTypeEnum = pgEnum('compliance_entity_type', ['driver', 'truck', 'company', 'driver_application'])
 
@@ -841,25 +847,112 @@ export const fuelEntries = pgTable('fuel_entries', {
  * Maintenance Records Table
  * Vehicle maintenance and repair tracking.
  */
+/**
+ * Shops — directory of places where maintenance work gets done.
+ * Per-tenant, internal or external. Each tenant gets a default 'Default'
+ * internal shop via the work-orders migration backfill.
+ */
+export const shops = pgTable('shops', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  kind: shopKindEnum('kind').notNull().default('external'),
+  contactName: text('contact_name'),
+  phone: text('phone'),
+  email: text('email'),
+  address: text('address'),
+  city: text('city'),
+  state: text('state'),
+  zip: text('zip'),
+  notes: text('notes'),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_shops_tenant_id').on(table.tenantId),
+  index('idx_shops_tenant_active').on(table.tenantId, table.isActive),
+  index('idx_shops_tenant_kind').on(table.tenantId, table.kind),
+])
+
+/**
+ * Maintenance records — AKA `workOrders` in new code.
+ * Physical table name stays `maintenance_records` (19 callsites across the
+ * stack). The new work-order UI reads the enriched shape via the `workOrders`
+ * alias exported below.
+ *
+ * `cost` and `vendor` are retained for backwards compatibility with
+ * truck-expense-ledger and quickbooks-sync consumers; Phase 5 keeps `cost`
+ * in sync with `grand_total` until those consumers migrate.
+ */
 export const maintenanceRecords = pgTable('maintenance_records', {
   id: uuid('id').primaryKey().defaultRandom(),
   tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
   truckId: uuid('truck_id').references(() => trucks.id),
+  trailerId: uuid('trailer_id').references(() => trailers.id),
+  shopId: uuid('shop_id').references(() => shops.id),
+  woNumber: integer('wo_number'),
   maintenanceType: maintenanceTypeEnum('maintenance_type').notNull().default('other'),
   status: maintenanceStatusEnum('status').notNull().default('scheduled'),
   description: text('description'),
   vendor: text('vendor'),
   cost: numeric('cost', { precision: 12, scale: 2 }).default('0'),
+  totalLabor: numeric('total_labor', { precision: 12, scale: 2 }).notNull().default('0'),
+  totalParts: numeric('total_parts', { precision: 12, scale: 2 }).notNull().default('0'),
+  grandTotal: numeric('grand_total', { precision: 12, scale: 2 }).notNull().default('0'),
   scheduledDate: date('scheduled_date'),
   completedDate: timestamp('completed_date', { withTimezone: true }),
+  closedAt: timestamp('closed_at', { withTimezone: true }),
   odometer: integer('odometer'),
   notes: text('notes'),
+  createdBy: uuid('created_by'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
   index('idx_maintenance_records_tenant_id').on(table.tenantId),
   index('idx_maintenance_records_tenant_truck').on(table.tenantId, table.truckId),
   index('idx_maintenance_records_tenant_status').on(table.tenantId, table.status),
+  uniqueIndex('uq_maintenance_records_tenant_wo_number').on(table.tenantId, table.woNumber),
+])
+
+/** Semantic alias — new code should import `workOrders` for clarity. */
+export const workOrders = maintenanceRecords
+
+/**
+ * Work-order line items — labor or part. FKs back to maintenance_records
+ * (physical name) via workOrderId. Denormalized tenant_id for simpler RLS.
+ */
+export const workOrderItems = pgTable('work_order_items', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  workOrderId: uuid('work_order_id').notNull().references(() => maintenanceRecords.id, { onDelete: 'cascade' }),
+  kind: workOrderItemKindEnum('kind').notNull(),
+  description: text('description').notNull(),
+  quantity: numeric('quantity', { precision: 12, scale: 2 }).notNull().default('1'),
+  unitRate: numeric('unit_rate', { precision: 12, scale: 2 }).notNull().default('0'),
+  amount: numeric('amount', { precision: 12, scale: 2 }).notNull().default('0'),
+  mechanicName: text('mechanic_name'),
+  serviceDate: date('service_date'),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_work_order_items_tenant_id').on(table.tenantId),
+  index('idx_work_order_items_work_order').on(table.workOrderId, table.sortOrder),
+])
+
+/**
+ * Work-order notes — chronological, author-attributed notes on a work order.
+ */
+export const workOrderNotes = pgTable('work_order_notes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  workOrderId: uuid('work_order_id').notNull().references(() => maintenanceRecords.id, { onDelete: 'cascade' }),
+  authorId: uuid('author_id'),
+  body: text('body').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_work_order_notes_tenant_id').on(table.tenantId),
+  index('idx_work_order_notes_work_order').on(table.workOrderId, table.createdAt),
 ])
 
 /**
@@ -1363,6 +1456,14 @@ export type DrizzleFuelEntry = typeof fuelEntries.$inferSelect
 export type NewFuelEntry = typeof fuelEntries.$inferInsert
 export type DrizzleMaintenanceRecord = typeof maintenanceRecords.$inferSelect
 export type NewMaintenanceRecord = typeof maintenanceRecords.$inferInsert
+export type DrizzleWorkOrder = DrizzleMaintenanceRecord
+export type NewWorkOrder = NewMaintenanceRecord
+export type DrizzleShop = typeof shops.$inferSelect
+export type NewShop = typeof shops.$inferInsert
+export type DrizzleWorkOrderItem = typeof workOrderItems.$inferSelect
+export type NewWorkOrderItem = typeof workOrderItems.$inferInsert
+export type DrizzleWorkOrderNote = typeof workOrderNotes.$inferSelect
+export type NewWorkOrderNote = typeof workOrderNotes.$inferInsert
 export type DrizzleComplianceDocument = typeof complianceDocuments.$inferSelect
 export type NewComplianceDocument = typeof complianceDocuments.$inferInsert
 export type DrizzleDriverLocation = typeof driverLocations.$inferSelect

@@ -3,7 +3,7 @@ import { z } from 'zod'
 export const maintenanceSchema = z.object({
   truckId: z.string().min(1, 'Truck is required').max(36),
   maintenanceType: z.enum(['preventive', 'repair', 'inspection', 'tire', 'oil_change', 'other']).default('other'),
-  status: z.enum(['scheduled', 'in_progress', 'completed']).default('scheduled'),
+  status: z.enum(['scheduled', 'in_progress', 'completed', 'new', 'closed']).default('scheduled'),
   description: z.string().max(5000).optional().or(z.literal('')),
   vendor: z.string().max(200).optional().or(z.literal('')),
   cost: z.coerce.number().min(0).max(10_000_000).default(0),
