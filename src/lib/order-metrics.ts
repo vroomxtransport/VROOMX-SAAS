@@ -9,15 +9,31 @@ export function parseDistanceMiles(val: string | null | undefined): number | nul
   return isNaN(n) || n <= 0 ? null : n
 }
 
+/**
+ * Revenue per mile, computed on **Clean Gross** (revenue − broker fee −
+ * local fee), not raw revenue. Matches the rest of the VroomX financial
+ * model: Clean Gross is what the carrier actually earns from the load,
+ * and dividing that by miles gives the true per-mile yield a dispatcher
+ * compares across lanes.
+ *
+ * Using raw revenue here would double-count broker and local fees (the
+ * broker/local payee captures those dollars, not the carrier), inflating
+ * RPM and leading to bad lane-pricing decisions.
+ */
 export function computeRevenuePerMile(
   revenue: string | number,
+  brokerFee: string | number | null | undefined,
+  localFee: string | number | null | undefined,
   distanceMiles: string | null | undefined
 ): number | null {
   const miles = parseDistanceMiles(distanceMiles)
   if (!miles) return null
   const rev = typeof revenue === 'string' ? parseFloat(revenue) : revenue
   if (isNaN(rev)) return null
-  return Math.round((rev / miles) * 100) / 100
+  const bf = brokerFee == null ? 0 : typeof brokerFee === 'string' ? parseFloat(brokerFee) : brokerFee
+  const lf = localFee == null ? 0 : typeof localFee === 'string' ? parseFloat(localFee) : localFee
+  const cleanGross = rev - (isNaN(bf) ? 0 : bf) - (isNaN(lf) ? 0 : lf)
+  return Math.round((cleanGross / miles) * 100) / 100
 }
 
 /**

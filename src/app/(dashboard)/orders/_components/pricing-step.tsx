@@ -24,6 +24,7 @@ import type { PaymentType } from '@/types'
 import { HelpTooltip } from '@/components/help-tooltip'
 import type { CreateOrderInput } from '@/lib/validations/order'
 import { computeOrderDriverPay } from '@/lib/financial/driver-pay'
+import { DistancePreview } from './distance-preview'
 
 export function PricingStep() {
   const form = useFormContext<CreateOrderInput>()
@@ -192,6 +193,12 @@ export function PricingStep() {
         />
       )}
 
+      {/* Distance + RPM preview — fires once pickup + delivery city/state
+          are filled. Auto-populates the distanceMiles form field unless
+          the user typed one manually, so per_mile driver pay below picks
+          up the real number without a page reload. */}
+      <DistancePreview />
+
       {/* Driver Pay preview — auto-computed from driver config. Only
           shown when a driver is selected; hidden otherwise to avoid
           cluttering the form with $0 placeholders. */}
@@ -202,7 +209,7 @@ export function PricingStep() {
               <span className="text-sm font-medium text-foreground">Driver Pay</span>
               <p className="text-xs text-muted-foreground">
                 Auto-calculated from driver&apos;s pay type
-                {selectedDriver.pay_type === 'per_mile' && ' × distance (filled on save)'}
+                {selectedDriver.pay_type === 'per_mile' && ' × live distance'}
               </p>
             </div>
             <span className="text-sm font-semibold tabular-nums text-foreground">

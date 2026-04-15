@@ -157,6 +157,11 @@ export async function createOrder(data: unknown) {
       // (see applyComputedDriverPay). Initial placeholder of '0' is written
       // here and overwritten once we know the final distance and driver.
       carrier_pay: '0',
+      // Mark geocoding as pending up-front so the UI can render a
+      // "Calculating…" state instead of a permanent dash while the
+      // Mapbox round-trip is in flight. Flipped to 'ok' / 'failed' /
+      // 'skipped' by geocodeAndSaveOrder below.
+      geocode_status: 'pending',
       broker_fee: String(v.brokerFee),
       local_fee: String(v.localFee),
       driver_pay_rate_override: v.driverPayRateOverride ? String(v.driverPayRateOverride) : null,
@@ -418,6 +423,15 @@ export async function updateOrder(id: string, data: unknown) {
   if (deliveryAddressChanged) {
     updateData.delivery_latitude = null
     updateData.delivery_longitude = null
+  }
+  // When addresses change, reset geocode status so the UI immediately
+  // reflects that the cached mileage + route polyline no longer match
+  // the new origin/destination. geocodeAndSaveOrder below will flip this
+  // to 'ok' / 'failed' / 'skipped' once Mapbox responds.
+  if (pickupAddressChanged || deliveryAddressChanged) {
+    updateData.geocode_status = 'pending'
+    updateData.geocode_error = null
+    updateData.route_geometry = null
   }
 
   const { data: order, error } = await supabase

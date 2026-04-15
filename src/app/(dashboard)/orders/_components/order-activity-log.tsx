@@ -17,6 +17,7 @@ import {
   CheckCircle2,
   FileText,
   Receipt,
+  Route,
   Trash2,
 } from 'lucide-react'
 import type { OrderActivityAction } from '@/types'
@@ -34,6 +35,7 @@ const ACTION_CONFIG: Record<OrderActivityAction, { icon: typeof Activity; dotCol
   invoice_sent: { icon: FileText, dotColor: 'bg-purple-500', iconColor: 'text-purple-500' },
   order_factored: { icon: Receipt, dotColor: 'bg-purple-500', iconColor: 'text-purple-500' },
   receipt_sent: { icon: Receipt, dotColor: 'bg-emerald-500', iconColor: 'text-emerald-500' },
+  distance_recalculated: { icon: Route, dotColor: 'bg-sky-500', iconColor: 'text-sky-500' },
 }
 
 const DEFAULT_CONFIG = { icon: Activity, dotColor: 'bg-gray-400', iconColor: 'text-gray-400' }

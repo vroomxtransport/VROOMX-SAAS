@@ -65,7 +65,7 @@ export function OrderHeaderBar({ order, onEdit, onDelete, canDelete }: OrderHead
     ? `${order.pickup_state} → ${order.delivery_state}`
     : null
   const distanceMiles = parseDistanceMiles(order.distance_miles)
-  const revenuePerMile = computeRevenuePerMile(order.revenue, order.distance_miles)
+  const revenuePerMile = computeRevenuePerMile(order.revenue, order.broker_fee, order.local_fee, order.distance_miles)
 
   return (
     <div className="rounded-xl border border-border-subtle bg-surface overflow-hidden">

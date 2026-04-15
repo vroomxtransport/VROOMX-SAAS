@@ -75,7 +75,7 @@ export function OrderCard({ order, onClick, onEdit }: OrderCardProps) {
   const driverName = formatDriverName(order.driver)
   const revenue = parseFloat(order.revenue)
   const distanceMiles = parseDistanceMiles(order.distance_miles)
-  const revenuePerMile = computeRevenuePerMile(order.revenue, order.distance_miles)
+  const revenuePerMile = computeRevenuePerMile(order.revenue, order.broker_fee, order.local_fee, order.distance_miles)
 
   async function handleAssignDriver(driverId: string) {
     setIsAssigning(true)

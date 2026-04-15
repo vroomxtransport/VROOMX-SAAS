@@ -121,6 +121,32 @@ export function TripRouteMapView({ orders, sequence }: TripRouteMapViewProps) {
     [stops]
   )
 
+  // Per-order cached Mapbox route polylines. The DB column
+  // `orders.route_geometry` stores a GeoJSON LineString with
+  // [lon, lat] coordinates from the Mapbox Directions API; Leaflet
+  // expects [lat, lng], so we flip here. Orders without a cached
+  // geometry (older orders, or ones where geocoding failed) fall back
+  // silently to the straight-line sequence polyline below.
+  const orderRoutePolylines = useMemo(() => {
+    const lines: Array<{ orderId: string; positions: [number, number][] }> = []
+    for (const order of orders) {
+      const geom = order.route_geometry
+      if (
+        !geom ||
+        geom.type !== 'LineString' ||
+        !Array.isArray(geom.coordinates) ||
+        geom.coordinates.length < 2
+      ) {
+        continue
+      }
+      const positions = geom.coordinates.map(
+        ([lon, lat]) => [lat, lon] as [number, number],
+      )
+      lines.push({ orderId: order.id, positions })
+    }
+    return lines
+  }, [orders])
+
   if (stops.length === 0) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
@@ -142,17 +168,36 @@ export function TripRouteMapView({ orders, sequence }: TripRouteMapViewProps) {
 
       <FitBounds stops={stops} />
 
+      {/* Inter-order transit sequence — dashed line connecting every
+          stop in order. Stays as the fallback visual for orders that
+          don't have a cached route geometry yet. */}
       {polylinePositions.length > 1 && (
         <Polyline
           positions={polylinePositions}
           pathOptions={{
             color: '#6366f1',
-            weight: 3,
-            dashArray: '8, 8',
-            opacity: 0.7,
+            weight: 2,
+            dashArray: '6, 8',
+            opacity: 0.4,
           }}
         />
       )}
+
+      {/* Cached per-order driving polylines — drawn ON TOP of the
+          transit dashes in a solid, more prominent style so the
+          actual road route is visually dominant. Zero Mapbox calls
+          at render time — all geometry comes from the orders row. */}
+      {orderRoutePolylines.map((line) => (
+        <Polyline
+          key={`route-${line.orderId}`}
+          positions={line.positions}
+          pathOptions={{
+            color: '#4f46e5',
+            weight: 4,
+            opacity: 0.85,
+          }}
+        />
+      ))}
 
       {stops.map((stop) => (
         <Marker

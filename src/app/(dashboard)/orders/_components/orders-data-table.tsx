@@ -280,7 +280,7 @@ export function OrdersDataTable({ orders, sort, onSort, onRowClick, onEdit }: Or
       minSize: 55,
       cell: ({ row }) => {
         const d = parseDistanceMiles(row.original.distance_miles)
-        const rpm = computeRevenuePerMile(row.original.revenue, row.original.distance_miles)
+        const rpm = computeRevenuePerMile(row.original.revenue, row.original.broker_fee, row.original.local_fee, row.original.distance_miles)
         return (
           <div className="text-right">
             <span className="text-sm tabular-nums text-foreground">

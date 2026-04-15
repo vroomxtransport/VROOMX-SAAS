@@ -21,9 +21,18 @@
  * HERE HGV profile, or PC*MILER) is a future enhancement.
  */
 
+export interface RouteGeometry {
+  type: 'LineString'
+  coordinates: [number, number][]
+}
+
 interface DistanceResult {
   miles: number
   durationMinutes: number
+  /** GeoJSON LineString from Mapbox Directions. Null when Mapbox omits it
+   *  (e.g. fallback path, older cached responses). Callers that need the
+   *  route polyline for a map view should tolerate null. */
+  geometry: RouteGeometry | null
 }
 
 const MAPBOX_DIRECTIONS_BASE = 'https://api.mapbox.com/directions/v5/mapbox/driving'
@@ -84,9 +93,14 @@ export async function calculateDrivingDistance(
   // for multi-waypoint routes. Numeric literals are safe to interpolate —
   // we've already validated they're finite numbers in range.
   const coords = `${pickupLon},${pickupLat};${deliveryLon},${deliveryLat}`
+  // `overview=simplified` gives us a ~2-10 KB GeoJSON LineString per order
+  // — enough precision for map display at trip-route-map-view zoom levels
+  // while keeping the `orders.route_geometry` jsonb column small. `overview=full`
+  // can balloon to 100+ KB on coast-to-coast hauls, which bloats list-query
+  // payloads that use `.select('*')`.
   const params = new URLSearchParams({
     access_token: token,
-    overview: 'false',
+    overview: 'simplified',
     geometries: 'geojson',
   })
   const url = `${MAPBOX_DIRECTIONS_BASE}/${coords}?${params.toString()}`
@@ -133,9 +147,27 @@ export async function calculateDrivingDistance(
       const miles = route.distance / 1609.34
       const durationMinutes = route.duration / 60
 
+      // Mapbox returns a GeoJSON LineString when geometries=geojson +
+      // overview != 'false'. Shape-validate before persisting so we never
+      // write malformed geometry into the orders row.
+      let geometry: RouteGeometry | null = null
+      const rawGeom = route.geometry
+      if (
+        rawGeom &&
+        rawGeom.type === 'LineString' &&
+        Array.isArray(rawGeom.coordinates) &&
+        rawGeom.coordinates.length >= 2
+      ) {
+        geometry = {
+          type: 'LineString',
+          coordinates: rawGeom.coordinates as [number, number][],
+        }
+      }
+
       return {
         miles: Math.round(miles * 10) / 10, // 1 decimal precision
         durationMinutes: Math.round(durationMinutes),
+        geometry,
       }
     } catch (err) {
       // AbortError (timeout) or network error — retry if budget remains

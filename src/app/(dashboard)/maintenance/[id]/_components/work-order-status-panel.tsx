@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { MAINTENANCE_STATUS_LABELS, MAINTENANCE_STATUS_COLORS } from '@/types'
 import type { MaintenanceStatus } from '@/types'
-import { setWorkOrderStatus, isTransitionAllowed } from '@/app/actions/work-orders'
+import { setWorkOrderStatus } from '@/app/actions/work-orders'
+import { isTransitionAllowed } from '@/lib/work-orders/transitions'
 
 interface WorkOrderStatusPanelProps {
   workOrderId: string

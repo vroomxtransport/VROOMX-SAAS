@@ -35,6 +35,7 @@ import { PAYMENT_TYPE_LABELS } from '@/types'
 import type { OrderStatus, TripStatus, PaymentStatus } from '@/types'
 import type { OrderWithRelations } from '@/lib/queries/orders'
 import { parseDistanceMiles, computeRevenuePerMile, computeDriverPayPerMile, formatMiles, formatPerMile } from '@/lib/order-metrics'
+import { RecalculateDistanceButton } from './recalculate-distance-button'
 
 interface OrderDetailProps {
   order: OrderWithRelations
@@ -78,7 +79,7 @@ export function OrderDetail({ order }: OrderDetailProps) {
   const marginPercent = revenue > 0 ? (margin / revenue) * 100 : 0
 
   const distanceMiles = parseDistanceMiles(order.distance_miles)
-  const revenuePerMile = computeRevenuePerMile(order.revenue, order.distance_miles)
+  const revenuePerMile = computeRevenuePerMile(order.revenue, order.broker_fee, order.local_fee, order.distance_miles)
   const driverPayPerMile = computeDriverPayPerMile(order.carrier_pay, order.distance_miles)
 
   const vehicleInfo = [
@@ -227,12 +228,49 @@ export function OrderDetail({ order }: OrderDetailProps) {
                 <Route className="h-3.5 w-3.5 text-muted-foreground" />
                 <span className="text-xs font-semibold uppercase text-muted-foreground">Per-Mile</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Distance</span>
-                <span className="text-sm font-medium tabular-nums text-foreground" title={distanceMiles === null ? 'Auto-calculates when both addresses have coordinates' : undefined}>
-                  {formatMiles(distanceMiles)}
-                </span>
-              </div>
+              {(() => {
+                // Geocode status drives the right-hand cell of the Distance
+                // row: success shows miles, pending shows a spinner, failed /
+                // skipped show a Recalculate button so the user is never
+                // stuck with a silent blank.
+                const status = order.geocode_status ?? null
+                const addressesReady = Boolean(
+                  order.pickup_city && order.pickup_state &&
+                  order.delivery_city && order.delivery_state,
+                )
+                const needsRecalc =
+                  distanceMiles === null ||
+                  status === 'failed' ||
+                  status === 'skipped'
+                return (
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Distance</span>
+                      {status === 'pending' ? (
+                        <span className="text-sm text-muted-foreground">Calculating…</span>
+                      ) : (
+                        <span className="text-sm font-medium tabular-nums text-foreground">
+                          {formatMiles(distanceMiles)}
+                        </span>
+                      )}
+                    </div>
+                    {needsRecalc && status !== 'pending' && (
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs text-muted-foreground">
+                          {order.geocode_error
+                            ? order.geocode_error
+                            : 'Add pickup & delivery city/state to calculate.'}
+                        </span>
+                        <RecalculateDistanceButton
+                          orderId={order.id}
+                          disabled={!addressesReady}
+                          disabledReason="Add pickup and delivery city + state first"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Revenue / Mile</span>
                 <span className="text-sm font-medium tabular-nums text-foreground">{formatPerMile(revenuePerMile)}</span>

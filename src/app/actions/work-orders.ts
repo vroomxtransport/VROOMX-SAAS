@@ -13,6 +13,7 @@ import {
   workOrderDuplicateSchema,
 } from '@/lib/validations/work-order'
 import { computeWorkOrderTotals } from '@/lib/financial/work-order-totals'
+import { isTransitionAllowed } from '@/lib/work-orders/transitions'
 import type { MaintenanceStatus } from '@/types'
 import type { WorkOrder, WorkOrderItem, WorkOrderNote } from '@/types/database'
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -22,27 +23,6 @@ type ActionErr = { error: string | Record<string, string[]> }
 function revalidateWorkOrderRoutes(workOrderId?: string) {
   revalidatePath('/maintenance')
   if (workOrderId) revalidatePath(`/maintenance/${workOrderId}`)
-}
-
-// ---------------------------------------------------------------------------
-// Status transition guard — extracted as a pure predicate so tests can hit
-// it directly without a DB. Mirrors the diagram in the design doc.
-// ---------------------------------------------------------------------------
-
-const ALLOWED_TRANSITIONS: Record<MaintenanceStatus, MaintenanceStatus[]> = {
-  new: ['scheduled', 'in_progress', 'closed'],
-  scheduled: ['new', 'in_progress', 'closed'],
-  in_progress: ['new', 'scheduled', 'completed'],
-  completed: ['in_progress', 'closed'],
-  closed: ['in_progress'],
-}
-
-export function isTransitionAllowed(
-  from: MaintenanceStatus,
-  to: MaintenanceStatus,
-): boolean {
-  if (from === to) return false
-  return ALLOWED_TRANSITIONS[from]?.includes(to) ?? false
 }
 
 // ---------------------------------------------------------------------------

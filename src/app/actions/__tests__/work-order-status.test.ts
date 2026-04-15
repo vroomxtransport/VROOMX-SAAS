@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { isTransitionAllowed } from '../work-orders'
+import { isTransitionAllowed } from '@/lib/work-orders/transitions'
 import type { MaintenanceStatus } from '@/types'
 
 describe('isTransitionAllowed', () => {
