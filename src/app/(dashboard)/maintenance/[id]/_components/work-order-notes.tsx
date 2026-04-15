@@ -115,6 +115,7 @@ function NoteEntry({ note }: { note: WorkOrderNote }) {
         toast.error(msg)
         return
       }
+      toast.success('Note deleted')
       router.refresh()
     })
   }

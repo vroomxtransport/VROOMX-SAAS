@@ -117,7 +117,8 @@ export function WorkOrderItemsGrid({ workOrderId, items }: WorkOrderItemsGridPro
     const reordered = arrayMove(localItems, oldIndex, newIndex)
     setLocalItems(reordered)
 
-    // Persist sort orders in background — failures are non-critical (realtime resyncs)
+    // Persist sort orders in background — failures are non-critical; the order
+    // self-corrects on the next router.refresh() (any other mutation re-fetches).
     reordered.forEach((item, index) => {
       if (item.sort_order !== index) {
         updateWorkOrderItem({ id: item.id, sortOrder: index }).catch(() => undefined)

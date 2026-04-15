@@ -1,7 +1,5 @@
 'use client'
 
-import { Skeleton } from '@/components/ui/skeleton'
-import { useWorkOrder } from '@/hooks/use-work-order'
 import type { WorkOrderDetail as WorkOrderDetailType } from '@/lib/queries/work-orders'
 import { WorkOrderHeader } from './work-order-header'
 import { WorkOrderShopCard } from './work-order-shop-card'
@@ -22,39 +20,12 @@ interface WorkOrderDetailProps {
   tenantName: string
 }
 
-function DetailSkeleton() {
-  return (
-    <div className="space-y-4 animate-pulse">
-      <div className="flex items-center gap-3">
-        <Skeleton className="h-8 w-8 rounded-lg" />
-        <Skeleton className="h-7 w-44" />
-        <div className="ml-auto flex gap-2">
-          <Skeleton className="h-8 w-24" />
-          <Skeleton className="h-8 w-8" />
-        </div>
-      </div>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="widget-card p-4 space-y-2">
-            <Skeleton className="h-4 w-16" />
-            <Skeleton className="h-5 w-28" />
-            <Skeleton className="h-3 w-20" />
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 export function WorkOrderDetail({ initialData, canClose, tenantName }: WorkOrderDetailProps) {
-  const { data: liveData, isPending } = useWorkOrder(initialData.id)
-
-  // Prefer live data over SSR snapshot; fall back during initial load
-  const wo = (liveData ?? initialData) as WorkOrderDetailType
-
-  if (isPending && !liveData) {
-    return <DetailSkeleton />
-  }
+  // SSR is the source of truth. Mutations call router.refresh() which re-runs
+  // the parent server component and delivers fresh initialData. We previously
+  // also consumed useWorkOrder, but its 15 s staleTime overrode router.refresh
+  // and silently held the stale snapshot for up to 15 s — defeating UX-1.
+  const wo = initialData
 
   return (
     <div className="space-y-4">
