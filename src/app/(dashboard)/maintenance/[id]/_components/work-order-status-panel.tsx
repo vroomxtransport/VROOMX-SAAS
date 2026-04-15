@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -33,6 +33,14 @@ export function WorkOrderStatusPanel({
 }: WorkOrderStatusPanelProps) {
   const [isPending, startTransition] = useTransition()
   const [optimisticStatus, setOptimisticStatus] = useState<MaintenanceStatus>(status)
+
+  // Re-sync when the parent (realtime hook) hands us a fresh status — e.g.
+  // another user changes status from a different tab. Without this the panel
+  // displays a stale badge and offers nonsensical transitions.
+  useEffect(() => {
+    setOptimisticStatus(status)
+  }, [status])
+
   const currentStatus = optimisticStatus
 
   const colors = MAINTENANCE_STATUS_COLORS[currentStatus]

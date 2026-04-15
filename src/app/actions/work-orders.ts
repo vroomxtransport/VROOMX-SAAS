@@ -2,7 +2,6 @@
 
 import { revalidatePath } from 'next/cache'
 import { authorize, safeError } from '@/lib/authz'
-import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import {
   workOrderCreateSchema,
   workOrderUpdateSchema,
@@ -113,7 +112,7 @@ export async function createWorkOrder(
     if (!auth.ok) return { error: auth.error }
     const { tenantId } = auth.ctx
 
-    const admin = createServiceRoleClient()
+    const { supabase: admin } = auth.ctx
     const { wo, error: woErr } = await nextWoNumber(admin, tenantId)
     if (woErr || wo == null) return { error: safeError({ message: woErr ?? 'Could not allocate WO number' }, 'createWorkOrder.woNumber') }
 
@@ -173,7 +172,7 @@ export async function updateWorkOrder(
     if (parsed.data.odometer !== undefined) updates.odometer = parsed.data.odometer
     if (parsed.data.notes !== undefined) updates.notes = parsed.data.notes || null
 
-    const admin = createServiceRoleClient()
+    const { supabase: admin } = auth.ctx
     const { data: updated, error } = await admin
       .from('maintenance_records')
       .update(updates)
@@ -205,7 +204,7 @@ export async function deleteWorkOrder(
     if (!auth.ok) return { error: auth.error }
     const { tenantId } = auth.ctx
 
-    const admin = createServiceRoleClient()
+    const { supabase: admin } = auth.ctx
     const { data: existing, error: selectErr } = await admin
       .from('maintenance_records')
       .select('id, status')
@@ -248,7 +247,7 @@ export async function setWorkOrderStatus(
     if (!auth.ok) return { error: auth.error }
     const { tenantId } = auth.ctx
 
-    const admin = createServiceRoleClient()
+    const { supabase: admin } = auth.ctx
     const { data: existing, error: selectErr } = await admin
       .from('maintenance_records')
       .select('id, status')
@@ -308,7 +307,7 @@ export async function addWorkOrderItem(
     const rate = Number(parsed.data.unitRate ?? 0)
     const amount = (qty * rate).toFixed(2)
 
-    const admin = createServiceRoleClient()
+    const { supabase: admin } = auth.ctx
     const { data: inserted, error } = await admin
       .from('work_order_items')
       .insert({
@@ -351,7 +350,7 @@ export async function updateWorkOrderItem(
     if (!auth.ok) return { error: auth.error }
     const { tenantId } = auth.ctx
 
-    const admin = createServiceRoleClient()
+    const { supabase: admin } = auth.ctx
 
     // Fetch the row to know which work_order to recompute + to derive amount
     // when only one of (quantity, unitRate) is changed.
@@ -411,7 +410,7 @@ export async function deleteWorkOrderItem(
     if (!auth.ok) return { error: auth.error }
     const { tenantId } = auth.ctx
 
-    const admin = createServiceRoleClient()
+    const { supabase: admin } = auth.ctx
     const { data: existing, error: selectErr } = await admin
       .from('work_order_items')
       .select('id, work_order_id')
@@ -455,7 +454,7 @@ export async function addWorkOrderNote(
     if (!auth.ok) return { error: auth.error }
     const { tenantId, user } = auth.ctx
 
-    const admin = createServiceRoleClient()
+    const { supabase: admin } = auth.ctx
     const { data: inserted, error } = await admin
       .from('work_order_notes')
       .insert({
@@ -488,7 +487,7 @@ export async function deleteWorkOrderNote(
     if (!auth.ok) return { error: auth.error }
     const { tenantId } = auth.ctx
 
-    const admin = createServiceRoleClient()
+    const { supabase: admin } = auth.ctx
     const { data: existing, error: selectErr } = await admin
       .from('work_order_notes')
       .select('id, work_order_id')
@@ -529,7 +528,7 @@ export async function duplicateWorkOrder(
     if (!auth.ok) return { error: auth.error }
     const { tenantId } = auth.ctx
 
-    const admin = createServiceRoleClient()
+    const { supabase: admin } = auth.ctx
 
     const { data: source, error: srcErr } = await admin
       .from('maintenance_records')

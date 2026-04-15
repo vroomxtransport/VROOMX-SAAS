@@ -56,7 +56,7 @@ export async function fetchMaintenanceRecords(
 
   let query = supabase
     .from('maintenance_records')
-    .select('*, truck:trucks(id, unit_number)', { count: 'exact' })
+    .select('*, truck:trucks(id, unit_number, year, make, model), shop:shops(id, name, kind)', { count: 'exact' })
     .order(orderField, { ascending })
     .range(page * pageSize, (page + 1) * pageSize - 1)
 
@@ -105,7 +105,7 @@ export async function fetchMaintenanceRecord(
 ): Promise<MaintenanceRecord> {
   const { data, error } = await supabase
     .from('maintenance_records')
-    .select('*, truck:trucks(id, unit_number)')
+    .select('*, truck:trucks(id, unit_number, year, make, model), shop:shops(id, name, kind)')
     .eq('id', id)
     .single()
 

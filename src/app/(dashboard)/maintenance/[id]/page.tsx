@@ -1,7 +1,7 @@
-import { notFound } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { notFound, redirect } from 'next/navigation'
+import { authorize } from '@/lib/authz'
 import { fetchWorkOrderDetail } from '@/lib/queries/work-orders'
-import { hasPermission, getBuiltInRolePermissions } from '@/lib/permissions'
+import { hasPermission } from '@/lib/permissions'
 import { WorkOrderDetail } from './_components/work-order-detail'
 
 export const metadata = { title: 'Work Order | VroomX' }
@@ -12,28 +12,18 @@ interface Props {
 
 export default async function WorkOrderDetailPage({ params }: Props) {
   const { id } = await params
-  const supabase = await createClient()
 
-  // Auth: get user + tenant
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
+  // authorize() resolves both built-in AND custom-role permissions via the
+  // custom_roles DB lookup — using getBuiltInRolePermissions() directly
+  // returned [] for custom roles and silently hid the Close button for
+  // legitimate users (audit finding CRITICAL-1).
+  const auth = await authorize('maintenance.view')
+  if (!auth.ok) redirect('/login')
+  const { supabase, tenantId, permissions } = auth.ctx
 
-  if (authError || !user) {
-    notFound()
-  }
-
-  const tenantId = user.app_metadata?.tenant_id as string | undefined
-  if (!tenantId) notFound()
-
-  // Fetch the work order detail (RLS enforces tenant isolation)
   const wo = await fetchWorkOrderDetail(supabase, id)
   if (!wo || wo.tenant_id !== tenantId) notFound()
 
-  // Resolve canClose permission server-side
-  const role: string = user.app_metadata?.role ?? ''
-  const permissions = getBuiltInRolePermissions(role) ?? []
   const canClose = hasPermission(permissions, 'maintenance.close')
 
   // Fetch tenant name for customer card

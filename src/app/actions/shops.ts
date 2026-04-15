@@ -2,7 +2,6 @@
 
 import { revalidatePath } from 'next/cache'
 import { authorize, safeError } from '@/lib/authz'
-import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { shopSchema } from '@/lib/validations/shop'
 import type { Shop } from '@/types/database'
 
@@ -38,7 +37,7 @@ export async function createShop(
     if (!auth.ok) return { error: auth.error }
     const { tenantId } = auth.ctx
 
-    const admin = createServiceRoleClient()
+    const { supabase } = auth.ctx
     const row = blankToNull({
       tenant_id: tenantId,
       name: parsed.data.name,
@@ -54,7 +53,7 @@ export async function createShop(
       is_active: parsed.data.isActive,
     })
 
-    const { data: inserted, error } = await admin
+    const { data: inserted, error } = await supabase
       .from('shops')
       .insert(row)
       .select('*')
@@ -86,8 +85,8 @@ export async function updateShop(
     if (!auth.ok) return { error: auth.error }
     const { tenantId } = auth.ctx
 
-    const admin = createServiceRoleClient()
-    const { data: updated, error } = await admin
+    const { supabase } = auth.ctx
+    const { data: updated, error } = await supabase
       .from('shops')
       .update({
         name: parsed.data.name,
@@ -131,8 +130,8 @@ export async function archiveShop(
     if (!auth.ok) return { error: auth.error }
     const { tenantId } = auth.ctx
 
-    const admin = createServiceRoleClient()
-    const { error } = await admin
+    const { supabase } = auth.ctx
+    const { error } = await supabase
       .from('shops')
       .update({ is_active: false, updated_at: new Date().toISOString() })
       .eq('id', id)
@@ -159,8 +158,8 @@ export async function reactivateShop(
     if (!auth.ok) return { error: auth.error }
     const { tenantId } = auth.ctx
 
-    const admin = createServiceRoleClient()
-    const { error } = await admin
+    const { supabase } = auth.ctx
+    const { error } = await supabase
       .from('shops')
       .update({ is_active: true, updated_at: new Date().toISOString() })
       .eq('id', id)

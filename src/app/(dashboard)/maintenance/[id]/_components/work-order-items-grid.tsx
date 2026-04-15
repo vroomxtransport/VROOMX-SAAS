@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { toast } from 'sonner'
 import { Plus, Wrench, Package } from 'lucide-react'
 import {
@@ -61,12 +61,14 @@ export function WorkOrderItemsGrid({ workOrderId, items }: WorkOrderItemsGridPro
   const [isAddingPart, startAddPart] = useTransition()
   const [localItems, setLocalItems] = useState<WorkOrderItem[]>(items)
 
-  // Sync incoming realtime items — compare by id+amount to detect changes
-  const remoteKey = items.map((i) => `${i.id}:${i.amount}:${i.sort_order}`).join(',')
-  const localKey = localItems.map((i) => `${i.id}:${i.amount}:${i.sort_order}`).join(',')
-  if (remoteKey !== localKey) {
+  // Sync incoming realtime items — track by id + updated_at + sort_order so
+  // remote edits (other users / other tabs) propagate without clobbering
+  // an in-flight local drag. Done in useEffect to keep render pure.
+  const remoteKey = items.map((i) => `${i.id}:${i.updated_at}:${i.sort_order}`).join(',')
+  useEffect(() => {
     setLocalItems(items)
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [remoteKey])
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -158,7 +160,7 @@ export function WorkOrderItemsGrid({ workOrderId, items }: WorkOrderItemsGridPro
                   </tr>
                 ) : (
                   localItems.map((item) => (
-                    <SortableRow key={item.id} item={item} />
+                    <SortableRow key={`${item.id}:${item.updated_at}`} item={item} />
                   ))
                 )}
               </tbody>
