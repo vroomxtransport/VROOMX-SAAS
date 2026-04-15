@@ -72,17 +72,12 @@ export function WorkOrderActionsMenu({ wo }: WorkOrderActionsMenuProps) {
 
         <DropdownMenuSeparator />
 
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <DropdownMenuItem disabled>
-                <FileText className="mr-2 h-4 w-4 opacity-50" />
-                <span className="opacity-50">Download PDF</span>
-              </DropdownMenuItem>
-            </TooltipTrigger>
-            <TooltipContent side="left">Coming in next phase</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <DropdownMenuItem asChild>
+          <a href={`/api/work-orders/${wo.id}/pdf`} download>
+            <FileText className="mr-2 h-4 w-4" />
+            Download PDF
+          </a>
+        </DropdownMenuItem>
 
         <TooltipProvider>
           <Tooltip>
