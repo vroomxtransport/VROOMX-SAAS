@@ -650,6 +650,22 @@
   opacity: 0.5 !important;
 }
 
+/* Leaflet stacking-context isolation.
+ *
+ * Leaflet's internal panes use z-index values up to 800
+ * (.leaflet-control), which by default escape into the parent stacking
+ * context because .leaflet-container is only `position: relative`. That
+ * leaks the map's controls and tile layers above any modal/dialog
+ * overlay (Radix Dialog uses z-50). `isolation: isolate` creates a new
+ * stacking context, trapping every internal pane below the map's own
+ * layer so portaled overlays sit cleanly on top.
+ *
+ * Affects: trip-route-map-view, live-map. No visual change in
+ * isolation; only fixes the dialog-overlap regression. */
+.leaflet-container {
+  isolation: isolate;
+}
+
 /* Fleet map - strip Leaflet popup defaults for custom React card */
 .leaflet-popup.fleet-popup .leaflet-popup-content-wrapper {
   background: transparent;
