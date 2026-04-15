@@ -606,19 +606,28 @@ async function fetchMaintenanceRecordsForTruck(
   truckId: string,
   range: LedgerDateRange,
 ): Promise<TruckExpenseEntry[]> {
+  // Maintenance "money is spent" = work has been finished. Both Completed
+  // and Closed are terminal-enough to count. A WO that fast-closes
+  // (New → Closed) won't have a completed_date, so the date window matches
+  // on either timestamp.
+  const fromIso = `${range.from}T00:00:00.000Z`
+  const toIso = `${range.to}T23:59:59.999Z`
   const { data, error } = await supabase
     .from('maintenance_records')
-    .select('id, maintenance_type, status, description, vendor, cost, scheduled_date, completed_date, odometer, notes')
+    .select('id, maintenance_type, status, description, vendor, cost, scheduled_date, completed_date, closed_at, odometer, notes')
     .eq('truck_id', truckId)
-    .eq('status', 'completed')
-    .gte('completed_date', `${range.from}T00:00:00.000Z`)
-    .lte('completed_date', `${range.to}T23:59:59.999Z`)
+    .in('status', ['completed', 'closed'])
+    .or(
+      `and(completed_date.gte.${fromIso},completed_date.lte.${toIso}),` +
+        `and(closed_at.gte.${fromIso},closed_at.lte.${toIso})`,
+    )
 
   if (error) throw error
 
   return (data ?? []).map((row) => {
     const completed = row.completed_date as string | null
-    const occurredAt = completed ? completed.slice(0, 10) : range.to
+    const closed = row.closed_at as string | null
+    const occurredAt = (completed ?? closed)?.slice(0, 10) ?? range.to
     return {
       id: `maintenance_records:${row.id}`,
       sourceTable: 'maintenance_records' as const,
