@@ -299,7 +299,7 @@ describe('recordPayment', () => {
     expect(updateFromResult.update).toHaveBeenCalledWith(
       expect.objectContaining({
         payment_status: 'paid',
-        amount_paid: '2000',
+        amount_paid: '2000.00',
       }),
     )
   })

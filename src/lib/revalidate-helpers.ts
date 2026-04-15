@@ -22,4 +22,7 @@ import { revalidatePath } from 'next/cache'
 export function revalidateFinancialDashboards() {
   revalidatePath('/dashboard')
   revalidatePath('/financials')
+  // W2-6: payment/trip mutations also affect trip detail pages. Invalidate
+  // the dynamic segment so any open /trips/[id] refetches on next render.
+  revalidatePath('/trips/[id]', 'page')
 }

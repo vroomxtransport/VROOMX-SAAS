@@ -6,6 +6,7 @@ import { logOrderActivity } from '@/lib/activity-log'
 import { syncPaymentToQB } from '@/lib/quickbooks/sync'
 import { revalidatePath } from 'next/cache'
 import { revalidateFinancialDashboards } from '@/lib/revalidate-helpers'
+import { equalsCurrency, gteCurrency, roundCurrency, sumCurrencyStrings, toCurrencyString } from '@/lib/financial/money'
 import { dispatchWebhookEvent } from '@/lib/webhooks/webhook-dispatcher'
 import { sanitizePayload } from '@/lib/webhooks/payload-sanitizer'
 import { captureAsyncError } from '@/lib/async-safe'
@@ -45,8 +46,9 @@ export async function recordPayment(orderId: string, data: unknown) {
   const billingPaid = isSplit ? Math.max(0, currentPaid - codAmount) : currentPaid
   const remaining = billingAmount - billingPaid
 
-  // Validate: payment amount must not exceed remaining balance (with threshold)
-  if (parsed.data.amount > remaining + 0.01) {
+  // Validate: payment amount must not exceed remaining balance, tolerating
+  // half-a-cent float drift (see equalsCurrency / gteCurrency in money.ts).
+  if (!gteCurrency(remaining, parsed.data.amount)) {
     return { error: 'Payment amount exceeds remaining balance' }
   }
 
@@ -73,7 +75,7 @@ export async function recordPayment(orderId: string, data: unknown) {
   // Determine new payment_status
   // For SPLIT orders: fully paid means total amount_paid >= carrier_pay (both COD + billing covered)
   let newPaymentStatus: string
-  if (Math.abs(carrierPay - newTotalPaid) < 0.01 || newTotalPaid >= carrierPay) {
+  if (equalsCurrency(newTotalPaid, carrierPay) || gteCurrency(newTotalPaid, carrierPay)) {
     newPaymentStatus = 'paid'
   } else if (newTotalPaid > 0) {
     newPaymentStatus = 'partially_paid'
@@ -85,7 +87,7 @@ export async function recordPayment(orderId: string, data: unknown) {
   const { error: updateError } = await supabase
     .from('orders')
     .update({
-      amount_paid: String(Math.round(newTotalPaid * 100) / 100),
+      amount_paid: toCurrencyString(newTotalPaid),
       payment_status: newPaymentStatus,
     })
     .eq('id', orderId)
@@ -149,7 +151,7 @@ export async function batchMarkPaid(orderIds: string[], paymentDate: string) {
 
       const carrierPay = parseFloat(order.carrier_pay)
       const currentPaid = parseFloat(order.amount_paid)
-      const remaining = Math.round((carrierPay - currentPaid) * 100) / 100
+      const remaining = roundCurrency(carrierPay - currentPaid)
 
       // Only insert payment if there's a remaining balance
       if (remaining > 0) {
@@ -272,7 +274,7 @@ export async function recordCodPayment(orderId: string) {
 
   // Determine new payment_status
   let newPaymentStatus: string
-  if (Math.abs(carrierPay - newTotalPaid) < 0.01 || newTotalPaid >= carrierPay) {
+  if (equalsCurrency(newTotalPaid, carrierPay) || gteCurrency(newTotalPaid, carrierPay)) {
     newPaymentStatus = 'paid'
   } else if (newTotalPaid > 0) {
     newPaymentStatus = 'partially_paid'
@@ -284,7 +286,7 @@ export async function recordCodPayment(orderId: string) {
   const { error: updateError } = await supabase
     .from('orders')
     .update({
-      amount_paid: String(Math.round(newTotalPaid * 100) / 100),
+      amount_paid: toCurrencyString(newTotalPaid),
       payment_status: newPaymentStatus,
     })
     .eq('id', orderId)
@@ -369,17 +371,15 @@ export async function deletePayment(paymentId: string) {
       .eq('tenant_id', tenantId)
     if (sumErr) return { error: safeError(sumErr, 'deletePayment.sum') }
 
-    const newTotalPaid = (remaining ?? []).reduce(
-      (acc, r) => acc + parseFloat((r as { amount: string }).amount ?? '0'),
-      0,
+    const newTotalPaid = sumCurrencyStrings(
+      (remaining ?? []).map((r) => (r as { amount: string }).amount),
     )
-    const newAmountPaid = Math.round(newTotalPaid * 100) / 100
 
     const carrierPay = parseFloat(order.carrier_pay)
     let newStatus: 'unpaid' | 'partially_paid' | 'paid' | 'invoiced'
-    if (newAmountPaid <= 0) {
+    if (newTotalPaid <= 0) {
       newStatus = order.payment_status === 'invoiced' ? 'invoiced' : 'unpaid'
-    } else if (Math.abs(newAmountPaid - carrierPay) < 0.01 || newAmountPaid >= carrierPay) {
+    } else if (equalsCurrency(newTotalPaid, carrierPay) || gteCurrency(newTotalPaid, carrierPay)) {
       newStatus = 'paid'
     } else {
       newStatus = 'partially_paid'
@@ -388,7 +388,7 @@ export async function deletePayment(paymentId: string) {
     const { error: updateErr } = await supabase
       .from('orders')
       .update({
-        amount_paid: String(newAmountPaid),
+        amount_paid: toCurrencyString(newTotalPaid),
         payment_status: newStatus,
       })
       .eq('id', payment.order_id)
@@ -404,10 +404,10 @@ export async function deletePayment(paymentId: string) {
       tenantId,
       orderId: payment.order_id,
       action: 'payment_deleted',
-      description: `Deleted payment of $${parseFloat(payment.amount).toFixed(2)} (new total paid: $${newAmountPaid.toFixed(2)})`,
+      description: `Deleted payment of $${parseFloat(payment.amount).toFixed(2)} (new total paid: $${toCurrencyString(newTotalPaid)})`,
       actorId: user.id,
       actorEmail: user.email,
-      metadata: { paymentId, deletedAmount: payment.amount, newAmountPaid, newPaymentStatus: newStatus },
+      metadata: { paymentId, deletedAmount: payment.amount, newAmountPaid: toCurrencyString(newTotalPaid), newPaymentStatus: newStatus },
     }).catch(captureAsyncError('deletePayment'))
 
     revalidatePath(`/orders/${payment.order_id}`)
