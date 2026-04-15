@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { WorkOrder, WorkOrderItem, WorkOrderNote, Shop, Truck, Trailer } from '@/types/database'
+import type { WorkOrder, WorkOrderItem, WorkOrderNote, WorkOrderAttachment, WorkOrderActivityLog, Shop, Truck, Trailer } from '@/types/database'
 
 export type WorkOrderDetail = Omit<WorkOrder, 'truck' | 'shop' | 'items'> & {
   shop: Shop | null
@@ -8,9 +8,11 @@ export type WorkOrderDetail = Omit<WorkOrder, 'truck' | 'shop' | 'items'> & {
   items: WorkOrderItem[]
   /** Renamed from `notes` to avoid collision with the header `notes: string | null` field. */
   noteEntries: WorkOrderNote[]
+  attachments: WorkOrderAttachment[]
+  activityLog: WorkOrderActivityLog[]
 }
 
-/** Single work order with shop, truck/trailer, items (sorted), and notes. */
+/** Single work order with shop, truck/trailer, items (sorted), notes, attachments, and activity log. */
 export async function fetchWorkOrderDetail(
   supabase: SupabaseClient,
   id: string,
@@ -31,7 +33,12 @@ export async function fetchWorkOrderDetail(
   if (error) throw error
   if (!wo) return null
 
-  const [{ data: items }, { data: notes }] = await Promise.all([
+  const [
+    { data: items },
+    { data: notes },
+    { data: attachments },
+    { data: activityLog },
+  ] = await Promise.all([
     supabase
       .from('work_order_items')
       .select('*')
@@ -43,6 +50,17 @@ export async function fetchWorkOrderDetail(
       .select('*')
       .eq('work_order_id', id)
       .order('created_at', { ascending: false }),
+    supabase
+      .from('work_order_attachments')
+      .select('*')
+      .eq('work_order_id', id)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('work_order_activity_logs')
+      .select('*')
+      .eq('work_order_id', id)
+      .order('created_at', { ascending: false })
+      .limit(50),
   ])
 
   const woTyped = wo as unknown as WorkOrder & {
@@ -55,5 +73,7 @@ export async function fetchWorkOrderDetail(
     ...woTyped,
     items: (items ?? []) as WorkOrderItem[],
     noteEntries: (notes ?? []) as WorkOrderNote[],
+    attachments: (attachments ?? []) as WorkOrderAttachment[],
+    activityLog: (activityLog ?? []) as WorkOrderActivityLog[],
   }
 }

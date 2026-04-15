@@ -643,6 +643,30 @@ export interface OrderActivityLog {
   created_at: string
 }
 
+export interface WorkOrderAttachment {
+  id: string
+  tenant_id: string
+  work_order_id: string
+  file_name: string
+  file_type: string
+  storage_path: string
+  file_size: number | null
+  uploaded_by: string | null
+  created_at: string
+}
+
+export interface WorkOrderActivityLog {
+  id: string
+  tenant_id: string
+  work_order_id: string
+  action: string
+  description: string
+  actor_id: string | null
+  actor_email: string | null
+  metadata: Record<string, unknown> | null
+  created_at: string
+}
+
 // ============================================================================
 // Audit Log Compliance Interfaces (SOC 2 Type II)
 // ============================================================================

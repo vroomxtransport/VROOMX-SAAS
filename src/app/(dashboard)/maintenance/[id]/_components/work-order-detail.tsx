@@ -11,6 +11,7 @@ import { WorkOrderStatusPanel } from './work-order-status-panel'
 import { WorkOrderItemsGrid } from './work-order-items-grid'
 import { WorkOrderAttachments } from './work-order-attachments'
 import { WorkOrderNotes } from './work-order-notes'
+import { WorkOrderActivityLog } from './work-order-activity-log'
 import { WorkOrderAccountingPanel } from './work-order-accounting-panel'
 import type { MaintenanceStatus } from '@/types'
 
@@ -77,11 +78,15 @@ export function WorkOrderDetail({ initialData, canClose, tenantName }: WorkOrder
       {/* Items grid */}
       <WorkOrderItemsGrid workOrderId={wo.id} items={wo.items} />
 
-      {/* Footer: attachments + notes (left 2 cols) + accounting (right col) */}
+      {/* Footer: attachments + notes + activity log (left 2 cols) + accounting (right col) */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div className="space-y-4 md:col-span-2">
-          <WorkOrderAttachments />
+          <WorkOrderAttachments
+            workOrderId={wo.id}
+            attachments={wo.attachments}
+          />
           <WorkOrderNotes workOrderId={wo.id} notes={wo.noteEntries} />
+          <WorkOrderActivityLog activityLog={wo.activityLog} />
         </div>
         <div>
           <WorkOrderAccountingPanel wo={wo} />

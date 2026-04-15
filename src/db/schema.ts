@@ -956,6 +956,44 @@ export const workOrderNotes = pgTable('work_order_notes', {
 ])
 
 /**
+ * Work-order attachments — photos, invoices, documents tied to a work order.
+ * Mirrors the order_attachments pattern. Storage path: {tenantId}/{workOrderId}/{uuid}.{ext}
+ */
+export const workOrderAttachments = pgTable('work_order_attachments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  workOrderId: uuid('work_order_id').notNull().references(() => maintenanceRecords.id, { onDelete: 'cascade' }),
+  fileName: text('file_name').notNull(),
+  fileType: text('file_type').notNull(),
+  storagePath: text('storage_path').notNull(),
+  fileSize: integer('file_size'),
+  uploadedBy: uuid('uploaded_by'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_work_order_attachments_tenant_id').on(table.tenantId),
+  index('idx_work_order_attachments_tenant_wo').on(table.tenantId, table.workOrderId),
+  index('idx_work_order_attachments_tenant_wo_created').on(table.tenantId, table.workOrderId, table.createdAt),
+])
+
+/**
+ * Work-order activity logs — append-only audit trail for all WO mutations.
+ * Mirrors the order_activity_logs pattern. No UPDATE / DELETE policies.
+ */
+export const workOrderActivityLogs = pgTable('work_order_activity_logs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  workOrderId: uuid('work_order_id').notNull().references(() => maintenanceRecords.id, { onDelete: 'cascade' }),
+  action: text('action').notNull(),
+  description: text('description').notNull(),
+  actorId: uuid('actor_id'),
+  actorEmail: text('actor_email'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_work_order_activity_logs_tenant_wo_created').on(table.tenantId, table.workOrderId, table.createdAt),
+])
+
+/**
  * Compliance Documents Table
  * Regulatory compliance document tracking with expiration alerts.
  */
@@ -1464,6 +1502,10 @@ export type DrizzleWorkOrderItem = typeof workOrderItems.$inferSelect
 export type NewWorkOrderItem = typeof workOrderItems.$inferInsert
 export type DrizzleWorkOrderNote = typeof workOrderNotes.$inferSelect
 export type NewWorkOrderNote = typeof workOrderNotes.$inferInsert
+export type DrizzleWorkOrderAttachment = typeof workOrderAttachments.$inferSelect
+export type NewWorkOrderAttachment = typeof workOrderAttachments.$inferInsert
+export type DrizzleWorkOrderActivityLog = typeof workOrderActivityLogs.$inferSelect
+export type NewWorkOrderActivityLog = typeof workOrderActivityLogs.$inferInsert
 export type DrizzleComplianceDocument = typeof complianceDocuments.$inferSelect
 export type NewComplianceDocument = typeof complianceDocuments.$inferInsert
 export type DrizzleDriverLocation = typeof driverLocations.$inferSelect
