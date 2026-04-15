@@ -16,7 +16,11 @@ import type { Shop, Truck, WorkOrder, WorkOrderItem } from '@/types/database'
  * attachment. PDF is generated server-side once, never embedded in the
  * HTML body.
  */
-export async function POST(request: Request) {
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id: urlId } = await params
   // Tighter rate limit (10/min) than the work-order CRUD actions —
   // this is a write that can spam external mailboxes.
   const auth = await authorize('maintenance.update', {
@@ -41,7 +45,14 @@ export async function POST(request: Request) {
       { status: 400 },
     )
   }
-  const { id, recipients, subject } = parsed.data
+  const { id: bodyId, recipients, subject } = parsed.data
+  // Audit LOW: URL [id] is the source of truth — body id must match or be omitted.
+  // Prevents a path/body desync where the route appears to act on /api/.../A
+  // but the WO fetched is B.
+  if (bodyId !== urlId) {
+    return Response.json({ error: 'Work order id mismatch' }, { status: 400 })
+  }
+  const id = urlId
 
   const [woResult, itemsResult, tenantResult] = await Promise.all([
     supabase

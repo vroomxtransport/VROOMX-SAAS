@@ -15,7 +15,15 @@ export default async function ShopsDirectoryPage() {
   const { supabase, permissions } = auth.ctx
 
   const shops = await fetchShops(supabase, { includeArchived: true })
-  const canManage = permissions.includes('*') || permissions.some((p) => p === 'shops.create' || p === 'shops.*')
+  const canManage =
+    permissions.includes('*') ||
+    permissions.some(
+      (p) =>
+        p === 'shops.*' ||
+        p === 'shops.create' ||
+        p === 'shops.update' ||
+        p === 'shops.delete',
+    )
 
   return (
     <div className="space-y-5">
