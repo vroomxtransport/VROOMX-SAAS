@@ -127,7 +127,7 @@ const PLAN_ACCENT: Record<string, { topBorder: string; ring: string; bg: string;
     bg: 'bg-emerald-500/5',
     badgeBg: 'bg-emerald-100',
     badgeText: 'text-emerald-700',
-    btnClass: 'border border-emerald-200 text-emerald-700',
+    btnClass: 'border text-emerald-700',
   },
   starter_x: {
     topBorder: 'border-t-brand',
@@ -143,7 +143,7 @@ const PLAN_ACCENT: Record<string, { topBorder: string; ring: string; bg: string;
     bg: 'bg-blue-500/5',
     badgeBg: 'bg-blue-100',
     badgeText: 'text-blue-700',
-    btnClass: 'border border-blue-200 text-blue-700',
+    btnClass: 'border text-blue-700',
   },
 }
 

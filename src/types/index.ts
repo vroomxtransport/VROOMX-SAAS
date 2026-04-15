@@ -198,24 +198,24 @@ export const PAYMENT_TERMS_LABELS: Record<PaymentTerms, string> = {
 // ============================================================================
 
 export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
-  new: 'text-blue-700 border-blue-200',
-  assigned: 'text-amber-700 border-amber-200',
-  picked_up: 'text-purple-700 border-purple-200',
-  delivered: 'text-green-700 border-green-200',
-  invoiced: 'text-indigo-700 border-indigo-200',
-  paid: 'text-emerald-700 border-emerald-200',
-  cancelled: 'text-red-700 border-red-200',
+  new: 'text-blue-700',
+  assigned: 'text-amber-700',
+  picked_up: 'text-purple-700',
+  delivered: 'text-green-700',
+  invoiced: 'text-indigo-700',
+  paid: 'text-emerald-700',
+  cancelled: 'text-red-700',
 }
 
 export const DRIVER_STATUS_COLORS: Record<DriverStatus, string> = {
-  active: 'text-green-700 border-green-200',
-  inactive: 'text-gray-700 border-gray-200',
+  active: 'text-green-700',
+  inactive: 'text-gray-700',
 }
 
 export const TRUCK_STATUS_COLORS: Record<TruckStatus, string> = {
-  active: 'text-green-700 border-green-200',
-  inactive: 'text-gray-700 border-gray-200',
-  maintenance: 'text-amber-700 border-amber-200',
+  active: 'text-green-700',
+  inactive: 'text-gray-700',
+  maintenance: 'text-amber-700',
 }
 
 // ============================================================================
@@ -246,10 +246,10 @@ export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
 
 // Colors (trip status)
 export const TRIP_STATUS_COLORS: Record<TripStatus, string> = {
-  planned: 'text-blue-700 border-blue-200',
-  in_progress: 'text-amber-700 border-amber-200',
-  at_terminal: 'text-purple-700 border-purple-200',
-  completed: 'text-green-700 border-green-200',
+  planned: 'text-blue-700',
+  in_progress: 'text-amber-700',
+  at_terminal: 'text-purple-700',
+  completed: 'text-green-700',
 }
 
 // Truck capacity lookup (derived from truck_type)
@@ -290,9 +290,9 @@ export const TRAILER_STATUS_LABELS: Record<TrailerStatus, string> = {
 }
 
 export const TRAILER_STATUS_COLORS: Record<TrailerStatus, string> = {
-  active: 'text-green-700 border-green-200',
-  inactive: 'text-gray-700 border-gray-200',
-  maintenance: 'text-amber-700 border-amber-200',
+  active: 'text-green-700',
+  inactive: 'text-gray-700',
+  maintenance: 'text-amber-700',
 }
 
 export const DRIVER_DOCUMENT_TYPE_LABELS: Record<DriverDocumentType, string> = {
@@ -380,9 +380,9 @@ export const PAYROLL_PERIOD_STATUS_LABELS: Record<PayrollPeriodStatus, string> =
 }
 
 export const PAYROLL_PERIOD_STATUS_COLORS: Record<PayrollPeriodStatus, string> = {
-  draft: 'text-gray-700 border-gray-200',
-  approved: 'text-blue-700 border-blue-200',
-  paid: 'text-emerald-700 border-emerald-200',
+  draft: 'text-gray-700',
+  approved: 'text-blue-700',
+  paid: 'text-emerald-700',
 }
 
 // ============================================================================
@@ -417,11 +417,11 @@ export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
 }
 
 export const PAYMENT_STATUS_COLORS: Record<PaymentStatus, string> = {
-  unpaid: 'text-gray-700 border-gray-200',
-  invoiced: 'text-indigo-700 border-indigo-200',
-  partially_paid: 'text-amber-700 border-amber-200',
-  paid: 'text-emerald-700 border-emerald-200',
-  factored: 'text-purple-700 border-purple-200',
+  unpaid: 'text-gray-700',
+  invoiced: 'text-indigo-700',
+  partially_paid: 'text-amber-700',
+  paid: 'text-emerald-700',
+  factored: 'text-purple-700',
 }
 
 // ============================================================================
@@ -449,16 +449,16 @@ export const TASK_PRIORITY_LABELS: Record<TaskPriority, string> = {
 }
 
 export const TASK_STATUS_COLORS: Record<TaskStatus, string> = {
-  pending: 'text-gray-700 border-gray-200',
-  in_progress: 'text-blue-700 border-blue-200',
-  completed: 'text-green-700 border-green-200',
+  pending: 'text-gray-700',
+  in_progress: 'text-blue-700',
+  completed: 'text-green-700',
 }
 
 export const TASK_PRIORITY_COLORS: Record<TaskPriority, string> = {
-  low: 'text-gray-700 border-gray-200',
-  medium: 'text-blue-700 border-blue-200',
-  high: 'text-amber-700 border-amber-200',
-  urgent: 'text-red-700 border-red-200',
+  low: 'text-gray-700',
+  medium: 'text-blue-700',
+  high: 'text-amber-700',
+  urgent: 'text-red-700',
 }
 
 // Local Drive types
@@ -474,10 +474,10 @@ export const LOCAL_DRIVE_STATUS_LABELS: Record<LocalDriveStatus, string> = {
 }
 
 export const LOCAL_DRIVE_STATUS_COLORS: Record<LocalDriveStatus, string> = {
-  pending: 'text-gray-700 border-gray-200',
-  in_progress: 'text-blue-700 border-blue-200',
-  completed: 'text-green-700 border-green-200',
-  cancelled: 'text-red-700 border-red-200',
+  pending: 'text-gray-700',
+  in_progress: 'text-blue-700',
+  completed: 'text-green-700',
+  cancelled: 'text-red-700',
 }
 
 // Local Drive Type (direction)
@@ -492,9 +492,9 @@ export const LOCAL_DRIVE_TYPE_LABELS: Record<LocalDriveType, string> = {
 }
 
 export const LOCAL_DRIVE_TYPE_COLORS: Record<LocalDriveType, string> = {
-  pickup_to_terminal: 'text-indigo-700 border-indigo-200',
-  delivery_from_terminal: 'text-cyan-700 border-cyan-200',
-  standalone: 'text-gray-700 border-gray-200',
+  pickup_to_terminal: 'text-indigo-700',
+  delivery_from_terminal: 'text-cyan-700',
+  standalone: 'text-gray-700',
 }
 
 // Local Run Status
@@ -510,10 +510,10 @@ export const LOCAL_RUN_STATUS_LABELS: Record<LocalRunStatus, string> = {
 }
 
 export const LOCAL_RUN_STATUS_COLORS: Record<LocalRunStatus, string> = {
-  planned: 'text-blue-700 border-blue-200',
-  in_progress: 'text-amber-700 border-amber-200',
-  completed: 'text-green-700 border-green-200',
-  cancelled: 'text-red-700 border-red-200',
+  planned: 'text-blue-700',
+  in_progress: 'text-amber-700',
+  completed: 'text-green-700',
+  cancelled: 'text-red-700',
 }
 
 // Maintenance types
@@ -555,11 +555,11 @@ export const MAINTENANCE_STATUS_LABELS: Record<MaintenanceStatus, string> = {
 }
 
 export const MAINTENANCE_STATUS_COLORS: Record<MaintenanceStatus, string> = {
-  new: 'text-slate-700 border-slate-200',
-  scheduled: 'text-blue-700 border-blue-200',
-  in_progress: 'text-amber-700 border-amber-200',
-  completed: 'text-green-700 border-green-200',
-  closed: 'text-zinc-700 border-zinc-300',
+  new: 'text-slate-700',
+  scheduled: 'text-blue-700',
+  in_progress: 'text-amber-700',
+  completed: 'text-green-700',
+  closed: 'text-zinc-700',
 }
 
 export type WorkOrderActivityAction =
@@ -606,9 +606,9 @@ export const COMPLIANCE_DOC_STATUS_LABELS: Record<ComplianceDocStatus, string> =
 }
 
 export const COMPLIANCE_DOC_STATUS_COLORS: Record<ComplianceDocStatus, string> = {
-  valid: 'text-green-700 border-green-200',
-  expiring_soon: 'text-amber-700 border-amber-200',
-  expired: 'text-red-700 border-red-200',
+  valid: 'text-green-700',
+  expiring_soon: 'text-amber-700',
+  expired: 'text-red-700',
 }
 
 // ============================================================================
@@ -713,17 +713,17 @@ export const SAFETY_EVENT_STATUS_LABELS: Record<SafetyEventStatus, string> = {
 }
 
 export const SAFETY_EVENT_SEVERITY_COLORS: Record<SafetyEventSeverity, string> = {
-  minor: 'text-blue-700 border-blue-200',
-  moderate: 'text-amber-700 border-amber-200',
-  severe: 'text-orange-700 border-orange-200',
-  critical: 'text-red-700 border-red-200',
+  minor: 'text-blue-700',
+  moderate: 'text-amber-700',
+  severe: 'text-orange-700',
+  critical: 'text-red-700',
 }
 
 export const SAFETY_EVENT_STATUS_COLORS: Record<SafetyEventStatus, string> = {
-  open: 'text-red-700 border-red-200',
-  under_review: 'text-amber-700 border-amber-200',
-  resolved: 'text-green-700 border-green-200',
-  closed: 'text-gray-700 border-gray-200',
+  open: 'text-red-700',
+  under_review: 'text-amber-700',
+  resolved: 'text-green-700',
+  closed: 'text-gray-700',
 }
 
 export const DOT_INSPECTION_LEVEL_LABELS: Record<DotInspectionLevel, string> = {
@@ -770,13 +770,13 @@ export const DRIVER_APPLICATION_STATUS_LABELS: Record<DriverApplicationStatus, s
 }
 
 export const DRIVER_APPLICATION_STATUS_COLORS: Record<DriverApplicationStatus, string> = {
-  draft: 'text-gray-700 border-gray-200',
-  submitted: 'text-blue-700 border-blue-200',
-  in_review: 'text-amber-700 border-amber-200',
-  pending_adverse_action: 'text-orange-700 border-orange-200',
-  approved: 'text-green-700 border-green-200',
-  rejected: 'text-red-700 border-red-200',
-  withdrawn: 'text-gray-500 border-gray-200',
+  draft: 'text-gray-700',
+  submitted: 'text-blue-700',
+  in_review: 'text-amber-700',
+  pending_adverse_action: 'text-orange-700',
+  approved: 'text-green-700',
+  rejected: 'text-red-700',
+  withdrawn: 'text-gray-500',
 }
 
 // --- OnboardingStepKey ---
@@ -874,12 +874,12 @@ export const ONBOARDING_STEP_STATUS_LABELS: Record<OnboardingStepStatus, string>
 }
 
 export const ONBOARDING_STEP_STATUS_COLORS: Record<OnboardingStepStatus, string> = {
-  pending: 'text-gray-700 border-gray-200',
-  in_progress: 'text-blue-700 border-blue-200',
-  passed: 'text-green-700 border-green-200',
-  failed: 'text-red-700 border-red-200',
-  waived: 'text-purple-700 border-purple-200',
-  not_applicable: 'text-gray-500 border-gray-100',
+  pending: 'text-gray-700',
+  in_progress: 'text-blue-700',
+  passed: 'text-green-700',
+  failed: 'text-red-700',
+  waived: 'text-purple-700',
+  not_applicable: 'text-gray-500',
 }
 
 // --- ConsentType ---
@@ -967,11 +967,11 @@ export const PIPELINE_OVERALL_STATUS_LABELS: Record<PipelineOverallStatus, strin
 }
 
 export const PIPELINE_OVERALL_STATUS_COLORS: Record<PipelineOverallStatus, string> = {
-  pending: 'text-gray-700 border-gray-200',
-  in_progress: 'text-blue-700 border-blue-200',
-  on_hold: 'text-amber-700 border-amber-200',
-  cleared: 'text-green-700 border-green-200',
-  rejected: 'text-red-700 border-red-200',
+  pending: 'text-gray-700',
+  in_progress: 'text-blue-700',
+  on_hold: 'text-amber-700',
+  cleared: 'text-green-700',
+  rejected: 'text-red-700',
 }
 
 // Note: ComplianceEntityType, COMPLIANCE_ENTITY_TYPES, and COMPLIANCE_ENTITY_TYPE_LABELS

@@ -292,7 +292,7 @@ export function ApplicationWizard({
             {serverError && (
               <div
                 role="alert"
-                className="mb-6 rounded-xl border border-red-200 px-5 py-4 text-sm text-red-700 shadow-sm"
+                className="mb-6 rounded-xl border px-5 py-4 text-sm text-red-700 shadow-sm"
               >
                 {serverError}
               </div>
@@ -413,7 +413,7 @@ export function ApplicationWizard({
                       onClick={handleBack}
                       disabled={isPending}
                       className={cn(
-                        'rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700',
+                        'rounded-lg border bg-white px-5 py-2.5 text-sm font-medium text-gray-700',
                         'hover:bg-gray-50 transition-colors',
                         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#192334)] focus-visible:ring-offset-1',
                         'disabled:opacity-50 disabled:cursor-not-allowed',

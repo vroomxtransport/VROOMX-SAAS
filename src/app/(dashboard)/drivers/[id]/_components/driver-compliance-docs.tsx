@@ -32,12 +32,12 @@ function getExpiryStatus(expiresAt: string | null): {
   const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
 
   if (diffDays < 0) {
-    return { label: 'Expired', className: 'text-red-700 border-red-200' }
+    return { label: 'Expired', className: 'text-red-700' }
   }
   if (diffDays <= 30) {
     return {
       label: 'Expiring Soon',
-      className: 'text-amber-700 border-amber-200',
+      className: 'text-amber-700',
     }
   }
   return null

@@ -161,7 +161,7 @@ export function PaymentRecorder({
               {PAYMENT_STATUS_LABELS[paymentStatus]}
             </span>
             {isSplit && (
-              <span className="inline-flex items-center rounded-full border border-blue-200 px-2.5 py-0.5 text-xs font-medium text-blue-700">
+              <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium text-blue-700">
                 Split Payment
               </span>
             )}

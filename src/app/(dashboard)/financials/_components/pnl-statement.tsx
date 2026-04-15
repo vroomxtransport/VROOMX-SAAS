@@ -88,8 +88,8 @@ export function PnLStatement({ pnl }: Props) {
         <div className={cn(
           'flex items-center justify-between rounded-xl p-4 mt-4',
           pnl.netProfitBeforeTax >= 0
-            ? 'border border-emerald-200 text-emerald-800'
-            : 'border border-red-200 text-red-800'
+            ? 'border text-emerald-800'
+            : 'border text-red-800'
         )}>
           <span className="font-bold">NET PROFIT BEFORE TAX</span>
           <span className="font-bold tabular-nums text-lg">

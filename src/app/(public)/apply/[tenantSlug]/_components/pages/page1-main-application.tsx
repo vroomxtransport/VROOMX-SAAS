@@ -958,7 +958,7 @@ export function Page1MainApplication({ resumeToken, onConsentSigned }: Page1Prop
         <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
           To Be Read and Signed by Applicant
         </h3>
-        <div className="mb-6 rounded-lg border border-gray-100/50 p-4 text-xs leading-relaxed text-gray-700 whitespace-pre-line max-h-48 overflow-y-auto">
+        <div className="mb-6 rounded-lg border/50 p-4 text-xs leading-relaxed text-gray-700 whitespace-pre-line max-h-48 overflow-y-auto">
           {APPLICATION_CERTIFICATION_TEXT}
         </div>
         <SignatureBox

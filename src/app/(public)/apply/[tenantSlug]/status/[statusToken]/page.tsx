@@ -190,7 +190,7 @@ export default async function StatusPage({ params }: Props) {
 
           {/* Rejection reason — only if present + whitelisted display */}
           {rejectionReason && status === 'rejected' && (
-            <div className="mt-2 rounded-lg border border-red-100 p-4 text-xs text-red-700">
+            <div className="mt-2 rounded-lg border p-4 text-xs text-red-700">
               <p className="font-semibold">Basis for decision:</p>
               <p className="mt-1">{rejectionReason}</p>
             </div>

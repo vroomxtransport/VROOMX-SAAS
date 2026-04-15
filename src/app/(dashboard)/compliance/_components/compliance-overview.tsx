@@ -72,24 +72,24 @@ function severityStyle(
 ): string {
   switch (severity) {
     case 'critical':
-      return 'text-red-700 border-red-200'
+      return 'text-red-700'
     case 'severe':
-      return 'text-orange-700 border-orange-200'
+      return 'text-orange-700'
     case 'moderate':
-      return 'text-amber-700 border-amber-200'
+      return 'text-amber-700'
     default:
-      return 'text-blue-700 border-blue-200'
+      return 'text-blue-700'
   }
 }
 
 function statusStyle(status: SafetyEvent['status']): string {
   switch (status) {
     case 'open':
-      return 'text-red-700 border-red-200'
+      return 'text-red-700'
     case 'under_review':
-      return 'text-amber-700 border-amber-200'
+      return 'text-amber-700'
     case 'resolved':
-      return 'text-emerald-700 border-emerald-200'
+      return 'text-emerald-700'
     case 'closed':
       return 'bg-muted text-muted-foreground border-border'
   }

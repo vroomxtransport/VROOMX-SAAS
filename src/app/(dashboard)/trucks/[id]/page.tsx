@@ -140,7 +140,7 @@ export default function TruckDetailPage({ params }: TruckDetailPageProps) {
               {truck.ownership === 'owner_operator' && (
                 <Badge
                   variant="outline"
-                  className="text-purple-700 border-purple-200"
+                  className="text-purple-700"
                 >
                   Owner-Operator
                 </Badge>

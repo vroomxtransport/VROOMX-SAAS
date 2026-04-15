@@ -54,7 +54,7 @@ export function Page7ClearinghouseLimitedQuery({ tenantName, onConsentSigned }: 
       </header>
 
       <div
-        className="rounded-xl border border-gray-100 border-l-4 border-l-[var(--brand-primary,#192334)] bg-gradient-to-br from-slate-50/80 to-white p-6 text-[13px] leading-[1.85] text-gray-600 whitespace-pre-line"
+        className="rounded-xl border border-l-4 border-l-[var(--brand-primary,#192334)] bg-gradient-to-br from-slate-50/80 to-white p-6 text-[13px] leading-[1.85] text-gray-600 whitespace-pre-line"
         role="region"
         aria-label="Clearinghouse Limited Query consent text"
       >

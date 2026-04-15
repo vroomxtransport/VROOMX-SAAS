@@ -16,7 +16,7 @@ export function WorkOrderCustomerCard({ tenantName }: WorkOrderCustomerCardProps
       <div className="space-y-1.5">
         <div className="flex items-center gap-2">
           <p className="text-sm font-semibold text-foreground">{tenantName}</p>
-          <Badge variant="outline" className="text-xs text-slate-600 border-slate-200">
+          <Badge variant="outline" className="text-xs text-slate-600">
             Internal
           </Badge>
         </div>

@@ -146,7 +146,7 @@ export function PayrollGenerateDrawer({
           )}
 
           {batchResult && (
-            <div className="rounded-lg border border-emerald-200 px-4 py-3 text-sm text-emerald-700">
+            <div className="rounded-lg border px-4 py-3 text-sm text-emerald-700">
               Generated {batchResult.generated} payroll period(s).
               {batchResult.skipped > 0 && ` Skipped ${batchResult.skipped} (overlap or error).`}
             </div>

@@ -303,7 +303,7 @@ export function StepDetailDrawer({ open, onOpenChange, step, applicationId }: Pr
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 text-xs text-red-600 border-red-200"
+                  className="h-8 text-xs text-red-600"
                   onClick={() => handleTransition('failed')}
                   disabled={busy}
                 >
@@ -330,7 +330,7 @@ export function StepDetailDrawer({ open, onOpenChange, step, applicationId }: Pr
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 text-xs text-purple-600 border-purple-200"
+                className="h-7 text-xs text-purple-600"
                 onClick={handleWaive}
                 disabled={busy || !waiveReason.trim()}
               >

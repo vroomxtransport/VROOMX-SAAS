@@ -52,10 +52,10 @@ const CATEGORY_BADGE_COLORS: Record<NormalizedExpenseCategory, string> = {
 
 const SOURCE_BADGE_STYLES: Record<string, string> = {
   manual: 'border-border bg-card text-muted-foreground',
-  samsara: 'border-blue-200 text-blue-700',
-  quickbooks: 'border-green-200 text-green-700',
-  efs: 'border-orange-200 text-orange-700',
-  msfuelcard: 'border-amber-200 text-amber-700',
+  samsara: 'text-blue-700',
+  quickbooks: 'text-green-700',
+  efs: 'text-orange-700',
+  msfuelcard: 'text-amber-700',
 }
 
 const SOURCE_BADGE_LABELS: Record<string, string> = {

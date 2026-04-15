@@ -125,8 +125,8 @@ export function WorkOrderItemRow({
           className={cn(
             'rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors border',
             kind === 'labor'
-              ? 'text-blue-700 border-blue-200'
-              : 'text-amber-700 border-amber-200',
+              ? 'text-blue-700'
+              : 'text-amber-700',
           )}
           title={`Click to switch to ${kind === 'labor' ? 'Part' : 'Labor'}`}
         >

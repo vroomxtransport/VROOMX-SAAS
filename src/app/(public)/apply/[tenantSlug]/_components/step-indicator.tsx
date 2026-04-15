@@ -99,7 +99,7 @@ export function StepIndicator({
           aria-haspopup="listbox"
           className={cn(
             'flex w-full items-center justify-between rounded-lg px-4 py-2.5',
-            'border border-gray-200 bg-white text-sm font-medium text-gray-700',
+            'border bg-white text-sm font-medium text-gray-700',
             'transition-colors hover:bg-gray-50',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary,#192334)]',
           )}

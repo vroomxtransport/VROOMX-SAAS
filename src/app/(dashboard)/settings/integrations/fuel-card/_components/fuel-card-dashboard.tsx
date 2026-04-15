@@ -92,7 +92,7 @@ function formatPricePerGallon(raw: string): string {
 function SyncStatusBadge({ status }: { status: FuelCardStatusData['syncStatus'] }) {
   if (status === 'active') {
     return (
-      <Badge className="gap-1 text-emerald-700 border-emerald-200">
+      <Badge className="gap-1 text-emerald-700">
         <CheckCircle2 className="h-3 w-3" />
         Connected
       </Badge>
@@ -100,7 +100,7 @@ function SyncStatusBadge({ status }: { status: FuelCardStatusData['syncStatus'] 
   }
   if (status === 'syncing') {
     return (
-      <Badge className="gap-1 text-sky-700 border-sky-200">
+      <Badge className="gap-1 text-sky-700">
         <RefreshCw className="h-3 w-3 animate-spin" />
         Syncing
       </Badge>
@@ -108,7 +108,7 @@ function SyncStatusBadge({ status }: { status: FuelCardStatusData['syncStatus'] 
   }
   if (status === 'error') {
     return (
-      <Badge className="gap-1 text-rose-700 border-rose-200">
+      <Badge className="gap-1 text-rose-700">
         <AlertTriangle className="h-3 w-3" />
         Error
       </Badge>
@@ -127,7 +127,7 @@ function SyncStatusBadge({ status }: { status: FuelCardStatusData['syncStatus'] 
 function MatchBadge({ row }: { row: FuelCardTransactionRow }) {
   if (row.flagged) {
     return (
-      <Badge className="gap-1 text-rose-700 border-rose-200 text-[11px]">
+      <Badge className="gap-1 text-rose-700 text-[11px]">
         <Flag className="h-2.5 w-2.5" />
         Flagged
       </Badge>
@@ -135,14 +135,14 @@ function MatchBadge({ row }: { row: FuelCardTransactionRow }) {
   }
   if (row.matchedTruckId) {
     return (
-      <Badge className="gap-1 text-emerald-700 border-emerald-200 text-[11px]">
+      <Badge className="gap-1 text-emerald-700 text-[11px]">
         <Check className="h-2.5 w-2.5" />
         {row.matchedTruckUnit ?? 'Matched'}
       </Badge>
     )
   }
   return (
-    <Badge className="gap-1 text-amber-700 border-amber-200 text-[11px]">
+    <Badge className="gap-1 text-amber-700 text-[11px]">
       <AlertTriangle className="h-2.5 w-2.5" />
       Unmatched
     </Badge>
@@ -508,7 +508,7 @@ export function FuelCardDashboard({ status, onDisconnected }: FuelCardDashboardP
               variant="outline"
               size="sm"
               onClick={() => setDisconnectOpen(true)}
-              className="h-8 gap-1.5 text-xs text-rose-600 hover:text-rose-700 hover:border-rose-300"
+              className="h-8 gap-1.5 text-xs text-rose-600 hover:text-rose-700"
             >
               <Unlink className="h-3.5 w-3.5" />
               Disconnect
@@ -566,7 +566,7 @@ export function FuelCardDashboard({ status, onDisconnected }: FuelCardDashboardP
 
         {/* Error banner */}
         {status.syncError && (
-          <div className="mt-3 flex items-start gap-2 rounded-lg border border-rose-200 px-3 py-2 text-xs text-rose-700">
+          <div className="mt-3 flex items-start gap-2 rounded-lg border px-3 py-2 text-xs text-rose-700">
             <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             <span>Last sync error: {status.syncError}</span>
           </div>
@@ -642,7 +642,7 @@ export function FuelCardDashboard({ status, onDisconnected }: FuelCardDashboardP
             ))}
           </div>
         ) : txQuery.isError ? (
-          <div className="flex items-center gap-2 rounded-lg border border-rose-200 px-3 py-4 text-sm text-rose-700">
+          <div className="flex items-center gap-2 rounded-lg border px-3 py-4 text-sm text-rose-700">
             <AlertTriangle className="h-4 w-4 shrink-0" />
             Failed to load transactions. Please try again.
           </div>

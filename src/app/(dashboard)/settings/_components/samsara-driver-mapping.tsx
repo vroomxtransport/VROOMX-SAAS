@@ -97,7 +97,7 @@ export function SamsaraDriverMapping({ drivers, vroomxDrivers }: SamsaraDriverMa
                   variant={driver.status === 'active' ? 'default' : 'secondary'}
                   className={
                     driver.status === 'active'
-                      ? 'text-emerald-700 border-emerald-200'
+                      ? 'text-emerald-700'
                       : undefined
                   }
                 >

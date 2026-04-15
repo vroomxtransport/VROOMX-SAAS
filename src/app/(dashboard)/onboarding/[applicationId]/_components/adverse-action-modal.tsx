@@ -137,7 +137,7 @@ export function AdverseActionModal({ open, onOpenChange, applicationId, applicat
             </DialogHeader>
 
             {/* FCRA explainer */}
-            <div className="rounded-lg border border-amber-200 p-3 text-xs text-amber-800 flex gap-2">
+            <div className="rounded-lg border p-3 text-xs text-amber-800 flex gap-2">
               <HugeiconsIcon icon={Alert01Icon} size={14} className="shrink-0 mt-0.5" />
               <p>
                 Under <strong>FCRA § 1681b(b)(3)</strong>, before taking adverse action you must
@@ -208,7 +208,7 @@ export function AdverseActionModal({ open, onOpenChange, applicationId, applicat
             </div>
 
             {/* Wait period warning */}
-            <div className="rounded-lg border border-red-200 p-3 text-xs text-red-800">
+            <div className="rounded-lg border p-3 text-xs text-red-800">
               After sending this notice, the applicant has the right to dispute the findings.
               You <strong>must wait at least 5 business days</strong> before finalizing the rejection.
             </div>
@@ -238,8 +238,8 @@ export function AdverseActionModal({ open, onOpenChange, applicationId, applicat
             <div
               className={`rounded-lg border p-3 text-xs flex gap-2 ${
                 canFinalize
-                  ? 'border-green-200 text-green-800'
-                  : 'border-amber-200 text-amber-800'
+                  ? 'text-green-800'
+                  : 'text-amber-800'
               }`}
             >
               <HugeiconsIcon icon={Alert01Icon} size={14} className="shrink-0 mt-0.5" />

@@ -125,7 +125,7 @@ export function ApplicationDetail({ applicationId }: Props) {
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 text-red-600 border-red-200 hover:border-red-300"
+                className="h-8 text-red-600"
                 onClick={() => setAdverseModalOpen(true)}
               >
                 <HugeiconsIcon icon={Cancel01Icon} size={14} className="mr-1.5" />

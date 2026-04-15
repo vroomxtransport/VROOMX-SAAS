@@ -332,7 +332,7 @@ export function IntegrationDetail({ integration, initialConnected }: Integration
               {CATEGORY_LABELS[integration.category]}
             </Badge>
             {integration.tags.includes('official') && (
-              <Badge className="text-blue-700 border-blue-200 text-xs">
+              <Badge className="text-blue-700 text-xs">
                 Official
               </Badge>
             )}

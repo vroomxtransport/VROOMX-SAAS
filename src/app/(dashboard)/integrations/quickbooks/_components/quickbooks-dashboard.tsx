@@ -168,9 +168,9 @@ function EntitySyncCard({
   disabled,
 }: EntitySyncCardProps) {
   const statusStyles = {
-    synced: 'text-emerald-600 border-emerald-200',
-    pending: 'text-amber-600 border-amber-200',
-    error: 'text-red-600 border-red-200',
+    synced: 'text-emerald-600',
+    pending: 'text-amber-600',
+    error: 'text-red-600',
     idle: 'text-muted-foreground bg-muted border-border',
   }
 
@@ -246,9 +246,9 @@ function SyncHistoryRow({ event }: SyncHistoryRowProps) {
   const [expanded, setExpanded] = useState(false)
 
   const statusConfig = {
-    success: { icon: <Check className="h-3.5 w-3.5" />, className: 'text-emerald-600 border-emerald-200' },
-    error: { icon: <X className="h-3.5 w-3.5" />, className: 'text-red-600 border-red-200' },
-    partial: { icon: <AlertCircle className="h-3.5 w-3.5" />, className: 'text-amber-600 border-amber-200' },
+    success: { icon: <Check className="h-3.5 w-3.5" />, className: 'text-emerald-600' },
+    error: { icon: <X className="h-3.5 w-3.5" />, className: 'text-red-600' },
+    partial: { icon: <AlertCircle className="h-3.5 w-3.5" />, className: 'text-amber-600' },
   }
 
   const sc = statusConfig[event.status]

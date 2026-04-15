@@ -162,7 +162,7 @@ export function SignatureBox({
               aria-required="true"
               style={{ fontSize: '16px' }}
               className={cn(
-                'w-full min-h-[44px] rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-800 outline-none',
+                'w-full min-h-[44px] rounded-lg border bg-white px-3 py-2 text-gray-800 outline-none',
                 'transition-[border-color,box-shadow] duration-200',
                 'focus:border-[var(--brand-primary,#192334)] focus:shadow-[0_0_0_3px_rgba(25,35,52,0.12)]',
               )}

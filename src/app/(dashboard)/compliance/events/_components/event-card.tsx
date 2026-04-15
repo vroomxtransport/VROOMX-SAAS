@@ -182,7 +182,7 @@ export function EventCard({ event, onEdit, onDelete, onResolve }: EventCardProps
       {event.event_type === 'dot_inspection' && (
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
           {event.inspection_level && (
-            <Badge variant="outline" className="text-xs text-blue-700 border-blue-200">
+            <Badge variant="outline" className="text-xs text-blue-700">
               {DOT_INSPECTION_LEVEL_LABELS[event.inspection_level as DotInspectionLevel]}
             </Badge>
           )}

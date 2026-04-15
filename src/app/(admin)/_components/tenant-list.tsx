@@ -15,9 +15,9 @@ import type { EnhancedFilterConfig, SortConfig, DateRange } from '@/types/filter
 
 // ── Plan badge colours ─────────────────────────────────────────────────────────
 const PLAN_COLORS: Record<string, string> = {
-  owner_operator: 'text-emerald-700 border-emerald-200',
+  owner_operator: 'text-emerald-700',
   starter_x:      'bg-brand/10 text-brand border-brand/20',
-  pro_x:          'text-blue-700 border-blue-200',
+  pro_x:          'text-blue-700',
 }
 
 const PLAN_LABELS: Record<string, string> = {
@@ -28,12 +28,12 @@ const PLAN_LABELS: Record<string, string> = {
 
 // ── Subscription status badge colours ─────────────────────────────────────────
 const STATUS_COLORS: Record<string, string> = {
-  active: 'text-emerald-700 border-emerald-200',
-  trialing: 'text-blue-700 border-blue-200',
-  past_due: 'text-amber-700 border-amber-200',
-  canceled: 'text-gray-500 border-gray-200',
-  suspended: 'text-red-700 border-red-200',
-  unpaid: 'text-orange-700 border-orange-200',
+  active: 'text-emerald-700',
+  trialing: 'text-blue-700',
+  past_due: 'text-amber-700',
+  canceled: 'text-gray-500',
+  suspended: 'text-red-700',
+  unpaid: 'text-orange-700',
 }
 
 const STATUS_LABELS: Record<string, string> = {
