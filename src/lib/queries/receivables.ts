@@ -1,6 +1,23 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { differenceInDays, startOfMonth, endOfMonth } from 'date-fns'
 
+/**
+ * Audit W2-4 defense-in-depth: every receivables query below now adds an
+ * explicit `.eq('tenant_id', tenantId)` filter in addition to RLS. RLS is
+ * the authoritative tenant gate; this filter prevents silent data leaks
+ * if RLS is ever misconfigured or disabled in a migration.
+ *
+ * Fetches the caller's tenant_id from the session (JWT app_metadata).
+ * Returns null if there is no valid session — callers should short-circuit
+ * with empty results rather than throw.
+ */
+async function getSessionTenantId(supabase: SupabaseClient): Promise<string | null> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  return (user?.app_metadata?.tenant_id as string | undefined) ?? null
+}
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -79,12 +96,16 @@ function getAgingBucket(invoiceDate: string): AgingBucket {
 export async function fetchBrokerReceivables(
   supabase: SupabaseClient
 ): Promise<BrokerReceivable[]> {
+  const tenantId = await getSessionTenantId(supabase)
+  if (!tenantId) return []
+
   // Fetch all orders with outstanding payment status that have a broker
   const { data: orders, error } = await supabase
     .from('orders')
     .select(
       'id, order_number, broker_id, carrier_pay, amount_paid, payment_status, invoice_date, payment_type, cod_amount, billing_amount, broker:brokers(id, name, email)'
     )
+    .eq('tenant_id', tenantId)
     .in('payment_status', ['invoiced', 'partially_paid'])
     .not('broker_id', 'is', null)
 
@@ -98,6 +119,7 @@ export async function fetchBrokerReceivables(
   const { data: recentPayments, error: paymentsError } = await supabase
     .from('payments')
     .select('order_id, amount')
+    .eq('tenant_id', tenantId)
     .gte('payment_date', monthStart.split('T')[0])
     .lte('payment_date', monthEnd.split('T')[0])
 
@@ -186,11 +208,14 @@ export async function fetchBrokerReceivables(
 export async function fetchAgingAnalysis(
   supabase: SupabaseClient
 ): Promise<AgingRow[]> {
+  const tenantId = await getSessionTenantId(supabase)
+  if (!tenantId) return []
   const { data: orders, error } = await supabase
     .from('orders')
     .select(
       'id, broker_id, carrier_pay, amount_paid, invoice_date, broker:brokers(id, name)'
     )
+    .eq('tenant_id', tenantId)
     .in('payment_status', ['invoiced', 'partially_paid'])
     .not('invoice_date', 'is', null)
 
@@ -236,11 +261,14 @@ export async function fetchAgingAnalysis(
 export async function fetchCollectionRate(
   supabase: SupabaseClient
 ): Promise<CollectionRate> {
+  const tenantId = await getSessionTenantId(supabase)
+  if (!tenantId) return { totalInvoiced: 0, totalCollected: 0, rate: 0 }
   // Fetch all orders that have been invoiced at any point
   // (payment_status is invoiced, partially_paid, or paid means it was invoiced)
   const { data: orders, error } = await supabase
     .from('orders')
     .select('carrier_pay, amount_paid')
+    .eq('tenant_id', tenantId)
     .in('payment_status', ['invoiced', 'partially_paid', 'paid'])
 
   if (error) throw error
@@ -282,11 +310,14 @@ export async function fetchOrdersByPaymentStatus(
   supabase: SupabaseClient,
   status: string
 ): Promise<StatusOrder[]> {
+  const tenantId = await getSessionTenantId(supabase)
+  if (!tenantId) return []
   const { data: orders, error } = await supabase
     .from('orders')
     .select(
       'id, order_number, vehicle_year, vehicle_make, vehicle_model, carrier_pay, amount_paid, updated_at, broker:brokers(name)'
     )
+    .eq('tenant_id', tenantId)
     .eq('payment_status', status)
     .order('updated_at', { ascending: false })
     .limit(50)
@@ -335,11 +366,14 @@ export interface ReadyToInvoiceOrder {
 export async function fetchReadyToInvoice(
   supabase: SupabaseClient
 ): Promise<ReadyToInvoiceOrder[]> {
+  const tenantId = await getSessionTenantId(supabase)
+  if (!tenantId) return []
   const { data: orders, error } = await supabase
     .from('orders')
     .select(
       'id, order_number, vehicle_year, vehicle_make, vehicle_model, carrier_pay, pickup_city, pickup_state, delivery_city, delivery_state, updated_at, payment_type, cod_amount, billing_amount, broker:brokers(id, name, email)'
     )
+    .eq('tenant_id', tenantId)
     .eq('status', 'delivered')
     .eq('payment_status', 'unpaid')
     .order('updated_at', { ascending: true })
@@ -397,9 +431,12 @@ export async function fetchReadyToInvoice(
 export async function fetchPaymentStatusBreakdown(
   supabase: SupabaseClient
 ): Promise<PaymentStatusBreakdown[]> {
+  const tenantId = await getSessionTenantId(supabase)
+  if (!tenantId) return []
   const { data: orders, error } = await supabase
     .from('orders')
     .select('payment_status, carrier_pay')
+    .eq('tenant_id', tenantId)
 
   if (error) throw error
 
@@ -428,9 +465,12 @@ export async function fetchPaymentStatusBreakdown(
 export async function fetchRecentPayments(
   supabase: SupabaseClient
 ): Promise<RecentPayment[]> {
+  const tenantId = await getSessionTenantId(supabase)
+  if (!tenantId) return []
   const { data: paymentsData, error } = await supabase
     .from('payments')
     .select('amount, payment_date, order:orders(order_number)')
+    .eq('tenant_id', tenantId)
     .order('payment_date', { ascending: false })
     .limit(10)
 
@@ -453,9 +493,12 @@ export async function fetchRecentPayments(
 export async function fetchOutstandingAR(
   supabase: SupabaseClient
 ): Promise<number> {
+  const tenantId = await getSessionTenantId(supabase)
+  if (!tenantId) return 0
   const { data: orders, error } = await supabase
     .from('orders')
     .select('carrier_pay, amount_paid')
+    .eq('tenant_id', tenantId)
     .in('payment_status', ['invoiced', 'partially_paid'])
 
   if (error) throw error
@@ -474,6 +517,9 @@ export async function fetchOutstandingAR(
 export async function fetchInvoicedMTD(
   supabase: SupabaseClient
 ): Promise<number> {
+  const tenantId = await getSessionTenantId(supabase)
+  if (!tenantId) return 0
+
   const now = new Date()
   const monthStart = startOfMonth(now).toISOString().split('T')[0]
   const monthEnd = endOfMonth(now).toISOString().split('T')[0]
@@ -481,6 +527,7 @@ export async function fetchInvoicedMTD(
   const { data: orders, error } = await supabase
     .from('orders')
     .select('carrier_pay')
+    .eq('tenant_id', tenantId)
     .not('invoice_date', 'is', null)
     .gte('invoice_date', monthStart)
     .lte('invoice_date', monthEnd)
@@ -501,6 +548,9 @@ export async function fetchInvoicedMTD(
 export async function fetchCollectedMTD(
   supabase: SupabaseClient
 ): Promise<number> {
+  const tenantId = await getSessionTenantId(supabase)
+  if (!tenantId) return 0
+
   const now = new Date()
   const monthStart = startOfMonth(now).toISOString().split('T')[0]
   const monthEnd = endOfMonth(now).toISOString().split('T')[0]
@@ -508,6 +558,7 @@ export async function fetchCollectedMTD(
   const { data: payments, error } = await supabase
     .from('payments')
     .select('amount')
+    .eq('tenant_id', tenantId)
     .gte('payment_date', monthStart)
     .lte('payment_date', monthEnd)
 
