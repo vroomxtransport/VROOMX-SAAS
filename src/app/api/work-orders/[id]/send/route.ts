@@ -5,6 +5,8 @@ import { getSignedUrl } from '@/lib/storage'
 import { workOrderEmailSchema } from '@/lib/validations/work-order'
 import { WorkOrderDocument } from '@/lib/pdf/work-order-template'
 import { WorkOrderEmail } from '@/components/email/work-order-email'
+import { logWorkOrderActivity } from '@/lib/activity-log'
+import { captureAsyncError } from '@/lib/async-safe'
 import type { Shop, Truck, WorkOrder, WorkOrderItem } from '@/types/database'
 
 /**
@@ -151,6 +153,16 @@ export async function POST(
     console.error('[work-order-send] Resend error', emailError)
     return Response.json({ error: 'Failed to send work-order email' }, { status: 500 })
   }
+
+  logWorkOrderActivity(supabase, {
+    tenantId,
+    workOrderId: id,
+    action: 'email_sent',
+    description: `Sent to ${recipients.length} recipient(s)`,
+    actorId: user.id,
+    actorEmail: user.email,
+    metadata: { recipients, emailId: data?.id },
+  }).catch(captureAsyncError('logWorkOrderActivity'))
 
   return Response.json({ success: true, emailId: data?.id, recipients })
 }

@@ -562,6 +562,21 @@ export const MAINTENANCE_STATUS_COLORS: Record<MaintenanceStatus, string> = {
   closed: 'bg-zinc-100 text-zinc-700 border-zinc-300',
 }
 
+export type WorkOrderActivityAction =
+  | 'created'
+  | 'updated'
+  | 'deleted'
+  | 'status_changed'
+  | 'item_added'
+  | 'item_updated'
+  | 'item_deleted'
+  | 'note_added'
+  | 'note_deleted'
+  | 'duplicated'
+  | 'attachment_added'
+  | 'attachment_deleted'
+  | 'email_sent'
+
 // Compliance types
 export type ComplianceDocType = 'dqf' | 'vehicle_qualification' | 'company_document'
 export type ComplianceEntityType = 'driver' | 'truck' | 'company' | 'driver_application'

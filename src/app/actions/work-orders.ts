@@ -13,6 +13,8 @@ import {
 } from '@/lib/validations/work-order'
 import { computeWorkOrderTotals } from '@/lib/financial/work-order-totals'
 import { isTransitionAllowed } from '@/lib/work-orders/transitions'
+import { logWorkOrderActivity } from '@/lib/activity-log'
+import { captureAsyncError } from '@/lib/async-safe'
 import type { MaintenanceStatus } from '@/types'
 import type { WorkOrder, WorkOrderItem, WorkOrderNote } from '@/types/database'
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -173,6 +175,15 @@ export async function createWorkOrder(
 
     if (error || !inserted) return { error: safeError({ message: error ?? 'create failed' }, 'createWorkOrder') }
 
+    logWorkOrderActivity(auth.ctx.supabase, {
+      tenantId,
+      workOrderId: inserted.id,
+      action: 'created',
+      description: `Created Work Order #${inserted.wo_number}`,
+      actorId: auth.ctx.user?.id,
+      actorEmail: auth.ctx.user?.email,
+    }).catch(captureAsyncError('logWorkOrderActivity'))
+
     revalidateWorkOrderRoutes(inserted.id)
     return { success: true, workOrder: inserted }
   } catch (err) {
@@ -216,6 +227,16 @@ export async function updateWorkOrder(
 
     if (error) return { error: safeError(error, 'updateWorkOrder') }
     if (!updated) return { error: 'Work order not found.' }
+
+    const diffKeys = Object.keys(updates).filter((k) => k !== 'updated_at')
+    logWorkOrderActivity(auth.ctx.supabase, {
+      tenantId,
+      workOrderId: id,
+      action: 'updated',
+      description: `Updated header (changed: ${diffKeys.join(', ')})`,
+      actorId: auth.ctx.user?.id,
+      actorEmail: auth.ctx.user?.email,
+    }).catch(captureAsyncError('logWorkOrderActivity'))
 
     revalidateWorkOrderRoutes(id)
     return { success: true, workOrder: updated as WorkOrder }
@@ -312,6 +333,15 @@ export async function setWorkOrderStatus(
 
     if (updateErr) return { error: safeError(updateErr, 'setWorkOrderStatus.update') }
 
+    logWorkOrderActivity(auth.ctx.supabase, {
+      tenantId,
+      workOrderId: parsed.data.id,
+      action: 'status_changed',
+      description: `Status: ${from} → ${to}`,
+      actorId: auth.ctx.user?.id,
+      actorEmail: auth.ctx.user?.email,
+    }).catch(captureAsyncError('logWorkOrderActivity'))
+
     revalidateWorkOrderRoutes(parsed.data.id)
     return { success: true, status: to }
   } catch (err) {
@@ -362,6 +392,15 @@ export async function addWorkOrderItem(
 
     const recompute = await recomputeWorkOrderTotals(admin, tenantId, parsed.data.workOrderId)
     if (recompute.error) return { error: safeError({ message: recompute.error }, 'addWorkOrderItem.recompute') }
+
+    logWorkOrderActivity(admin, {
+      tenantId,
+      workOrderId: parsed.data.workOrderId,
+      action: 'item_added',
+      description: `Added ${parsed.data.kind}: ${parsed.data.description} ($${amount})`,
+      actorId: auth.ctx.user?.id,
+      actorEmail: auth.ctx.user?.email,
+    }).catch(captureAsyncError('logWorkOrderActivity'))
 
     revalidateWorkOrderRoutes(parsed.data.workOrderId)
     return { success: true, item: inserted as WorkOrderItem }
@@ -424,6 +463,15 @@ export async function updateWorkOrderItem(
     const recompute = await recomputeWorkOrderTotals(admin, tenantId, existing.work_order_id)
     if (recompute.error) return { error: safeError({ message: recompute.error }, 'updateWorkOrderItem.recompute') }
 
+    logWorkOrderActivity(admin, {
+      tenantId,
+      workOrderId: existing.work_order_id,
+      action: 'item_updated',
+      description: `Updated ${parsed.data.kind ?? 'item'}: ${parsed.data.description ?? '—'}`,
+      actorId: auth.ctx.user?.id,
+      actorEmail: auth.ctx.user?.email,
+    }).catch(captureAsyncError('logWorkOrderActivity'))
+
     revalidateWorkOrderRoutes(existing.work_order_id)
     return { success: true, item: updated as WorkOrderItem }
   } catch (err) {
@@ -446,7 +494,7 @@ export async function deleteWorkOrderItem(
     const { supabase: admin } = auth.ctx
     const { data: existing, error: selectErr } = await admin
       .from('work_order_items')
-      .select('id, work_order_id')
+      .select('id, work_order_id, kind, description')
       .eq('id', id)
       .eq('tenant_id', tenantId)
       .maybeSingle()
@@ -462,6 +510,15 @@ export async function deleteWorkOrderItem(
 
     const recompute = await recomputeWorkOrderTotals(admin, tenantId, existing.work_order_id)
     if (recompute.error) return { error: safeError({ message: recompute.error }, 'deleteWorkOrderItem.recompute') }
+
+    logWorkOrderActivity(admin, {
+      tenantId,
+      workOrderId: existing.work_order_id,
+      action: 'item_deleted',
+      description: `Removed ${existing.kind}: ${existing.description}`,
+      actorId: auth.ctx.user?.id,
+      actorEmail: auth.ctx.user?.email,
+    }).catch(captureAsyncError('logWorkOrderActivity'))
 
     revalidateWorkOrderRoutes(existing.work_order_id)
     return { success: true }
@@ -501,6 +558,16 @@ export async function addWorkOrderNote(
 
     if (error) return { error: safeError(error, 'addWorkOrderNote') }
 
+    logWorkOrderActivity(admin, {
+      tenantId,
+      workOrderId: parsed.data.workOrderId,
+      action: 'note_added',
+      description: 'Added note',
+      actorId: user?.id,
+      actorEmail: user?.email,
+      metadata: { body: parsed.data.body },
+    }).catch(captureAsyncError('logWorkOrderActivity'))
+
     revalidateWorkOrderRoutes(parsed.data.workOrderId)
     return { success: true, note: inserted as WorkOrderNote }
   } catch (err) {
@@ -536,6 +603,15 @@ export async function deleteWorkOrderNote(
       .eq('id', id)
       .eq('tenant_id', tenantId)
     if (error) return { error: safeError(error, 'deleteWorkOrderNote') }
+
+    logWorkOrderActivity(admin, {
+      tenantId,
+      workOrderId: existing.work_order_id,
+      action: 'note_deleted',
+      description: 'Removed note',
+      actorId: auth.ctx.user?.id,
+      actorEmail: auth.ctx.user?.email,
+    }).catch(captureAsyncError('logWorkOrderActivity'))
 
     revalidateWorkOrderRoutes(existing.work_order_id)
     return { success: true }
@@ -616,6 +692,16 @@ export async function duplicateWorkOrder(
 
     const recompute = await recomputeWorkOrderTotals(admin, tenantId, created.id)
     if (recompute.error) return { error: safeError({ message: recompute.error }, 'duplicateWorkOrder.recompute') }
+
+    logWorkOrderActivity(admin, {
+      tenantId,
+      workOrderId: created.id,
+      action: 'duplicated',
+      description: `Duplicated as Work Order #${created.wo_number ?? '?'}`,
+      actorId: auth.ctx.user?.id,
+      actorEmail: auth.ctx.user?.email,
+      metadata: { sourceId: parsed.data.id },
+    }).catch(captureAsyncError('logWorkOrderActivity'))
 
     revalidateWorkOrderRoutes(created.id)
     return { success: true, workOrderId: created.id, woNumber: created.wo_number ?? 0 }
