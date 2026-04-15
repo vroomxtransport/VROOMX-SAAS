@@ -3,6 +3,7 @@
 import { authorize, safeError } from '@/lib/authz'
 import { businessExpenseSchema } from '@/lib/validations/business-expense'
 import { revalidatePath } from 'next/cache'
+import { revalidateFinancialDashboards } from '@/lib/revalidate-helpers'
 
 export async function createBusinessExpense(data: unknown) {
   const parsed = businessExpenseSchema.safeParse(data)
@@ -37,7 +38,7 @@ export async function createBusinessExpense(data: unknown) {
   }
 
   revalidatePath('/financials/expenses')
-  revalidatePath('/financials')
+  revalidateFinancialDashboards()
   return { success: true, data: expense }
 }
 
@@ -76,7 +77,7 @@ export async function updateBusinessExpense(id: string, data: unknown) {
   }
 
   revalidatePath('/financials/expenses')
-  revalidatePath('/financials')
+  revalidateFinancialDashboards()
   return { success: true, data: expense }
 }
 
@@ -96,6 +97,6 @@ export async function deleteBusinessExpense(id: string) {
   }
 
   revalidatePath('/financials/expenses')
-  revalidatePath('/financials')
+  revalidateFinancialDashboards()
   return { success: true }
 }

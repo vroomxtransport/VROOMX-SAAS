@@ -472,11 +472,17 @@ export async function assignOrderToTrip(orderId: string, tripId: string) {
     { orderId, stopType: 'delivery' },
   ]
 
-  await supabase
+  // W3-1: route_sequence was previously a silent-fail update. The trip's
+  // financial totals are already correct at this point (recalc above);
+  // route is metadata. Log the failure so it's observable.
+  const { error: routeErr } = await supabase
     .from('trips')
     .update({ route_sequence: newSequence })
     .eq('id', tripId)
     .eq('tenant_id', tenantId)
+  if (routeErr) {
+    console.error('[assignOrderToTrip] route_sequence update failed:', routeErr.message, { tripId, orderId })
+  }
 
   // Fire-and-forget activity log
   const { data: tripInfo } = await supabase

@@ -3,6 +3,7 @@
 import { z } from 'zod'
 import { authorize, safeError } from '@/lib/authz'
 import { revalidatePath } from 'next/cache'
+import { revalidateFinancialDashboards } from '@/lib/revalidate-helpers'
 import { recalculateTripFinancials } from '@/app/actions/trips'
 import { syncExpenseToQB } from '@/lib/quickbooks/sync'
 
@@ -455,7 +456,7 @@ function requiredPermissionFor(category: NonNullable<AddTruckExpenseInput['categ
 function revalidateTruckFinancials(truckId: string): void {
   revalidatePath(`/trucks/${truckId}`)
   revalidatePath(`/trucks/${truckId}/financials`)
-  revalidatePath('/financials')
+  revalidateFinancialDashboards()
 }
 
 function categoryLabel(category: string): string {

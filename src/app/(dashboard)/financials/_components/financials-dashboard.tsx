@@ -46,14 +46,14 @@ export function FinancialsDashboard({
     queryKey: ['financials', 'kpi', dateRange?.from, dateRange?.to],
     queryFn: () => fetchKPIAggregates(supabase, dateRange),
     initialData: dateRange === undefined ? initialAggregates : undefined,
-    staleTime: 60_000,
+    staleTime: 30_000,
   })
 
   // Fetch KPI aggregates for the prior period (non-blocking — loads separately)
   const { data: prevAggregates } = useQuery({
     queryKey: ['financials', 'kpi-prev', dateRange?.from, dateRange?.to],
     queryFn: () => fetchPreviousPeriodKPIs(supabase, dateRange),
-    staleTime: 60_000,
+    staleTime: 30_000,
   })
 
   // Fetch PnL data for selected period (includes business expenses)
@@ -61,21 +61,21 @@ export function FinancialsDashboard({
     queryKey: ['financials', 'pnl', dateRange?.from, dateRange?.to],
     queryFn: () => fetchPnLData(supabase, dateRange),
     initialData: dateRange === undefined ? initialPnLData : undefined,
-    staleTime: 60_000,
+    staleTime: 30_000,
   })
 
   const { data: profitByTruck } = useQuery({
     queryKey: ['financials', 'profit-by-truck', dateRange?.from, dateRange?.to],
     queryFn: () => fetchProfitByTruck(supabase, dateRange),
     initialData: dateRange === undefined ? initialProfitByTruck : undefined,
-    staleTime: 60_000,
+    staleTime: 30_000,
   })
 
   const { data: profitByDriver } = useQuery({
     queryKey: ['financials', 'profit-by-driver', dateRange?.from, dateRange?.to],
     queryFn: () => fetchProfitByDriver(supabase, dateRange),
     initialData: dateRange === undefined ? initialProfitByDriver : undefined,
-    staleTime: 60_000,
+    staleTime: 30_000,
   })
 
   // Compute trip-level KPIs (without business expenses)
