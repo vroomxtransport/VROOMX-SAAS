@@ -12,13 +12,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
 import { duplicateWorkOrder } from '@/app/actions/work-orders'
+import { WorkOrderSendDialog } from './work-order-send-dialog'
 import type { WorkOrderDetail } from '@/lib/queries/work-orders'
 
 interface WorkOrderActionsMenuProps {
@@ -29,6 +24,7 @@ export function WorkOrderActionsMenu({ wo }: WorkOrderActionsMenuProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [open, setOpen] = useState(false)
+  const [sendOpen, setSendOpen] = useState(false)
 
   const handleDuplicate = () => {
     setOpen(false)
@@ -79,18 +75,24 @@ export function WorkOrderActionsMenu({ wo }: WorkOrderActionsMenuProps) {
           </a>
         </DropdownMenuItem>
 
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <DropdownMenuItem disabled>
-                <Mail className="mr-2 h-4 w-4 opacity-50" />
-                <span className="opacity-50">Email</span>
-              </DropdownMenuItem>
-            </TooltipTrigger>
-            <TooltipContent side="left">Coming in next phase</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <DropdownMenuItem
+          onClick={() => {
+            setOpen(false)
+            setSendOpen(true)
+          }}
+        >
+          <Mail className="mr-2 h-4 w-4" />
+          Email
+        </DropdownMenuItem>
       </DropdownMenuContent>
+
+      <WorkOrderSendDialog
+        open={sendOpen}
+        onOpenChange={setSendOpen}
+        workOrderId={wo.id}
+        woNumber={wo.wo_number}
+        defaultRecipient={wo.shop?.email ?? null}
+      />
     </DropdownMenu>
   )
 }
