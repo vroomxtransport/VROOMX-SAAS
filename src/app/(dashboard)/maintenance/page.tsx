@@ -1,5 +1,8 @@
+import Link from 'next/link'
+import { Store } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { PageHeader } from '@/components/shared/page-header'
+import { Button } from '@/components/ui/button'
 import { WorkOrderList } from './_components/work-order-list'
 import type { WorkOrder } from '@/types/database'
 
@@ -56,7 +59,14 @@ export default async function MaintenancePage() {
       <PageHeader
         title="Maintenance / Work Orders"
         subtitle="Shop work orders, line items, and totals"
-      />
+      >
+        <Button asChild variant="outline" size="sm">
+          <Link href="/maintenance/shops">
+            <Store className="mr-1.5 h-4 w-4" />
+            Manage Shops
+          </Link>
+        </Button>
+      </PageHeader>
       <WorkOrderList
         initialWorkOrders={workOrders}
         openCount={openCount}
