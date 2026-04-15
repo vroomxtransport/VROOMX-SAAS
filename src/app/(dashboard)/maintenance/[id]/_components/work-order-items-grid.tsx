@@ -132,26 +132,29 @@ export function WorkOrderItemsGrid({ workOrderId, items }: WorkOrderItemsGridPro
         <h2 className="text-sm font-semibold text-foreground">Line Items</h2>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[780px] text-sm">
-          <thead>
-            <tr className="border-b border-border bg-muted/30">
-              <th className="w-8 px-1 py-2" aria-label="Reorder" />
-              <th className="w-20 px-1 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Type</th>
-              <th className="px-1 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Description</th>
-              <th className="w-20 px-1 py-2 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">Qty</th>
-              <th className="w-28 px-1 py-2 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">Rate</th>
-              <th className="w-28 px-2 py-2 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">Amount</th>
-              <th className="w-32 px-1 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Mechanic</th>
-              <th className="w-32 px-1 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Date</th>
-              <th className="w-10 px-1 py-2" aria-label="Actions" />
-            </tr>
-          </thead>
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
+      {/* DndContext must wrap the table — placing it BETWEEN <thead> and
+         <tbody> renders the dnd-kit accessibility <div> directly inside
+         <table>, which is invalid HTML and triggers a hydration error. */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[780px] text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/30">
+                <th className="w-8 px-1 py-2" aria-label="Reorder" />
+                <th className="w-20 px-1 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Type</th>
+                <th className="px-1 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Description</th>
+                <th className="w-20 px-1 py-2 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">Qty</th>
+                <th className="w-28 px-1 py-2 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">Rate</th>
+                <th className="w-28 px-2 py-2 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">Amount</th>
+                <th className="w-32 px-1 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Mechanic</th>
+                <th className="w-32 px-1 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Date</th>
+                <th className="w-10 px-1 py-2" aria-label="Actions" />
+              </tr>
+            </thead>
             <SortableContext
               items={localItems.map((i) => i.id)}
               strategy={verticalListSortingStrategy}
@@ -170,9 +173,9 @@ export function WorkOrderItemsGrid({ workOrderId, items }: WorkOrderItemsGridPro
                 )}
               </tbody>
             </SortableContext>
-          </DndContext>
-        </table>
-      </div>
+          </table>
+        </div>
+      </DndContext>
 
       <div className="flex items-center gap-2 border-t border-border px-4 py-3">
         <Button

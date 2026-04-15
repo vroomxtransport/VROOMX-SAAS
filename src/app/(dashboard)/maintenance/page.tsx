@@ -45,11 +45,19 @@ export default async function MaintenancePage() {
 
   for (const row of thisMonthRows ?? []) {
     const r = row as { status: string; grand_total: string | null; completed_date: string | null; closed_at: string | null }
-    if (r.status === 'completed' && r.completed_date && r.completed_date >= monthStart) {
-      completedThisMonth++
-    }
-    if (r.status === 'closed' && r.closed_at && r.closed_at >= monthStart) {
-      closedThisMonth++
+
+    // "Money is spent" = the work has been finished. Count both Completed
+    // and Closed work orders against the month's spend, dated by whichever
+    // terminal timestamp the WO has reached. Without this, marking a WO
+    // Completed but not Closed leaves it invisible to the spend KPI.
+    const completedAtMonth =
+      r.status === 'completed' && r.completed_date && r.completed_date >= monthStart
+    const closedAtMonth =
+      r.status === 'closed' && r.closed_at && r.closed_at >= monthStart
+
+    if (completedAtMonth) completedThisMonth++
+    if (closedAtMonth) closedThisMonth++
+    if (completedAtMonth || closedAtMonth) {
       totalSpend += parseFloat(r.grand_total ?? '0')
     }
   }
