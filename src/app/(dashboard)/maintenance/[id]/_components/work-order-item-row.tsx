@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useTransition, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Trash2, GripVertical } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -26,6 +27,7 @@ export function WorkOrderItemRow({
   rowRef,
   rowStyle,
 }: WorkOrderItemRowProps) {
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [isDeleting, startDeleteTransition] = useTransition()
 
@@ -55,9 +57,11 @@ export function WorkOrderItemRow({
             ? result.error
             : 'Failed to save line item.'
         toast.error(msg)
+        return
       }
+      router.refresh()
     })
-  }, [item.id])
+  }, [item.id, router])
 
   const handleBlur = (field: string, value: unknown) => {
     if (!dirtyRef.current.has(field)) return
@@ -86,9 +90,10 @@ export function WorkOrderItemRow({
             ? result.error
             : 'Failed to delete line item.'
         toast.error(msg)
-      } else {
-        toast.success('Line item removed')
+        return
       }
+      toast.success('Line item removed')
+      router.refresh()
     })
   }
 

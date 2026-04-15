@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Plus, Wrench, Package } from 'lucide-react'
 import {
@@ -57,6 +58,7 @@ function SortableRow({ item }: { item: WorkOrderItem }) {
 }
 
 export function WorkOrderItemsGrid({ workOrderId, items }: WorkOrderItemsGridProps) {
+  const router = useRouter()
   const [isAddingLabor, startAddLabor] = useTransition()
   const [isAddingPart, startAddPart] = useTransition()
   const [localItems, setLocalItems] = useState<WorkOrderItem[]>(items)
@@ -98,7 +100,9 @@ export function WorkOrderItemsGrid({ workOrderId, items }: WorkOrderItemsGridPro
             ? result.error
             : `Failed to add ${kind}.`
         toast.error(msg)
+        return
       }
+      router.refresh()
     })
   }
 

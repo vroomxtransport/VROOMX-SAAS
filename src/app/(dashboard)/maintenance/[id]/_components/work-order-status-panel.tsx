@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -31,6 +32,7 @@ export function WorkOrderStatusPanel({
   status,
   canClose,
 }: WorkOrderStatusPanelProps) {
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [optimisticStatus, setOptimisticStatus] = useState<MaintenanceStatus>(status)
 
@@ -80,6 +82,7 @@ export function WorkOrderStatusPanel({
       }
 
       toast.success(`Status updated to ${MAINTENANCE_STATUS_LABELS[to]}`)
+      router.refresh()
     })
   }
 

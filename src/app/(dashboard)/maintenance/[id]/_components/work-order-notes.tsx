@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
 import { Trash2, MessageSquare } from 'lucide-react'
@@ -15,6 +16,7 @@ interface WorkOrderNotesProps {
 }
 
 export function WorkOrderNotes({ workOrderId, notes }: WorkOrderNotesProps) {
+  const router = useRouter()
   const [body, setBody] = useState('')
   const [isAdding, startAddTransition] = useTransition()
 
@@ -42,6 +44,7 @@ export function WorkOrderNotes({ workOrderId, notes }: WorkOrderNotesProps) {
 
       setBody('')
       toast.success('Note added')
+      router.refresh()
     })
   }
 
@@ -92,6 +95,7 @@ export function WorkOrderNotes({ workOrderId, notes }: WorkOrderNotesProps) {
 }
 
 function NoteEntry({ note }: { note: WorkOrderNote }) {
+  const router = useRouter()
   const [isDeleting, startDeleteTransition] = useTransition()
 
   const handleDelete = () => {
@@ -109,7 +113,9 @@ function NoteEntry({ note }: { note: WorkOrderNote }) {
             ? result.error
             : 'Failed to delete note.'
         toast.error(msg)
+        return
       }
+      router.refresh()
     })
   }
 

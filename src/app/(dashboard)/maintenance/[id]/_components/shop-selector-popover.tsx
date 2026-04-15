@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { ChevronsUpDown, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -20,6 +21,7 @@ interface ShopSelectorPopoverProps {
 }
 
 export function ShopSelectorPopover({ workOrderId, currentShopId }: ShopSelectorPopoverProps) {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const { data: shops = [] } = useShops()
@@ -49,6 +51,7 @@ export function ShopSelectorPopover({ workOrderId, currentShopId }: ShopSelector
 
       toast.success(`Shop updated to ${shop.name}`)
       setOpen(false)
+      router.refresh()
     })
   }
 

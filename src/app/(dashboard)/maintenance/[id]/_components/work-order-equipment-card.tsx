@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Truck, ChevronsUpDown, Check } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -21,6 +22,7 @@ interface WorkOrderEquipmentCardProps {
 }
 
 export function WorkOrderEquipmentCard({ workOrderId, wo }: WorkOrderEquipmentCardProps) {
+  const router = useRouter()
   const [pickerOpen, setPickerOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const { data: trucksData } = useTrucks({ pageSize: 200 })
@@ -61,6 +63,7 @@ export function WorkOrderEquipmentCard({ workOrderId, wo }: WorkOrderEquipmentCa
 
       toast.success(`Equipment updated to ${unitNum}`)
       setPickerOpen(false)
+      router.refresh()
     })
   }
 
