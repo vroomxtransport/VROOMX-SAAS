@@ -1,20 +1,14 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
-import { updateTrip } from '@/app/actions/trips'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import {
   DollarSign,
-  Building2,
   Calculator,
-  Pencil,
-  Check,
-  X,
-  Loader2,
   Truck,
+  Receipt,
+  MapPin,
+  User,
+  Wallet,
 } from 'lucide-react'
 import { DRIVER_PAY_TYPE_LABELS } from '@/types'
 import type { TripWithRelations } from '@/lib/queries/trips'
@@ -32,7 +26,7 @@ function formatCurrency(value: string | number): string {
   }).format(num)
 }
 
-// --- Accent style maps (reused from kpi-cards pattern) ---
+// --- Accent style maps ---
 
 type Accent = 'emerald' | 'muted' | 'violet' | 'rose'
 
@@ -52,67 +46,25 @@ const ICON_STYLES: Record<Accent, string> = {
 
 // --- Sub-components ---
 
-function HeroCard({ label, value, subtitle, icon: Icon, accent, editAction }: {
+function HeroCard({ label, value, subtitle, icon: Icon, accent }: {
   label: string
   value: string
   subtitle?: string
   icon: LucideIcon
   accent: Accent
-  editAction?: React.ReactNode
 }) {
   return (
-    <div className={cn('rounded-xl border p-4', ACCENT_STYLES[accent])}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-lg', ICON_STYLES[accent])}>
-            <Icon className="h-4 w-4" />
-          </div>
-          <span className="text-xs font-medium uppercase text-muted-foreground">{label}</span>
+    <div className={cn('rounded-xl border p-3', ACCENT_STYLES[accent])}>
+      <div className="flex items-center gap-2">
+        <div className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-lg', ICON_STYLES[accent])}>
+          <Icon className="h-3.5 w-3.5" />
         </div>
-        {editAction}
+        <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{label}</span>
       </div>
-      <p className="mt-2 text-2xl font-bold tabular-nums text-foreground">{value}</p>
+      <p className="mt-2 text-xl font-bold tabular-nums text-foreground">{value}</p>
       {subtitle && (
-        <p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p>
+        <p className="mt-0.5 text-[11px] text-muted-foreground">{subtitle}</p>
       )}
-    </div>
-  )
-}
-
-function WaterfallLine({ label, value, valueStr, bold, indent, highlight, bottomLine }: {
-  label: string
-  value?: number
-  valueStr?: string
-  bold?: boolean
-  indent?: boolean
-  highlight?: boolean
-  bottomLine?: 'positive' | 'negative'
-}) {
-  const displayValue = valueStr ?? (value !== undefined ? formatCurrency(value) : '')
-
-  return (
-    <div className={cn(
-      'flex items-center justify-between px-4 py-2',
-      highlight && 'bg-muted/30',
-      bottomLine === 'positive' && 'bg-green-50/50',
-      bottomLine === 'negative' && 'bg-red-50/50',
-    )}>
-      <span className={cn(
-        indent && 'pl-4',
-        bold ? 'font-semibold text-foreground' : 'text-muted-foreground',
-        bottomLine && 'font-bold text-foreground',
-      )}>
-        {label}
-      </span>
-      <span className={cn(
-        'tabular-nums',
-        bold ? 'font-semibold text-foreground' : 'text-muted-foreground',
-        bottomLine === 'positive' && 'font-bold text-green-700',
-        bottomLine === 'negative' && 'font-bold text-red-700',
-        !bottomLine && value !== undefined && value < 0 && 'text-red-600',
-      )}>
-        {displayValue}
-      </span>
     </div>
   )
 }
@@ -138,11 +90,6 @@ interface TripFinancialCardProps {
 }
 
 export function TripFinancialCard({ trip }: TripFinancialCardProps) {
-  const queryClient = useQueryClient()
-  const [isEditingCarrierPay, setIsEditingCarrierPay] = useState(false)
-  const [carrierPayValue, setCarrierPayValue] = useState('')
-  const [isSaving, setIsSaving] = useState(false)
-
   const revenue = parseFloat(trip.total_revenue || '0')
   const carrierPay = parseFloat(trip.carrier_pay || '0')
   const brokerFees = parseFloat(trip.total_broker_fees || '0')
@@ -152,7 +99,7 @@ export function TripFinancialCard({ trip }: TripFinancialCardProps) {
   const netProfit = parseFloat(trip.net_profit || '0')
   const totalMiles = parseFloat(trip.total_miles || '0')
 
-  // Derived P&L metrics (computed client-side from existing denormalized fields)
+  // Derived metrics
   const cleanGross = revenue - brokerFees - localFees
   const truckGross = cleanGross - driverPay
   const truckGrossMargin = revenue > 0 ? (truckGross / revenue) * 100 : 0
@@ -166,84 +113,7 @@ export function TripFinancialCard({ trip }: TripFinancialCardProps) {
   const payType = trip.driver?.pay_type as DriverPayType | undefined
   const payRate = trip.driver?.pay_rate
 
-  const handleStartEdit = useCallback(() => {
-    setCarrierPayValue(String(carrierPay))
-    setIsEditingCarrierPay(true)
-  }, [carrierPay])
-
-  const handleCancelEdit = useCallback(() => {
-    setIsEditingCarrierPay(false)
-    setCarrierPayValue('')
-  }, [])
-
-  const handleSaveCarrierPay = useCallback(async () => {
-    const numValue = parseFloat(carrierPayValue)
-    if (isNaN(numValue) || numValue < 0) return
-
-    setIsSaving(true)
-    try {
-      const result = await updateTrip(trip.id, { carrier_pay: numValue })
-      if ('error' in result && result.error) {
-        console.error('Failed to update carrier pay:', result.error)
-        return
-      }
-      queryClient.invalidateQueries({ queryKey: ['trip', trip.id] })
-      setIsEditingCarrierPay(false)
-    } finally {
-      setIsSaving(false)
-    }
-  }, [trip.id, carrierPayValue, queryClient])
-
-  const carrierPayEditAction = isEditingCarrierPay ? (
-    <div className="flex items-center gap-1">
-      <Input
-        type="number"
-        step="0.01"
-        min="0"
-        value={carrierPayValue}
-        onChange={(e) => setCarrierPayValue(e.target.value)}
-        className="h-7 w-24 text-sm"
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') handleSaveCarrierPay()
-          if (e.key === 'Escape') handleCancelEdit()
-        }}
-        autoFocus
-      />
-      <Button
-        variant="ghost"
-        size="sm"
-        className="h-7 w-7 p-0"
-        onClick={handleSaveCarrierPay}
-        disabled={isSaving}
-      >
-        {isSaving ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        ) : (
-          <Check className="h-3.5 w-3.5 text-green-600" />
-        )}
-      </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="h-7 w-7 p-0"
-        onClick={handleCancelEdit}
-        disabled={isSaving}
-      >
-        <X className="h-3.5 w-3.5 text-muted-foreground/60" />
-      </Button>
-    </div>
-  ) : (
-    <Button
-      variant="ghost"
-      size="sm"
-      className="h-7 w-7 p-0"
-      onClick={handleStartEdit}
-    >
-      <Pencil className="h-3.5 w-3.5 text-muted-foreground/60" />
-    </Button>
-  )
-
-  // Driver pay model label for metrics section
+  // Driver pay model label for the Driver Pay card subtitle and metrics row
   let driverPayModelLabel = 'N/A'
   if (payType && payRate !== undefined && payRate !== null) {
     if (payType === 'per_car') driverPayModelLabel = `$${payRate}/car`
@@ -253,10 +123,14 @@ export function TripFinancialCard({ trip }: TripFinancialCardProps) {
     else driverPayModelLabel = DRIVER_PAY_TYPE_LABELS[payType]
   }
 
+  // True minus sign (U+2212) for deduction display
+  const minus = '\u2212'
+  const formatDeduction = (v: number) => v > 0 ? `${minus}${formatCurrency(v)}` : formatCurrency(v)
+
   return (
     <div className="rounded-xl border bg-card overflow-hidden">
-      {/* Section 1: Hero KPIs */}
-      <div className="grid grid-cols-2 gap-3 p-4 lg:grid-cols-4">
+      {/* Section 1: 7-card financial grid (waterfall reading order) */}
+      <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7">
         <HeroCard
           label="Revenue"
           value={formatCurrency(revenue)}
@@ -265,11 +139,29 @@ export function TripFinancialCard({ trip }: TripFinancialCardProps) {
           accent="emerald"
         />
         <HeroCard
-          label="Carrier Pay"
-          value={isEditingCarrierPay ? '' : formatCurrency(carrierPay)}
-          icon={Building2}
-          accent="muted"
-          editAction={carrierPayEditAction}
+          label="Broker Fees"
+          value={formatDeduction(brokerFees)}
+          icon={Receipt}
+          accent="rose"
+        />
+        <HeroCard
+          label="Local Fees"
+          value={formatDeduction(localFees)}
+          icon={MapPin}
+          accent="rose"
+        />
+        <HeroCard
+          label="Driver Pay"
+          value={formatDeduction(driverPay)}
+          subtitle={payType ? driverPayModelLabel : undefined}
+          icon={User}
+          accent="rose"
+        />
+        <HeroCard
+          label="Expenses"
+          value={formatDeduction(expenses)}
+          icon={Wallet}
+          accent="rose"
         />
         <HeroCard
           label="Truck Gross"
@@ -286,32 +178,7 @@ export function TripFinancialCard({ trip }: TripFinancialCardProps) {
         />
       </div>
 
-      {/* Section 2: P&L Waterfall */}
-      <div className="border-t">
-        <div className="px-4 py-2 bg-muted/30">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">P&L Breakdown</span>
-        </div>
-        <div className="divide-y divide-border/50 text-sm">
-          <WaterfallLine label="Revenue" value={revenue} bold />
-          <WaterfallLine label="− Broker Fees" value={-brokerFees} indent />
-          <WaterfallLine label="− Local Fees" value={-localFees} indent />
-          <WaterfallLine label="= Clean Gross" value={cleanGross} bold highlight />
-          <WaterfallLine
-            label="− Driver Pay"
-            value={-driverPay}
-            indent
-          />
-          <WaterfallLine label="= Truck Gross" value={truckGross} bold highlight />
-          <WaterfallLine label="− Expenses" value={-expenses} indent />
-          <WaterfallLine
-            label="= Net Profit"
-            value={netProfit}
-            bottomLine={netProfit >= 0 ? 'positive' : 'negative'}
-          />
-        </div>
-      </div>
-
-      {/* Section 3: Per-Unit Metrics */}
+      {/* Section 2: Per-Unit Metrics */}
       <div className="border-t grid grid-cols-3 gap-2 p-4 lg:grid-cols-6">
         <MetricPill
           label="RPM"
