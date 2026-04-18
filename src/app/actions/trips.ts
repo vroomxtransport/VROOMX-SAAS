@@ -14,6 +14,7 @@ import { z } from 'zod'
 import type { OrderStatus, TripStatus } from '@/types'
 import type { RouteStop } from '@/types/database'
 import { captureAsyncError } from '@/lib/async-safe'
+import { recomputeTripRouteGeometry } from '@/lib/trip-routing'
 
 // Trip status → Order status auto-sync mapping
 const TRIP_TO_ORDER_STATUS: Partial<Record<TripStatus, string>> = {
@@ -439,6 +440,24 @@ export async function assignOrderToTrip(orderId: string, tripId: string) {
     return { error: safeError(updateError, 'assignOrderToTrip') }
   }
 
+  // Invalidate cached trip-level route geometry on BOTH trips before
+  // recomputing financials. The cached geometry was computed for the
+  // previous order set; assigning/unassigning an order makes it stale,
+  // and `recalculateTripFinancials` would otherwise derive `total_miles`
+  // from a polyline that no longer matches the trip's actual stops.
+  // The map will fall back to the legacy per-order/dashed render until
+  // the dispatcher re-saves the sequence or hits Recalculate.
+  const tripsToInvalidate = [tripId, ...(oldTripId && oldTripId !== tripId ? [oldTripId] : [])]
+  await supabase
+    .from('trips')
+    .update({
+      route_geometry: null,
+      route_distance_meters: null,
+      route_duration_seconds: null,
+    })
+    .in('id', tripsToInvalidate)
+    .eq('tenant_id', tenantId)
+
   // Recalculate old trip financials if the order was previously assigned.
   // CodeAuditX #3 BUG-2: surface CAS-exhaustion errors.
   if (oldTripId && oldTripId !== tripId) {
@@ -562,6 +581,19 @@ export async function unassignOrderFromTrip(orderId: string) {
     return { error: safeError(updateError, 'unassignOrderFromTrip') }
   }
 
+  // Invalidate cached trip-level route geometry — see assignOrderToTrip
+  // for the full rationale. Removing an order leaves the polyline +
+  // distance reflecting a stop set that no longer matches reality.
+  await supabase
+    .from('trips')
+    .update({
+      route_geometry: null,
+      route_distance_meters: null,
+      route_duration_seconds: null,
+    })
+    .eq('id', oldTripId)
+    .eq('tenant_id', tenantId)
+
   // Recalculate old trip financials.
   // CodeAuditX #3 BUG-2: surface CAS-exhaustion errors.
   const recalc = await recalculateTripFinancials(oldTripId)
@@ -661,7 +693,7 @@ export async function recalculateTripFinancials(tripId: string) {
 
     const { data: trip, error: tripError } = await supabase
       .from('trips')
-      .select('id, version, carrier_pay, driver:drivers(driver_type, pay_type, pay_rate)')
+      .select('id, version, carrier_pay, route_distance_meters, driver:drivers(driver_type, pay_type, pay_rate)')
       .eq('id', tripId)
       .eq('tenant_id', tenantId)
       .single()
@@ -824,7 +856,17 @@ export async function recalculateTripFinancials(tripId: string) {
         local_operations_expense: String(localOpsExpense),
         net_profit: String(adjustedNetProfit),
         order_count: rawOrders.length,
-        total_miles: String(financials.totalMiles),
+        // Prefer the trip-level cached Mapbox route distance when
+        // available — it's actual-highway accurate and includes
+        // inter-order transits. Fall back to the per-order summed
+        // distance for legacy trips with no cached geometry yet.
+        // Read off the SAME `trip` row that supplied `version` so the
+        // CAS retry loop doesn't see a stale meters value.
+        total_miles: ((trip as unknown as { route_distance_meters: string | null }).route_distance_meters)
+          ? String(Math.round(
+              (parseFloat((trip as unknown as { route_distance_meters: string }).route_distance_meters) / 1609.344) * 10
+            ) / 10)
+          : String(financials.totalMiles),
         origin_summary: originSummary,
         destination_summary: destinationSummary,
         version: oldVersion + 1,
@@ -944,6 +986,34 @@ export async function updateRouteSequence(data: unknown) {
   if (updateError) {
     return { error: safeError(updateError, 'updateRouteSequence') }
   }
+
+  // Auto-recompute the trip's cached Mapbox driving polyline so the
+  // map immediately reflects the new ordering. Bounded await — if
+  // Mapbox is slow we let the action return and the realtime
+  // subscription delivers the geometry on a later tick. Same 6s
+  // budget pattern used by the order-level geocode flow in
+  // createOrder/updateOrder.
+  const TRIP_GEOCODE_AWAIT_BUDGET_MS = 6_000
+  const recomputePromise = recomputeTripRouteGeometry(supabase, tripId, tenantId)
+    .then(async (outcome) => {
+      // Re-derive denormalized financials from the new cached
+      // distance — only when a new geometry actually landed.
+      if (outcome.ok) {
+        const recalc = await recalculateTripFinancials(tripId)
+        if ('error' in recalc && recalc.error) {
+          console.warn(
+            `[updateRouteSequence] financials recompute warning for trip ${tripId}: ${recalc.error}`,
+          )
+        }
+      }
+      revalidatePath(`/trips/${tripId}`)
+    })
+    .catch(captureAsyncError('updateRouteSequence.recomputeTripRoute'))
+
+  await Promise.race([
+    recomputePromise,
+    new Promise<void>((resolve) => setTimeout(resolve, TRIP_GEOCODE_AWAIT_BUDGET_MS)),
+  ])
 
   revalidatePath(`/trips/${tripId}`)
   return { success: true }

@@ -94,46 +94,71 @@ function SortableStop({ stop, index }: { stop: SequenceStop; index: number }) {
   }
 
   const isPickup = stop.stopType === 'pickup'
+  // Sequence badge mirrors the marker badge exactly so the dispatcher
+  // can move from sequence row → marker on the map without a mental
+  // re-mapping. Pickup = white card with navy stroke + navy text.
+  // Delivery = orange card with darker orange stroke + white text.
+  const badgeStyle = isPickup
+    ? {
+        background: 'var(--marker-pickup-fill)',
+        color: 'var(--marker-badge-navy)',
+        borderColor: 'var(--marker-pickup-stroke)',
+      }
+    : {
+        background: 'var(--marker-delivery-fill)',
+        color: 'var(--marker-pickup-fill)',
+        borderColor: 'var(--marker-delivery-stroke)',
+      }
+  const glyph = isPickup ? '▲' : '■'
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-2 rounded-md border px-3 py-2 bg-surface ${
-        isDragging ? 'opacity-50 shadow-lg z-50' : ''
+      className={`group flex items-stretch gap-3 rounded-md border border-transparent px-3 py-3 transition-colors hover:bg-[var(--panel-row-hover)] ${
+        isDragging ? 'border-border bg-surface opacity-60 shadow-lg z-50' : ''
       }`}
     >
       <button
-        className="shrink-0 cursor-grab active:cursor-grabbing text-muted-foreground/60 hover:text-muted-foreground"
+        type="button"
+        aria-label="Drag to reorder"
+        className="shrink-0 cursor-grab text-muted-foreground/0 transition-colors group-hover:text-muted-foreground/70 hover:text-foreground active:cursor-grabbing"
         {...attributes}
         {...listeners}
       >
         <GripVertical className="h-4 w-4" />
       </button>
 
-      <span className="shrink-0 flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white"
-        style={{ backgroundColor: isPickup ? '#16a34a' : '#dc2626' }}
+      <span
+        className="relative inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border text-[12px] font-semibold tabular-nums"
+        style={{ ...badgeStyle, borderWidth: 1 }}
       >
+        <span
+          className="absolute left-0.5 top-0 text-[7px] opacity-60"
+          aria-hidden
+        >
+          {glyph}
+        </span>
         {index + 1}
       </span>
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <span className="text-xs font-medium text-foreground truncate">
-            {stop.orderNumber ?? 'Draft'}
-          </span>
-          <span className={`text-[10px] font-semibold uppercase px-1 py-0.5 rounded ${
-            isPickup
-              ? 'text-green-700'
-              : 'text-red-700'
-          }`}>
+          <span className="text-[12px] font-semibold uppercase tracking-wide text-foreground/80">
             {isPickup ? 'Pickup' : 'Delivery'}
           </span>
+          {stop.orderNumber && (
+            <span className="text-xs text-muted-foreground">
+              · {stop.orderNumber}
+            </span>
+          )}
           {!stop.hasCoords && (
-            <span className="text-[10px] text-amber-600">No coords</span>
+            <span className="rounded-sm bg-[var(--state-warn-bg)] px-1 py-px text-[10px] font-medium text-[var(--state-warn-text)]">
+              No coords
+            </span>
           )}
         </div>
-        <p className="text-xs text-muted-foreground truncate">
+        <p className="mt-0.5 truncate text-sm text-foreground">
           {[stop.city, stop.state].filter(Boolean).join(', ') || 'No address'}
         </p>
       </div>

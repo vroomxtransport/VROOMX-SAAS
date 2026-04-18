@@ -97,6 +97,11 @@ const REQUIRED_ENV: EnvCheck[] = [
   // continue to work without it; distance_miles stays null until entered
   // manually. Warning printed below.
   { name: 'MAPBOX_ACCESS_TOKEN', required: false, description: 'Mapbox token for geocoding + driving-distance calculation on orders' },
+  // Public Mapbox token used by the trip route map's tile layer in the
+  // browser. Optional — when unset, the map silently falls back to
+  // OpenStreetMap raster tiles. Warning printed below so an operator
+  // who set the server token but forgot the public one notices.
+  { name: 'NEXT_PUBLIC_MAPBOX_PUBLIC_TOKEN', required: false, description: 'Public Mapbox token for trip route map tiles (browser-exposed; URL-restrict in Mapbox dashboard)' },
 
   // N12: SSN encryption key — used by encrypt_ssn/decrypt_ssn RPCs.
   // If unset, SSN encryption is skipped (ssn_last4 still stored).
@@ -151,6 +156,11 @@ export function assertRequiredEnvVars(): void {
     if (!process.env.MAPBOX_ACCESS_TOKEN) {
       console.warn(
         '[startup] MAPBOX_ACCESS_TOKEN unset — order geocoding + driving-distance auto-calc disabled',
+      )
+    }
+    if (!process.env.NEXT_PUBLIC_MAPBOX_PUBLIC_TOKEN) {
+      console.warn(
+        '[startup] NEXT_PUBLIC_MAPBOX_PUBLIC_TOKEN unset — trip route map will fall back to OpenStreetMap tiles',
       )
     }
     return

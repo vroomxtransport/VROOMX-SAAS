@@ -210,6 +210,9 @@ export interface Trip {
   origin_summary: string | null
   destination_summary: string | null
   route_sequence: RouteStop[] | null
+  route_geometry: { type: 'LineString'; coordinates: [number, number][] } | null
+  route_distance_meters: string | null
+  route_duration_seconds: number | null
   notes: string | null
   created_at: string
   updated_at: string

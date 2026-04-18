@@ -183,3 +183,133 @@ export async function calculateDrivingDistance(
 
   return null
 }
+
+const MAPBOX_DIRECTIONS_MAX_WAYPOINTS = 25
+
+/**
+ * Multi-waypoint variant of `calculateDrivingDistance`. Routes through
+ * every coordinate in `coords` (in order) via a single Mapbox
+ * Directions request and returns the cumulative distance + duration +
+ * GeoJSON LineString for the entire path.
+ *
+ * Used by the trip-level cached route feature: one call covers every
+ * stop on a trip's `route_sequence`, producing a single road-following
+ * polyline instead of N per-order polylines + dashed connectors.
+ *
+ * Capped at `MAPBOX_DIRECTIONS_MAX_WAYPOINTS` (25) per Mapbox API
+ * limits. Trips with more stops are silently skipped — the caller
+ * falls back to the per-order rendering path.
+ *
+ * Returns null on the same conditions as `calculateDrivingDistance`
+ * (missing token, invalid coords, 4xx, retries exhausted, no route),
+ * plus when the waypoint count exceeds the cap.
+ */
+export async function calculateMultiWaypointRoute(
+  coords: Array<[number, number]>,
+): Promise<DistanceResult | null> {
+  if (coords.length < 2) {
+    return null
+  }
+  if (coords.length > MAPBOX_DIRECTIONS_MAX_WAYPOINTS) {
+    console.warn(
+      `[distance] ${coords.length} waypoints exceeds Mapbox cap of ${MAPBOX_DIRECTIONS_MAX_WAYPOINTS} — skipping multi-waypoint route`,
+    )
+    return null
+  }
+
+  const token = process.env.MAPBOX_ACCESS_TOKEN
+  if (!token) {
+    console.warn('[distance] MAPBOX_ACCESS_TOKEN not set — multi-waypoint route skipped')
+    return null
+  }
+
+  // Validate every coordinate before constructing the URL — same defence
+  // as the two-point variant. One bad coord poisons the whole request.
+  for (const [lon, lat] of coords) {
+    if (
+      !isFiniteNumber(lat) ||
+      !isFiniteNumber(lon) ||
+      lat < -90 || lat > 90 ||
+      lon < -180 || lon > 180
+    ) {
+      console.warn('[distance] invalid coordinate in multi-waypoint route, skipping')
+      return null
+    }
+  }
+
+  // Mapbox expects lon,lat;lon,lat;... (semicolon-separated).
+  const coordPath = coords.map(([lon, lat]) => `${lon},${lat}`).join(';')
+  const params = new URLSearchParams({
+    access_token: token,
+    overview: 'simplified',
+    geometries: 'geojson',
+  })
+  const url = `${MAPBOX_DIRECTIONS_BASE}/${coordPath}?${params.toString()}`
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const response = await fetch(url, {
+        headers: { 'User-Agent': 'VroomX-TMS/1.0' },
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      })
+
+      if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+        console.error(`[distance] Mapbox ${response.status} (unrecoverable) on multi-waypoint attempt ${attempt}`)
+        return null
+      }
+
+      if (!response.ok) {
+        if (attempt < MAX_ATTEMPTS) {
+          await sleep(BASE_BACKOFF_MS * 2 ** (attempt - 1))
+          continue
+        }
+        console.error(`[distance] Mapbox ${response.status} after ${MAX_ATTEMPTS} multi-waypoint attempts`)
+        return null
+      }
+
+      const data = await response.json()
+      if (data.code !== 'Ok' || !Array.isArray(data.routes) || data.routes.length === 0) {
+        console.warn('[distance] no route found through requested waypoints')
+        return null
+      }
+      const route = data.routes[0]
+      if (!isFiniteNumber(route.distance) || !isFiniteNumber(route.duration)) {
+        console.warn('[distance] Mapbox multi-waypoint response missing numeric distance/duration')
+        return null
+      }
+
+      let geometry: RouteGeometry | null = null
+      const rawGeom = route.geometry
+      if (
+        rawGeom &&
+        rawGeom.type === 'LineString' &&
+        Array.isArray(rawGeom.coordinates) &&
+        rawGeom.coordinates.length >= 2
+      ) {
+        geometry = {
+          type: 'LineString',
+          coordinates: rawGeom.coordinates as [number, number][],
+        }
+      }
+
+      const miles = route.distance / 1609.34
+      const durationMinutes = route.duration / 60
+
+      return {
+        miles: Math.round(miles * 10) / 10,
+        durationMinutes: Math.round(durationMinutes),
+        geometry,
+      }
+    } catch (err) {
+      if (attempt < MAX_ATTEMPTS) {
+        await sleep(BASE_BACKOFF_MS * 2 ** (attempt - 1))
+        continue
+      }
+      const msg = err instanceof Error ? err.message : 'unknown error'
+      console.error(`[distance] Mapbox multi-waypoint fetch failed after ${MAX_ATTEMPTS} attempts: ${msg}`)
+      return null
+    }
+  }
+
+  return null
+}

@@ -353,6 +353,13 @@ export const trips = pgTable('trips', {
   destinationSummary: text('destination_summary'),
   // Route sequencing (ordered list of stops for route planning)
   routeSequence: jsonb('route_sequence'),
+  // Cached Mapbox Directions geometry for the full ordered trip — one
+  // continuous LineString through every stop in `routeSequence`. Drives
+  // the road-following polyline on the trip route map. NULL until the
+  // dispatcher saves a sequence (auto-computed) or clicks Recalculate.
+  routeGeometry: jsonb('route_geometry'),
+  routeDistanceMeters: numeric('route_distance_meters', { precision: 14, scale: 2 }),
+  routeDurationSeconds: integer('route_duration_seconds'),
   // Metadata
   notes: text('notes'),
   // Optimistic concurrency control counter — bumped by

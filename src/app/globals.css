@@ -650,6 +650,263 @@
   opacity: 0.5 !important;
 }
 
+/* ============================================================
+ * Trip route map — design tokens + Leaflet customisations
+ * Phase 1 visual overhaul. Tokens mirror MARKER_TOKENS in
+ * src/components/map/markers/marker-tokens.ts; keep both in sync.
+ * ============================================================ */
+
+:root {
+  /* Tile + base map */
+  --map-bg: #f2efe9;
+  --map-water: #d4e6ec;
+
+  /* Markers */
+  --marker-pickup-fill: #ffffff;
+  --marker-pickup-stroke: #192334;
+  --marker-delivery-fill: #fb7232;
+  --marker-delivery-stroke: #c4521f;
+  --marker-badge-navy: #192334;
+  --marker-count-badge: #192334;
+
+  /* Polylines */
+  --route-driving: #192334;
+  --route-casing: #ffffff;
+
+  /* Map chrome (controls + popovers) */
+  --chrome-border: #e5e4df;
+  --chrome-bg: #ffffff;
+  --chrome-hover-bg: #f7f7f5;
+  --chrome-text: #192334;
+
+  /* Sequence panel rows */
+  --panel-row-hover: #faf9f6;
+  --panel-row-selected-bg: #fef5ef;
+  --panel-row-selected-border: #fb7232;
+
+  /* Failure / banner state */
+  --state-warn-bg: #fef7ed;
+  --state-warn-text: #c2410c;
+  --state-warn-border: #fed7aa;
+  --state-ok: #10b981;
+}
+
+/* Markers — DivIcon hover/active scale. CSS lives outside the SVG
+ * so we can transition cleanly without re-rendering the icon. */
+.vroomx-marker {
+  transition: transform 150ms ease, filter 150ms ease;
+  filter: drop-shadow(0 1px 2px rgba(25, 35, 52, 0.12))
+    drop-shadow(0 4px 8px rgba(25, 35, 52, 0.08));
+}
+.vroomx-marker:hover,
+.vroomx-marker--hover {
+  transform: scale(1.08);
+  filter: drop-shadow(0 8px 16px rgba(25, 35, 52, 0.14));
+  z-index: 1000 !important;
+}
+.vroomx-marker--active {
+  transform: scale(1.12);
+  z-index: 1100 !important;
+}
+
+/* Custom map chrome buttons. Supabase-panel aesthetic — navy on
+ * white, 1px border, 6px radius, soft shadow. Position is set on
+ * the parent container; the buttons stack vertically. */
+.vroomx-map-chrome {
+  position: absolute;
+  z-index: 500; /* above tiles + polylines, below popups (z 700) */
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  pointer-events: auto;
+}
+.vroomx-map-chrome--top-right {
+  top: 12px;
+  right: 12px;
+}
+.vroomx-map-chrome--bottom-right {
+  bottom: 24px;
+  right: 12px;
+  align-items: flex-end;
+}
+.vroomx-map-chrome__btn {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--chrome-bg);
+  color: var(--chrome-text);
+  border: 1px solid var(--chrome-border);
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+.vroomx-map-chrome__btn:hover {
+  background: var(--chrome-hover-bg);
+}
+.vroomx-map-chrome__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.vroomx-map-chrome__attribution {
+  margin-top: 4px;
+  padding: 6px 10px;
+  font-size: 10px;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--chrome-border);
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+/* Strip Leaflet's default zoom widget on the trip map (we render
+ * `<MapChrome>` instead). Leaflet still mounts it under the hood
+ * because `zoomControl` defaults true; hiding via CSS is simpler
+ * than threading a prop through every consumer. */
+.vroomx-map .leaflet-control-zoom,
+.vroomx-map .leaflet-control-attribution {
+  display: none;
+}
+
+/* Marker popup wrapper reset for the trip route map. Strips
+ * Leaflet's white wrapper box, the tail, and the shadow so our
+ * `RoutePopup` card renders as a flat sticker. */
+.vroomx-map-popup .leaflet-popup-content-wrapper {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  border-radius: 0;
+}
+.vroomx-map-popup .leaflet-popup-content {
+  margin: 0;
+  width: 280px !important;
+}
+.vroomx-map-popup .leaflet-popup-tip-container,
+.vroomx-map-popup .leaflet-popup-tip {
+  display: none;
+}
+
+/* Popup card itself (rendered by `RoutePopup`). */
+.vroomx-map-popup__card {
+  width: 280px;
+  background: #ffffff;
+  border: 1px solid var(--chrome-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(25, 35, 52, 0.10);
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--chrome-text);
+}
+.vroomx-map-popup__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--chrome-border);
+}
+.vroomx-map-popup__seq {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  flex-shrink: 0;
+}
+.vroomx-map-popup__heading {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.vroomx-map-popup__kind {
+  font-weight: 600;
+  color: var(--chrome-text);
+}
+.vroomx-map-popup__sub {
+  color: #64748b;
+  font-weight: 400;
+}
+.vroomx-map-popup__vehicle {
+  color: #475569;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+.vroomx-map-popup__address {
+  padding: 10px 12px;
+}
+.vroomx-map-popup__line1 {
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0;
+}
+.vroomx-map-popup__line2 {
+  font-size: 13px;
+  color: #475569;
+  margin: 2px 0 0 0;
+}
+.vroomx-map-popup__vehicles {
+  list-style: none;
+  margin: 0;
+  padding: 0 12px 10px;
+  display: grid;
+  gap: 4px;
+}
+.vroomx-map-popup__vehicles li {
+  font-size: 12px;
+  color: #64748b;
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+}
+.vroomx-map-popup__order {
+  font-weight: 600;
+  color: #475569;
+  flex-shrink: 0;
+}
+.vroomx-map-popup__more {
+  color: #94a3b8;
+  font-style: italic;
+}
+.vroomx-map-popup__footer {
+  display: flex;
+  gap: 6px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--chrome-border);
+  background: #fafafa;
+}
+.vroomx-map-popup__btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--chrome-text);
+  background: #ffffff;
+  border: 1px solid var(--chrome-border);
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+.vroomx-map-popup__btn:hover {
+  background: var(--chrome-hover-bg);
+}
+.vroomx-map-popup__btn--primary:hover {
+  background: var(--chrome-hover-bg);
+  border-color: var(--marker-delivery-fill);
+}
+
 /* Leaflet stacking-context isolation.
  *
  * Leaflet's internal panes use z-index values up to 800
